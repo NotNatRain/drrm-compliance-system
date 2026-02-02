@@ -193,8 +193,8 @@
                                 <span>{{ Auth::user()->name }}</span>
                             </a>
                             <div class="dropdown-menu dropdown-menu-end">
-                                <a class="dropdown-item" href="#">
-                                    <i class="fas fa-user-cog me-2"></i> Profile Settings
+                                <a class="dropdown-item" href="{{ route('fire-safety.customization') }}">
+                                    <i class="fas fa-cogs me-2"></i> Customization
                                 </a>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="{{ route('logout') }}"
@@ -248,9 +248,9 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.settings') }}">
+                    <a class="nav-link" href="{{ route('fire-safety.customization') }}">
                         <span class="nav-icon"><i class="fas fa-cog"></i></span>
-                        <span>Settings</span>
+                        <span>Customization</span>
                     </a>
                 </li>
             </ul>
@@ -539,6 +539,7 @@
                                 <div class="col-md-6">
                                     <p><strong>School Name:</strong> <span id="modalSchoolName"></span></p>
                                     <p><strong>School ID:</strong> <span id="modalSchoolId"></span></p>
+                                    <p><strong>Address:</strong> <span id="modalSchoolAddress"></span></p>
                                 </div>
                                 <div class="col-md-6">
                                     <p><strong>School Head:</strong> <span id="modalSchoolHead"></span></p>
@@ -642,6 +643,10 @@
                                 <label>School ID *</label>
                                 <input type="text" class="form-control" name="school_id" required>
                             </div>
+                            <div class="mb-3">
+                                <label>Address *</label>
+                                <textarea class="form-control" name="address" rows="2" required></textarea>
+                            </div>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label>School Head *</label>
@@ -744,6 +749,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 document.getElementById('modalSchoolName').textContent = data.name;
                 document.getElementById('modalSchoolId').textContent = data.school_id;
+                document.getElementById('modalSchoolAddress').textContent = data.address || 'N/A';
                 document.getElementById('modalSchoolHead').textContent = data.school_head;
                 document.getElementById('modalDrrmCoordinator').textContent = data.drrm_coordinator;
                 document.getElementById('fireExtinguishersCount').textContent = data.fire_extinguishers_count;
@@ -839,24 +845,27 @@ function loadSchoolIssues(schoolId) {
                 body: JSON.stringify({
                     name: this.name.value,
                     school_id: this.school_id.value,
+                    address: this.address.value,
                     school_head: this.school_head.value,
                     drrm_coordinator: this.drrm_coordinator.value
                 })
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
+            .then(async response => {
+                const data = await response.json();
+                if (response.ok && data.success) {
                     alert('School added successfully!');
                     // Close modal
                     const modal = bootstrap.Modal.getInstance(document.getElementById('addInspectionModal'));
                     modal.hide();
                     // Reload page
                     location.reload();
+                } else {
+                    alert(data.message || 'Failed to add school. Check your input.');
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('Failed to add school. Please try again.');
+                alert('An error occurred. Please try again.');
             });
         });
     }

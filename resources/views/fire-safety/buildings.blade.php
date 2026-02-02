@@ -191,6 +191,11 @@
 
                 <div class="col-auto">
                     <div class="d-flex align-items-center">
+                        <!-- Customization -->
+                        <a href="{{ route('fire-safety.customization') }}" class="text-white me-3 text-decoration-none" title="Customization">
+                            <i class="fas fa-cogs fa-lg"></i>
+                        </a>
+
                         <div class="dropdown">
                             <a href="#" class="text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
                                 <i class="fas fa-user-circle fa-lg me-2"></i>
@@ -248,6 +253,12 @@
                     <a class="nav-link" href="{{ route('fire-safety.evacuation-plans') }}">
                         <span class="nav-icon"><i class="fas fa-map-signs"></i></span>
                         <span>Evacuation Plans</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('fire-safety.customization') }}">
+                        <span class="nav-icon"><i class="fas fa-cog"></i></span>
+                        <span>Customization</span>
                     </a>
                 </li>
             </ul>
@@ -634,7 +645,6 @@
                                     <option value="laboratory">Laboratory</option>
                                     <option value="gymnasium">Gymnasium</option>
                                     <option value="cafeteria">Cafeteria</option>
-                                    <option value="dormitory">Dormitory</option>
                                 </select>
                             </div>
                         </div>
@@ -649,10 +659,6 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="features[]" value="fire_alarms" id="fireAlarms">
-                                        <label class="form-check-label" for="fireAlarms">Fire Alarm System</label>
-                                    </div>
-                                    <div class="form-check">
                                         <input class="form-check-input" type="checkbox" name="features[]" value="sprinklers" id="sprinklers">
                                         <label class="form-check-label" for="sprinklers">Sprinkler System</label>
                                     </div>
@@ -662,10 +668,6 @@
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="features[]" value="fire_extinguishers" id="fireExtinguishers">
-                                        <label class="form-check-label" for="fireExtinguishers">Fire Extinguishers</label>
-                                    </div>
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" name="features[]" value="exit_signs" id="exitSigns">
                                         <label class="form-check-label" for="exitSigns">Exit Signs</label>
@@ -1239,6 +1241,13 @@
             }
 
             const formData = new FormData(form);
+            const yearConstructed = parseInt(formData.get('year_constructed'));
+            const lastRenovation = parseInt(formData.get('last_renovation'));
+
+            if (yearConstructed && lastRenovation && lastRenovation < yearConstructed) {
+                alert('Last renovation year cannot be earlier than the year constructed.');
+                return;
+            }
 
             try {
                 const response = await fetch(form.action, {

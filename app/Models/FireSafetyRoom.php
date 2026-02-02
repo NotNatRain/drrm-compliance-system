@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class FireSafetyRoom extends Model
 {
@@ -17,17 +19,21 @@ class FireSafetyRoom extends Model
         'floor_no',
     ];
 
-    public function school()
+    protected $casts = [
+        'floor_no' => 'integer'
+    ];
+
+    public function school(): BelongsTo
     {
         return $this->belongsTo(FireSafetySchool::class, 'school_id');
     }
 
-    public function building()
+    public function building(): BelongsTo
     {
         return $this->belongsTo(FireSafetyBuilding::class, 'building_id');
     }
 
-    public function extinguishersCoveringThisRoom()
+    public function extinguishersCoveringThisRoom(): BelongsToMany
     {
         return $this->belongsToMany(
             FireSafetyExtinguisher::class,
@@ -36,5 +42,60 @@ class FireSafetyRoom extends Model
             'extinguisher_id'
         )->withTimestamps();
     }
+    
+    // Helper methods
+    public function getRoomTypeColorAttribute(): string
+    {
+        return match($this->room_type) {
+            'laboratory' => 'danger',
+            'auxiliary' => 'info',
+            'classroom' => 'primary',
+            'office' => 'success',
+            'storage' => 'warning',
+            default => 'secondary'
+        };
+    }
+    
+    public function getRoomTypeLabelAttribute(): string
+    {
+        return ucfirst($this->room_type);
+    }
+    
+    public function getFloorLabelAttribute(): string
+    {
+        if (!$this->floor_no) return 'N/A';
+        
+        $ordinals = ['th', 'st', 'nd', 'rd', 'th'];
+        $v = $this->floor_no % 100;
+        return $this->floor_no . ($ordinals[($v - 20) % 10] ?? $ordinals[$v] ?? $ordinals[0]) . ' Floor';
+    }
+    
+    public function isCovered(): bool
+    {
+        return $this->extinguishersCoveringThisRoom()->exists();
+    }
+    
+    public function getCoveringExtinguisherAttribute(): ?FireSafetyExtinguisher
+    {
+        return $this->extinguishersCoveringThisRoom()->first();
+    }
+    
+    public function getCoverageInfoAttribute(): array
+    {
+        $extinguisher = $this->coveringExtinguisher;
+        
+        if (!$extinguisher) {
+            return [
+                'is_covered' => false,
+                'extinguisher_code' => null,
+                'is_center_room' => false
+            ];
+        }
+        
+        return [
+            'is_covered' => true,
+            'extinguisher_code' => $extinguisher->code,
+            'is_center_room' => $extinguisher->room_id === $this->id
+        ];
+    }
 }
-

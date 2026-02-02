@@ -21,6 +21,9 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
+        'school_id',
+        'module_access',
     ];
 
     /**
@@ -34,6 +37,14 @@ class User extends Authenticatable
     ];
 
     /**
+     * Get the school that the user belongs to.
+     */
+    public function school()
+    {
+        return $this->belongsTo(FireSafetySchool::class, 'school_id');
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -43,6 +54,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'module_access' => 'array',
         ];
     }
 }

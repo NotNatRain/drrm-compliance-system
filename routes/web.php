@@ -18,15 +18,34 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name
 // Main dashboard
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
+// Global User Management (Admin Only)
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/users', [DashboardController::class, 'getUsers'])->name('users.index');
+    Route::post('/users', [DashboardController::class, 'storeUser'])->name('users.store');
+    Route::get('/users/{id}', [DashboardController::class, 'getUser'])->name('users.show');
+    Route::delete('/users/{id}', [DashboardController::class, 'deleteUser'])->name('users.destroy');
+});
+
 // Subsystem dashboards
 // Fire Safety Routes
-Route::prefix('fire-safety')->group(function () {
+Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])->group(function () {
     Route::get('/dashboard', [FireSafetyController::class, 'dashboard'])->name('fire-safety.dashboard');
     Route::get('/alarm-systems', [FireSafetyController::class, 'alarmSystems'])->name('fire-safety.alarm-systems');
     Route::get('/extinguishers', [FireSafetyController::class, 'extinguishers'])->name('fire-safety.extinguishers');
     Route::get('/buildings', [FireSafetyController::class, 'buildings'])->name('fire-safety.buildings');
     Route::get('/evacuation-plans', [FireSafetyController::class, 'evacuationPlans'])->name('fire-safety.evacuation-plans');
-    Route::get('/settings', [FireSafetyController::class, 'settings'])->name('fire-safety.settings');
+    Route::post('/evacuation-plan/store', [FireSafetyController::class, 'storeEvacuationPlan'])->name('fire-safety.evacuation-plan.store');
+    Route::get('/customization', [FireSafetyController::class, 'customization'])->name('fire-safety.customization');
+    Route::get('/customization', [FireSafetyController::class, 'customization'])->name('fire-safety.customization');
+    
+
+
+    // System Configuration Routes
+    Route::post('/config/{type}/order', [FireSafetyController::class, 'updateConfigOrder'])->name('fire-safety.config.order');
+    Route::post('/config/{type}', [FireSafetyController::class, 'storeConfig'])->name('fire-safety.config.store');
+    Route::put('/config/{type}/{id}', [FireSafetyController::class, 'updateConfig'])->name('fire-safety.config.update');
+    Route::delete('/config/{type}/{id}', [FireSafetyController::class, 'deleteConfig'])->name('fire-safety.config.destroy');
+    Route::get('/schools/export', [FireSafetyController::class, 'exportSchools'])->name('fire-safety.schools.export');
 
     // AJAX routes for dynamic loading
     Route::get('/school/{id}', [FireSafetyController::class, 'getSchoolDetails'])->name('fire-safety.school.details');
@@ -68,12 +87,14 @@ Route::prefix('fire-safety')->group(function () {
     Route::get('/rooms/{buildingId}', [FireSafetyController::class, 'getRooms'])->name('fire-safety.rooms.list');
     Route::post('/room/store', [FireSafetyController::class, 'storeRoom'])->name('fire-safety.room.store');
     Route::post('/extinguisher/store', [FireSafetyController::class, 'storeExtinguisher'])->name('fire-safety.extinguisher.store');
+    Route::post('/extinguisher/{id}/update', [FireSafetyController::class, 'updateExtinguisher'])->name('fire-safety.extinguisher.update');
+    Route::get('/extinguisher/inspections/{schoolId}', [FireSafetyController::class, 'getRecentExtinguisherInspections'])->name('fire-safety.extinguisher.inspections');
 });
 
 
 
 //Typhoon/Flood Routes
-Route::prefix('typhoon')->group(function () {
+Route::prefix('typhoon')->middleware(['auth', 'module.access:typhoon_flood'])->group(function () {
     Route::get('/dashboard', [TyphoonController::class, 'dashboard'])->name('typhoon.dashboard');
     // Add other typhoon routes here
 });
@@ -83,7 +104,7 @@ Route::prefix('typhoon')->group(function () {
 
 
 //Incident Routes
-Route::prefix('incidents')->group(function () {
+Route::prefix('incidents')->middleware(['auth', 'module.access:incidents'])->group(function () {
     Route::get('/dashboard', [IncidentController::class, 'dashboard'])->name('incidents.dashboard');
     // Add other incident routes here
 });

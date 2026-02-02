@@ -9,11 +9,17 @@ use App\Models\FireSafetyAlarmSystem;
 use App\Models\FireSafetyBuilding;
 use App\Models\FireSafetyEvacuationPlan;
 use App\Models\FireSafetyInspection;
+use App\Models\FireSafetyExtinguisherInspection;
 use App\Models\FireSafetyRoom;
+use App\Models\FireSafetyEvacuationDrill;
 use Carbon\Carbon;
+use App\Models\User;
+use App\Models\SystemConfiguration;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 
 class FireSafetyController extends Controller
 {
@@ -24,8 +30,13 @@ class FireSafetyController extends Controller
 
     public function dashboard()
     {
-        $schools = FireSafetySchool::withCount(['extinguishers', 'alarmSystems', 'buildings', 'evacuationPlans'])
-            ->get()
+        $query = FireSafetySchool::withCount(['extinguishers', 'alarmSystems', 'buildings', 'evacuationPlans']);
+        
+        if (auth()->user()->role !== 'admin') {
+            $query->where('id', auth()->user()->school_id);
+        }
+
+        $schools = $query->get()
             ->map(function($school) {
                 // Set status and issues count
                 if ($school->extinguishers_count === 0 || $school->alarm_systems_count === 0) {
@@ -67,7 +78,13 @@ class FireSafetyController extends Controller
 
     public function alarmSystems()
     {
-        $schools = FireSafetySchool::with(['alarmSystems.building', 'buildings'])->get();
+        $query = FireSafetySchool::with(['alarmSystems.building', 'buildings']);
+        
+        if (auth()->user()->role !== 'admin') {
+            $query->where('id', auth()->user()->school_id);
+        }
+
+        $schools = $query->get();
 
         return view('fire-safety.alarm-systems', [
             'schools' => $schools
@@ -123,11 +140,14 @@ class FireSafetyController extends Controller
             Log::info('Validation passed:', $validated);
 
             // Check if code already exists
-            $exists = FireSafetyAlarmSystem::where('code', $validated['code'])->exists();
+            // Check if code already exists for this school
+            $exists = FireSafetyAlarmSystem::where('school_id', $validated['school_id'])
+                ->where('code', $validated['code'])
+                ->exists();
             if ($exists) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Alarm code already exists. Please use a different code.'
+                    'message' => 'Alarm code already exists in this school. Please use a different code.'
                 ], 422);
             }
 
@@ -213,12 +233,18 @@ class FireSafetyController extends Controller
 
     public function extinguishers()
     {
-        $schools = FireSafetySchool::with([
+        $query = FireSafetySchool::with([
             'buildings',
             'buildings.rooms',
             'buildings.fireExtinguishers.centerRoom',
             'buildings.fireExtinguishers.coveredRooms',
-        ])->get();
+        ]);
+
+        if (auth()->user()->role !== 'admin') {
+            $query->where('id', auth()->user()->school_id);
+        }
+
+        $schools = $query->get();
 
         return view('fire-safety.extinguishers', [
             'schools' => $schools
@@ -248,6 +274,19 @@ class FireSafetyController extends Controller
             'floor_no' => 'nullable|integer|min:1|max:50',
         ]);
 
+        // Unique Room Code Check (Per School)
+        if (!empty($validated['room_code'])) {
+            $exists = FireSafetyRoom::where('school_id', $validated['school_id'])
+                ->where('room_code', $validated['room_code'])
+                ->exists();
+            if ($exists) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Room code already exists in this school.'
+                ], 422);
+            }
+        }
+
         // Ensure building belongs to school
         $building = FireSafetyBuilding::where('id', $validated['building_id'])
             ->where('school_id', $validated['school_id'])
@@ -256,6 +295,18 @@ class FireSafetyController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Building does not belong to the selected school.'
+            ], 422);
+        }
+
+        // Check if building has reached its room capacity
+        // We consider all existing rooms for this building
+        $currentRoomCount = FireSafetyRoom::where('building_id', $validated['building_id'])->count();
+
+        // The building model has a 'rooms' column which is the total capacity/count defined by user
+        if ($currentRoomCount >= $building->rooms) {
+            return response()->json([
+                'success' => false,
+                'message' => "Cannot add more rooms. Building capacity of {$building->rooms} rooms has been reached."
             ], 422);
         }
 
@@ -275,7 +326,9 @@ class FireSafetyController extends Controller
             'school_id' => 'required|exists:firesafety_school_information,id',
             'building_id' => 'required|exists:firesafety_buildings,id',
             'code' => 'required|string|max:50',
+            'type' => 'required|string|max:50', // ABC, CO2, etc.
             'status' => 'required|in:active,expired,maintenance,missing',
+            'pressure_level' => 'required|integer|min:0|max:100',
             'date_checked' => 'required|date',
             'evaluation_result' => 'required|string|max:255',
             'room_id' => 'required|exists:fire_safety_rooms,id', // center room
@@ -376,7 +429,9 @@ class FireSafetyController extends Controller
                 'building_id' => $validated['building_id'],
                 'room_id' => $validated['room_id'],
                 'code' => $validated['code'],
+                'type' => $validated['type'],
                 'status' => $validated['status'],
+                'pressure_level' => $validated['pressure_level'],
                 'date_checked' => $validated['date_checked'],
                 'evaluation_result' => $validated['evaluation_result'],
             ]);
@@ -400,9 +455,78 @@ class FireSafetyController extends Controller
         }
     }
 
+    // Update Extinguisher Status & Log Inspection
+    public function updateExtinguisher(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:active,expired,maintenance,missing',
+            'pressure_level' => 'required|integer|min:0|max:100',
+            'notes' => 'nullable|string'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $ext = FireSafetyExtinguisher::findOrFail($id);
+            $ext->status = $request->status;
+            $ext->pressure_level = $request->pressure_level;
+            $ext->date_checked = now(); // Update checked date
+            $ext->save();
+
+            // Log inspection
+            FireSafetyExtinguisherInspection::create([
+                'extinguisher_id' => $ext->id,
+                'user_id' => Auth::id(),
+                'inspection_date' => now(),
+                'status' => $ext->status,
+                'pressure_level' => $ext->pressure_level,
+                'notes' => $request->notes
+            ]);
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Extinguisher updated successfully!']);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating extinguisher: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to update extinguisher.'], 500);
+        }
+    }
+
+    // Get Recent Inspections (AJAX)
+    public function getRecentExtinguisherInspections($schoolId)
+    {
+        $inspections = FireSafetyExtinguisherInspection::whereHas('extinguisher', function($q) use ($schoolId) {
+                $q->where('school_id', $schoolId);
+            })
+            ->with(['extinguisher', 'extinguisher.building', 'extinguisher.centerRoom', 'inspector'])
+            ->latest('inspection_date')
+            ->take(10) // Limit to last 10
+            ->get()
+            ->map(function($insp) {
+                return [
+                    'date' => Carbon::parse($insp->inspection_date)->format('Y-m-d'),
+                    'code' => $insp->extinguisher->code,
+                    'location' => ($insp->extinguisher->building->building_no ?? '?') . ' - ' . ($insp->extinguisher->centerRoom->room_name ?? '?'),
+                    'inspector' => $insp->inspector->name ?? 'Unknown',
+                    'status' => $insp->status,
+                    'pressure_level' => $insp->pressure_level
+                ];
+            });
+
+        return response()->json($inspections);
+    }
+
     public function buildings()
     {
-        $schools = FireSafetySchool::with(['buildings', 'buildings.alarmSystems', 'buildings.fireExtinguishers'])->get();
+        $query = FireSafetySchool::with(['buildings', 'buildings.alarmSystems', 'buildings.fireExtinguishers']);
+
+        if (auth()->user()->role !== 'admin') {
+            $query->where('id', auth()->user()->school_id);
+        }
+
+        $schools = $query->get();
 
         return view('fire-safety.buildings',[
             'schools' => $schools
@@ -616,12 +740,150 @@ class FireSafetyController extends Controller
     }
     public function evacuationPlans()
     {
-        return view('fire-safety.evacuation-plans');
+        $query = FireSafetySchool::with([
+            'buildings' => function($query) {
+                $query->with([
+                    'evacuationPlan',
+                    'alarmSystems' => function($q) {
+                        $q->whereIn('status', ['functional', 'online']);
+                    },
+                    'fireExtinguishers' => function($q) {
+                        $q->where('status', 'active');
+                    },
+                    'rooms'
+                ]);
+            },
+            'buildings.evacuationPlan'
+        ]);
+
+        if (auth()->user()->role !== 'admin') {
+            $query->where('id', auth()->user()->school_id);
+        }
+
+        $schools = $query->get();
+        
+        return view('fire-safety.evacuation-plans', compact('schools'));
+    }
+    public function storeEvacuationPlan(Request $request)
+    {
+        $request->validate([
+            'building_id' => 'required|exists:firesafety_buildings,id',
+            'plan_no' => 'required|string|max:50',
+            'exits' => 'required|integer|min:1',
+            'routes' => 'required|integer|min:1|max:5',
+            'areas' => 'required|integer|min:1|max:3',
+            'primary_route' => 'required|string',
+            'primary_assembly_area' => 'required|string',
+            'assembly_capacity' => 'required|integer|min:1',
+            'status' => 'required|in:active,draft,review,inactive',
+        ]);
+        
+        $plan = FireSafetyEvacuationPlan::create([
+            'school_id' => $request->school_id,
+            'building_id' => $request->building_id,
+            'plan_no' => $request->plan_no,
+            'exits' => $request->exits,
+            'routes' => $request->routes,
+            'areas' => $request->areas,
+            'primary_route' => $request->primary_route,
+            'secondary_route' => $request->secondary_route,
+            'primary_assembly_area' => $request->primary_assembly_area,
+            'secondary_assembly_area' => $request->secondary_assembly_area,
+            'assembly_capacity' => $request->assembly_capacity,
+            'emergency_contacts' => $request->emergency_contacts,
+            'special_instructions' => $request->special_instructions,
+            'status' => $request->status,
+            'approved_at' => $request->status === 'active' ? now() : null,
+        ]);
+        
+        return response()->json(['success' => true, 'message' => 'Evacuation plan created successfully']);
+    }
+    public function getPlanStats($schoolId)
+    {
+        $school = FireSafetySchool::withCount(['buildings'])->findOrFail($schoolId);
+        
+        $activePlans = FireSafetyEvacuationPlan::where('school_id', $schoolId)
+            ->where('status', 'active')
+            ->count();
+        
+        $draftPlans = FireSafetyEvacuationPlan::where('school_id', $schoolId)
+            ->where('status', 'draft')
+            ->count();
+        
+        return response()->json([
+            'active_plans' => $activePlans,
+            'draft_plans' => $draftPlans,
+            'total_buildings' => $school->buildings_count,
+            'no_plan' => $school->buildings_count - ($activePlans + $draftPlans),
+        ]);
     }
 
-    public function settings()
+    public function getDrillHistory($schoolId)
     {
-        return view('fire-safety.settings');
+        $drills = FireSafetyEvacuationDrill::where('school_id', $schoolId)
+            ->orderBy('drill_date', 'desc')
+            ->limit(10)
+            ->get();
+        
+        return response()->json($drills);
+    }
+
+    public function customization()
+    {
+        $user = auth()->user();
+        
+        if ($user->role === 'admin') {
+            // Load all data for admin
+            $schools = FireSafetySchool::withCount(['buildings', 'rooms', 'alarmSystems', 'extinguishers as fire_extinguishers_count'])->get();
+            $buildingTypes = SystemConfiguration::where('config_type', 'building_type')->orderBy('sort_order')->get();
+            $alarmTypes = SystemConfiguration::where('config_type', 'alarm_type')->get();
+            $alarmStatuses = SystemConfiguration::where('config_type', 'alarm_status')->get();
+            $extinguisherTypes = SystemConfiguration::where('config_type', 'extinguisher_type')->get();
+            $extinguisherStatuses = SystemConfiguration::where('config_type', 'extinguisher_status')->get();
+            $safetyFeatures = SystemConfiguration::where('config_type', 'safety_feature')->orderBy('sort_order')->get();
+            
+            return view('fire-safety.customization', compact(
+                'schools', 'buildingTypes', 'alarmTypes', 'alarmStatuses',
+                'extinguisherTypes', 'extinguisherStatuses', 'safetyFeatures'
+            ));
+        } else {
+            // For contributors, just load their school
+            $school = FireSafetySchool::withCount(['buildings', 'rooms', 'alarmSystems', 'extinguishers as fire_extinguishers_count'])
+                ->find($user->school_id);
+                
+            return view('fire-safety.customization', compact('school'));
+        }
+    }
+
+    public function updateSchool(Request $request)
+    {
+        $user = auth()->user();
+        
+        if ($user->role === 'admin') {
+            // Admin can update any school
+            $schoolId = $request->school_id;
+        } else {
+            // Contributors can only update their own school
+            $schoolId = $user->school_id;
+            if ($request->school_id != $schoolId) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+        }
+        
+        $validated = $request->validate([
+            'school_name' => 'required|string|max:255',
+            'address' => 'required|string',
+            'school_head' => 'required|string|max:255',
+            'school_drrm_coordinator' => 'required|string|max:255',
+            'school_head_contact' => 'nullable|string|max:20',
+            'drrm_coordinator_contact' => 'nullable|string|max:20',
+            'email' => 'nullable|email',
+        ]);
+        
+        $school = FireSafetySchool::findOrFail($schoolId);
+        $school->update($validated);
+        
+        return response()->json(['success' => true, 'message' => 'School updated successfully']);
     }
 
     // API endpoints for AJAX calls
@@ -711,9 +973,26 @@ class FireSafetyController extends Controller
 
     public function storeSchool(Request $request)
     {
+        $user = auth()->user();
+        
+        // Restriction: Contributor can only add one school
+        if ($user->role === 'contributor') {
+            $existingSchoolCount = FireSafetySchool::where('id', $user->school_id)->count();
+            // If they already have a school assigned, or if they've already created one (in case school_id is not yet set)
+            // Actually, if it's a contributor, they should only manage their assigned school.
+            // If they are trying to create a NEW school, and they are a contributor, we should check if they already have one.
+            if ($user->school_id) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are already assigned to a school and cannot create another one.'
+                ], 403);
+            }
+        }
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'school_id' => 'required|string|max:50|unique:firesafety_school_information,school_id',
+            'address' => 'required|string|max:500',
             'school_head' => 'required|string|max:255',
             'drrm_coordinator' => 'required|string|max:255'
         ]);
@@ -721,10 +1000,17 @@ class FireSafetyController extends Controller
         $school = FireSafetySchool::create([
             'school_name' => $validated['name'],
             'school_id' => $validated['school_id'],
+            'address' => $validated['address'],
             'school_head' => $validated['school_head'],
             'school_drrm_coordinator' => $validated['drrm_coordinator'],
             'status' => 'unconfigured'
         ]);
+
+        // If contributor creates the school, assign them to it automatically
+        if ($user->role === 'contributor' && !$user->school_id) {
+            $user->school_id = $school->id;
+            $user->save();
+        }
 
         return response()->json([
             'success' => true,
@@ -732,9 +1018,132 @@ class FireSafetyController extends Controller
             'school' => $school
         ]);
     }
+
     public function checkAlarmCode($code)
     {
         $exists = FireSafetyAlarmSystem::where('code', $code)->exists();
         return response()->json(['exists' => $exists]);
+    }
+
+    // User Management Methods
+    // Configuration Management Methods
+    public function updateConfigOrder(Request $request, $type)
+    {
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $order = $request->input('order');
+        if (!$order) {
+            return response()->json(['success' => false, 'message' => 'No order provided'], 400);
+        }
+
+        foreach ($order as $index => $id) {
+            SystemConfiguration::where('id', $id)
+                ->where('config_type', str_replace('-', '_', $type))
+                ->update(['sort_order' => $index]);
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    public function storeConfig(Request $request, $type)
+    {
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'code' => 'nullable|string|max:50',
+            'category' => 'nullable|string|max:100',
+            'color_class' => 'nullable|string|max:50',
+            'is_active' => 'nullable|boolean'
+        ]);
+
+        $config = SystemConfiguration::create([
+            'config_type' => str_replace('-', '_', $type),
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'code' => $validated['code'] ?? null,
+            'category' => $validated['category'] ?? null,
+            'color_class' => $validated['color_class'] ?? null,
+            'is_active' => $request->has('is_active') ? $request->is_active : true,
+            'sort_order' => SystemConfiguration::where('config_type', str_replace('-', '_', $type))->count()
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Configuration saved successfully', 'config' => $config]);
+    }
+
+    public function updateConfig(Request $request, $type, $id)
+    {
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'is_active' => 'nullable'
+        ]);
+
+        $config = SystemConfiguration::where('id', $id)
+            ->where('config_type', str_replace('-', '_', $type))
+            ->firstOrFail();
+
+        $config->update([
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'is_active' => $request->has('is_active') ? ($request->is_active == 'on' || $request->is_active == '1') : false
+        ]);
+
+        return response()->json(['success' => true, 'message' => 'Configuration updated successfully']);
+    }
+
+    public function deleteConfig($type, $id)
+    {
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        SystemConfiguration::where('id', $id)
+            ->where('config_type', str_replace('-', '_', $type))
+            ->delete();
+
+        return response()->json(['success' => true, 'message' => 'Configuration deleted successfully']);
+    }
+
+    public function exportSchools()
+    {
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $schools = FireSafetySchool::all();
+        $filename = "schools_export_" . date('Y-m-d') . ".csv";
+        $handle = fopen('php://output', 'w');
+        
+        // Add CSV header
+        fputcsv($handle, ['ID', 'School ID', 'Name', 'Address', 'Head', 'DRRM Coordinator', 'Status', 'Last Updated']);
+
+        foreach ($schools as $school) {
+            fputcsv($handle, [
+                $school->id,
+                $school->school_id,
+                $school->school_name,
+                $school->address,
+                $school->school_head,
+                $school->school_drrm_coordinator,
+                $school->status,
+                $school->updated_at
+            ]);
+        }
+
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+        
+        fclose($handle);
+        exit;
     }
 }

@@ -11,9 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('fire_safety_extinguishers', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
+        Schema::table('firesafety_evacuationplans', function (Blueprint $table) {
+            //
         });
     }
 
@@ -22,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('fire_safety_extinguishers');
+        Schema::table('firesafety_evacuationplans', function (Blueprint $table) {
+            //
+        });
     }
 };

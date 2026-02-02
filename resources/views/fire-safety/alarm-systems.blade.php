@@ -164,6 +164,11 @@
 
                 <div class="col-auto">
                     <div class="d-flex align-items-center">
+                        <!-- Customization -->
+                        <a href="{{ route('fire-safety.customization') }}" class="text-white me-3 text-decoration-none" title="Customization">
+                            <i class="fas fa-cogs fa-lg"></i>
+                        </a>
+
                         <div class="dropdown">
                             <a href="#" class="text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
                                 <i class="fas fa-user-circle fa-lg me-2"></i>
@@ -224,9 +229,9 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.settings') }}">
+                    <a class="nav-link" href="{{ route('fire-safety.customization') }}">
                         <span class="nav-icon"><i class="fas fa-cog"></i></span>
-                        <span>Settings</span>
+                        <span>Customization</span>
                     </a>
                 </li>
             </ul>
@@ -300,7 +305,7 @@
                                 <div class="row align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs fw-bold text-success text-uppercase mb-1">
-                                            Functional/Online
+                                            Functional
                                         </div>
                                         <div class="h2 mb-0 fw-bold text-gray-800">
                                             {{ $school->alarmSystems()->whereIn('status', ['functional', 'online'])->count() }}
@@ -360,7 +365,7 @@
                                 <div class="row align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs fw-bold text-info text-uppercase mb-1">
-                                            Last Test Date
+                                            AS OF
                                         </div>
                                         <div class="h5 mb-0 fw-bold text-gray-800">
                                             @php
@@ -390,7 +395,7 @@
                                         data-school-id="{{ $school->id }}"
                                         data-bs-toggle="modal"
                                         data-bs-target="#addAlarmModal">
-                                    <i class="fas fa-plus me-2"></i> Add New System
+                                    <i class="fas fa-plus me-2"></i> Add New Alarm
                                 </button>
                             </div>
                             <div class="card-body">
@@ -402,7 +407,7 @@
                                                 <th>Building</th>
                                                 <th>Type</th>
                                                 <th>Status</th>
-                                                <th>Last Test</th>
+                                                <th>AS OF</th>
                                                 <th>Next Test Due</th>
                                                 <th>Actions</th>
                                             </tr>
@@ -535,10 +540,16 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-12 mb-3">
-                        <label class="form-label">Location in Building *</label>
-                        <input type="text" class="form-control" name="location"
-                            placeholder="e.g., 1st Floor Hallway, Room 101, Near Main Entrance, etc." required>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Floor *</label>
+                        <select class="form-control" id="alarmFloorSelect" required disabled>
+                            <option value="">Select Building First</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Specific Location *</label>
+                        <input type="text" class="form-control" id="alarmSpecificLocation" placeholder="e.g., Hallway, Near Room 101" required>
+                        <input type="hidden" name="location" id="finalLocation">
                     </div>
                 </div>
 
@@ -877,6 +888,7 @@
                     const option = document.createElement('option');
                     option.value = building.id;
                     option.textContent = building.building_no;
+                    option.dataset.floors = building.floors || 1;
                     select.appendChild(option);
                 });
 
@@ -885,6 +897,41 @@
                 alert('Failed to load buildings. Please check if buildings are added.');
             }
         }
+        // Check if alarm code already exists
+        async function checkAlarmCode(code) {
+           // ... (existing code, not shown here to save tokens if possible, but replace tool requires context)
+           // Actually, I should insert the new logic BEFORE checkAlarmCode or AFTER loadBuildings.
+           // Since I'm replacing lines 889-889 (StartLine), I'll just insert the new logic there.
+        }
+
+        // Handle Building Selection (Populate Floors)
+        document.getElementById('buildingSelect').addEventListener('change', function() {
+            const select = this;
+            const floorSelect = document.getElementById('alarmFloorSelect');
+            floorSelect.innerHTML = '<option value="">Select Floor</option>';
+            floorSelect.disabled = true;
+
+            const option = select.options[select.selectedIndex];
+            if (!option || !option.value) return;
+
+            const floors = parseInt(option.dataset.floors) || 1;
+            floorSelect.disabled = false;
+            
+            // Ordinals helper
+            const getOrdinal = (n) => {
+                const s = ["th", "st", "nd", "rd"];
+                const v = n % 100;
+                return n + (s[(v - 20) % 10] || s[v] || s[0]);
+            };
+
+            for (let i = 1; i <= floors; i++) {
+                const opt = document.createElement('option');
+                opt.value = getOrdinal(i) + " Floor";
+                opt.textContent = getOrdinal(i) + " Floor";
+                floorSelect.appendChild(opt);
+            }
+        });
+
         // Check if alarm code already exists
         async function checkAlarmCode(code) {
             if (!code) return;
@@ -987,6 +1034,15 @@
             }
 
             console.log('CSRF Token found:', csrfToken ? 'Yes' : 'No');
+
+            // Combine Location
+            const floor = document.getElementById('alarmFloorSelect').value;
+            const specific = document.getElementById('alarmSpecificLocation').value.trim();
+            if (!floor || !specific) {
+                alert('Please select a floor and enter a specific location.');
+                return;
+            }
+            document.getElementById('finalLocation').value = `${floor} - ${specific}`;
 
             const formData = new FormData(form);
 

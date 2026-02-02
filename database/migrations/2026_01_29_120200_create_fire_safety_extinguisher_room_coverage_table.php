@@ -21,7 +21,7 @@ return new class extends Migration
 
             $table->timestamps();
 
-            $table->unique(['extinguisher_id', 'room_id']);
+            $table->unique(['extinguisher_id', 'room_id'], 'fs_ext_room_cov_unique');
         });
     }
 
