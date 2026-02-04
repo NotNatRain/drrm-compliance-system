@@ -16,5 +16,12 @@ class FireSafetyEvacuationDrill extends Model
         'evacuation_time_minutes',
         'status',
         'remarks',
+        'coordinator',
+        'notes',
     ];
+
+    public function buildings()
+    {
+        return $this->belongsToMany(FireSafetyBuilding::class, 'fire_safety_drill_building', 'drill_id', 'building_id');
+    }
 }

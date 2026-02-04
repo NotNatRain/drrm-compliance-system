@@ -241,7 +241,7 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('fire-safety.extinguishers') }}">
                         <span class="nav-icon"><i class="fas fa-fire-extinguisher"></i></span>
-                        <span>Fire Extinguishers</span>
+                        <span>Fire Extinguishers & Rooms</span>
                     </a>
                 </li>
                 <li class="nav-item">

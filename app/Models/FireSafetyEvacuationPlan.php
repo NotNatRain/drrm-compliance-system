@@ -24,7 +24,8 @@ class FireSafetyEvacuationPlan extends Model
         'emergency_contacts',
         'special_instructions',
         'status',
-        'approved_at'
+        'approved_at',
+        'map_data'
     ];
 
     protected $casts = [

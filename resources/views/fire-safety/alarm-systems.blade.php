@@ -7,6 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         :root {
             --fire-red: #A8191F;
@@ -164,10 +165,19 @@
 
                 <div class="col-auto">
                     <div class="d-flex align-items-center">
-                        <!-- Customization -->
-                        <a href="{{ route('fire-safety.customization') }}" class="text-white me-3 text-decoration-none" title="Customization">
-                            <i class="fas fa-cogs fa-lg"></i>
-                        </a>
+                        <!-- Notifications -->
+                        <div class="dropdown me-3">
+                            <a href="#" class="text-white position-relative" data-bs-toggle="dropdown">
+                                <i class="fas fa-bell fa-lg"></i>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    0
+                                </span>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <h6 class="dropdown-header">Notifications</h6>
+                                <div class="dropdown-item text-muted">No new notifications</div>
+                            </div>
+                        </div>
 
                         <div class="dropdown">
                             <a href="#" class="text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
@@ -219,7 +229,7 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('fire-safety.extinguishers') }}">
                         <span class="nav-icon"><i class="fas fa-fire-extinguisher"></i></span>
-                        <span>Fire Extinguishers</span>
+                        <span>Fire Extinguishers & Rooms</span>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -420,7 +430,17 @@
                                             @endphp
                                             <tr class="{{ $isOverdue ? 'test-overdue' : '' }}">
                                                 <td>{{ $alarm->code }}</td>
-                                                <td>{{ $building ? $building->building_no : 'N/A' }}</td>
+                                                <td>
+                                                    @if($alarm->buildings->count() > 0)
+                                                        @foreach($alarm->buildings as $b)
+                                                            <span class="badge bg-secondary mb-1">{{ $b->building_no }}</span>
+                                                        @endforeach
+                                                    @elseif($alarm->building)
+                                                        <span class="badge bg-secondary">{{ $alarm->building->building_no }}</span>
+                                                    @else
+                                                        <span class="text-muted">N/A</span>
+                                                    @endif
+                                                </td>
                                                 <td>{{ $alarm->alarm_type }}</td>
                                                 <td>
                                                     @php
@@ -487,7 +507,15 @@
                                         <div class="card-body">
                                             <h6 class="card-title">{{ $alarm->code }}</h6>
                                             <p class="card-text mb-1">
-                                                <small class="text-muted">Building: {{ $alarm->building->building_no ?? 'N/A' }}</small>
+                                            <p class="card-text mb-1">
+                                                <small class="text-muted">Building: 
+                                                    @if($alarm->buildings->count() > 0)
+                                                        {{ $alarm->buildings->pluck('building_no')->implode(', ') }}
+                                                    @else
+                                                        {{ $alarm->building->building_no ?? 'N/A' }}
+                                                    @endif
+                                                </small>
+                                            </p>
                                             </p>
                                             <p class="card-text mb-1">
                                                 <small class="text-muted">Type: {{ $alarm->alarm_type }}</small>
@@ -530,12 +558,31 @@
                         <input type="text" class="form-control" name="code" id="alarmCode" placeholder="e.g., ALM-001" required onblur="checkAlarmCode(this.value)">
                         <div class="invalid-feedback" id="codeError">Alarm code already exists</div>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Building *</label>
-                        <select class="form-control" name="building_id" id="buildingSelect" required>
+                <div class="mb-3">
+                    <label class="form-label">Does this alarm cover multiple buildings?</label>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="is_multi_building" id="multiBuildingToggle" value="1">
+                        <label class="form-check-label" for="multiBuildingToggle">Yes, it covers multiple buildings</label>
+                    </div>
+                </div>
+
+                <div class="row" id="singleBuildingContainer">
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">Primary Building *</label>
+                        <select class="form-control" name="building_id" id="buildingSelect">
                             <option value="">Select Building</option>
                             <!-- Buildings will be populated by JavaScript -->
                         </select>
+                    </div>
+                </div>
+
+                <div class="row" id="multiBuildingContainer" style="display: none;">
+                    <div class="col-md-12 mb-3">
+                        <label class="form-label">Select All Buildings Covered *</label>
+                        <div id="buildingsCheckboxList" class="border rounded p-3 bg-light" style="max-height: 200px; overflow-y: auto;">
+                            <!-- Building checkboxes will be populated here -->
+                            <p class="text-muted small mb-0">Select buildings...</p>
+                        </div>
                     </div>
                 </div>
 
@@ -675,8 +722,8 @@
                 <div class="modal-body">
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <p><strong>Alarm Code:</strong> <span id="detailCode"></span></p>
-                            <p><strong>Building:</strong> <span id="detailBuilding"></span></p>
+                            <p><strong>Code:</strong> <span id="detailCode"></span></p>
+                            <p><strong>Covered Buildings:</strong> <div id="detailBuildingsList" class="mb-2"></div></p>
                             <p><strong>School:</strong> <span id="detailSchool"></span></p>
                             <p><strong>Alarm Type:</strong> <span id="detailType"></span></p>
                         </div>
@@ -747,11 +794,38 @@
             currentSchoolId = firstTab.getAttribute('data-school-id');
         }
 
+        // Toggle multi-building selection
+        document.getElementById('multiBuildingToggle').addEventListener('change', function() {
+            const singleContainer = document.getElementById('singleBuildingContainer');
+            const multiContainer = document.getElementById('multiBuildingContainer');
+            const buildingSelect = document.getElementById('buildingSelect');
+            const floorSelect = document.getElementById('alarmFloorSelect');
+
+            if (this.checked) {
+                singleContainer.style.display = 'none';
+                multiContainer.style.display = 'block';
+                buildingSelect.removeAttribute('required');
+                floorSelect.disabled = true;
+                floorSelect.value = "";
+                document.getElementById('alarmSpecificLocation').value = "Multiple Buildings";
+                document.getElementById('finalLocation').value = "Multiple Buildings - Shared System";
+            } else {
+                singleContainer.style.display = 'flex';
+                multiContainer.style.display = 'none';
+                buildingSelect.setAttribute('required', 'required');
+            }
+        });
+
         // Add Alarm button click
         document.querySelectorAll('.add-alarm-btn').forEach(button => {
             button.addEventListener('click', function() {
                 const schoolId = this.getAttribute('data-school-id');
                 document.getElementById('modalSchoolId').value = schoolId;
+                
+                // Reset toggle
+                document.getElementById('multiBuildingToggle').checked = false;
+                document.getElementById('singleBuildingContainer').style.display = 'flex';
+                document.getElementById('multiBuildingContainer').style.display = 'none';
 
                 // Load buildings for this school
                 loadBuildings(schoolId);
@@ -817,7 +891,7 @@
 
                 } catch (error) {
                     console.error('Error loading alarm data:', error);
-                    alert('Failed to load alarm data');
+                    Swal.fire('Error', 'Failed to load alarm data', 'error');
                 }
             });
         });
@@ -834,7 +908,26 @@
 
                     // Populate details
                     document.getElementById('detailCode').textContent = alarm.code;
-                    document.getElementById('detailBuilding').textContent = alarm.building ? alarm.building.building_no : 'N/A';
+                    
+                    const detailsBuildingsList = document.getElementById('detailBuildingsList');
+                    detailsBuildingsList.innerHTML = '';
+                    
+                    if (alarm.buildings && alarm.buildings.length > 0) {
+                        alarm.buildings.forEach(b => {
+                            const badge = document.createElement('span');
+                            badge.className = 'badge bg-secondary me-1 mb-1';
+                            badge.textContent = b.building_no;
+                            detailsBuildingsList.appendChild(badge);
+                        });
+                    } else if (alarm.building) {
+                         const badge = document.createElement('span');
+                         badge.className = 'badge bg-secondary me-1 mb-1';
+                         badge.textContent = alarm.building.building_no;
+                         detailsBuildingsList.appendChild(badge);
+                    } else {
+                        detailsBuildingsList.textContent = 'N/A';
+                    }
+
                     document.getElementById('detailSchool').textContent = alarm.school.school_name;
                     document.getElementById('detailType').textContent = alarm.alarm_type;
 
@@ -850,7 +943,7 @@
 
                 } catch (error) {
                     console.error('Error loading alarm details:', error);
-                    alert('Failed to load alarm details');
+                    Swal.fire('Error', 'Failed to load alarm details', 'error');
                 }
             });
         });
@@ -861,18 +954,33 @@
                 const alarmId = this.getAttribute('data-alarm-id');
                 const alarmCode = this.getAttribute('data-alarm-code');
 
-                if (confirm(`Test alarm ${alarmCode} now? This will update the last test date to today.`)) {
-                    testAlarmSystem(alarmId);
-                }
+                Swal.fire({
+                    title: 'Test Alarm?',
+                    text: `Test alarm ${alarmCode} now? This will update the last test date to today.`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, Test Now'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        testAlarmSystem(alarmId);
+                    }
+                });
             });
         });
 
         // Simulate Alarm Button
         document.getElementById('simulateAlarmBtn').addEventListener('click', function() {
-            if (confirm('Are you sure you want to simulate an alarm test? This will trigger test alerts.')) {
-                alert('Alarm test simulation started! Testing all functional/online alarm systems...');
-                // In real implementation, this would trigger API call
-            }
+            Swal.fire({
+                title: 'Simulate Alarm Test?',
+                text: 'Are you sure you want to simulate an alarm test? This will trigger test alerts.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Simulate'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire('Simulating...', 'Alarm test simulation started! Testing all functional/online alarm systems...', 'info');
+                }
+            });
         });
 
         // Load buildings for a school
@@ -882,19 +990,36 @@
                 const buildings = await response.json();
 
                 const select = document.getElementById('buildingSelect');
+                const checkboxList = document.getElementById('buildingsCheckboxList');
+                
                 select.innerHTML = '<option value="">Select Building</option>';
+                checkboxList.innerHTML = '';
 
                 buildings.forEach(building => {
+                    const buildingDisplayName = `${building.building_no} (${building.building_name || 'No Name'})`;
+                    
+                    // Dropdown option
                     const option = document.createElement('option');
                     option.value = building.id;
-                    option.textContent = building.building_no;
-                    option.dataset.floors = building.floors || 1;
+                    option.textContent = buildingDisplayName;
+                    option.dataset.floors = building.floors;
                     select.appendChild(option);
+
+                    // Checkbox for multi-building
+                    const div = document.createElement('div');
+                    div.className = 'form-check mb-2';
+                    div.innerHTML = `
+                        <input class="form-check-input" type="checkbox" name="building_ids[]" value="${building.id}" id="bldgCheck${building.id}">
+                        <label class="form-check-label" for="bldgCheck${building.id}">
+                            ${buildingDisplayName}
+                        </label>
+                    `;
+                    checkboxList.appendChild(div);
                 });
 
             } catch (error) {
                 console.error('Error loading buildings:', error);
-                alert('Failed to load buildings. Please check if buildings are added.');
+                Swal.fire('Notice', 'Failed to load buildings. Please check if buildings are added.', 'info');
             }
         }
         // Check if alarm code already exists
@@ -967,19 +1092,19 @@
 
             // Check last test not before installation
             if (installationDate && lastTestDate && lastTestDate < installationDate) {
-                alert('Last test date cannot be before installation date.');
+                Swal.fire('Validation Error', 'Last test date cannot be before installation date.', 'warning');
                 isValid = false;
             }
 
             // Check next test not before installation
             if (installationDate && nextTestDue && nextTestDue < installationDate) {
-                alert('Next test due date cannot be before installation date.');
+                Swal.fire('Validation Error', 'Next test due date cannot be before installation date.', 'warning');
                 isValid = false;
             }
 
             // Check next test not before last test
             if (lastTestDate && nextTestDue && nextTestDue < lastTestDate) {
-                alert('Next test due date cannot be before last test date.');
+                Swal.fire('Validation Error', 'Next test due date cannot be before last test date.', 'warning');
                 isValid = false;
             }
 
@@ -999,14 +1124,14 @@
             const code = document.getElementById('alarmCode').value;
             const codeValid = await checkAlarmCode(code);
             if (!codeValid) {
-                alert('Please fix the alarm code error.');
+                Swal.fire('Error', 'Please fix the alarm code error.', 'error');
                 return;
             }
 
             // Check if building exists for this school
             const buildingSelect = document.getElementById('buildingSelect');
             if (buildingSelect.options.length <= 1) { // Only "Select Building" option
-                alert('No buildings found for this school. Please add buildings first.');
+                Swal.fire('Warning', 'No buildings found for this school. Please add buildings first.', 'warning');
                 return;
             }
 
@@ -1027,7 +1152,7 @@
 
                     if (!csrfToken) {
                         console.error('CSRF token not found anywhere');
-                        alert('Security token missing. Please refresh the page and try again.');
+                        Swal.fire('Error', 'Security token missing. Please refresh the page and try again.', 'error');
                         return;
                     }
                 }
@@ -1036,13 +1161,31 @@
             console.log('CSRF Token found:', csrfToken ? 'Yes' : 'No');
 
             // Combine Location
-            const floor = document.getElementById('alarmFloorSelect').value;
-            const specific = document.getElementById('alarmSpecificLocation').value.trim();
-            if (!floor || !specific) {
-                alert('Please select a floor and enter a specific location.');
-                return;
+            const isMulti = document.getElementById('multiBuildingToggle').checked;
+            
+            if (isMulti) {
+                // Check if at least one checkbox is checked
+                const checked = document.querySelectorAll('input[name="building_ids[]"]:checked');
+                if (checked.length === 0) {
+                    Swal.fire('Missing Information', 'Please select at least one building.', 'warning');
+                    return;
+                }
+                document.getElementById('finalLocation').value = "Multiple Buildings - Shared System";
+            } else {
+                const floor = document.getElementById('alarmFloorSelect').value;
+                const specific = document.getElementById('alarmSpecificLocation').value.trim();
+                
+                if (!buildingSelect.value) {
+                    Swal.fire('Missing Information', 'Please select a primary building.', 'warning');
+                    return;
+                }
+                
+                if (!floor || !specific) {
+                    Swal.fire('Missing Information', 'Please select a floor and enter a specific location.', 'warning');
+                    return;
+                }
+                document.getElementById('finalLocation').value = `${floor} - ${specific}`;
             }
-            document.getElementById('finalLocation').value = `${floor} - ${specific}`;
 
             const formData = new FormData(form);
 
@@ -1069,10 +1212,11 @@
                 console.log('Response data:', data);
 
                 if (data.success) {
-                    alert('Alarm system added successfully!');
-                    location.reload();
+                    Swal.fire('Success', 'Alarm system added successfully!', 'success').then(() => {
+                        location.reload();
+                    });
                 } else {
-                    alert('Error: ' + (data.message || 'Failed to add alarm system'));
+                    Swal.fire('Error', data.message || 'Failed to add alarm system', 'error');
                     if (data.errors) {
                         console.log('Validation errors:', data.errors);
                     }
@@ -1080,7 +1224,7 @@
 
             } catch (error) {
                 console.error('Error details:', error);
-                alert('Failed to add alarm system. Check console (F12) for details.');
+                Swal.fire('Error', 'Failed to add alarm system. Check console (F12) for details.', 'error');
             }
         }
 
@@ -1103,28 +1247,29 @@
             if (installationDate) {
                 // Check last test not before installation
                 if (lastTest && lastTest < installationDate) {
-                    alert('Last test date cannot be before installation date.');
+                    Swal.fire('Invalid Date', 'Last test date cannot be before installation date.', 'warning');
                     return;
                 }
 
                 // Check next test not before installation
                 if (nextTestDue && nextTestDue < installationDate) {
-                    alert('Next test due date cannot be before installation date.');
+                    Swal.fire('Invalid Date', 'Next test due date cannot be before installation date.', 'warning');
                     return;
                 }
             }
 
             // Check next test not before last test
             if (lastTest && nextTestDue && nextTestDue < lastTest) {
-                alert('Next test due date cannot be before last test date.');
+                Swal.fire('Invalid Date', 'Next test due date cannot be before last test date.', 'warning');
                 return;
             }
 
             const formData = new FormData(form);
+            formData.append('_method', 'PUT');
 
             try {
                 const response = await fetch(`/fire-safety/alarm/${alarmId}`, {
-                    method: 'PUT',
+                    method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                         'Accept': 'application/json'
@@ -1135,15 +1280,16 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    alert('Alarm system updated successfully!');
-                    location.reload();
+                    Swal.fire('Updated', 'Alarm system updated successfully!', 'success').then(() => {
+                        location.reload();
+                    });
                 } else {
-                    alert('Error: ' + (data.message || 'Failed to update alarm system'));
+                    Swal.fire('Error', data.message || 'Failed to update alarm system', 'error');
                 }
 
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to update alarm system');
+                Swal.fire('Error', 'Failed to update alarm system', 'error');
             }
         }
 
@@ -1161,46 +1307,55 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    alert('Alarm test completed successfully! Last test date updated.');
-                    location.reload();
+                    Swal.fire('Success', 'Alarm test completed successfully! Last test date updated.', 'success').then(() => {
+                        location.reload();
+                    });
                 } else {
-                    alert('Error: ' + (data.message || 'Failed to test alarm system'));
+                    Swal.fire('Error', data.message || 'Failed to test alarm system', 'error');
                 }
 
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to test alarm system');
+                Swal.fire('Error', 'Failed to test alarm system', 'error');
             }
         }
 
         // Remove Alarm System
         async function removeAlarmSystem() {
-            if (!confirm('Are you sure you want to remove this alarm system? This action cannot be undone.')) {
-                return;
-            }
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'Are you sure you want to remove this alarm system? This action cannot be undone.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Yes, remove it!'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        const response = await fetch(`/fire-safety/alarm/${currentAlarmId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'Accept': 'application/json'
+                            }
+                        });
 
-            try {
-                const response = await fetch(`/fire-safety/alarm/${currentAlarmId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json'
+                        const data = await response.json();
+
+                        if (data.success) {
+                            Swal.fire('Removed', 'Alarm system removed successfully!', 'success').then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire('Error', data.message || 'Failed to remove alarm system', 'error');
+                        }
+
+                    } catch (error) {
+                        console.error('Error:', error);
+                        Swal.fire('Error', 'Failed to remove alarm system', 'error');
                     }
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    alert('Alarm system removed successfully!');
-                    location.reload();
-                } else {
-                    alert('Error: ' + (data.message || 'Failed to remove alarm system'));
                 }
-
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Failed to remove alarm system');
-            }
+            });
         }
 
 

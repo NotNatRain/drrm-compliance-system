@@ -7,10 +7,19 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         :root {
             --fire-red: #A8191F;
             --fire-dark-red: #8A1217;
+        }
+
+        /* SweetAlert2 Custom Styling */
+        .swal2-popup {
+            border-radius: 15px !important;
+        }
+        .swal2-styled.swal2-confirm {
+            background-color: var(--fire-red) !important;
         }
 
         body {
@@ -191,10 +200,19 @@
 
                 <div class="col-auto">
                     <div class="d-flex align-items-center">
-                        <!-- Customization -->
-                        <a href="{{ route('fire-safety.customization') }}" class="text-white me-3 text-decoration-none" title="Customization">
-                            <i class="fas fa-cogs fa-lg"></i>
-                        </a>
+                        <!-- Notifications -->
+                        <div class="dropdown me-3">
+                            <a href="#" class="text-white position-relative" data-bs-toggle="dropdown">
+                                <i class="fas fa-bell fa-lg"></i>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    0
+                                </span>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <h6 class="dropdown-header">Notifications</h6>
+                                <div class="dropdown-item text-muted">No new notifications</div>
+                            </div>
+                        </div>
 
                         <div class="dropdown">
                             <a href="#" class="text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
@@ -246,7 +264,7 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('fire-safety.extinguishers') }}">
                         <span class="nav-icon"><i class="fas fa-fire-extinguisher"></i></span>
-                        <span>Fire Extinguishers</span>
+                        <span>Fire Extinguishers & Rooms</span>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -431,6 +449,7 @@
                                     <i class="fas fa-building me-2"></i> Buildings - {{ $school->school_name }}
                                 </h6>
                                 <div>
+                                    @if(auth()->user()->role === 'admin')
                                     <button class="btn btn-primary btn-sm me-2 add-building-btn"
                                             data-school-id="{{ $school->id }}"
                                             data-bs-toggle="modal"
@@ -443,6 +462,7 @@
                                             data-bs-target="#scheduleInspectionModal">
                                         <i class="fas fa-calendar-plus me-2"></i> Schedule Inspection
                                     </button>
+                                    @endif
                                 </div>
                             </div>
                             <div class="card-body">
@@ -498,8 +518,9 @@
                                                             data-building-id="{{ $building->id }}"
                                                             data-bs-toggle="modal"
                                                             data-bs-target="#viewBuildingModal">
-                                                        <i class="fas fa-eye me-2"></i> View Details
+                                                        <i class="fas fa-eye me-2"></i> View Details / Update
                                                     </button>
+                                                    @if(auth()->user()->role === 'admin')
                                                     <button class="btn btn-sm btn-outline-success inspect-building-btn"
                                                             data-building-id="{{ $building->id }}"
                                                             data-building-name="{{ $building->building_no }}"
@@ -507,6 +528,7 @@
                                                             data-bs-target="#scheduleInspectionModal">
                                                         <i class="fas fa-clipboard-check me-2"></i> Inspect Now
                                                     </button>
+                                                    @endif
                                                 </div>
                                             </div>
                                         </div>
@@ -518,12 +540,14 @@
                                     <i class="fas fa-building"></i>
                                     <h4>No Buildings Found</h4>
                                     <p class="text-muted">This school doesn't have any buildings yet. Add your first building to get started.</p>
+                                    @if(auth()->user()->role === 'admin')
                                     <button class="btn btn-primary add-building-btn"
                                             data-school-id="{{ $school->id }}"
                                             data-bs-toggle="modal"
                                             data-bs-target="#addBuildingModal">
                                         <i class="fas fa-plus me-2"></i> Add First Building
                                     </button>
+                                    @endif
                                 </div>
                                 @endif
                             </div>
@@ -596,26 +620,11 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Building Number/Code</label>
-                                <input type="text" class="form-control" name="building_no" placeholder="e.g., BLDG-001, Main Building" required>
+                                <input type="text" class="form-control" name="building_no" id="building_no" placeholder="e.g., BLDG-001, Main Building" required>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Building Name</label>
-                                <input type="text" class="form-control" name="building_name" placeholder="e.g., Science Building, Gymnasium" required>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Number of Floors</label>
-                                <input type="number" class="form-control" name="floors" min="1" max="50" value="1" required>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Total Rooms</label>
-                                <input type="number" class="form-control" name="rooms" min="1" value="1" required>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Maximum Capacity</label>
-                                <input type="number" class="form-control" name="capacity" placeholder="e.g., 500" required>
+                                <input type="text" class="form-control" name="building_name" id="building_name" placeholder="e.g., Science Building, Gymnasium" required>
                             </div>
                         </div>
 
@@ -637,52 +646,89 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Building Type</label>
-                                <select class="form-control" name="building_type">
+                                <select class="form-control" name="building_type" id="building_type_select" required>
                                     <option value="">Select Type</option>
                                     <option value="classroom">Classroom Building</option>
                                     <option value="administrative">Administrative Building</option>
                                     <option value="library">Library</option>
                                     <option value="laboratory">Laboratory</option>
-                                    <option value="gymnasium">Gymnasium</option>
-                                    <option value="cafeteria">Cafeteria</option>
+                                    <option value="gymnasium">Gymnasium (1 Floor/1 Room)</option>
+                                    <option value="cafeteria">Cafeteria (1 Floor/1 Room)</option>
                                 </select>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Building Description</label>
-                            <textarea class="form-control" name="description" rows="3" placeholder="Describe the building features, location, etc..."></textarea>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Safety Features Installed</label>
+                        <div id="roomFloorInputs">
                             <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="features[]" value="sprinklers" id="sprinklers">
-                                        <label class="form-check-label" for="sprinklers">Sprinkler System</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="features[]" value="emergency_lights" id="emergencyLights">
-                                        <label class="form-check-label" for="emergencyLights">Emergency Lighting</label>
-                                    </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Number of Floors</label>
+                                    <input type="number" class="form-control" name="floors" id="buildingFloorsInput" min="1" max="50" value="1" required>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="features[]" value="exit_signs" id="exitSigns">
-                                        <label class="form-check-label" for="exitSigns">Exit Signs</label>
-                                    </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="features[]" value="fire_doors" id="fireDoors">
-                                        <label class="form-check-label" for="fireDoors">Fire Doors</label>
-                                    </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Total Rooms</label>
+                                    <input type="number" class="form-control" name="rooms" id="buildingRoomsInput" min="1" value="1" required>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Manage Floors & Rooms (Edit Mode Only) -->
+                        <div id="manageFloorsRoomsSection" style="display: none;" class="mb-3 border rounded p-3 bg-light">
+                            <h6 class="fw-bold mb-3"><i class="fas fa-tasks me-2"></i>Manage Reduction (Optional)</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-danger fw-bold">Remove Floor</label>
+                                    <select class="form-control border-danger" id="removeFloorSelect">
+                                        <option value="">-- No Floor to Remove --</option>
+                                    </select>
+                                    <small class="text-muted">Removing a floor deletes its alarms, rooms, and extinguishers.</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label text-danger fw-bold">Remove Room</label>
+                                    <select class="form-control border-danger" id="removeRoomSelect">
+                                        <option value="">-- No Room to Remove --</option>
+                                    </select>
+                                    <small class="text-muted">Removing a room re-assigns or removes extinguishers.</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Building Description <small class="text-muted">(Optional)</small></label>
+                            <textarea class="form-control" name="description" rows="3" placeholder="Describe the building features, location, etc... (Optional)"></textarea>
+                        </div>
+
+                     <div class="mb-3">
+                        <label class="form-label">Safety Features Installed <small class="text-muted">(Optional - Select all that apply)</small></label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="features[]" value="sprinklers" id="sprinklers">
+                                    <label class="form-check-label" for="sprinklers">Sprinkler System</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="features[]" value="emergency_lights" id="emergencyLights">
+                                    <label class="form-check-label" for="emergencyLights">Emergency Lighting</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="features[]" value="exit_signs" id="exitSigns">
+                                    <label class="form-check-label" for="exitSigns">Exit Signs</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="features[]" value="fire_doors" id="fireDoors">
+                                    <label class="form-check-label" for="fireDoors">Fire Doors</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="features[]" value="two_stairways" id="twoStairways">
+                                    <label class="form-check-label" for="twoStairways">Two Stairways</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" onclick="saveBuilding()">
                         <i class="fas fa-save me-2"></i> Save Building
                     </button>
@@ -744,7 +790,6 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" onclick="saveInspection()">
                         <i class="fas fa-calendar-check me-2"></i> Schedule
                     </button>
@@ -768,8 +813,8 @@
                         <!-- Building details will be loaded here -->
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <div class="modal-footer" id="buildingModalFooter">
+                    <!-- Footer buttons will be injected by JavaScript -->
                 </div>
             </div>
         </div>
@@ -780,7 +825,9 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <script>
-        // Helper functions
+        // Global variables
+        const USER_ROLE = "{{ auth()->user()->role }}";
+        let currentSchoolId = null;
         function formatDate(dateString) {
             try {
                 const date = new Date(dateString);
@@ -831,8 +878,7 @@
             return typeMap[type.toLowerCase()] || type.charAt(0).toUpperCase() + type.slice(1);
         }
 
-        // Store current school ID
-        let currentSchoolId = null;
+        // Store current school ID (already initialized above)
 
         // Initialize with first school
         document.addEventListener('DOMContentLoaded', function() {
@@ -900,8 +946,27 @@
             button.addEventListener('click', async function() {
                 const buildingId = this.getAttribute('data-building-id');
 
+                // Show loading in modal
+                document.getElementById('buildingDetailsContent').innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-spinner fa-spin fa-2x"></i>
+                        <p class="mt-2">Loading building details...</p>
+                    </div>
+                `;
+
                 try {
                     const response = await fetch(`/fire-safety/building/${buildingId}`);
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        let errorMessage = 'Failed to load building details. Please try again.';
+                        try {
+                            const errorData = JSON.parse(errorText);
+                            errorMessage = errorData.error || errorMessage;
+                        } catch (e) {
+                            console.error('Error parsing error response:', errorText);
+                        }
+                        throw new Error(errorMessage);
+                    }
                     const building = await response.json();
 
                     let html = `
@@ -915,7 +980,6 @@
                             <div class="col-md-6">
                                 <p><strong>Floors:</strong> ${building.floors}</p>
                                 <p><strong>Rooms:</strong> ${building.rooms}</p>
-                                <p><strong>Number of Families:</strong> ${building.capacity ?? 'N/A'}</p>
                                 <p><strong>Minimum Fire Extinguishers:</strong> ${Math.max(1, Math.ceil((Number(building.rooms) || 0) / 3))}</p>
                                 <p><strong>Emergency Exits:</strong> ${building.emergency_exits || 'N/A'}</p>
                             </div>
@@ -943,25 +1007,289 @@
                                 ).join('') : 'No safety features recorded.'}
                             </div>
                         </div>
-
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            To update building information or remove this building, please contact the system administrator.
-                        </div>
                     `;
 
+                    let footerHtml = '';
+                    if (USER_ROLE === 'admin') {
+                        html += `
+                            <div class="alert alert-primary mt-3">
+                                <i class="fas fa-question-circle me-2"></i>
+                                <strong>Already Inspected building?</strong>
+                            </div>
+                        `;
+                        footerHtml = `
+                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" onclick="editBuilding(${building.id})">
+                                <i class="fas fa-edit me-2"></i> Update
+                            </button>
+                        `;
+                    } else {
+                        html += `
+                            <div class="alert alert-info mt-3">
+                                <i class="fas fa-info-circle me-2"></i>
+                                To update building information or remove this building, please contact the system administrator.
+                            </div>
+                        `;
+                        footerHtml = `
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        `;
+                    }
+
                     document.getElementById('buildingDetailsContent').innerHTML = html;
+                    document.getElementById('buildingModalFooter').innerHTML = footerHtml;
 
                 } catch (error) {
                     console.error('Error loading building details:', error);
                     document.getElementById('buildingDetailsContent').innerHTML = `
                         <div class="alert alert-danger">
                             <i class="fas fa-exclamation-circle me-2"></i>
-                            Failed to load building details. Please try again.
+                            ${error.message || 'Failed to load building details. Please try again.'}
                         </div>
+                    `;
+                    document.getElementById('buildingModalFooter').innerHTML = `
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     `;
                 }
             });
+        });
+
+        // Edit Building functionality
+        async function editBuilding(buildingId) {
+            try {
+                const response = await fetch(`/fire-safety/building/${buildingId}`);
+                const building = await response.json();
+
+                // Close view modal
+                const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewBuildingModal'));
+                if (viewModal) viewModal.hide();
+
+                // Open add/edit modal but with update behavior
+                const editModalEl = document.getElementById('addBuildingModal');
+                const editModal = new bootstrap.Modal(editModalEl);
+
+                // Update modal title
+                editModalEl.querySelector('.modal-title').innerHTML = '<i class="fas fa-edit me-2"></i> Update Building Information';
+
+                // Set form action and method for update
+                const form = document.getElementById('addBuildingForm');
+                const originalAction = form.action;
+                form.action = `/fire-safety/building/${buildingId}/update`;
+
+                // Fill form data
+                form.querySelector('[name="building_no"]').value = building.building_no;
+                form.querySelector('[name="building_name"]').value = building.building_name || '';
+
+                const floorsInput = form.querySelector('#buildingFloorsInput');
+                floorsInput.value = building.floors;
+                floorsInput.min = building.floors; // Can only increase
+
+                const roomsInput = form.querySelector('#buildingRoomsInput');
+                roomsInput.value = building.rooms;
+                roomsInput.min = building.rooms; // Can only increase
+
+                form.querySelector('[name="year_constructed"]').value = building.year_constructed || '';
+                form.querySelector('[name="last_renovation"]').value = building.last_renovation || '';
+                form.querySelector('[name="emergency_exits"]').value = building.emergency_exits || 0;
+                const typeSelect = form.querySelector('[name="building_type"]');
+                typeSelect.value = building.building_type || '';
+                typeSelect.disabled = true; // Building type can't be edited
+
+                form.querySelector('[name="description"]').value = building.description || '';
+
+                // Handle Gymnasium/Cafeteria restriction
+                const isMiniBldg = ['gymnasium', 'cafeteria'].includes(building.building_type?.toLowerCase());
+                if (isMiniBldg) {
+                    document.getElementById('roomFloorInputs').style.display = 'none';
+                    floorsInput.value = 1;
+                    roomsInput.value = 1;
+                } else {
+                    document.getElementById('roomFloorInputs').style.display = 'block';
+                }
+
+                // Populate Removal Selection
+                const removeFloorSelect = document.getElementById('removeFloorSelect');
+                const removeRoomSelect = document.getElementById('removeRoomSelect');
+                removeFloorSelect.innerHTML = '<option value="">-- No Floor to Remove --</option>';
+                removeRoomSelect.innerHTML = '<option value="">-- No Room to Remove --</option>';
+
+                // Add floors
+                for (let i = 1; i <= building.floors; i++) {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.textContent = `Floor no. ${i}`;
+                    removeFloorSelect.appendChild(opt);
+                }
+
+                // Add rooms
+                if (building.rooms_list && Array.isArray(building.rooms_list)) {
+                    building.rooms_list.forEach(room => {
+                        const opt = document.createElement('option');
+                        opt.value = room.id;
+                        opt.textContent = `${room.room_name} (Floor ${room.floor_no})`;
+                        opt.dataset.extinguisher = room.is_center_room ? 'yes' : 'no';
+                        opt.dataset.hasOthers = room.has_other_rooms_on_floor ? 'yes' : 'no';
+                        removeRoomSelect.appendChild(opt);
+                    });
+                }
+
+                document.getElementById('manageFloorsRoomsSection').style.display = isMiniBldg ? 'none' : 'block';
+
+                // Handle checkboxes
+                const features = building.features ? building.features.split(',') : [];
+                form.querySelectorAll('[name="features[]"]').forEach(cb => {
+                    cb.checked = features.includes(cb.value);
+                });
+
+                // Update save button to update button
+                const saveBtn = editModalEl.querySelector('.btn-primary');
+                const originalOnClick = saveBtn.getAttribute('onclick');
+                saveBtn.innerHTML = '<i class="fas fa-save me-2"></i> Update Information';
+                saveBtn.setAttribute('onclick', `updateBuilding(${buildingId}, '${building.building_no}')`);
+
+                // Reset modal on hide
+                editModalEl.addEventListener('hidden.bs.modal', function() {
+                    form.action = originalAction;
+                    form.reset();
+                    editModalEl.querySelector('.modal-title').innerHTML = '<i class="fas fa-plus me-2"></i> Add New Building';
+                    saveBtn.innerHTML = '<i class="fas fa-save me-2"></i> Save Building';
+                    saveBtn.setAttribute('onclick', originalOnClick);
+                    floorsInput.min = 1;
+                    roomsInput.min = 1;
+                    typeSelect.disabled = false;
+                    document.getElementById('roomFloorInputs').style.display = 'block';
+                    document.getElementById('manageFloorsRoomsSection').style.display = 'none';
+                }, { once: true });
+
+                editModal.show();
+
+            } catch (error) {
+                console.error('Error loading building for edit:', error);
+                Swal.fire('Error', 'Failed to load building data for editing.', 'error');
+            }
+        }
+
+        async function updateBuilding(buildingId, oldBuildingNo) {
+            const form = document.getElementById('addBuildingForm');
+            const formData = new FormData(form);
+            const newBuildingNo = formData.get('building_no');
+
+            if (newBuildingNo !== oldBuildingNo) {
+                const result = await Swal.fire({
+                    title: 'Confirmation',
+                    text: "Are sure you want to update Building Code?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#A8191F',
+                    confirmButtonText: 'Yes, update it!',
+                    cancelButtonText: 'No, cancel!'
+                });
+
+                if (!result.isConfirmed) return;
+            }
+
+            // Floor Removal Confirmation
+            const floorToRemove = document.getElementById('removeFloorSelect').value;
+            if (floorToRemove) {
+                const result = await Swal.fire({
+                    title: 'Floor Removal Warning',
+                    text: `Are you sure you want to remove Floor no.${floorToRemove}? The assigned alarm, fire extinguisher and rooms for this floor will completely be remove`,
+                    icon: 'danger',
+                    showCancelButton: true,
+                    confirmButtonColor: '#A8191F',
+                    confirmButtonText: 'Yes, remove floor!',
+                    cancelButtonText: 'No, cancel!'
+                });
+
+                if (!result.isConfirmed) return;
+                formData.append('removed_floor', floorToRemove);
+            }
+
+            // Room Removal Confirmation
+            const roomToRemoveSelect = document.getElementById('removeRoomSelect');
+            const roomIdToRemove = roomToRemoveSelect.value;
+            if (roomIdToRemove) {
+                const roomName = roomToRemoveSelect.options[roomToRemoveSelect.selectedIndex].text;
+                const isCenter = roomToRemoveSelect.options[roomToRemoveSelect.selectedIndex].dataset.extinguisher === 'yes';
+                const hasOthers = roomToRemoveSelect.options[roomToRemoveSelect.selectedIndex].dataset.hasOthers === 'yes';
+
+                let message = `Are you sure you want to remove room ${roomName}?`;
+                if (isCenter) {
+                    if (hasOthers) {
+                        message += `, fire extinguisher will be re-assigned to its nearest room`;
+                    } else {
+                        message += `, fire extinguiser will be completely removed as there aren't anymore rooms to this floor left to be reassigned`;
+                    }
+                }
+
+                const result = await Swal.fire({
+                    title: 'Room Removal Warning',
+                    text: message,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#A8191F',
+                    confirmButtonText: 'Yes, remove room!',
+                    cancelButtonText: 'No, cancel!'
+                });
+
+                if (!result.isConfirmed) return;
+                formData.append('removed_room_id', roomIdToRemove);
+            }
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: data.message,
+                        icon: 'success',
+                        confirmButtonColor: '#A8191F'
+                    }).then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        title: 'Error',
+                        text: data.message || 'Failed to update building.',
+                        icon: 'error',
+                        confirmButtonColor: '#A8191F'
+                    });
+                }
+            } catch (error) {
+                console.error('Error updating building:', error);
+                Swal.fire({
+                    title: 'Error',
+                    text: 'An unexpected error occurred.',
+                    icon: 'error',
+                    confirmButtonColor: '#A8191F'
+                });
+            }
+        }
+
+        // Add Gymnasium/Cafeteria locking logic for Add Mode
+        document.getElementById('building_type_select').addEventListener('change', function() {
+            const isMiniBldg = ['gymnasium', 'cafeteria'].includes(this.value.toLowerCase());
+            const roomsIn = document.getElementById('buildingRoomsInput');
+            const floorsIn = document.getElementById('buildingFloorsInput');
+
+            if (isMiniBldg) {
+                roomsIn.value = 1;
+                roomsIn.readOnly = true;
+                floorsIn.value = 1;
+                floorsIn.readOnly = true;
+            } else {
+                roomsIn.readOnly = false;
+                floorsIn.readOnly = false;
+            }
         });
 
         // Load school data (inspections and stats)
@@ -1194,7 +1522,15 @@
         // Load all inspections (for refresh button)
         async function loadAllInspections(schoolId) {
             await loadInspections(schoolId);
-            alert('Inspections refreshed!');
+            Swal.fire({
+                title: 'Refreshed!',
+                text: 'Inspections have been reloaded.',
+                icon: 'success',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000
+            });
         }
 
         // Load buildings for inspection dropdown
@@ -1215,39 +1551,55 @@
 
             } catch (error) {
                 console.error('Error loading buildings:', error);
-                alert('Failed to load buildings. Please try again.');
+                Swal.fire('Error', 'Failed to load buildings. Please try again.', 'error');
             }
         }
 
-        // Save Building
+       // Save Building - FIXED VERSION
         async function saveBuilding() {
             const form = document.getElementById('addBuildingForm');
+
+            // Basic validation for required fields only
+            const buildingNo = form.querySelector('[name="building_no"]').value.trim();
+            const buildingName = form.querySelector('[name="building_name"]').value.trim();
+
+            if (!buildingNo || !buildingName) {
+                Swal.fire('Validation Error', 'Building number and name are required.', 'warning');
+                return;
+            }
 
             if (!form.checkValidity()) {
                 form.reportValidity();
                 return;
             }
 
-            // Get CSRF token
-            let csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+            // Get CSRF token - FIXED
+            let csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
+            // Alternative fallback if meta tag method fails
             if (!csrfToken) {
                 csrfToken = document.querySelector('input[name="_token"]')?.value;
-
                 if (!csrfToken) {
-                    alert('CSRF token missing. Please refresh the page and try again.');
+                    Swal.fire('Error', 'CSRF token missing. Please refresh the page and try again.', 'error');
                     return;
                 }
             }
 
             const formData = new FormData(form);
-            const yearConstructed = parseInt(formData.get('year_constructed'));
-            const lastRenovation = parseInt(formData.get('last_renovation'));
+            const yearConstructed = parseInt(formData.get('year_constructed')) || 0;
+            const lastRenovation = parseInt(formData.get('last_renovation')) || 0;
 
+            // Validation
             if (yearConstructed && lastRenovation && lastRenovation < yearConstructed) {
-                alert('Last renovation year cannot be earlier than the year constructed.');
+                Swal.fire('Invalid Dates', 'Last renovation year cannot be earlier than the year constructed.', 'warning');
                 return;
             }
+
+            // Show loading state
+            const saveButton = document.querySelector('#addBuildingModal .btn-primary');
+            const originalText = saveButton.innerHTML;
+            saveButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Saving...';
+            saveButton.disabled = true;
 
             try {
                 const response = await fetch(form.action, {
@@ -1262,15 +1614,30 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    alert('Building added successfully!');
-                    location.reload();
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addBuildingModal'));
+                    if (modal) modal.hide();
+
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Building added successfully!',
+                        icon: 'success',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload();
+                    });
                 } else {
-                    alert('Error: ' + (data.message || 'Failed to add building'));
+                    Swal.fire('Error', data.message || 'Failed to add building', 'error');
+                    saveButton.innerHTML = originalText;
+                    saveButton.disabled = false;
                 }
 
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to add building. Please try again.');
+                Swal.fire('Error', 'Failed to add building. Please check your connection and try again.', 'error');
+                saveButton.innerHTML = originalText;
+                saveButton.disabled = false;
             }
         }
 
@@ -1298,15 +1665,16 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    alert('Inspection scheduled successfully!');
-                    location.reload();
+                    Swal.fire('Success', 'Inspection scheduled successfully!', 'success').then(() => {
+                        location.reload();
+                    });
                 } else {
-                    alert('Error: ' + (data.message || 'Failed to schedule inspection'));
+                    Swal.fire('Error', data.message || 'Failed to schedule inspection', 'error');
                 }
 
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to schedule inspection');
+                Swal.fire('Error', 'Failed to schedule inspection', 'error');
             }
         }
 
@@ -1391,7 +1759,6 @@
                                     </div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                                     ${inspection.status === 'scheduled' ? `
                                     <button type="button" class="btn btn-primary" onclick="startInspection(${inspection.id})">
                                         <i class="fas fa-play me-2"></i> Start Inspection
@@ -1414,15 +1781,21 @@
 
             } catch (error) {
                 console.error('Error loading inspection details:', error);
-                alert('Failed to load inspection details. Please try again.');
+                Swal.fire('Error', 'Failed to load inspection details. Please try again.', 'error');
             }
         }
 
-        // Cancel Inspection with confirmation and API call
         async function cancelInspection(inspectionId) {
-            if (!confirm('Are you sure you want to cancel this inspection? This action cannot be undone.')) {
-                return;
-            }
+            const result = await Swal.fire({
+                title: 'Cancel Inspection?',
+                text: "Are you sure you want to cancel this inspection? This action cannot be undone.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, cancel it!',
+                cancelButtonText: 'No, keep it'
+            });
+
+            if (!result.isConfirmed) return;
 
             try {
                 const response = await fetch(`/fire-safety/inspection/${inspectionId}/cancel`, {
@@ -1438,18 +1811,18 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    alert('Inspection cancelled successfully!');
+                    Swal.fire('Cancelled', 'Inspection has been cancelled.', 'success');
                     // Reload the current school's inspections
                     if (currentSchoolId) {
                         await loadInspections(currentSchoolId);
                     }
                 } else {
-                    alert('Error: ' + (data.message || 'Failed to cancel inspection'));
+                    Swal.fire('Error', data.message || 'Failed to cancel inspection', 'error');
                 }
 
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to cancel inspection. Please try again.');
+                Swal.fire('Error', 'Failed to cancel inspection. Please try again.', 'error');
             }
         }
 
@@ -1461,11 +1834,26 @@
 
         // Generate building report
         function generateBuildingReport() {
-            if (confirm('Generate comprehensive building safety report for all schools?')) {
-                alert('Building safety report generation started... This may take a moment.');
-                // In real implementation, this would generate PDF report
-                window.open('/fire-safety/generate-report', '_blank');
-            }
+            Swal.fire({
+                title: 'Generate Report?',
+                text: "Generate comprehensive building safety report for all schools?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Generate',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Generating...',
+                        text: 'Building safety report generation started... This may take a moment.',
+                        icon: 'info',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    // In real implementation, this would generate PDF report
+                    window.open('/fire-safety/generate-report', '_blank');
+                }
+            });
         }
     </script>
 </body>

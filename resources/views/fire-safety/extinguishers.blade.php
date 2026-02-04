@@ -7,6 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         :root {
             --fire-red: #A8191F;
@@ -128,21 +129,42 @@
     </style>
     <style>
         .health-bar {
-            height: 6px;
+            height: 25px; /* Fatten/Large height */
             width: 100%;
             background-color: #e9ecef;
-            border-radius: 3px;
+            border-radius: 12px;
             margin-top: 5px;
             overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
         }
         .health-bar-fill {
             height: 100%;
             transition: width 0.3s ease;
         }
-        .health-critical { background-color: #dc3545; } /* < 70% */
-        .health-low { background-color: #ffc107; } /* 70-89% */
-        .health-good { background-color: #28a745; } /* 90-100% */
-        .health-empty { background-color: #343a40; } /* 0-10% */
+        .health-bar-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 11px;
+            font-weight: bold;
+            color: #000;
+            text-shadow: 0 0 2px rgba(255,255,255,0.8);
+        }
+        .health-good { background-color: #28a745; } /* OK */
+        .health-warning { background-color: #ffc107; } /* For Refill */
+        .health-danger { background-color: #dc3545; } /* Empty/Missing */
+
+        /* SweetAlert2 Custom Styling */
+        .swal2-popup {
+            border-radius: 15px !important;
+        }
+        .swal2-styled.swal2-confirm {
+            background-color: var(--fire-red) !important;
+        }
     </style>
 </head>
 <body>
@@ -164,10 +186,19 @@
 
                 <div class="col-auto">
                     <div class="d-flex align-items-center">
-                        <!-- Customization -->
-                        <a href="{{ route('fire-safety.customization') }}" class="text-white me-3 text-decoration-none" title="Customization">
-                            <i class="fas fa-cogs fa-lg"></i>
-                        </a>
+                        <!-- Notifications -->
+                        <div class="dropdown me-3">
+                            <a href="#" class="text-white position-relative" data-bs-toggle="dropdown">
+                                <i class="fas fa-bell fa-lg"></i>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    0
+                                </span>
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-end">
+                                <h6 class="dropdown-header">Notifications</h6>
+                                <div class="dropdown-item text-muted">No new notifications</div>
+                            </div>
+                        </div>
 
                         <div class="dropdown">
                             <a href="#" class="text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
@@ -219,13 +250,19 @@
                 <li class="nav-item">
                     <a class="nav-link active" href="{{ route('fire-safety.extinguishers') }}">
                         <span class="nav-icon"><i class="fas fa-fire-extinguisher"></i></span>
-                        <span>Fire Extinguishers</span>
+                        <span>Fire Extinguishers & Rooms</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('fire-safety.evacuation-plans') }}">
                         <span class="nav-icon"><i class="fas fa-map-signs"></i></span>
                         <span>Evacuation Plans</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('fire-safety.customization') }}">
+                        <span class="nav-icon"><i class="fas fa-cog"></i></span>
+                        <span>Customization</span>
                     </a>
                 </li>
             </ul>
@@ -300,11 +337,12 @@
             <div class="tab-content" id="schoolTabContent">
                 @foreach($schools as $school)
                     @php
-                        $allRooms = $school->buildings->flatMap(fn ($b) => $b->rooms);
+                        $allRoomsCount = $school->buildings->sum('rooms');
+                        $allRoomsCollection = $school->buildings->flatMap(fn ($b) => $b->rooms()->get());
                         $allExts = $school->buildings->flatMap(fn ($b) => $b->fireExtinguishers);
                         $coveredRoomIds = $allExts->flatMap(fn ($e) => $e->coveredRooms->pluck('id'))->unique();
-                        $uncoveredRoomsCount = max(0, $allRooms->count() - $coveredRoomIds->count());
-                        $labRooms = $allRooms->where('room_type', 'laboratory');
+                        $uncoveredRoomsCount = max(0, $allRoomsCollection->count() - $coveredRoomIds->count());
+                        $labRooms = $allRoomsCollection->where('room_type', 'laboratory');
                         $labsCovered = $labRooms->filter(fn ($r) => $coveredRoomIds->contains($r->id))->count();
                     @endphp
 
@@ -317,8 +355,8 @@
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
-                                                <div class="text-xs fw-bold text-primary text-uppercase mb-1">Total Rooms (Defined)</div>
-                                                <div class="h2 mb-0 fw-bold text-gray-800">{{ $allRooms->count() }}</div>
+                                                <div class="text-xs fw-bold text-primary text-uppercase mb-1">Total Rooms</div>
+                                                <div class="h2 mb-0 fw-bold text-gray-800">{{ $allRoomsCollection->count() }}</div>
                                             </div>
                                             <i class="fas fa-door-closed fa-2x text-primary"></i>
                                         </div>
@@ -332,14 +370,13 @@
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
-                                                <div class="text-xs fw-bold text-success text-uppercase mb-1">Room Coverage</div>
-                                                <div class="mb-0 fw-bold text-dark">
-                                                    <span class="text-success">{{ $coveredRoomIds->count() }} Covered</span>
+                                                <div class="text-xs fw-bold text-dark text-uppercase mb-1">Room Coverage</div>
+                                                <div class="mb-0 fw-bold">
+                                                    <span class="text-success">{{ $coveredRoomIds->count() }} Covered ✔</span>
                                                     <span class="text-muted mx-1">|</span>
-                                                    <span class="text-danger">{{ $uncoveredRoomsCount }} Uncovered</span>
+                                                    <span class="text-danger">{{ $uncoveredRoomsCount }} Uncovered X</span>
                                                 </div>
                                             </div>
-                                            <i class="fas fa-check-double fa-2x text-success"></i>
                                         </div>
                                     </div>
                                 </div>
@@ -353,7 +390,7 @@
                                             <div>
                                                 <div class="text-xs fw-bold text-info text-uppercase mb-1">Coverage Compliance</div>
                                                 <div class="h2 mb-0 fw-bold text-gray-800">
-                                                    {{ $allRooms->count() > 0 ? round(($coveredRoomIds->count() / $allRooms->count()) * 100, 1) : 0 }}%
+                                                    {{ $allRoomsCollection->count() > 0 ? round(($coveredRoomIds->count() / $allRoomsCollection->count()) * 100, 1) : 0 }}%
                                                 </div>
                                             </div>
                                             <i class="fas fa-percent fa-2x text-info"></i>
@@ -368,10 +405,10 @@
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
-                                                <div class="text-xs fw-bold text-warning text-uppercase mb-1">Extinguisher Status</div>
+                                                <div class="text-xs fw-bold text-warning text-uppercase mb-1">Evaluation Result</div>
                                                 <div class="h2 mb-0 fw-bold text-gray-800">
                                                     {{ $allExts->where('status', 'active')->count() }} / {{ $allExts->count() }}
-                                                    <span class="text-xs text-muted fw-normal">Passed</span>
+                                                    <span class="text-xs text-muted fw-normal">{{ $allExts->where('status', 'active')->count() === $allExts->count() && $allExts->count() > 0 ? 'Passed' : 'Failed' }}</span>
                                                 </div>
                                             </div>
                                             <i class="fas fa-clipboard-check fa-2x text-warning"></i>
@@ -397,6 +434,7 @@
                                             <i class="fas fa-list me-2"></i> Room-Based Extinguishers - {{ $school->school_name }}
                                         </h6>
                                         <div>
+                                            @if(auth()->user()->role === 'admin')
                                             <button class="btn btn-outline-primary btn-sm me-2"
                                                     data-bs-toggle="modal"
                                                     data-bs-target="#addRoomModal"
@@ -409,6 +447,7 @@
                                                     data-school-id="{{ $school->id }}">
                                                 <i class="fas fa-plus me-2"></i> Add Extinguisher
                                             </button>
+                                            @endif
                                         </div>
                                     </div>
                                     <div class="card-body">
@@ -462,6 +501,7 @@
                                                                                             <th>Type</th>
                                                                                             <th>Floor</th>
                                                                                             <th>Covered By</th>
+                                                                                            <th class="text-end">Action</th>
                                                                                         </tr>
                                                                                     </thead>
                                                                                     <tbody>
@@ -488,6 +528,11 @@
                                                                                                         <span class="badge bg-warning text-dark">Uncovered</span>
                                                                                                     @endif
                                                                                                 </td>
+                                                                                                <td class="text-end">
+                                                                                                    <button class="btn btn-sm btn-outline-primary" onclick="inspectRoom({{ $room->id }})">
+                                                                                                        <i class="fas fa-search-plus me-1"></i> Inspect & Update
+                                                                                                    </button>
+                                                                                                </td>
                                                                                             </tr>
                                                                                         @endforeach
                                                                                     </tbody>
@@ -497,70 +542,74 @@
                                                                     </div>
 
                                                                     <div class="col-lg-5 mb-4">
-                                                                        <h6 class="fw-bold mb-2"><i class="fas fa-fire-extinguisher me-2"></i>Extinguishers</h6>
+                                                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                                                            <h6 class="fw-bold mb-0"><i class="fas fa-fire-extinguisher me-2"></i>Extinguishers</h6>
+                                                                            @php
+                                                                                $bldgExts = $building->fireExtinguishers;
+                                                                                $bldgActive = $bldgExts->where('status', 'active')->count();
+                                                                                $bldgTotal = $bldgExts->count();
+                                                                                $evalText = $bldgTotal > 0 && ($bldgActive/$bldgTotal >= 1.0) ? 'Passed' : 'Failed';
+                                                                                $evalColor = $evalText === 'Passed' ? 'success' : 'danger';
+                                                                            @endphp
+                                                                            <span class="badge bg-{{ $evalColor }}">Evaluation Result: {{ $evalText }} ({{ $bldgActive }}/{{ $bldgTotal }})</span>
+                                                                        </div>
                                                                         @if($building->fireExtinguishers->isEmpty())
                                                                             <div class="alert alert-secondary mb-0">
                                                                                 No extinguishers recorded yet for this building.
                                                                             </div>
                                                                         @else
                                                                             <div class="table-responsive">
-                                                <table class="table table-sm table-hover align-middle">
+                                                <table class="table table-sm table-hover align-middle border">
                                                     <thead class="table-light">
                                                         <tr>
-                                                            <th>Code</th>
-                                                            <th>Type</th>
-                                                            <th>Status & Pressure</th>
-                                                            <th>As Of</th>
-                                                            <th>Location (Center)</th>
-                                                            <th>Covered Rooms</th>
+                                                            <th>Extinguisher Details</th>
+                                                            <th>Tracking</th>
                                                             <th>Action</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                         @foreach($building->fireExtinguishers as $ext)
-                                                            <tr>
-                                                                <td class="fw-semibold">{{ $ext->code }}</td>
-                                                                <td>{{ $ext->type ?? 'N/A' }}</td>
-                                                                <td>
-                                                                    @php
-                                                                        $badgeClass = 'secondary';
-                                                                        $statusLabel = ucfirst($ext->status);
-                                                                        
-                                                                        if ($ext->status === 'active') {
-                                                                            $badgeClass = 'success';
-                                                                            $statusLabel = 'OK';
-                                                                        } elseif ($ext->status === 'maintenance') {
-                                                                            $badgeClass = 'warning';
-                                                                            $statusLabel = 'For Refill';
-                                                                        } elseif ($ext->status === 'expired') {
-                                                                            $badgeClass = 'danger';
-                                                                        }
+                                                            @php
+                                                                $pressure = $ext->pressure_level ?? 100;
+                                                                $statusLabel = 'OK';
+                                                                $healthClass = 'health-good';
+                                                                $badgeClass = 'success';
 
-                                                                        $pressure = $ext->pressure_level ?? 100;
-                                                                        $healthClass = 'health-good';
-                                                                        if ($pressure <= 10) $healthClass = 'health-empty';
-                                                                        else if ($pressure < 70) $healthClass = 'health-critical';
-                                                                        else if ($pressure < 90) $healthClass = 'health-low';
-                                                                    @endphp
-                                                                    <div class="d-flex align-items-center justify-content-between">
-                                                                        <span class="badge bg-{{ $badgeClass }}">{{ $statusLabel }}</span>
-                                                                        <small class="text-muted ms-2">{{ $pressure }}%</small>
+                                                                if ($ext->status === 'maintenance') {
+                                                                    $statusLabel = 'For Refill';
+                                                                    $healthClass = 'health-warning';
+                                                                    $badgeClass = 'warning';
+                                                                } elseif ($ext->status === 'expired' || $ext->status === 'missing') {
+                                                                    $statusLabel = $ext->status === 'expired' ? 'Empty' : 'Missing';
+                                                                    $healthClass = 'health-danger';
+                                                                    $badgeClass = 'danger';
+                                                                }
+                                                            @endphp
+                                                            <tr>
+                                                                <td>
+                                                                    <div class="row g-2 mb-2">
+                                                                        <div class="col-6">
+                                                                            <div class="small fw-bold">Status & Pressure:</div>
+                                                                            <span class="badge bg-{{ $badgeClass }}">{{ $statusLabel }}</span>
+                                                                        </div>
+                                                                        <div class="col-6 text-end">
+                                                                            <div class="small fw-bold">Type:</div>
+                                                                            <span class="badge bg-secondary">{{ $ext->type }}</span>
+                                                                        </div>
                                                                     </div>
                                                                     <div class="health-bar" title="Pressure: {{ $pressure }}%">
                                                                         <div class="health-bar-fill {{ $healthClass }}" style="width: {{ $pressure }}%"></div>
+                                                                        <div class="health-bar-text">{{ $pressure }}%</div>
                                                                     </div>
                                                                 </td>
                                                                 <td>
-                                                                    {{ $ext->date_checked ? \Carbon\Carbon::parse($ext->date_checked)->format('m-d-Y') : 'N/A' }}
-                                                                </td>
-                                                                <td class="small">
-                                                                    {{ $ext->centerRoom->room_name ?? 'N/A' }}
-                                                                </td>
-                                                                <td class="small">
-                                                                    {{ $ext->coveredRooms->pluck('room_name')->join(', ') }}
+                                                                    <div class="small mb-1"><strong>Code:</strong> {{ $ext->code }}</div>
+                                                                    <div class="small mb-1"><strong>As Of:</strong> {{ $ext->date_checked ? \Carbon\Carbon::parse($ext->date_checked)->format('m-d-Y') : 'N/A' }}</div>
+                                                                    <div class="small mb-1"><strong>Location:</strong> {{ $ext->centerRoom->room_name ?? 'N/A' }}</div>
+                                                                    <div class="small"><strong>Covering:</strong> {{ $ext->coveredRooms->count() }} Rooms</div>
                                                                 </td>
                                                                 <td>
-                                                                    <button class="btn btn-sm btn-outline-primary"
+                                                                    <button class="btn btn-sm btn-primary w-100"
                                                                             onclick="openUpdateModal({{ $ext->id }}, '{{ $ext->code }}', '{{ $ext->status }}', {{ $pressure }})">
                                                                         Update
                                                                     </button>
@@ -583,7 +632,7 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
+
                         <!-- Recent Inspections -->
                         <div class="row mt-4">
                             <div class="col-12">
@@ -636,7 +685,7 @@
                     <form id="updateExtForm">
                         @csrf
                         <input type="hidden" id="updateExtId">
-                        
+
                         <div class="mb-3">
                             <label class="form-label">Extinguisher Code</label>
                             <input type="text" class="form-control" id="updateExtCode" readonly>
@@ -645,10 +694,10 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Status *</label>
-                                <select class="form-control" name="status" id="updateExtStatus" required>
+                                <select class="form-control" name="status" id="updateExtStatus" required onchange="handleUpdateStatusChange()">
                                     <option value="active">OK (Active)</option>
-                                    <option value="maintenance">For Refill (Maintenance)</option>
-                                    <option value="expired">Expired</option>
+                                    <option value="maintenance">For Refill</option>
+                                    <option value="expired">Empty</option>
                                     <option value="missing">Missing</option>
                                 </select>
                             </div>
@@ -665,8 +714,7 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="saveExtinguisherStatus()">
+                    <button class="btn btn-primary" onclick="saveExtinguisherStatus()">
                         <i class="fas fa-save me-2"></i>Update
                     </button>
                 </div>
@@ -714,19 +762,24 @@
 
                         <div class="mb-3">
                             <label class="form-label">Room Type *</label>
-                            <select class="form-control" name="room_type" required>
+                            <select class="form-control" name="room_type" id="room_type_select" required onchange="updateRoomPriority()">
                                 <option value="classroom">Classroom</option>
                                 <option value="laboratory">Laboratory</option>
-                                <option value="auxiliary">Auxiliary</option>
-                                <option value="office">Office</option>
+                                <option value="clinic">Clinic</option>
+                                <option value="department">Department</option>
+                                <option value="library">Library</option>
                                 <option value="storage">Storage</option>
                                 <option value="others">Others</option>
                             </select>
                         </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Fire Extinguisher Priority</label>
+                            <input type="text" class="form-control bg-light" id="room_priority" readonly value="Shared Coverage (Up to 3 Classrooms)">
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" onclick="saveRoom()">
                         <i class="fas fa-save me-2"></i>Save
                     </button>
@@ -755,12 +808,12 @@
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Type *</label>
-                                <select class="form-control" name="type" required>
+                                <select class="form-control" name="type" id="ext_type_select" required onchange="handleExtTypeChange()">
                                     <option value="ABC">ABC (Dry Chemical)</option>
                                     <option value="CO2">CO2</option>
                                     <option value="Water">Water</option>
                                     <option value="Foam">Foam</option>
-                                    <option value="Other">Other</option>
+                                    <option value="Other">Other, Please Specify...</option>
                                 </select>
                             </div>
                         </div>
@@ -768,16 +821,16 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Status *</label>
-                                <select class="form-control" name="status" required>
+                                <select class="form-control" name="status" id="addExtStatus" required onchange="handleAddStatusChange()">
                                     <option value="active">Active</option>
-                                    <option value="maintenance">Maintenance</option>
-                                    <option value="expired">Expired</option>
+                                    <option value="maintenance">For Refill</option>
+                                    <option value="expired">Empty</option>
                                     <option value="missing">Missing</option>
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Pressure Level (0-100%)</label>
-                                <input type="number" class="form-control" name="pressure_level" min="0" max="100" value="100" required>
+                                <input type="number" class="form-control" name="pressure_level" id="addExtPressure" min="0" max="100" value="100" required>
                             </div>
                         </div>
 
@@ -829,7 +882,6 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" onclick="saveExtinguisher()">
                         <i class="fas fa-save me-2"></i>Save
                     </button>
@@ -846,6 +898,64 @@
 
         function csrfToken() {
             return document.querySelector('meta[name="csrf-token"]').content;
+        }
+
+        // Handle status change in Add Extinguisher modal - enforce pressure ranges
+        function handleAddStatusChange() {
+            const status = document.getElementById('addExtStatus').value;
+            const pressureInput = document.getElementById('addExtPressure');
+            
+            // Set constraints based on status
+            switch(status) {
+                case 'active':
+                    pressureInput.min = 70;
+                    pressureInput.max = 100;
+                    if (pressureInput.value < 70) pressureInput.value = 70;
+                    break;
+                case 'maintenance': // For Refill
+                    pressureInput.min = 0;
+                    pressureInput.max = 69;
+                    if (pressureInput.value >= 70) pressureInput.value = 69;
+                    break;
+                case 'expired': // Empty
+                    pressureInput.min = 0;
+                    pressureInput.max = 19;
+                    if (pressureInput.value > 19) pressureInput.value = 19;
+                    break;
+                case 'missing':
+                    pressureInput.min = 0;
+                    pressureInput.max = 100;
+                    break;
+            }
+        }
+
+        // Handle status change in Update Extinguisher modal - enforce pressure ranges
+        function handleUpdateStatusChange() {
+            const status = document.getElementById('updateExtStatus').value;
+            const pressureInput = document.getElementById('updateExtPressure');
+            
+            // Set constraints based on status
+            switch(status) {
+                case 'active':
+                    pressureInput.min = 70;
+                    pressureInput.max = 100;
+                    if (pressureInput.value < 70) pressureInput.value = 70;
+                    break;
+                case 'maintenance': // For Refill
+                    pressureInput.min = 0;
+                    pressureInput.max = 69;
+                    if (pressureInput.value >= 70) pressureInput.value = 69;
+                    break;
+                case 'expired': // Empty
+                    pressureInput.min = 0;
+                    pressureInput.max = 19;
+                    if (pressureInput.value > 19) pressureInput.value = 19;
+                    break;
+                case 'missing':
+                    pressureInput.min = 0;
+                    pressureInput.max = 100;
+                    break;
+            }
         }
 
         function setTodayIfEmpty(dateInput) {
@@ -871,7 +981,7 @@
                 opt1.textContent = b.building_no + (b.building_name ? ` (${b.building_name})` : '');
                 // Store floors and type for logic
                 opt1.dataset.floors = b.floors || 1;
-                opt1.dataset.type = b.building_type || ''; 
+                opt1.dataset.type = b.building_type || '';
                 roomBuildingSelect.appendChild(opt1);
 
                 const opt2 = document.createElement('option');
@@ -880,7 +990,7 @@
                 extBuildingSelect.appendChild(opt2);
             });
         }
-        
+
         // Handle Building Selection in Add Room (Populate Floors & Check Type)
         document.getElementById('roomBuildingSelect').addEventListener('change', function() {
             const select = this;
@@ -893,15 +1003,19 @@
 
             const type = option.dataset.type;
             // Restriction for Gymnasium and Cafeteria
-            if (type === 'gymnasium' || type === 'cafeteria') {
-                alert('Rooms cannot be added to Gymnasium or Cafeteria buildings in this module.');
+            if (type.toLowerCase() === 'gymnasium' || type.toLowerCase() === 'cafeteria or canteens') {
+                Swal.fire({
+                    title: 'Building Restriction',
+                    text: 'Gymnasium & Cafeteria buildings have only 1 room. You cannot add more rooms to them.',
+                    icon: 'warning'
+                });
                 select.value = ""; // Reset
                 return;
             }
 
             const floors = parseInt(option.dataset.floors) || 1;
             floorSelect.disabled = false;
-            
+
             // Ordinals helper
             const getOrdinal = (n) => {
                 const s = ["th", "st", "nd", "rd"];
@@ -959,15 +1073,84 @@
 
                 const data = await resp.json();
                 if (!resp.ok || !data.success) {
-                    alert(data.message || 'Failed to add room');
+                    Swal.fire('Error', data.message || 'Failed to add room', 'error');
                     return;
                 }
 
-                alert('Room added successfully!');
-                location.reload();
+                Swal.fire('Success', 'Room added successfully!', 'success').then(() => {
+                    location.reload();
+                });
             } catch (e) {
                 console.error(e);
-                alert('Failed to add room. Please try again.');
+                Swal.fire('Error', 'Failed to add room. Please try again.', 'error');
+            }
+        }
+
+        // Inspect Room - Show room details and extinguisher info
+        function inspectRoom(roomId) {
+            Swal.fire({
+                title: 'Room Inspection',
+                html: '\u003cdiv class=\"text-center\"\u003e\u003ci class=\"fas fa-spinner fa-spin fa-2x\"\u003e\u003c/i\u003e\u003cp class=\"mt-2\"\u003eLoading room details...\u003c/p\u003e\u003c/div\u003e',
+                showConfirmButton: false,
+                allowOutsideClick: false
+            });
+
+            // Fetch room details
+            fetch(`/fire-safety/room/${roomId}`)
+                .then(response => response.json())
+                .then(room => {
+                    let extInfo = 'No extinguisher assigned';
+                    let actionButton = '';
+                    
+                    if (room.extinguisher) {
+                        const ext = room.extinguisher;
+                        extInfo = `
+                            \u003cdiv class=\"alert alert-info\"\u003e
+                                \u003cstrong\u003eExtinguisher:\u003c/strong\u003e ${ext.code}\u003cbr\u003e
+                                \u003cstrong\u003eType:\u003c/strong\u003e ${ext.type}\u003cbr\u003e
+                                \u003cstrong\u003eStatus:\u003c/strong\u003e ${ext.status}\u003cbr\u003e
+                                \u003cstrong\u003ePressure:\u003c/strong\u003e ${ext.pressure_level}%\u003cbr\u003e
+                                \u003cstrong\u003eDate Checked:\u003c/strong\u003e ${ext.date_checked || 'N/A'}
+                            \u003c/div\u003e
+                        `;
+                        actionButton = `\u003cbutton class=\"btn btn-primary\" onclick=\"openUpdateModal(${ext.id}, '${ext.code}', '${ext.status}', ${ext.pressure_level}); Swal.close();\"\u003e\u003ci class=\"fas fa-edit me-2\"\u003e\u003c/i\u003eUpdate Extinguisher\u003c/button\u003e`;
+                    }
+
+                    Swal.fire({
+                        title: `\u003ci class=\"fas fa-door-open me-2\"\u003e\u003c/i\u003e${room.room_name}`,
+                        html: `
+                            \u003cdiv class=\"text-start\"\u003e
+                                \u003cp\u003e\u003cstrong\u003eRoom Code:\u003c/strong\u003e ${room.room_code || 'N/A'}\u003c/p\u003e
+                                \u003cp\u003e\u003cstrong\u003eType:\u003c/strong\u003e ${room.room_type}\u003c/p\u003e
+                                \u003cp\u003e\u003cstrong\u003eFloor:\u003c/strong\u003e ${room.floor_no || 'N/A'}\u003c/p\u003e
+                                \u003chr\u003e
+                                ${extInfo}
+                            \u003c/div\u003e
+                        `,
+                        showCancelButton: true,
+                        confirmButtonText: actionButton ? '' : 'Close',
+                        cancelButtonText: 'Close',
+                        footer: actionButton,
+                        width: '600px'
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching room details:', error);
+                    Swal.fire('Error', 'Failed to load room details', 'error');
+                });
+        }
+
+        function updateRoomPriority() {
+            const typeSelect = document.getElementById('room_type_select');
+            const priorityInput = document.getElementById('room_priority');
+            const type = typeSelect.value;
+
+            if (['laboratory', 'clinic', 'storage'].includes(type)) {
+                priorityInput.value = 'Dedicated / Limited Shared';
+            } else if (['classroom', 'department', 'library'].includes(type)) {
+                priorityInput.value = 'Shared Coverage (Up to 3 Classrooms)';
+            } else {
+                priorityInput.value = 'General Use';
             }
         }
 
@@ -1004,7 +1187,34 @@
                 });
             } catch (e) {
                 console.error(e);
-                alert('Failed to load rooms for this building.');
+                Swal.fire('Error', 'Failed to load rooms for this building.', 'error');
+            }
+        }
+
+        async function handleExtTypeChange() {
+            const select = document.getElementById('ext_type_select');
+            if (select.value === 'Other') {
+                const { value: otherType } = await Swal.fire({
+                    title: 'Specify Extinguisher Type',
+                    input: 'text',
+                    inputLabel: 'What type of fire extinguisher?',
+                    inputPlaceholder: 'Enter type...',
+                    showCancelButton: true,
+                    inputValidator: (value) => {
+                        if (!value) return 'You need to write something!'
+                    }
+                });
+
+                if (otherType) {
+                    // Create new option or just update the current 'Other' value
+                    const newOption = document.createElement('option');
+                    newOption.value = otherType;
+                    newOption.textContent = otherType;
+                    newOption.selected = true;
+                    select.appendChild(newOption);
+                } else {
+                    select.value = 'ABC'; // Default back
+                }
             }
         }
 
@@ -1049,23 +1259,26 @@
             const covered = Array.from(document.getElementById('coveredRoomsSelect').selectedOptions).map(o => o.value);
 
             if (!centerId) {
-                alert('Please select a center room.');
+                Swal.fire('Selection Required', 'Please select a center room.', 'warning');
                 return;
             }
             if (covered.length < 1 || covered.length > 3) {
-                alert('Please select 1 to 3 covered rooms.');
+                Swal.fire('Invalid Selection', 'Please select 1 to 3 covered rooms.', 'warning');
                 return;
             }
             if (!covered.includes(centerId)) {
-                alert('Covered rooms must include the center room.');
+                Swal.fire('Inconsistent Selection', 'Covered rooms must include the center room.', 'warning');
                 return;
             }
 
             const centerType = document.getElementById('centerRoomSelect').selectedOptions[0]?.dataset?.roomType;
             if (centerType === 'laboratory' && covered.length > 2) {
-                alert('Laboratory can only cover itself, or itself + 1 auxiliary room.');
+                Swal.fire('Constraint Error', 'Laboratory can only cover itself, or itself + 1 clinic/auxiliary room.', 'warning');
                 return;
             }
+
+            // Update pressure based on status if needed, or enforce validation later
+            // For now, simple validation
 
             const formData = new FormData(form);
 
@@ -1081,15 +1294,16 @@
 
                 const data = await resp.json();
                 if (!resp.ok || !data.success) {
-                    alert(data.message || 'Failed to add extinguisher');
+                    Swal.fire('Error', data.message || 'Failed to add extinguisher', 'error');
                     return;
                 }
 
-                alert('Extinguisher added successfully!');
-                location.reload();
+                Swal.fire('Success', 'Extinguisher added successfully!', 'success').then(() => {
+                    location.reload();
+                });
             } catch (e) {
                 console.error(e);
-                alert('Failed to add extinguisher. Please try again.');
+                Swal.fire('Error', 'Failed to add extinguisher. Please try again.', 'error');
             }
         }
 
@@ -1100,7 +1314,7 @@
                 if (selected.length > 3) {
                     // keep first 3
                     selected.slice(3).forEach(o => o.selected = false);
-                    alert('Max of 3 rooms can be covered by one extinguisher.');
+                    Swal.fire('Limit Reached', 'Max of 3 rooms can be covered by one extinguisher.', 'info');
                 }
             }
         });
@@ -1112,9 +1326,31 @@
             document.getElementById('updateExtCode').value = code;
             document.getElementById('updateExtStatus').value = status;
             document.getElementById('updateExtPressure').value = pressure;
-            
+
             updateModalBS = new bootstrap.Modal(document.getElementById('updateExtModal'));
             updateModalBS.show();
+        }
+
+        function handleUpdateStatusChange() {
+            const status = document.getElementById('updateExtStatus').value;
+            const pressureInput = document.getElementById('updateExtPressure');
+
+            if (status === 'active') {
+                pressureInput.min = 70;
+                pressureInput.max = 100;
+                if (pressureInput.value < 70) pressureInput.value = 70;
+            } else if (status === 'maintenance') {
+                pressureInput.min = 0;
+                pressureInput.max = 69;
+                if (pressureInput.value >= 70) pressureInput.value = 69;
+            } else if (status === 'expired') {
+                pressureInput.min = 0;
+                pressureInput.max = 19;
+                if (pressureInput.value > 19) pressureInput.value = 19;
+            } else {
+                pressureInput.min = 0;
+                pressureInput.max = 100;
+            }
         }
 
         async function saveExtinguisherStatus() {
@@ -1136,28 +1372,29 @@
                     },
                     body: formData
                 });
-                
+
                 const data = await resp.json();
                 if(data.success) {
-                    alert('Updated successfully');
-                    location.reload();
+                    Swal.fire('Updated', 'Extinguisher status updated successfully!', 'success').then(() => {
+                        location.reload();
+                    });
                 } else {
-                    alert(data.message || 'Error updating');
+                    Swal.fire('Error', data.message || 'Error updating extinguisher', 'error');
                 }
             } catch(e) {
                 console.error(e);
-                alert('Failed to update');
+                Swal.fire('Network Error', 'Failed to update extinguisher status.', 'error');
             }
         }
 
         async function loadRecentInspections(schoolId) {
             const tableBody = document.querySelector(`#inspectionsTable-${schoolId} tbody`);
             tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Loading...</td></tr>';
-            
+
             try {
                 const resp = await fetch(`/fire-safety/extinguisher/inspections/${schoolId}`);
                 const data = await resp.json();
-                
+
                 if (data.length === 0) {
                     tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No recent inspections found.</td></tr>';
                     return;
@@ -1165,13 +1402,20 @@
 
                 tableBody.innerHTML = '';
                 data.forEach(item => {
+                    let badgeClass = 'secondary';
+                    let statusLabel = item.status;
+                    if (item.status === 'active') { badgeClass = 'success'; statusLabel = 'OK'; }
+                    else if (item.status === 'maintenance') { badgeClass = 'warning'; statusLabel = 'For Refill'; }
+                    else if (item.status === 'expired') { badgeClass = 'danger'; statusLabel = 'Empty'; }
+                    else if (item.status === 'missing') { badgeClass = 'danger'; statusLabel = 'Missing'; }
+
                     const row = `
                         <tr>
                             <td>${item.date}</td>
                             <td class="fw-bold">${item.code}</td>
                             <td>${item.location}</td>
                             <td>${item.inspector}</td>
-                            <td><span class="badge bg-secondary">${item.status}</span></td>
+                            <td><span class="badge bg-${badgeClass}">${statusLabel}</span></td>
                             <td>${item.pressure_level}%</td>
                         </tr>
                     `;
@@ -1190,7 +1434,7 @@
                const sId = activeTabPane.id.replace('school-', '');
                loadRecentInspections(sId);
            }
-           
+
            // Listener for tab changes
            const tabEls = document.querySelectorAll('button[data-bs-toggle="tab"]');
            tabEls.forEach(tabEl => {
@@ -1201,6 +1445,42 @@
                });
            });
         });
+        function handleAddStatusChange() {
+            const status = document.getElementById('addExtStatus').value;
+            const pressureInput = document.getElementById('addExtPressure');
+
+            if (status === 'active') {
+                pressureInput.min = 70;
+                pressureInput.max = 100;
+                if (pressureInput.value < 70) pressureInput.value = 100;
+            } else if (status === 'maintenance') {
+                pressureInput.min = 20;
+                pressureInput.max = 69;
+                if (pressureInput.value >= 70 || pressureInput.value < 20) pressureInput.value = 69;
+            } else if (status === 'expired') {
+                pressureInput.min = 0;
+                pressureInput.max = 19;
+                if (pressureInput.value > 19) pressureInput.value = 19;
+            } else {
+                pressureInput.min = 0;
+                pressureInput.max = 100;
+            }
+        }
+
+        function inspectRoom(roomId) {
+            Swal.fire({
+                title: 'Inspect & Update Room',
+                text: 'This feature allows you to update specific room safety details. Opening room management...',
+                icon: 'info',
+                timer: 1500,
+                showConfirmButton: false
+            }).then(() => {
+                // For now, redirect to customization or open a specific modal if one existed
+                // The user requested 'Inspect & Update' button, usually implying a details view
+                // Since there's no specific 'update room' modal mentioned, I'll redirect to a common place or show a placeholder
+                Swal.fire('Coming Soon', 'Room-specific inspection details are under development.', 'info');
+            });
+        }
     </script>
 </body>
 </html>

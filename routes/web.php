@@ -35,6 +35,24 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     Route::get('/buildings', [FireSafetyController::class, 'buildings'])->name('fire-safety.buildings');
     Route::get('/evacuation-plans', [FireSafetyController::class, 'evacuationPlans'])->name('fire-safety.evacuation-plans');
     Route::post('/evacuation-plan/store', [FireSafetyController::class, 'storeEvacuationPlan'])->name('fire-safety.evacuation-plan.store');
+    Route::get('/evacuation-plan/{id}', [FireSafetyController::class, 'getEvacuationPlan']);
+    Route::get('/evacuation-plan/{id}/details', [FireSafetyController::class, 'getEvacuationPlanDetails']);
+    Route::put('/evacuation-plan/{id}', [FireSafetyController::class, 'updateEvacuationPlan']);
+    Route::delete('/evacuation-plan/{id}', [FireSafetyController::class, 'deleteEvacuationPlan']);
+    Route::get('/building/{buildingId}/has-plan', [FireSafetyController::class, 'checkBuildingPlan']);
+    Route::get('/building/{buildingId}/evacuation-data', [FireSafetyController::class, 'getBuildingEvacuationData']);
+    
+    // Drill routes
+    Route::get('/drill-history/{schoolId}', [FireSafetyController::class, 'getDrillHistory']);
+    Route::get('/drill-buildings/{schoolId}', [FireSafetyController::class, 'getDrillBuildings']);
+    Route::post('/drill/schedule', [FireSafetyController::class, 'scheduleDrill']);
+    Route::get('/drill/{id}', [FireSafetyController::class, 'getDrill']);
+    Route::post('/drill/{id}/cancel', [FireSafetyController::class, 'cancelDrill']);
+    
+    // Stats routes
+    Route::get('/plan-stats/{schoolId}', [FireSafetyController::class, 'getPlanStats']);
+    Route::get('/evacuation-sidebar-stats/{schoolId}', [FireSafetyController::class, 'getEvacuationSidebarStats']);
+
     Route::get('/customization', [FireSafetyController::class, 'customization'])->name('fire-safety.customization');
     Route::get('/customization', [FireSafetyController::class, 'customization'])->name('fire-safety.customization');
     
@@ -72,6 +90,7 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     // Building Routes
     Route::get('/building/{id}', [FireSafetyController::class, 'getBuilding']);
     Route::post('/building/store', [FireSafetyController::class, 'storeBuilding'])->name('fire-safety.building.store');
+    Route::post('/building/{id}/update', [FireSafetyController::class, 'updateBuilding'])->name('fire-safety.building.update');
     Route::get('/inspections/{schoolId}', [FireSafetyController::class, 'getInspections']);
     Route::get('/compliance-stats/{schoolId}', [FireSafetyController::class, 'getComplianceStats']);
     Route::get('/sidebar-stats/{schoolId}', [FireSafetyController::class, 'getSidebarStats']);
@@ -86,6 +105,7 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     // Room-based Fire Extinguisher Routes (AJAX)
     Route::get('/rooms/{buildingId}', [FireSafetyController::class, 'getRooms'])->name('fire-safety.rooms.list');
     Route::post('/room/store', [FireSafetyController::class, 'storeRoom'])->name('fire-safety.room.store');
+    Route::get('/room/{id}', [FireSafetyController::class, 'getRoom'])->name('fire-safety.room.show');
     Route::post('/extinguisher/store', [FireSafetyController::class, 'storeExtinguisher'])->name('fire-safety.extinguisher.store');
     Route::post('/extinguisher/{id}/update', [FireSafetyController::class, 'updateExtinguisher'])->name('fire-safety.extinguisher.update');
     Route::get('/extinguisher/inspections/{schoolId}', [FireSafetyController::class, 'getRecentExtinguisherInspections'])->name('fire-safety.extinguisher.inspections');

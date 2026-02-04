@@ -22,9 +22,9 @@ class FireSafetyAlarmSystem extends Model
         'notes'
     ];
 
-    public function building()
+    public function buildings()
     {
-        return $this->belongsTo(FireSafetyBuilding::class, 'building_id');
+        return $this->belongsToMany(FireSafetyBuilding::class, 'fire_safety_alarm_building', 'alarm_id', 'building_id');
     }
     public function school()
     {

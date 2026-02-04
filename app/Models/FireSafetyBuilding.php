@@ -16,7 +16,6 @@ class FireSafetyBuilding extends Model
         'building_name',
         'floors',
         'rooms',
-        'capacity',
         'year_constructed',
         'last_renovation',
         'emergency_exits',
@@ -28,7 +27,6 @@ class FireSafetyBuilding extends Model
     protected $casts = [
         'floors' => 'integer',
         'rooms' => 'integer',
-        'capacity' => 'integer',
         'year_constructed' => 'integer',
         'last_renovation' => 'integer',
         'emergency_exits' => 'integer'
@@ -43,6 +41,11 @@ class FireSafetyBuilding extends Model
     public function alarmSystems(): HasMany
     {
         return $this->hasMany(FireSafetyAlarmSystem::class, 'building_id');
+    }
+
+    public function alarmSystemsMany(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(FireSafetyAlarmSystem::class, 'fire_safety_alarm_building', 'building_id', 'alarm_id');
     }
 
     public function fireExtinguishers(): HasMany

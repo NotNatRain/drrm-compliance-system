@@ -31,7 +31,7 @@ class FireSafetyController extends Controller
     public function dashboard()
     {
         $query = FireSafetySchool::withCount(['extinguishers', 'alarmSystems', 'buildings', 'evacuationPlans']);
-        
+
         if (auth()->user()->role !== 'admin') {
             $query->where('id', auth()->user()->school_id);
         }
@@ -78,8 +78,8 @@ class FireSafetyController extends Controller
 
     public function alarmSystems()
     {
-        $query = FireSafetySchool::with(['alarmSystems.building', 'buildings']);
-        
+        $query = FireSafetySchool::with(['alarmSystems.buildings', 'buildings']);
+
         if (auth()->user()->role !== 'admin') {
             $query->where('id', auth()->user()->school_id);
         }
@@ -123,6 +123,8 @@ class FireSafetyController extends Controller
             $validated = $request->validate([
                 'school_id' => 'required|exists:firesafety_school_information,id',
                 'building_id' => 'nullable|exists:firesafety_buildings,id',
+                'building_ids' => 'nullable|array',
+                'building_ids.*' => 'exists:firesafety_buildings,id',
                 'code' => 'required|string|max:50',
                 'alarm_type' => 'required|in:Bell,Mechanical,Digital',
                 'status' => 'required|string',
@@ -152,6 +154,12 @@ class FireSafetyController extends Controller
             }
 
             $alarm = FireSafetyAlarmSystem::create($validated);
+
+            if ($request->has('building_ids') && is_array($request->building_ids)) {
+                $alarm->buildings()->sync($request->building_ids);
+            } elseif ($request->building_id) {
+                $alarm->buildings()->sync([$request->building_id]);
+            }
 
             Log::info('Alarm created successfully:', ['id' => $alarm->id]);
 
@@ -188,7 +196,9 @@ class FireSafetyController extends Controller
             'status' => 'required|string',
             'last_test' => 'nullable|date',
             'next_test_due' => 'required|date',
-            'notes' => 'nullable|string'
+            'notes' => 'nullable|string',
+            'building_ids' => 'nullable|array',
+            'building_ids.*' => 'exists:firesafety_buildings,id'
         ]);
 
         $statusMap = [
@@ -199,6 +209,10 @@ class FireSafetyController extends Controller
         $validated['status'] = $statusMap[$originalStatus] ?? $originalStatus;
 
         $alarm->update($validated);
+
+        if ($request->has('building_ids')) {
+            $alarm->buildings()->sync($request->building_ids);
+        }
 
         return response()->json([
             'success' => true,
@@ -270,7 +284,7 @@ class FireSafetyController extends Controller
             'building_id' => 'required|exists:firesafety_buildings,id',
             'room_code' => 'nullable|string|max:50',
             'room_name' => 'required|string|max:120',
-            'room_type' => 'required|in:classroom,laboratory,auxiliary,office,storage,others',
+            'room_type' => 'required|in:classroom,laboratory,clinic,department,library,storage,others',
             'floor_no' => 'nullable|integer|min:1|max:50',
         ]);
 
@@ -298,24 +312,45 @@ class FireSafetyController extends Controller
             ], 422);
         }
 
-        // Check if building has reached its room capacity
-        // We consider all existing rooms for this building
-        $currentRoomCount = FireSafetyRoom::where('building_id', $validated['building_id'])->count();
-
-        // The building model has a 'rooms' column which is the total capacity/count defined by user
-        if ($currentRoomCount >= $building->rooms) {
-            return response()->json([
-                'success' => false,
-                'message' => "Cannot add more rooms. Building capacity of {$building->rooms} rooms has been reached."
-            ], 422);
-        }
-
         $room = FireSafetyRoom::create($validated);
+
+        // Update building's total rooms count to stay in sync
+        $building->increment('rooms');
 
         return response()->json([
             'success' => true,
             'message' => 'Room added successfully!',
             'room' => $room
+        ]);
+    }
+
+    // Get room details with extinguisher info
+    public function getRoom($id)
+    {
+        $room = FireSafetyRoom::with(['building', 'extinguishersCoveringThisRoom'])->findOrFail($id);
+
+        // Find the extinguisher that covers this room
+        $extinguisher = null;
+        if ($room->extinguishersCoveringThisRoom->count() > 0) {
+            $ext = $room->extinguishersCoveringThisRoom->first();
+            $extinguisher = [
+                'id' => $ext->id,
+                'code' => $ext->code,
+                'type' => $ext->type,
+                'status' => $ext->status,
+                'pressure_level' => $ext->pressure_level,
+                'date_checked' => $ext->date_checked
+            ];
+        }
+
+        return response()->json([
+            'id' => $room->id,
+            'room_code' => $room->room_code,
+            'room_name' => $room->room_name,
+            'room_type' => $room->room_type,
+            'floor_no' => $room->floor_no,
+            'building' => $room->building->building_no ?? 'N/A',
+            'extinguisher' => $extinguisher
         ]);
     }
 
@@ -380,19 +415,19 @@ class FireSafetyController extends Controller
             ], 422);
         }
 
-        // Laboratory rule: lab can only share with ONE auxiliary room (total 2 rooms)
+        // Laboratory rule: lab can only share with ONE clinic/auxiliary room (total 2 rooms)
         if ($centerRoom->room_type === 'laboratory' && count($coveredRoomIds) > 2) {
             return response()->json([
                 'success' => false,
-                'message' => 'Laboratory center room can cover only itself, or itself + 1 auxiliary room.'
+                'message' => 'Laboratory center room can cover only itself, or itself + 1 clinic/auxiliary room.'
             ], 422);
         }
         if ($centerRoom->room_type === 'laboratory' && count($coveredRoomIds) === 2) {
             $otherRoom = $coveredRooms->firstWhere('id', '!=', $centerRoom->id);
-            if (!$otherRoom || $otherRoom->room_type !== 'auxiliary') {
+            if (!$otherRoom || !in_array($otherRoom->room_type, ['clinic', 'auxiliary'])) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Laboratory can only share with an auxiliary room.'
+                    'message' => 'Laboratory can only share with a clinic or auxiliary room.'
                 ], 422);
             }
         }
@@ -506,7 +541,7 @@ class FireSafetyController extends Controller
             ->get()
             ->map(function($insp) {
                 return [
-                    'date' => Carbon::parse($insp->inspection_date)->format('Y-m-d'),
+                    'date' => \Carbon\Carbon::parse($insp->inspection_date)->format('Y-m-d'),
                     'code' => $insp->extinguisher->code,
                     'location' => ($insp->extinguisher->building->building_no ?? '?') . ' - ' . ($insp->extinguisher->centerRoom->room_name ?? '?'),
                     'inspector' => $insp->inspector->name ?? 'Unknown',
@@ -572,7 +607,6 @@ class FireSafetyController extends Controller
             'building_name' => 'nullable|string|max:100',
             'floors' => 'required|integer|min:1',
             'rooms' => 'required|integer|min:1',
-            'capacity' => 'required|integer|min:1',
             'year_constructed' => 'nullable|integer|min:1900|max:' . date('Y'),
             'last_renovation' => 'nullable|integer|min:1900|max:' . date('Y'),
             'emergency_exits' => 'nullable|integer|min:0',
@@ -580,6 +614,22 @@ class FireSafetyController extends Controller
             'description' => 'nullable|string',
             'features' => 'nullable|array'
         ]);
+
+        // Unique Building Code Check (Per School)
+        $exists = FireSafetyBuilding::where('school_id', $validated['school_id'])
+            ->where('building_no', $validated['building_no'])
+            ->exists();
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Building code already exists in this school.'
+            ], 422);
+        }
+
+        // Gymnasium & Cafeteria restriction: only 1 room
+        if (in_array(strtolower($validated['building_type']), ['gymnasium', 'cafeteria'])) {
+            $validated['rooms'] = 1;
+        }
 
         // Convert features array to comma-separated string
         if (isset($validated['features'])) {
@@ -592,12 +642,131 @@ class FireSafetyController extends Controller
             'message' => 'Building added successfully!'
         ]);
     }
+
+    // Update building
+    public function updateBuilding(Request $request, $id)
+    {
+        $building = FireSafetyBuilding::findOrFail($id);
+
+        $validated = $request->validate([
+            'building_no' => 'required|string|max:50',
+            'building_name' => 'nullable|string|max:100',
+            'year_constructed' => 'nullable|integer|min:1900|max:' . date('Y'),
+            'last_renovation' => 'nullable|integer|min:1900|max:' . date('Y'),
+            'emergency_exits' => 'nullable|integer|min:0',
+            'description' => 'nullable|string',
+            'features' => 'nullable|array',
+            'removed_floor' => 'nullable|integer',
+            'removed_room_id' => 'nullable|exists:fire_safety_rooms,id'
+        ]);
+
+        // Check uniqueness if building_no is changing
+        if ($validated['building_no'] !== $building->building_no) {
+            $exists = FireSafetyBuilding::where('school_id', $building->school_id)
+                ->where('building_no', $validated['building_no'])
+                ->where('id', '!=', $id)
+                ->exists();
+            if ($exists) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Building code already exists in this school.'
+                ], 422);
+            }
+        }
+
+        // Gymnasium & Cafeteria restriction is enforced at creation only
+        // Building type cannot be changed after creation
+
+        // Convert features array to comma-separated string
+        if (isset($validated['features'])) {
+            $validated['features'] = implode(',', $validated['features']);
+        }
+
+        // Handle Cascading Removals
+        $cascadingMessages = [];
+
+        // 1. Floor Removal
+        if ($request->filled('removed_floor')) {
+            $floorNo = $request->removed_floor;
+            // Remove Alarms on this floor
+            $locationPrefix = "Floor " . $floorNo . " -";
+            $alarmsToRemove = FireSafetyAlarmSystem::where('building_id', $id)
+                ->where('location', 'like', $locationPrefix . '%')
+                ->get();
+            foreach ($alarmsToRemove as $alarm) {
+                $alarm->buildings()->detach();
+                $alarm->delete();
+            }
+
+            // Get rooms on this floor to remove extinguishers
+            $roomsOnFloor = FireSafetyRoom::where('building_id', $id)->where('floor_no', $floorNo)->get();
+            foreach ($roomsOnFloor as $room) {
+                $this->processRoomRemoval($room);
+            }
+
+            $building->decrement('floors');
+            $cascadingMessages[] = "Floor {$floorNo} and its associated safety systems were removed.";
+        }
+
+        // 2. Room Removal
+        if ($request->filled('removed_room_id')) {
+            $room = FireSafetyRoom::findOrFail($request->removed_room_id);
+            $res = $this->processRoomRemoval($room);
+            $building->decrement('rooms');
+            if ($res) $cascadingMessages[] = $res;
+        }
+
+        $building->update(collect($validated)->except(['removed_floor', 'removed_room_id', 'building_type'])->toArray());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Building updated successfully!' . (count($cascadingMessages) > 0 ? ' ' . implode(' ', $cascadingMessages) : '')
+        ]);
+    }
+
+    private function processRoomRemoval($room)
+    {
+        // Find extinguishers where this room is the center
+        $extsAsCenter = FireSafetyExtinguisher::where('room_id', $room->id)->get();
+        foreach ($extsAsCenter as $ext) {
+            // Find other rooms covered by this extinguisher on same floor
+            $otherRooms = $ext->coveredRooms()->where('fire_safety_rooms.id', '!=', $room->id)->get();
+            if ($otherRooms->count() > 0) {
+                $newCenter = $otherRooms->random();
+                $ext->update(['room_id' => $newCenter->id]);
+            } else {
+                $ext->delete(); // No rooms left to cover
+            }
+        }
+
+        // Detach from all extinguisher coverages
+        $room->extinguishersCoveringThisRoom()->detach();
+        $roomName = $room->room_name;
+        $room->delete();
+
+        return "Room {$roomName} was removed and safety equipment was re-assigned/removed.";
+    }
+
     // Get building details
     public function getBuilding($id)
     {
-        $building = FireSafetyBuilding::with(['school', 'alarmSystems', 'fireExtinguishers'])->findOrFail($id);
+        Log::info('getBuilding called with id: ' . $id);
+        try {
+            $building = FireSafetyBuilding::with(['school'])->findOrFail($id);
+            Log::info('Building found: ' . $building->id);
 
-        return response()->json($building);
+            // Check if user has access to this building's school
+            if (auth()->user()->role !== 'admin' && $building->school_id !== auth()->user()->school_id) {
+                Log::warning('Access denied for user ' . auth()->id() . ' to building ' . $id);
+                return response()->json(['error' => 'Access denied'], 403);
+            }
+
+            Log::info('Returning building data');
+            return response()->json($building);
+        } catch (\Exception $e) {
+            Log::error('Error loading building details: ' . $e->getMessage());
+            return response()->json(['error' => 'Building not found or error loading details'], 404);
+        }
     }
 
     // Get inspections for a school
@@ -761,7 +930,7 @@ class FireSafetyController extends Controller
         }
 
         $schools = $query->get();
-        
+
         return view('fire-safety.evacuation-plans', compact('schools'));
     }
     public function storeEvacuationPlan(Request $request)
@@ -777,7 +946,7 @@ class FireSafetyController extends Controller
             'assembly_capacity' => 'required|integer|min:1',
             'status' => 'required|in:active,draft,review,inactive',
         ]);
-        
+
         $plan = FireSafetyEvacuationPlan::create([
             'school_id' => $request->school_id,
             'building_id' => $request->building_id,
@@ -794,22 +963,158 @@ class FireSafetyController extends Controller
             'special_instructions' => $request->special_instructions,
             'status' => $request->status,
             'approved_at' => $request->status === 'active' ? now() : null,
+            'map_data' => $request->map_data,
         ]);
-        
+
         return response()->json(['success' => true, 'message' => 'Evacuation plan created successfully']);
+    }
+
+    public function getEvacuationPlan($id)
+    {
+        $plan = FireSafetyEvacuationPlan::findOrFail($id);
+        return response()->json($plan);
+    }
+
+    public function getEvacuationPlanDetails($id)
+    {
+        $plan = FireSafetyEvacuationPlan::with(['building', 'school'])->findOrFail($id);
+
+        // Load all buildings for the school with their safety components
+        $schoolBuildings = FireSafetyBuilding::where('school_id', $plan->school_id)
+            ->with(['rooms', 'fireExtinguishers', 'alarmSystemsMany'])
+            ->get();
+
+        return response()->json([
+            'plan' => $plan,
+            'building' => $plan->building,
+            'school_buildings' => $schoolBuildings,
+            'stats' => $plan->safety_equipment_summary,
+            'status_label' => $plan->status_label,
+            'status_color' => $plan->status_color
+        ]);
+    }
+
+    public function updateEvacuationPlan(Request $request, $id)
+    {
+        $plan = FireSafetyEvacuationPlan::findOrFail($id);
+
+        $request->validate([
+            'plan_no' => 'required|string|max:50',
+            'exits' => 'required|integer|min:1',
+            'routes' => 'required|integer|min:1|max:5',
+            'areas' => 'required|integer|min:1|max:3',
+            'primary_route' => 'required|string',
+            'primary_assembly_area' => 'required|string',
+            'assembly_capacity' => 'required|integer|min:1',
+            'status' => 'required|in:active,draft,review,inactive',
+        ]);
+
+        $data = $request->all();
+        if ($request->status === 'active' && $plan->status !== 'active') {
+            $data['approved_at'] = now();
+        }
+
+        $plan->update($data);
+
+        return response()->json(['success' => true, 'message' => 'Evacuation plan updated successfully']);
+    }
+
+    public function deleteEvacuationPlan($id)
+    {
+        $plan = FireSafetyEvacuationPlan::findOrFail($id);
+        $plan->delete();
+        return response()->json(['success' => true, 'message' => 'Evacuation plan deleted successfully']);
+    }
+
+    public function checkBuildingPlan($buildingId)
+    {
+        $plan = FireSafetyEvacuationPlan::where('building_id', $buildingId)->first();
+        return response()->json([
+            'has_plan' => $plan !== null,
+            'plan_id' => $plan ? $plan->id : null
+        ]);
+    }
+
+    public function getBuildingEvacuationData($buildingId)
+    {
+        $building = FireSafetyBuilding::findOrFail($buildingId);
+        return response()->json([
+            'building_name' => $building->building_name,
+            'building_no' => $building->building_no,
+            'rooms' => $building->rooms_count,
+            'exits' => $building->emergency_exits,
+            'alarms' => $building->functional_alarms_count,
+            'extinguishers' => $building->active_extinguishers_count,
+        ]);
+    }
+
+    public function getDrillBuildings($schoolId)
+    {
+        $buildings = FireSafetyBuilding::where('school_id', $schoolId)->get();
+        return response()->json($buildings);
+    }
+
+    public function scheduleDrill(Request $request)
+    {
+        $request->validate([
+            'school_id' => 'required|exists:firesafety_school_information,id',
+            'drill_type' => 'required|string',
+            'drill_date' => 'required|date',
+            'building_ids' => 'required|array',
+            'coordinator' => 'required|string',
+        ]);
+
+        $drill = FireSafetyEvacuationDrill::create([
+            'school_id' => $request->school_id,
+            'drill_type' => $request->drill_type,
+            'drill_date' => $request->drill_date,
+            'status' => 'scheduled',
+            'coordinator' => $request->coordinator,
+            'notes' => $request->notes,
+        ]);
+
+        $drill->buildings()->attach($request->building_ids);
+
+        return response()->json(['success' => true, 'message' => 'Drill scheduled successfully']);
+    }
+
+    public function getDrill($id)
+    {
+        $drill = FireSafetyEvacuationDrill::with('buildings')->findOrFail($id);
+        return response()->json($drill);
+    }
+
+    public function cancelDrill($id)
+    {
+        $drill = FireSafetyEvacuationDrill::findOrFail($id);
+        $drill->update(['status' => 'cancelled']);
+        return response()->json(['success' => true, 'message' => 'Drill cancelled successfully']);
+    }
+
+    public function getEvacuationSidebarStats($schoolId)
+    {
+        $school = FireSafetySchool::withCount(['buildings', 'evacuationPlans'])->findOrFail($schoolId);
+        $activePlans = FireSafetyEvacuationPlan::where('school_id', $schoolId)->where('status', 'active')->count();
+
+        return response()->json([
+            'total_buildings' => $school->buildings_count,
+            'total_plans' => $school->evacuation_plans_count,
+            'active_plans' => $activePlans,
+            'buildings_without_plans' => $school->buildings_count - $school->evacuation_plans_count,
+        ]);
     }
     public function getPlanStats($schoolId)
     {
         $school = FireSafetySchool::withCount(['buildings'])->findOrFail($schoolId);
-        
+
         $activePlans = FireSafetyEvacuationPlan::where('school_id', $schoolId)
             ->where('status', 'active')
             ->count();
-        
+
         $draftPlans = FireSafetyEvacuationPlan::where('school_id', $schoolId)
             ->where('status', 'draft')
             ->count();
-        
+
         return response()->json([
             'active_plans' => $activePlans,
             'draft_plans' => $draftPlans,
@@ -824,14 +1129,14 @@ class FireSafetyController extends Controller
             ->orderBy('drill_date', 'desc')
             ->limit(10)
             ->get();
-        
+
         return response()->json($drills);
     }
 
     public function customization()
     {
         $user = auth()->user();
-        
+
         if ($user->role === 'admin') {
             // Load all data for admin
             $schools = FireSafetySchool::withCount(['buildings', 'rooms', 'alarmSystems', 'extinguishers as fire_extinguishers_count'])->get();
@@ -841,7 +1146,7 @@ class FireSafetyController extends Controller
             $extinguisherTypes = SystemConfiguration::where('config_type', 'extinguisher_type')->get();
             $extinguisherStatuses = SystemConfiguration::where('config_type', 'extinguisher_status')->get();
             $safetyFeatures = SystemConfiguration::where('config_type', 'safety_feature')->orderBy('sort_order')->get();
-            
+
             return view('fire-safety.customization', compact(
                 'schools', 'buildingTypes', 'alarmTypes', 'alarmStatuses',
                 'extinguisherTypes', 'extinguisherStatuses', 'safetyFeatures'
@@ -850,7 +1155,7 @@ class FireSafetyController extends Controller
             // For contributors, just load their school
             $school = FireSafetySchool::withCount(['buildings', 'rooms', 'alarmSystems', 'extinguishers as fire_extinguishers_count'])
                 ->find($user->school_id);
-                
+
             return view('fire-safety.customization', compact('school'));
         }
     }
@@ -858,7 +1163,7 @@ class FireSafetyController extends Controller
     public function updateSchool(Request $request)
     {
         $user = auth()->user();
-        
+
         if ($user->role === 'admin') {
             // Admin can update any school
             $schoolId = $request->school_id;
@@ -869,7 +1174,7 @@ class FireSafetyController extends Controller
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
         }
-        
+
         $validated = $request->validate([
             'school_name' => 'required|string|max:255',
             'address' => 'required|string',
@@ -879,10 +1184,10 @@ class FireSafetyController extends Controller
             'drrm_coordinator_contact' => 'nullable|string|max:20',
             'email' => 'nullable|email',
         ]);
-        
+
         $school = FireSafetySchool::findOrFail($schoolId);
         $school->update($validated);
-        
+
         return response()->json(['success' => true, 'message' => 'School updated successfully']);
     }
 
@@ -974,7 +1279,7 @@ class FireSafetyController extends Controller
     public function storeSchool(Request $request)
     {
         $user = auth()->user();
-        
+
         // Restriction: Contributor can only add one school
         if ($user->role === 'contributor') {
             $existingSchoolCount = FireSafetySchool::where('id', $user->school_id)->count();
@@ -1123,7 +1428,7 @@ class FireSafetyController extends Controller
         $schools = FireSafetySchool::all();
         $filename = "schools_export_" . date('Y-m-d') . ".csv";
         $handle = fopen('php://output', 'w');
-        
+
         // Add CSV header
         fputcsv($handle, ['ID', 'School ID', 'Name', 'Address', 'Head', 'DRRM Coordinator', 'Status', 'Last Updated']);
 
@@ -1142,7 +1447,7 @@ class FireSafetyController extends Controller
 
         header('Content-Type: text/csv');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
-        
+
         fclose($handle);
         exit;
     }
