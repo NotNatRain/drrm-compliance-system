@@ -353,170 +353,153 @@
         <div class="row">
             <div class="col-lg-12">
                 <div class="card dashboard-card mb-4">
-                    <div class="card-header py-3">
+                    <div class="card-header py-3 d-flex justify-content-between align-items-center">
                         <h6 class="m-0 fw-bold text-primary">School Safety Status</h6>
+                        <div class="d-flex gap-2">
+                            <select id="statusFilter" class="form-select form-select-sm" style="width: auto;">
+                                <option value="all">All Status</option>
+                                <option value="passed">Passed</option>
+                                <option value="failed">Ongoing</option>
+                                <option value="unconfigured">Unconfigured</option>
+                            </select>
+                            <select id="sortFilter" class="form-select form-select-sm" style="width: auto;">
+                                <option value="name_asc">School Name (A-Z)</option>
+                                <option value="name_desc">School Name (Z-A)</option>
+                                <option value="inspection_asc">Last Inspection (Oldest)</option>
+                                <option value="inspection_desc">Last Inspection (Newest)</option>
+                            </select>
+                        </div>
                     </div>
                     <div class="card-body">
-                        <ul class="nav nav-tabs" id="schoolTab">
-                            <li class="nav-item">
-                                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#all">
-                                    All Schools
-                                </button>
-                            </li>
-                            @foreach($schools as $school)
-                            <li class="nav-item">
-                                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#school-{{ $school->id }}">
-                                    {{ $school->name }}
-                                </button>
-                            </li>
-                            @endforeach
-                        </ul>
-                        <div class="tab-content mt-3">
-                            <!-- All Schools Tab -->
-                            <div class="tab-pane fade show active" id="all">
-                                <div class="row">
-                                    <div class="col-lg-8">
-                                        <div class="table-responsive">
-                                            <table class="table table-hover">
-                                                <thead class="table-light">
-                                                    <tr>
-                                                        <th>School</th>
-                                                        <th>Status</th>
-                                                        <th>Issues</th>
-                                                        <th>Last Inspection</th>
-                                                        <th>Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @forelse($schools as $school)
-                                                        <tr>
-                                                            <td>{{ $school->school_name }}</td>
-                                                                <td>
-                                                                    @if($school->status === 'passed')
-                                                                        <span class="status-badge bg-success">PASSED</span>
-                                                                    @elseif($school->status === 'failed')
-                                                                        <span class="status-badge bg-danger">FAILED</span>
-                                                                    @elseif($school->status === 'unconfigured')
-                                                                        <span class="status-badge bg-warning">UNCONFIGURED</span>
-                                                                    @else
-                                                                        <span class="status-badge bg-warning">WARNING</span>
-                                                                    @endif
-                                                                </td>
-                                                            <td>
-                                                                @if($school->status === 'unconfigured')
-                                                                    Setup Needed
-                                                                @elseif ($school->issues_count > 0)
-                                                                    {{$school->issues_count}} issues found
-                                                                @else
-                                                                    None
-                                                                @endif
-                                                            </td>
-                                                            <td>
-                                                                @if($school->last_inspection_date && $school->last_inspection_date !== 'Never')
-                                                                    {{ \Carbon\Carbon::parse($school->last_inspection_date)->format('Y-m-d') }}
-                                                                @else
-                                                                    Never
-                                                                @endif
-                                                            </td>
-                                                            <td>
-                                                                @if($school->status === 'passed')
-                                                                    <button class="btn btn-sm btn-outline-primary view-school-btn"
-                                                                            data-school-id="{{ $school->id }}"
-                                                                            data-bs-toggle="modal"
-                                                                            data-bs-target="#viewSchoolModal">
-                                                                        <i class="fas fa-eye"></i> View
-                                                                    </button>
-                                                                @else
-                                                                    <button class="btn btn-sm btn-outline-warning details-btn"
-                                                                            data-school-id="{{ $school->id }}"
-                                                                            data-bs-toggle="modal"
-                                                                            data-bs-target="#issuesModal">
-                                                                        <i class="fas fa-info-circle"></i> Details
-                                                                    </button>
-                                                                @endif
-                                                            </td>
-                                                        </tr>
-                                                    @empty
-                                                        <tr>
-                                                            <td colspan="5" class="text-center text-muted py-4">
-                                                                No schools found. Click "Add Inspection" to add a school.
-                                                            </td>
-                                                        </tr>
-                                                    @endforelse
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                                                            <!-- Bottom Action Bar -->
-                                    <div class="row mt-4">
-                                        <div class="col-12">
-                                            <div class="card dashboard-card">
-                                                <div class="card-body">
-                                                    <div class="d-flex justify-content-center gap-3">
-                                                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addInspectionModal">
-                                                            <i class="fas fa-plus me-2"></i> Add Inspection
-                                                        </button>
-                                                        <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#alarmInfoModal">
-                                                            <i class="fas fa-bell me-2"></i> Simulate Alarm
-                                                        </button>
-                                                        <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#evacInfoModal">
-                                                            <i class="fas fa-map-signs me-2"></i> View Evacuation Plans
-                                                        </button>
-                                                        <button class="btn btn-success">
-                                                            <i class="fas fa-file-pdf me-2"></i> Generate Report
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    </div>
-                                    <div class="col-lg-4">
-                                        <!-- Alerts for All Schools -->
-                                        <div class="card dashboard-card mb-4">
-                                            <div class="card-header py-3 bg-danger text-white">
-                                                <h6 class="m-0 fw-bold">
-                                                    <i class="fas fa-exclamation-circle me-2"></i> Alerts - All Schools
-                                                </h6>
-                                            </div>
-                                            <div class="card-body" id="allAlerts">
-                                                <div class="text-center text-muted py-3">
-                                                    <i class="fas fa-info-circle me-2"></i>
-                                                    Select a school to see alerts
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <!-- Events for All Schools -->
+                        <div class="row">
+                            <div class="col-lg-8">
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>School</th>
+                                                <th>Status</th>
+                                                <th>Issues</th>
+                                                <th>Last Inspection</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="schoolsTableBody">
+                                            @forelse($schools as $school)
+                                                <tr data-status="{{ $school->status }}" 
+                                                    data-school-name="{{ $school->school_name }}"
+                                                    data-inspection-date="{{ $school->last_inspection_date ?? '1900-01-01' }}">
+                                                    <td>{{ $school->school_name }}</td>
+                                                    <td>
+                                                        @if($school->status === 'passed')
+                                                            <span class="status-badge bg-success">PASSED</span>
+                                                        @elseif($school->status === 'failed')
+                                                            <span class="status-badge bg-danger">FAILED</span>
+                                                        @elseif($school->status === 'unconfigured')
+                                                            <span class="status-badge bg-warning">UNCONFIGURED</span>
+                                                        @else
+                                                            <span class="status-badge bg-warning">WARNING</span>
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        @if($school->status === 'unconfigured')
+                                                            Setup Needed
+                                                        @elseif ($school->issues_count > 0)
+                                                            {{$school->issues_count}} issues found
+                                                        @else
+                                                            None
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        @if($school->last_inspection_date && $school->last_inspection_date !== 'Never')
+                                                            {{ \Carbon\Carbon::parse($school->last_inspection_date)->format('Y-m-d') }}
+                                                        @else
+                                                            Never
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        @if($school->status === 'passed')
+                                                            <button class="btn btn-sm btn-outline-primary view-school-btn"
+                                                                    data-school-id="{{ $school->id }}"
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#viewSchoolModal">
+                                                                <i class="fas fa-eye"></i> View
+                                                            </button>
+                                                        @else
+                                                            <button class="btn btn-sm btn-outline-warning details-btn"
+                                                                    data-school-id="{{ $school->id }}"
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#issuesModal">
+                                                                <i class="fas fa-info-circle"></i> Details
+                                                            </button>
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                            @empty
+                                                <tr>
+                                                    <td colspan="5" class="text-center text-muted py-4">
+                                                        No schools found. Click "Add Inspection" to add a school.
+                                                    </td>
+                                                </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <!-- Bottom Action Bar -->
+                                <div class="row mt-4">
+                                    <div class="col-12">
                                         <div class="card dashboard-card">
-                                            <div class="card-header py-3 bg-primary text-white">
-                                                <h6 class="m-0 fw-bold">
-                                                    <i class="fas fa-calendar-alt me-2"></i> Events - All Schools
-                                                </h6>
-                                            </div>
-                                            <div class="card-body" id="allEvents">
-                                                <div class="text-center text-muted py-3">
-                                                    <i class="fas fa-info-circle me-2"></i>
-                                                    Select a school to see events
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-center gap-3">
+                                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addInspectionModal">
+                                                        <i class="fas fa-plus me-2"></i> Add Inspection
+                                                    </button>
+                                                    <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#alarmInfoModal">
+                                                        <i class="fas fa-bell me-2"></i> Simulate Alarm
+                                                    </button>
+                                                    <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#evacInfoModal">
+                                                        <i class="fas fa-map-signs me-2"></i> View Evacuation Plans
+                                                    </button>
+                                                    <button class="btn btn-success">
+                                                        <i class="fas fa-file-pdf me-2"></i> Generate Report
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Individual School Tabs -->
-                                @foreach($schools as $school)
-                                <div class="tab-pane fade" id="school-{{ $school->id }}">
-                                    <div class="row">
-                                        <div class="col-lg-8">
-                                            <!-- School-specific data will go here -->
-                                        </div>
-                                        <div class="col-lg-4">
-                                            <!-- Dynamic alerts/events -->
+                            <div class="col-lg-4">
+                                <!-- Alerts for All Schools -->
+                                <div class="card dashboard-card mb-4">
+                                    <div class="card-header py-3 bg-danger text-white">
+                                        <h6 class="m-0 fw-bold">
+                                            <i class="fas fa-exclamation-circle me-2"></i> Alerts - All Schools
+                                        </h6>
+                                    </div>
+                                    <div class="card-body" id="allAlerts">
+                                        <div class="text-center text-muted py-3">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            Select a school to see alerts
                                         </div>
                                     </div>
                                 </div>
-                                @endforeach
+
+                                <!-- Events for All Schools -->
+                                <div class="card dashboard-card">
+                                    <div class="card-header py-3 bg-primary text-white">
+                                        <h6 class="m-0 fw-bold">
+                                            <i class="fas fa-calendar-alt me-2"></i> Events - All Schools
+                                        </h6>
+                                    </div>
+                                    <div class="card-body" id="allEvents">
+                                        <div class="text-center text-muted py-3">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            Select a school to see events
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -836,6 +819,61 @@ function loadSchoolIssues(schoolId) {
     if (firstTab) {
         firstTab.click();
     }
+
+    // Filter and Sort functionality
+    const statusFilter = document.getElementById('statusFilter');
+    const sortFilter = document.getElementById('sortFilter');
+    const schoolsTableBody = document.getElementById('schoolsTableBody');
+
+    function filterAndSortSchools() {
+        const statusValue = statusFilter.value;
+        const sortValue = sortFilter.value;
+        const rows = Array.from(schoolsTableBody.querySelectorAll('tr'));
+
+        // Filter rows
+        rows.forEach(row => {
+            if (row.querySelector('td[colspan]')) return; // Skip empty state row
+            
+            const rowStatus = row.dataset.status;
+            if (statusValue === 'all' || rowStatus === statusValue) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+
+        // Get visible rows
+        const visibleRows = rows.filter(row => row.style.display !== 'none' && !row.querySelector('td[colspan]'));
+
+        // Sort visible rows
+        visibleRows.sort((a, b) => {
+            if (sortValue.startsWith('name_')) {
+                const nameA = a.dataset.schoolName.toLowerCase();
+                const nameB = b.dataset.schoolName.toLowerCase();
+                return sortValue === 'name_asc' 
+                    ? nameA.localeCompare(nameB) 
+                    : nameB.localeCompare(nameA);
+            } else if (sortValue.startsWith('inspection_')) {
+                const dateA = new Date(a.dataset.inspectionDate);
+                const dateB = new Date(b.dataset.inspectionDate);
+                return sortValue === 'inspection_asc' 
+                    ? dateA - dateB 
+                    : dateB - dateA;
+            }
+            return 0;
+        });
+
+        // Reorder rows in the table
+        visibleRows.forEach(row => {
+            schoolsTableBody.appendChild(row);
+        });
+    }
+
+    if (statusFilter && sortFilter) {
+        statusFilter.addEventListener('change', filterAndSortSchools);
+        sortFilter.addEventListener('change', filterAndSortSchools);
+    }
+
     // Add School Form Submission
     const addSchoolForm = document.getElementById('addSchoolForm');
     if (addSchoolForm) {
@@ -859,19 +897,36 @@ function loadSchoolIssues(schoolId) {
             .then(async response => {
                 const data = await response.json();
                 if (response.ok && data.success) {
-                    alert('School added successfully!');
-                    // Close modal
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('addInspectionModal'));
-                    modal.hide();
-                    // Reload page
-                    location.reload();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: 'School added successfully!',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload();
+                    });
                 } else {
-                    alert(data.message || 'Failed to add school. Check your input.');
+                    // Specific handling for validation errors if data.message is present
+                    let errorMsg = data.message || 'Failed to add school. Check your input.';
+                    if (data.errors) {
+                        const firstError = Object.values(data.errors)[0][0];
+                        errorMsg = firstError;
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Notice',
+                        text: errorMsg
+                    });
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred. Please try again.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'System Error',
+                    text: 'An unexpected error occurred. Please try again later.'
+                });
             });
         });
     }

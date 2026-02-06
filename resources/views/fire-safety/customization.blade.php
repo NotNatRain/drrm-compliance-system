@@ -7,6 +7,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         :root {
             --fire-red: #A8191F;
@@ -1101,12 +1102,21 @@
 
             // Set up delete config buttons
             document.querySelectorAll('.delete-config-btn').forEach(button => {
-                button.addEventListener('click', function() {
+                button.addEventListener('click', async function() {
                     const configId = this.getAttribute('data-id');
                     const configType = this.getAttribute('data-type');
                     const configName = this.getAttribute('data-name');
                     
-                    if (confirm(`Delete ${configName}?`)) {
+                    const result = await Swal.fire({
+                        title: 'Are you sure?',
+                        text: `You are about to delete "${configName}". This action cannot be undone.`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        confirmButtonText: 'Yes, delete it!'
+                    });
+
+                    if (result.isConfirmed) {
                         deleteConfigItem(configId, configType);
                     }
                 });
@@ -1138,7 +1148,11 @@
 
             } catch (error) {
                 console.error('Error loading school:', error);
-                alert('Failed to load school data');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to load school data'
+                });
             }
         }
 
@@ -1165,16 +1179,35 @@
 
                 const data = await response.json();
 
-                if (data.success) {
-                    alert('School added successfully!');
-                    location.reload();
+                if (response.ok && data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: 'School added successfully!',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload();
+                    });
                 } else {
-                    alert('Error: ' + (data.message || 'Failed to add school'));
+                    let errorMsg = data.message || 'Failed to add school';
+                    if (data.errors) {
+                        errorMsg = Object.values(data.errors)[0][0];
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Notice',
+                        text: errorMsg
+                    });
                 }
 
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to add school');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'System Error',
+                    text: 'Failed to add school. Please check your connection.'
+                });
             }
         }
 
@@ -1203,24 +1236,51 @@
 
                 const data = await response.json();
 
-                if (data.success) {
-                    alert('School updated successfully!');
-                    location.reload();
+                if (response.ok && data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Updated',
+                        text: 'School updated successfully!',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload();
+                    });
                 } else {
-                    alert('Error: ' + (data.message || 'Failed to update school'));
+                    let errorMsg = data.message || 'Failed to update school';
+                    if (data.errors) {
+                        errorMsg = Object.values(data.errors)[0][0];
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Notice',
+                        text: errorMsg
+                    });
                 }
 
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to update school');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'System Error',
+                    text: 'Failed to update school'
+                });
             }
         }
 
         // Admin: Delete school
         async function deleteSchool(schoolId, schoolName) {
-            if (!confirm(`Are you sure you want to delete "${schoolName}"?\n\nThis will also delete all associated buildings, equipment, and data.`)) {
-                return;
-            }
+            const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: `You are about to delete "${schoolName}". This will also delete all associated buildings, equipment, and data. This action cannot be undone!`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!'
+            });
+
+            if (!result.isConfirmed) return;
 
             try {
                 const response = await fetch(`/fire-safety/school/${schoolId}`, {
@@ -1234,15 +1294,28 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    alert('School deleted successfully!');
-                    location.reload();
+                    Swal.fire(
+                        'Deleted!',
+                        'School has been deleted.',
+                        'success'
+                    ).then(() => {
+                        location.reload();
+                    });
                 } else {
-                    alert('Error: ' + (data.message || 'Failed to delete school'));
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Denied',
+                        text: 'Error: ' + (data.message || 'Failed to delete school')
+                    });
                 }
 
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to delete school');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'System Error',
+                    text: 'Failed to delete school'
+                });
             }
         }
 
@@ -1269,16 +1342,31 @@
 
                 const data = await response.json();
 
-                if (data.success) {
-                    alert('Building type added successfully!');
-                    location.reload();
+                if (response.ok && data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: 'Building type added successfully!',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload();
+                    });
                 } else {
-                    alert('Error: ' + (data.message || 'Failed to add building type'));
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Notice',
+                        text: data.message || 'Failed to add building type'
+                    });
                 }
 
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to add building type');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'System Error',
+                    text: 'Failed to add building type'
+                });
             }
         }
 
@@ -1368,16 +1456,35 @@
 
                 const data = await response.json();
 
-                if (data.success) {
-                    alert('User created successfully!');
-                    location.reload();
+                if (response.ok && data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Created!',
+                        text: 'User created successfully!',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload();
+                    });
                 } else {
-                    alert('Error: ' + (data.message || 'Failed to create user'));
+                    let errorMsg = data.message || 'Failed to create user';
+                    if (data.errors) {
+                        errorMsg = Object.values(data.errors)[0][0];
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Notice',
+                        text: errorMsg
+                    });
                 }
 
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to create user');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'System Error',
+                    text: 'Failed to create user'
+                });
             }
         }
 
@@ -1389,20 +1496,34 @@
                 const user = await response.json();
                 
                 // You need to create an edit user modal
-                // For now, just alert
-                alert(`Edit user: ${user.name}`);
+                Swal.fire({
+                    title: 'Edit User',
+                    text: `Edit user functionality for "${user.name}" is coming soon.`,
+                    icon: 'info'
+                });
                 
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to load user data');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to load user data'
+                });
             }
         }
 
         // Admin: Delete user
         async function deleteUser(userId, userName) {
-            if (!confirm(`Delete user "${userName}"?`)) {
-                return;
-            }
+            const result = await Swal.fire({
+                title: 'Delete User?',
+                text: `Are you sure you want to delete user "${userName}"?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete user'
+            });
+
+            if (!result.isConfirmed) return;
 
             try {
                 const response = await fetch(`/fire-safety/users/${userId}`, {
@@ -1416,15 +1537,27 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    alert('User deleted successfully!');
+                    Swal.fire(
+                        'Deleted!',
+                        'User has been deleted.',
+                        'success'
+                    );
                     loadUsers();
                 } else {
-                    alert('Error: ' + (data.message || 'Failed to delete user'));
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Denied',
+                        text: 'Error: ' + (data.message || 'Failed to delete user')
+                    });
                 }
 
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to delete user');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'System Error',
+                    text: 'Failed to delete user'
+                });
             }
         }
 
@@ -1503,21 +1636,44 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    alert('School information updated successfully!');
-                    location.reload();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Information Updated',
+                        text: 'School information updated successfully!',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload();
+                    });
                 } else {
-                    alert('Error: ' + (data.message || 'Failed to update school information'));
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Denied',
+                        text: 'Error: ' + (data.message || 'Failed to update school information')
+                    });
                 }
 
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to update school information');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'System Error',
+                    text: 'Failed to update school information'
+                });
             }
         }
 
         // Export schools data
         async function exportSchoolsData() {
-            if (confirm('Export all schools data to CSV?')) {
+            const result = await Swal.fire({
+                title: 'Export Data',
+                text: 'Export all schools data to CSV?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, export'
+            });
+
+            if (result.isConfirmed) {
                 try {
                     const response = await fetch('/fire-safety/schools/export');
                     const blob = await response.blob();
@@ -1533,7 +1689,11 @@
                     
                 } catch (error) {
                     console.error('Error:', error);
-                    alert('Failed to export data');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Export Failed',
+                        text: 'Failed to export data'
+                    });
                 }
             }
         }
@@ -1618,16 +1778,31 @@
 
                 const data = await response.json();
 
-                if (data.success) {
-                    alert('Configuration updated successfully!');
-                    location.reload();
+                if (response.ok && data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Updated!',
+                        text: 'Configuration updated successfully!',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload();
+                    });
                 } else {
-                    alert('Error: ' + (data.message || 'Failed to update configuration'));
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Notice',
+                        text: data.message || 'Failed to update configuration'
+                    });
                 }
 
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to update configuration');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'System Error',
+                    text: 'Failed to update configuration'
+                });
             }
         }
 
@@ -1644,16 +1819,31 @@
 
                 const data = await response.json();
 
-                if (data.success) {
-                    alert('Configuration deleted successfully!');
-                    location.reload();
+                if (response.ok && data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Deleted!',
+                        text: 'Configuration deleted successfully!',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        location.reload();
+                    });
                 } else {
-                    alert('Error: ' + (data.message || 'Failed to delete configuration'));
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Notice',
+                        text: data.message || 'Failed to delete configuration'
+                    });
                 }
 
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to delete configuration');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'System Error',
+                    text: 'Failed to delete configuration'
+                });
             }
         }
     </script>

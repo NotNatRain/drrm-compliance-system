@@ -263,6 +263,94 @@
         </div>
     </div>
 
+    <!-- Alarm Details & Update Modal -->
+    <div class="modal fade" id="alarmDetailsModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
+                    <h5 class="modal-title">
+                        <i class="fas fa-edit me-2"></i> Alarm System Details & Update
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="updateAlarmForm">
+                        @csrf
+                        @method('PUT')
+                        <input type="hidden" name="alarm_id" id="updateAlarmId">
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">School</label>
+                                <p class="form-control-plaintext border-bottom" id="updateDisplaySchool">Loading...</p>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Building(s)</label>
+                                <p class="form-control-plaintext border-bottom" id="updateDisplayBuildings">Loading...</p>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Alarm Code *</label>
+                                <input type="text" class="form-control" name="code" id="updateAlarmCode" required>
+                                <input type="hidden" id="originalAlarmCode">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Alarm Type</label>
+                                <input type="text" class="form-control bg-light" id="updateAlarmTypeDisplay" readonly disabled>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Status *</label>
+                                <select class="form-control" name="status" id="updateStatusSelect" required>
+                                    <!-- Options populated by JS -->
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Next Test Due *</label>
+                                <input type="date" class="form-control" name="next_test_due" id="updateNextTestDue" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Manufacturer</label>
+                                <input type="text" class="form-control" name="manufacturer" id="updateManufacturer">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Installation Date</label>
+                                <input type="date" class="form-control" name="installation_date" id="updateInstallationDateInput">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Notes/Remarks</label>
+                            <textarea class="form-control" name="notes" id="updateNotes" rows="3"></textarea>
+                        </div>
+                        
+                        <div class="alert alert-info py-2">
+                            <i class="fas fa-info-circle me-1"></i> <strong>Note:</strong> Updating this information will set the "As Of" (Last Test) date to today.
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    @if(Auth::user()->role === 'admin')
+                    <button type="button" class="btn btn-danger me-auto" onclick="removeAlarmSystem()">
+                        <i class="fas fa-trash me-2"></i> Remove
+                    </button>
+                    @endif
+                    <button type="button" class="btn btn-primary" onclick="updateAlarmSystem()">
+                        <i class="fas fa-save me-2"></i> Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <div class="main-content">
         <!-- THIS IS WHERE THE INSTRUCTION APPLIES (around line 130) -->
@@ -375,13 +463,26 @@
                                 <div class="row align-items-center">
                                     <div class="col mr-2">
                                         <div class="text-xs fw-bold text-info text-uppercase mb-1">
-                                            AS OF
+                                            Last Inspected
                                         </div>
-                                        <div class="h5 mb-0 fw-bold text-gray-800">
+                                        <div class="small fw-bold text-gray-800">
                                             @php
-                                                $lastTest = $school->alarmSystems()->max('last_test');
-                                                echo $lastTest ? \Carbon\Carbon::parse($lastTest)->format('Y-m-d') : 'Never';
+                                                $latestTested = $school->alarmSystems()
+                                                    ->whereNotNull('last_test')
+                                                    ->orderBy('last_test', 'desc')
+                                                    ->take(2)
+                                                    ->get();
                                             @endphp
+                                            @if($latestTested->count() > 0)
+                                                @foreach($latestTested as $tested)
+                                                    <div class="mb-1">
+                                                        <strong>{{ $tested->code }}</strong><br>
+                                                        <small class="text-muted">{{ \Carbon\Carbon::parse($tested->last_test)->format('Y-m-d') }}</small>
+                                                    </div>
+                                                @endforeach
+                                            @else
+                                                <span class="text-muted">No tests recorded</span>
+                                            @endif
                                         </div>
                                     </div>
                                     <div class="col-auto">
@@ -401,12 +502,19 @@
                                 <h6 class="m-0 fw-bold text-primary">
                                     <i class="fas fa-list me-2"></i> Alarm Systems List - {{ $school->school_name }}
                                 </h6>
-                                <button class="btn btn-primary btn-sm add-alarm-btn"
-                                        data-school-id="{{ $school->id }}"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#addAlarmModal">
-                                    <i class="fas fa-plus me-2"></i> Add New Alarm
-                                </button>
+                                <div class="d-flex">
+                                    <button class="btn btn-sm ms-2" 
+                                            style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;"
+                                            onclick="openAlarmHistoryModal({{ $school->id }})">
+                                        <i class="fas fa-history me-1"></i> Removed Alarm System
+                                    </button>
+                                    <button class="btn btn-primary btn-sm add-alarm-btn ms-2"
+                                            data-school-id="{{ $school->id }}"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#addAlarmModal">
+                                        <i class="fas fa-plus me-2"></i> Add New Alarm
+                                    </button>
+                                </div>
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
@@ -458,23 +566,23 @@
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    <button class="btn btn-sm btn-outline-primary test-now-btn"
-                                                            data-alarm-id="{{ $alarm->id }}"
-                                                            data-alarm-code="{{ $alarm->code }}">
-                                                        <i class="fas fa-play"></i> Test Now
-                                                    </button>
-                                                    <button class="btn btn-sm btn-outline-info update-alarm-btn"
-                                                            data-alarm-id="{{ $alarm->id }}"
-                                                            data-bs-toggle="modal"
-                                                            data-bs-target="#updateAlarmModal">
-                                                        <i class="fas fa-edit"></i> Update
-                                                    </button>
-                                                    <button class="btn btn-sm btn-outline-secondary view-details-btn"
-                                                            data-alarm-id="{{ $alarm->id }}"
-                                                            data-bs-toggle="modal"
-                                                            data-bs-target="#viewAlarmModal">
-                                                        <i class="fas fa-eye"></i> Details
-                                                    </button>
+                                                    <div class="btn-group">
+                                                        <button class="btn btn-sm btn-outline-primary test-now-btn"
+                                                                data-alarm-id="{{ $alarm->id }}"
+                                                                data-alarm-code="{{ $alarm->code }}">
+                                                            <i class="fas fa-play"></i> Test Now
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-info update-alarm-btn"
+                                                                data-alarm-id="{{ $alarm->id }}">
+                                                            <i class="fas fa-edit"></i> Details
+                                                        </button>
+                                                        @if(Auth::user()->role === 'admin')
+                                                        <button class="btn btn-sm btn-outline-danger remove-alarm-btn-table"
+                                                                onclick="currentAlarmId = '{{ $alarm->id }}'; removeAlarmSystem();">
+                                                            <i class="fas fa-trash"></i> Remove
+                                                        </button>
+                                                        @endif
+                                                    </div>
                                                 </td>
                                             </tr>
                                             @endforeach
@@ -657,107 +765,62 @@
         </div>
     </div>
 
-    <!-- Update Alarm Modal -->
-    <div class="modal fade" id="updateAlarmModal" tabindex="-1">
+    <!-- Alarm System Removal Modal -->
+    <div class="modal fade" id="alarmRemovalModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
-                    <h5 class="modal-title">
-                        <i class="fas fa-edit me-2"></i> Update Alarm System
-                    </h5>
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Remove Alarm System</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="updateAlarmForm">
-                        @csrf
-                        @method('PUT')
-                        <input type="hidden" name="alarm_id" id="updateAlarmId">
-                        <input type="hidden" id="updateInstallationDate">
-                        <div class="mb-3">
-                            <label class="form-label">Status *</label>
-                            <select class="form-control" name="status" id="updateStatusSelect" required>
-                                <!-- Options will be populated based on alarm type -->
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label text-muted">Installation Date</label>
-                            <p class="form-control-plaintext" id="displayInstallationDate">Not set</p>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Last Test Date</label>
-                            <input type="date" class="form-control" name="last_test" id="updateLastTest">
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Next Test Due *</label>
-                            <input type="date" class="form-control" name="next_test_due" id="updateNextTestDue" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Notes/Remarks</label>
-                            <textarea class="form-control" name="notes" id="updateNotes" rows="3"></textarea>
-                        </div>
-                    </form>
+                    <p class="fw-bold">Are you sure you want to remove this alarm system?</p>
+                    <p class="text-muted small">This action cannot be undone. All historical data for this alarm will be moved to the archives.</p>
+                    
+                    <div class="mt-4">
+                        <label class="form-label fw-bold">Reason to be removed *</label>
+                        <textarea class="form-control" id="alarmRemovalReason" rows="3" placeholder="Enter reason for removal..."></textarea>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="updateAlarmSystem()">
-                        <i class="fas fa-save me-2"></i> Update
+                    <button type="button" class="btn btn-danger" onclick="confirmRemoveAlarm()">
+                        <i class="fas fa-trash-alt me-2"></i>Yes, Remove It!
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- View Alarm Details Modal -->
-    <div class="modal fade" id="viewAlarmModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
+    <!-- Alarm System History Modal -->
+    <div class="modal fade" id="alarmHistoryModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
-                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
-                    <h5 class="modal-title">
-                        <i class="fas fa-info-circle me-2"></i> Alarm System Details
-                    </h5>
+                <div class="modal-header" style="background-color: #6c757d; color: white;">
+                    <h5 class="modal-title"><i class="fas fa-history me-2"></i>Alarm System's History</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <p><strong>Code:</strong> <span id="detailCode"></span></p>
-                            <p><strong>Covered Buildings:</strong> <div id="detailBuildingsList" class="mb-2"></div></p>
-                            <p><strong>School:</strong> <span id="detailSchool"></span></p>
-                            <p><strong>Alarm Type:</strong> <span id="detailType"></span></p>
-                        </div>
-                        <div class="col-md-6">
-                            <p><strong>Status:</strong> <span id="detailStatus"></span></p>
-                            <p><strong>Manufacturer:</strong> <span id="detailManufacturer"></span></p>
-                            <p><strong>Installation Date:</strong> <span id="detailInstallation"></span></p>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <p><strong>Last Test:</strong> <span id="detailLastTest"></span></p>
-                        </div>
-                        <div class="col-md-6">
-                            <p><strong>Next Test Due:</strong> <span id="detailNextTest"></span></p>
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <p><strong>Notes/Remarks:</strong></p>
-                        <div class="border rounded p-3" id="detailNotes"></div>
-                    </div>
-
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        To remove this alarm system, click the "Remove Alarm" button below.
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm" id="alarmHistoryTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date Removed</th>
+                                    <th>Code</th>
+                                    <th>Type</th>
+                                    <th>Last Location</th>
+                                    <th>Reason to be removed</th>
+                                    <th>Last Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data populated via AJAX -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-danger" onclick="removeAlarmSystem()" id="removeAlarmBtn">
-                        <i class="fas fa-trash me-2"></i> Remove Alarm
-                    </button>
                 </div>
             </div>
         </div>
@@ -813,6 +876,15 @@
                 singleContainer.style.display = 'flex';
                 multiContainer.style.display = 'none';
                 buildingSelect.setAttribute('required', 'required');
+                // Re-enable floor select if a building is selected
+                if (buildingSelect.value) {
+                    floorSelect.disabled = false;
+                } else {
+                    floorSelect.disabled = true;
+                }
+                // Clear the multi-building location text
+                document.getElementById('alarmSpecificLocation').value = "";
+                document.getElementById('finalLocation').value = "";
             }
         });
 
@@ -849,103 +921,72 @@
             }
         });
 
-        // Update Alarm button click - ADD DATE VALIDATION
-        document.querySelectorAll('.update-alarm-btn').forEach(button => {
-            button.addEventListener('click', async function() {
-                const alarmId = this.getAttribute('data-alarm-id');
-                currentAlarmId = alarmId;
+        // Update Alarm button click (using delegation)
+        document.body.addEventListener('click', async function(e) {
+            const button = e.target.closest('.update-alarm-btn');
+            if (!button) return;
+            
+            console.log('Update button clicked for alarm:', button.getAttribute('data-alarm-id'));
 
-                try {
-                    const response = await fetch(`/fire-safety/alarm/${alarmId}`);
-                    const alarm = await response.json();
+            const alarmId = button.getAttribute('data-alarm-id');
+            currentAlarmId = alarmId;
 
-                    currentAlarmType = alarm.alarm_type;
+            try {
+                const response = await fetch(`/fire-safety/alarm/${alarmId}`);
+                const alarm = await response.json();
 
-                    // Populate form
-                    document.getElementById('updateAlarmId').value = alarmId;
-                    document.getElementById('updateLastTest').value = alarm.last_test || '';
-                    document.getElementById('updateInstallationDate').value = alarm.installation_date || '';
-                    document.getElementById('displayInstallationDate').textContent = alarm.installation_date ? alarm.installation_date : 'Not set';
-                    document.getElementById('updateNextTestDue').value = alarm.next_test_due || '';
-                    document.getElementById('updateNotes').value = alarm.notes || '';
+                currentAlarmType = alarm.alarm_type;
 
-                    // Store installation date for validation
-                    document.getElementById('updateAlarmId').dataset.installationDate = alarm.installation_date || '';
-
-                    // Populate status options
-                    const statusSelect = document.getElementById('updateStatusSelect');
-                    statusSelect.innerHTML = '<option value="">Select Status</option>';
-
-                    if (statusOptions[alarm.alarm_type]) {
-                        statusOptions[alarm.alarm_type].forEach(status => {
-                            const option = document.createElement('option');
-                            const statusValue = status.toLowerCase().replace(' ', '_');
-                            option.value = statusValue;
-                            option.textContent = status;
-                            if (alarm.status === statusValue) {
-                                option.selected = true;
-                            }
-                            statusSelect.appendChild(option);
-                        });
-                    }
-
-                } catch (error) {
-                    console.error('Error loading alarm data:', error);
-                    Swal.fire('Error', 'Failed to load alarm data', 'error');
+                // Populate form
+                document.getElementById('updateAlarmId').value = alarmId;
+                document.getElementById('updateAlarmCode').value = alarm.code;
+                document.getElementById('originalAlarmCode').value = alarm.code;
+                document.getElementById('updateAlarmTypeDisplay').value = alarm.alarm_type;
+                document.getElementById('updateDisplaySchool').textContent = alarm.school ? alarm.school.school_name : 'N/A';
+                
+                // Display Buildings
+                let buildingsStr = 'N/A';
+                if (alarm.buildings && alarm.buildings.length > 0) {
+                    buildingsStr = alarm.buildings.map(b => b.building_no).join(', ');
+                } else if (alarm.building) {
+                    buildingsStr = alarm.building.building_no;
                 }
-            });
-        });
+                document.getElementById('updateDisplayBuildings').textContent = buildingsStr;
 
-        // View Details button click
-        document.querySelectorAll('.view-details-btn').forEach(button => {
-            button.addEventListener('click', async function() {
-                const alarmId = this.getAttribute('data-alarm-id');
-                currentAlarmId = alarmId;
+                document.getElementById('updateManufacturer').value = alarm.manufacturer || '';
+                document.getElementById('updateInstallationDateInput').value = alarm.installation_date || '';
+                document.getElementById('updateNextTestDue').value = alarm.next_test_due || '';
+                document.getElementById('updateNotes').value = alarm.notes || '';
 
-                try {
-                    const response = await fetch(`/fire-safety/alarm/${alarmId}`);
-                    const alarm = await response.json();
+                // Store installation date for validation
+                document.getElementById('updateAlarmId').dataset.installationDate = alarm.installation_date || '';
 
-                    // Populate details
-                    document.getElementById('detailCode').textContent = alarm.code;
-                    
-                    const detailsBuildingsList = document.getElementById('detailBuildingsList');
-                    detailsBuildingsList.innerHTML = '';
-                    
-                    if (alarm.buildings && alarm.buildings.length > 0) {
-                        alarm.buildings.forEach(b => {
-                            const badge = document.createElement('span');
-                            badge.className = 'badge bg-secondary me-1 mb-1';
-                            badge.textContent = b.building_no;
-                            detailsBuildingsList.appendChild(badge);
-                        });
-                    } else if (alarm.building) {
-                         const badge = document.createElement('span');
-                         badge.className = 'badge bg-secondary me-1 mb-1';
-                         badge.textContent = alarm.building.building_no;
-                         detailsBuildingsList.appendChild(badge);
-                    } else {
-                        detailsBuildingsList.textContent = 'N/A';
+                // Populate status options
+                const statusSelect = document.getElementById('updateStatusSelect');
+                statusSelect.innerHTML = '<option value="">Select Status</option>';
+
+                let options = [...(statusOptions[alarm.alarm_type] || [])];
+                if (!options.includes('Decommissioned')) options.push('Decommissioned');
+
+                options.forEach(status => {
+                    const option = document.createElement('option');
+                    const statusValue = status.toLowerCase().replace(' ', '_');
+                    option.value = statusValue;
+                    option.textContent = status;
+                    if (alarm.status === statusValue) {
+                        option.selected = true;
                     }
+                    statusSelect.appendChild(option);
+                });
 
-                    document.getElementById('detailSchool').textContent = alarm.school.school_name;
-                    document.getElementById('detailType').textContent = alarm.alarm_type;
+                // Show modal using Vanilla JS for maximum compatibility with BS5
+                const modalEl = document.getElementById('alarmDetailsModal');
+                const modal = new bootstrap.Modal(modalEl);
+                modal.show();
 
-                    // Format status
-                    const statusText = alarm.status.replace(/_/g, ' ');
-                    document.getElementById('detailStatus').textContent = statusText.charAt(0).toUpperCase() + statusText.slice(1);
-
-                    document.getElementById('detailManufacturer').textContent = alarm.manufacturer || 'N/A';
-                    document.getElementById('detailInstallation').textContent = alarm.installation_date || 'N/A';
-                    document.getElementById('detailLastTest').textContent = alarm.last_test || 'Never';
-                    document.getElementById('detailNextTest').textContent = alarm.next_test_due || 'Not set';
-                    document.getElementById('detailNotes').textContent = alarm.notes || 'No notes';
-
-                } catch (error) {
-                    console.error('Error loading alarm details:', error);
-                    Swal.fire('Error', 'Failed to load alarm details', 'error');
-                }
-            });
+            } catch (error) {
+                console.error('Error loading alarm data:', error);
+            }
         });
 
         // Test Now button click
@@ -1033,7 +1074,7 @@
         document.getElementById('buildingSelect').addEventListener('change', function() {
             const select = this;
             const floorSelect = document.getElementById('alarmFloorSelect');
-            floorSelect.innerHTML = '<option value="">Select Floor</option>';
+            floorSelect.innerHTML = '<option value="">Select Floor</option><option value="All Floors">All Floors</option>';
             floorSelect.disabled = true;
 
             const option = select.options[select.selectedIndex];
@@ -1087,25 +1128,43 @@
             const installationDate = document.getElementById('installationDate').value;
             const lastTestDate = document.getElementById('lastTestDate').value;
             const nextTestDue = document.getElementById('nextTestDue').value;
+            const today = new Date().toISOString().split('T')[0];
 
             let isValid = true;
+
+            // Check installation date not in future
+            if (installationDate && installationDate > today) {
+                Swal.fire('Validation Error', 'Installation date cannot be in the future.', 'warning');
+                isValid = false;
+                return false;
+            }
+
+            // Check last test not in future
+            if (lastTestDate && lastTestDate > today) {
+                Swal.fire('Validation Error', 'Last test date cannot be in the future.', 'warning');
+                isValid = false;
+                return false;
+            }
 
             // Check last test not before installation
             if (installationDate && lastTestDate && lastTestDate < installationDate) {
                 Swal.fire('Validation Error', 'Last test date cannot be before installation date.', 'warning');
                 isValid = false;
+                return false;
             }
 
             // Check next test not before installation
             if (installationDate && nextTestDue && nextTestDue < installationDate) {
                 Swal.fire('Validation Error', 'Next test due date cannot be before installation date.', 'warning');
                 isValid = false;
+                return false;
             }
 
             // Check next test not before last test
             if (lastTestDate && nextTestDue && nextTestDue < lastTestDate) {
                 Swal.fire('Validation Error', 'Next test due date cannot be before last test date.', 'warning');
                 isValid = false;
+                return false;
             }
 
             return isValid;
@@ -1232,25 +1291,38 @@
         async function updateAlarmSystem() {
             const form = document.getElementById('updateAlarmForm');
             const alarmId = document.getElementById('updateAlarmId').value;
+            const newCode = document.getElementById('updateAlarmCode').value;
+            const oldCode = document.getElementById('originalAlarmCode').value;
 
             if (!form.checkValidity()) {
                 form.reportValidity();
                 return;
             }
 
-            // Get dates
-            const lastTest = document.getElementById('updateLastTest').value;
-            const nextTestDue = document.getElementById('updateNextTestDue').value;
-            const installationDate = document.getElementById('updateAlarmId').dataset.installationDate;
+            // Code update confirmation
+            if (newCode !== oldCode) {
+                const confirmCode = await Swal.fire({
+                    title: 'Update Alarm Code?',
+                    text: `Are you sure you want to update the alarm code from "${oldCode}" to "${newCode}"?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#A8191F',
+                    confirmButtonText: 'Yes, update it!',
+                    cancelButtonText: 'No, keep original'
+                });
 
-            // Validate dates
-            if (installationDate) {
-                // Check last test not before installation
-                if (lastTest && lastTest < installationDate) {
-                    Swal.fire('Invalid Date', 'Last test date cannot be before installation date.', 'warning');
+                if (!confirmCode.isConfirmed) {
+                    document.getElementById('updateAlarmCode').value = oldCode;
                     return;
                 }
+            }
 
+            // Get dates
+            const nextTestDue = document.getElementById('updateNextTestDue').value;
+            const installationDate = document.getElementById('updateAlarmId').dataset.installationDate;
+            const today = new Date().toISOString().split('T')[0];
+
+            if (installationDate) {
                 // Check next test not before installation
                 if (nextTestDue && nextTestDue < installationDate) {
                     Swal.fire('Invalid Date', 'Next test due date cannot be before installation date.', 'warning');
@@ -1258,14 +1330,20 @@
                 }
             }
 
-            // Check next test not before last test
-            if (lastTest && nextTestDue && nextTestDue < lastTest) {
-                Swal.fire('Invalid Date', 'Next test due date cannot be before last test date.', 'warning');
-                return;
-            }
-
             const formData = new FormData(form);
             formData.append('_method', 'PUT');
+            // Auto-update Last Test to Today
+            formData.append('last_test', today);
+
+            // Show loading
+            Swal.fire({
+                title: 'Updating...',
+                text: 'Please wait...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
 
             try {
                 const response = await fetch(`/fire-safety/alarm/${alarmId}`, {
@@ -1280,7 +1358,12 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    Swal.fire('Updated', 'Alarm system updated successfully!', 'success').then(() => {
+                    Swal.fire({
+                        title: 'Updated',
+                        text: 'Alarm system details updated successfully!',
+                        icon: 'success',
+                        confirmButtonColor: '#A8191F'
+                    }).then(() => {
                         location.reload();
                     });
                 } else {
@@ -1320,45 +1403,91 @@
             }
         }
 
-        // Remove Alarm System
-        async function removeAlarmSystem() {
-            Swal.fire({
-                title: 'Are you sure?',
-                text: 'Are you sure you want to remove this alarm system? This action cannot be undone.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'Yes, remove it!'
-            }).then(async (result) => {
-                if (result.isConfirmed) {
-                    try {
-                        const response = await fetch(`/fire-safety/alarm/${currentAlarmId}`, {
-                            method: 'DELETE',
-                            headers: {
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                'Accept': 'application/json'
-                            }
-                        });
+        // Open Removal Modal
+        function removeAlarmSystem() {
+            // currentAlarmId is already set by the button onclick
+            document.getElementById('alarmRemovalReason').value = '';
+            const modalEl = document.getElementById('alarmRemovalModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        }
 
-                        const data = await response.json();
+        async function confirmRemoveAlarm() {
+            const reason = document.getElementById('alarmRemovalReason').value;
+            if (!reason.trim()) {
+                Swal.fire('Reason Required', 'Please provide a reason for removal.', 'warning');
+                return;
+            }
 
-                        if (data.success) {
-                            Swal.fire('Removed', 'Alarm system removed successfully!', 'success').then(() => {
-                                location.reload();
-                            });
-                        } else {
-                            Swal.fire('Error', data.message || 'Failed to remove alarm system', 'error');
-                        }
+            try {
+                const response = await fetch(`/fire-safety/alarm/${currentAlarmId}/remove`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ reason: reason })
+                });
 
-                    } catch (error) {
-                        console.error('Error:', error);
-                        Swal.fire('Error', 'Failed to remove alarm system', 'error');
-                    }
+                const data = await response.json();
+
+                if (data.success) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('alarmRemovalModal'));
+                    if(modal) modal.hide();
+                    
+                    Swal.fire('Removed', 'Alarm system has been archived successfully!', 'success').then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Error', data.message || 'Failed to remove alarm system', 'error');
                 }
-            });
+
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire('Error', 'Failed to remove alarm system', 'error');
+            }
+        }
+
+        async function openAlarmHistoryModal(schoolId) {
+            const modalEl = document.getElementById('alarmHistoryModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            const tableBody = document.querySelector('#alarmHistoryTable tbody');
+            tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Loading...</td></tr>';
+            modal.show();
+
+            try {
+                const resp = await fetch(`/fire-safety/alarm/history/${schoolId}`);
+                const data = await resp.json();
+
+                if (data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No removed alarm systems found.</td></tr>';
+                    return;
+                }
+
+                tableBody.innerHTML = '';
+                data.forEach(item => {
+                    const removedAt = new Date(item.removed_at).toLocaleString();
+                    const row = `
+                        <tr>
+                            <td>${removedAt}</td>
+                            <td class="fw-bold text-danger">${item.item_code || 'N/A'}</td>
+                            <td>${item.item_data.alarm_type || 'N/A'}</td>
+                            <td>${item.item_data.building_name || 'N/A'}</td>
+                            <td>${item.reason || 'No reason provided'}</td>
+                            <td><span class="badge bg-secondary">${item.item_data.status}</span></td>
+                        </tr>
+                    `;
+                    tableBody.insertAdjacentHTML('beforeend', row);
+                });
+            } catch (e) {
+                console.error(e);
+                tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Failed to load history.</td></tr>';
+            }
         }
 
 
     </script>
+    <!-- Placeholder removed -->
 </body>
 </html>

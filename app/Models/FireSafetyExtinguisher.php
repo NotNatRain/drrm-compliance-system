@@ -20,6 +20,7 @@ class FireSafetyExtinguisher extends Model
         'pressure_level',
         'date_checked',
         'evaluation_result',
+        'remarks',
         'notes'
     ];
 

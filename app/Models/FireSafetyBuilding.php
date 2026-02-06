@@ -16,17 +16,22 @@ class FireSafetyBuilding extends Model
         'building_name',
         'floors',
         'rooms',
+        'max_floors',
+        'max_rooms',
         'year_constructed',
         'last_renovation',
         'emergency_exits',
         'building_type',
         'description',
-        'features'
+        'features',
+        'required_extinguishers'
     ];
 
     protected $casts = [
         'floors' => 'integer',
         'rooms' => 'integer',
+        'max_floors' => 'integer',
+        'max_rooms' => 'integer',
         'year_constructed' => 'integer',
         'last_renovation' => 'integer',
         'emergency_exits' => 'integer'
@@ -53,7 +58,7 @@ class FireSafetyBuilding extends Model
         return $this->hasMany(FireSafetyExtinguisher::class, 'building_id');
     }
 
-    public function rooms(): HasMany
+    public function actualRooms(): HasMany
     {
         return $this->hasMany(FireSafetyRoom::class, 'building_id');
     }
@@ -77,6 +82,9 @@ class FireSafetyBuilding extends Model
     
     public function getRequiredExtinguishersCountAttribute(): int
     {
+        if ($this->required_extinguishers > 0) {
+            return $this->required_extinguishers;
+        }
         return max(1, (int) ceil(($this->rooms ?? 0) / 3));
     }
     

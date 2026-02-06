@@ -428,7 +428,7 @@
                                             Minimum Fire Extinguishers
                                         </div>
                                         <div class="h2 mb-0 fw-bold text-gray-800">
-                                            {{ $school->buildings->sum(fn ($b) => max(1, (int) ceil(($b->rooms ?? 0) / 3))) }}
+                                            {{ $school->buildings->sum('required_extinguishers_count') }}
                                         </div>
                                     </div>
                                     <div class="col-auto">
@@ -450,6 +450,11 @@
                                 </h6>
                                 <div>
                                     @if(auth()->user()->role === 'admin')
+                                    <button class="btn btn-sm me-2" 
+                                            style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;"
+                                            onclick="openBuildingHistoryModal({{ $school->id }})">
+                                        <i class="fas fa-history me-1"></i> Removed Floor/Room
+                                    </button>
                                     <button class="btn btn-primary btn-sm me-2 add-building-btn"
                                             data-school-id="{{ $school->id }}"
                                             data-bs-toggle="modal"
@@ -492,7 +497,7 @@
                                                     <div class="d-flex justify-content-between">
                                                         <span>Floors: <strong>{{ $building->floors }}</strong></span>
                                                         <span>Rooms: <strong>{{ $building->rooms }}</strong></span>
-                                                        <span>Minimum Fire Extinguishers: <strong>{{ max(1, (int) ceil(($building->rooms ?? 0) / 3)) }}</strong></span>
+                                                        <span>Minimum Fire Extinguishers: <strong>{{ $building->required_extinguishers_count }}</strong></span>
                                                     </div>
                                                 </div>
 
@@ -662,13 +667,24 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Number of Floors</label>
-                                    <input type="number" class="form-control" name="floors" id="buildingFloorsInput" min="1" max="50" value="1" required>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" name="floors" id="buildingFloorsInput" min="1" max="50" value="1" readonly required>
+                                        <button class="btn btn-outline-secondary" type="button" id="btnIncFloors" onclick="incrementValue('buildingFloorsInput')"><i class="fas fa-plus"></i></button>
+                                    </div>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Total Rooms</label>
-                                    <input type="number" class="form-control" name="rooms" id="buildingRoomsInput" min="1" value="1" required>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" name="rooms" id="buildingRoomsInput" min="1" value="1" readonly required>
+                                        <button class="btn btn-outline-secondary" type="button" id="btnIncRooms" onclick="incrementValue('buildingRoomsInput')"><i class="fas fa-plus"></i></button>
+                                    </div>
                                 </div>
                             </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Min. Required Fire Extinguishers</label>
+                            <input type="number" class="form-control" name="required_extinguishers" id="buildingReqExt" min="0" value="0">
                         </div>
 
                         <!-- Manage Floors & Rooms (Edit Mode Only) -->
@@ -677,24 +693,32 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label text-danger fw-bold">Remove Floor</label>
-                                    <select class="form-control border-danger" id="removeFloorSelect">
+                                    <select class="form-control border-danger" id="removeFloorSelect" onchange="toggleFloorRemovalReason()">
                                         <option value="">-- No Floor to Remove --</option>
                                     </select>
-                                    <small class="text-muted">Removing a floor deletes its alarms, rooms, and extinguishers.</small>
+                                    <small class="text-muted d-block mb-2">Removing a floor deletes its alarms, rooms, and extinguishers.</small>
+                                    <div id="floorRemovalReasonSection" style="display: none;">
+                                        <label class="form-label text-danger small fw-bold">Reason to be removed (Floor)</label>
+                                        <textarea class="form-control border-danger mb-2" id="floorRemovalReason" rows="2" placeholder="State reason for removing this floor..."></textarea>
+                                    </div>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label text-danger fw-bold">Remove Room</label>
-                                    <select class="form-control border-danger" id="removeRoomSelect">
+                                    <select class="form-control border-danger" id="removeRoomSelect" onchange="toggleRoomRemovalReason()">
                                         <option value="">-- No Room to Remove --</option>
                                     </select>
-                                    <small class="text-muted">Removing a room re-assigns or removes extinguishers.</small>
+                                    <small class="text-muted d-block mb-2">Removing a room re-assigns or removes extinguishers.</small>
+                                    <div id="roomRemovalReasonSection" style="display: none;">
+                                        <label class="form-label text-danger small fw-bold">Reason to be removed (Room)</label>
+                                        <textarea class="form-control border-danger" id="roomRemovalReason" rows="2" placeholder="State reason for removing this room..."></textarea>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Building Description <small class="text-muted">(Optional)</small></label>
-                            <textarea class="form-control" name="description" rows="3" placeholder="Describe the building features, location, etc... (Optional)"></textarea>
+                            <label class="form-label">Building Description</label>
+                            <textarea class="form-control" name="description" rows="3" placeholder="Describe the building features, location, etc..."></textarea>
                         </div>
 
                      <div class="mb-3">
@@ -820,7 +844,39 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS -->
+    <!-- Floor and Room History Modal -->
+    <div class="modal fade" id="buildingHistoryModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #6c757d; color: white;">
+                    <h5 class="modal-title"><i class="fas fa-history me-2"></i>Floor and Room's History</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm" id="buildingHistoryTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date Removed</th>
+                                    <th>Type</th>
+                                    <th>Building</th>
+                                    <th>Identifer</th>
+                                    <th>Reason to be removed</th>
+                                    <th>Involved Items (Archives)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data populated via AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
@@ -828,6 +884,75 @@
         // Global variables
         const USER_ROLE = "{{ auth()->user()->role }}";
         let currentSchoolId = null;
+
+        function toggleFloorRemovalReason() {
+            const select = document.getElementById('removeFloorSelect');
+            const section = document.getElementById('floorRemovalReasonSection');
+            if (select && select.value) {
+                section.style.display = 'block';
+            } else if (section) {
+                section.style.display = 'none';
+                const reasonInput = document.getElementById('floorRemovalReason');
+                if(reasonInput) reasonInput.value = '';
+            }
+        }
+
+        function toggleRoomRemovalReason() {
+            const select = document.getElementById('removeRoomSelect');
+            const section = document.getElementById('roomRemovalReasonSection');
+            if (select && select.value) {
+                section.style.display = 'block';
+            } else if (section) {
+                section.style.display = 'none';
+                const reasonInput = document.getElementById('roomRemovalReason');
+                if(reasonInput) reasonInput.value = '';
+            }
+        }
+
+        async function openBuildingHistoryModal(schoolId) {
+            const modalEl = document.getElementById('buildingHistoryModal');
+            if(!modalEl) return;
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            const tableBody = document.querySelector('#buildingHistoryTable tbody');
+            if(!tableBody) return;
+            tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Loading...</td></tr>';
+            modal.show();
+
+            try {
+                const resp = await fetch(`/fire-safety/building/history/${schoolId}`);
+                const data = await resp.json();
+
+                if (data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No removed floors or rooms found.</td></tr>';
+                    return;
+                }
+
+                tableBody.innerHTML = '';
+                data.forEach(item => {
+                    const removedAt = new Date(item.removed_at).toLocaleString();
+                    const row = `
+                        <tr>
+                            <td>${removedAt}</td>
+                            <td><span class="badge bg-secondary">${item.type}</span></td>
+                            <td>${item.item_data.building_name || 'N/A'}</td>
+                            <td class="fw-bold text-danger">${item.item_code || 'N/A'}</td>
+                            <td>${item.reason || 'No reason provided'}</td>
+                            <td>
+                                <small>
+                                    ${item.item_data.involved_alarms ? `Alarms: ${item.item_data.involved_alarms}<br>` : ''}
+                                    ${item.item_data.involved_extinguishers ? `Extinguishers: ${item.item_data.involved_extinguishers}<br>` : ''}
+                                    ${item.item_data.involved_rooms ? `Rooms: ${item.item_data.involved_rooms}<br>` : ''}
+                                </small>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.insertAdjacentHTML('beforeend', row);
+                });
+            } catch (e) {
+                console.error(e);
+                tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Failed to load history.</td></tr>';
+            }
+        }
         function formatDate(dateString) {
             try {
                 const date = new Date(dateString);
@@ -978,9 +1103,10 @@
                                 <p><strong>Building Type:</strong> ${building.building_type || 'N/A'}</p>
                             </div>
                             <div class="col-md-6">
-                                <p><strong>Floors:</strong> ${building.floors}</p>
-                                <p><strong>Rooms:</strong> ${building.rooms}</p>
-                                <p><strong>Minimum Fire Extinguishers:</strong> ${Math.max(1, Math.ceil((Number(building.rooms) || 0) / 3))}</p>
+                                <p><strong>Floors:</strong> ${building.floors || 0}</p>
+                                <p><strong>Standard Rooms:</strong> ${building.rooms || 0}</p>
+                                <p><strong>Rooms Added:</strong> ${building.actual_rooms ? building.actual_rooms.length : 0}</p>
+                                <p><strong>Minimum Required Extinguisher:</strong> ${building.required_extinguishers_count || 1}</p>
                                 <p><strong>Emergency Exits:</strong> ${building.emergency_exits || 'N/A'}</p>
                             </div>
                         </div>
@@ -1002,7 +1128,7 @@
                         <div class="mb-3">
                             <p><strong>Safety Features:</strong></p>
                             <div class="border rounded p-3">
-                                ${building.features ? building.features.split(',').map(feature =>
+                                ${(building.features && typeof building.features === 'string') ? building.features.split(',').map(feature =>
                                     `<span class="badge bg-info me-2 mb-2">${feature}</span>`
                                 ).join('') : 'No safety features recorded.'}
                             </div>
@@ -1081,11 +1207,15 @@
 
                 const floorsInput = form.querySelector('#buildingFloorsInput');
                 floorsInput.value = building.floors;
-                floorsInput.min = building.floors; // Can only increase
+                floorsInput.min = building.floors;
+                floorsInput.readOnly = true;
+                document.getElementById('btnIncFloors').style.display = 'block';
 
                 const roomsInput = form.querySelector('#buildingRoomsInput');
                 roomsInput.value = building.rooms;
-                roomsInput.min = building.rooms; // Can only increase
+                roomsInput.min = building.rooms;
+                roomsInput.readOnly = true;
+                document.getElementById('btnIncRooms').style.display = 'block';
 
                 form.querySelector('[name="year_constructed"]').value = building.year_constructed || '';
                 form.querySelector('[name="last_renovation"]').value = building.last_renovation || '';
@@ -1128,11 +1258,39 @@
                         opt.textContent = `${room.room_name} (Floor ${room.floor_no})`;
                         opt.dataset.extinguisher = room.is_center_room ? 'yes' : 'no';
                         opt.dataset.hasOthers = room.has_other_rooms_on_floor ? 'yes' : 'no';
+                        opt.dataset.floorNo = room.floor_no; // Add floor number for filtering
                         removeRoomSelect.appendChild(opt);
                     });
                 }
 
+                // Add event listener to filter rooms when a floor is selected for removal
+                removeFloorSelect.addEventListener('change', function() {
+                    const selectedFloor = this.value;
+                    const roomOptions = removeRoomSelect.querySelectorAll('option');
+
+                    roomOptions.forEach(option => {
+                        if (option.value === '') return; // Skip the default option
+
+                        if (selectedFloor && option.dataset.floorNo === selectedFloor) {
+                            // Hide rooms from the selected floor
+                            option.style.display = 'none';
+                            option.disabled = true;
+                        } else {
+                            // Show all other rooms
+                            option.style.display = 'block';
+                            option.disabled = false;
+                        }
+                    });
+
+                    // Reset room selection if the selected room is from the removed floor
+                    const selectedRoomOption = removeRoomSelect.options[removeRoomSelect.selectedIndex];
+                    if (selectedRoomOption && selectedRoomOption.dataset.floorNo === selectedFloor) {
+                        removeRoomSelect.value = '';
+                    }
+                });
+
                 document.getElementById('manageFloorsRoomsSection').style.display = isMiniBldg ? 'none' : 'block';
+                document.getElementById('buildingReqExt').value = building.required_extinguishers || 0;
 
                 // Handle checkboxes
                 const features = building.features ? building.features.split(',') : [];
@@ -1158,6 +1316,10 @@
                     typeSelect.disabled = false;
                     document.getElementById('roomFloorInputs').style.display = 'block';
                     document.getElementById('manageFloorsRoomsSection').style.display = 'none';
+                    document.getElementById('floorRemovalReasonSection').style.display = 'none';
+                    document.getElementById('roomRemovalReasonSection').style.display = 'none';
+                    document.getElementById('floorRemovalReason').value = '';
+                    document.getElementById('roomRemovalReason').value = '';
                 }, { once: true });
 
                 editModal.show();
@@ -1185,23 +1347,8 @@
                 });
 
                 if (!result.isConfirmed) return;
-            }
-
-            // Floor Removal Confirmation
-            const floorToRemove = document.getElementById('removeFloorSelect').value;
-            if (floorToRemove) {
-                const result = await Swal.fire({
-                    title: 'Floor Removal Warning',
-                    text: `Are you sure you want to remove Floor no.${floorToRemove}? The assigned alarm, fire extinguisher and rooms for this floor will completely be remove`,
-                    icon: 'danger',
-                    showCancelButton: true,
-                    confirmButtonColor: '#A8191F',
-                    confirmButtonText: 'Yes, remove floor!',
-                    cancelButtonText: 'No, cancel!'
-                });
-
-                if (!result.isConfirmed) return;
                 formData.append('removed_floor', floorToRemove);
+                formData.append('floor_removal_reason', document.getElementById('floorRemovalReason').value);
             }
 
             // Room Removal Confirmation
@@ -1233,6 +1380,7 @@
 
                 if (!result.isConfirmed) return;
                 formData.append('removed_room_id', roomIdToRemove);
+                formData.append('room_removal_reason', document.getElementById('roomRemovalReason').value);
             }
 
             try {
@@ -1280,15 +1428,25 @@
             const isMiniBldg = ['gymnasium', 'cafeteria'].includes(this.value.toLowerCase());
             const roomsIn = document.getElementById('buildingRoomsInput');
             const floorsIn = document.getElementById('buildingFloorsInput');
+            const btnIncRooms = document.getElementById('btnIncRooms');
+            const btnIncFloors = document.getElementById('btnIncFloors');
 
             if (isMiniBldg) {
                 roomsIn.value = 1;
-                roomsIn.readOnly = true;
                 floorsIn.value = 1;
-                floorsIn.readOnly = true;
+                roomsIn.disabled = true;
+                floorsIn.disabled = true;
+                btnIncRooms.disabled = true;
+                btnIncFloors.disabled = true;
+                btnIncRooms.style.display = 'none';
+                btnIncFloors.style.display = 'none';
             } else {
-                roomsIn.readOnly = false;
-                floorsIn.readOnly = false;
+                roomsIn.disabled = false;
+                floorsIn.disabled = false;
+                btnIncRooms.disabled = false;
+                btnIncFloors.disabled = false;
+                btnIncRooms.style.display = 'block';
+                btnIncFloors.style.display = 'block';
             }
         });
 
@@ -1851,10 +2009,49 @@
                         showConfirmButton: false
                     });
                     // In real implementation, this would generate PDF report
-                    window.open('/fire-safety/generate-report', '_blank');
                 }
             });
         }
+
+        function incrementValue(inputId) {
+            const input = document.getElementById(inputId);
+            let value = parseInt(input.value) || 0;
+            const max = parseInt(input.max) || 1000;
+
+            if (value < max) {
+                input.value = value + 1;
+            }
+        }
+
+        // Reset form when opening Add Building modal in Add mode
+        document.getElementById('addBuildingModal').addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            // If button has data-school-id, it's the Add button (not Update)
+            if (button && button.hasAttribute('data-school-id') && !button.hasAttribute('data-building-id')) {
+                const form = document.getElementById('addBuildingForm');
+                form.reset();
+                form.action = "{{ route('fire-safety.building.store') }}";
+
+                // Reset inputs to default
+                // Reset inputs to default and unlock
+                document.getElementById('buildingFloorsInput').value = 1;
+                document.getElementById('buildingFloorsInput').min = 1;
+                document.getElementById('buildingFloorsInput').readOnly = false;
+                document.getElementById('btnIncFloors').style.display = 'none';
+
+                document.getElementById('buildingRoomsInput').value = 1;
+                document.getElementById('buildingRoomsInput').min = 1;
+                document.getElementById('buildingRoomsInput').readOnly = false;
+                document.getElementById('btnIncRooms').style.display = 'none';
+
+                document.querySelector('#addBuildingModal .modal-title').innerHTML = '<i class="fas fa-plus me-2"></i> Add New Building';
+                document.getElementById('manageFloorsRoomsSection').style.display = 'none';
+                document.getElementById('buildingReqExt').value = 0;
+
+                // Enable building type select
+                document.getElementById('building_type_select').disabled = false;
+            }
+        });
     </script>
 </body>
 </html>

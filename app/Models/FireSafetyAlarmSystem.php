@@ -26,6 +26,10 @@ class FireSafetyAlarmSystem extends Model
     {
         return $this->belongsToMany(FireSafetyBuilding::class, 'fire_safety_alarm_building', 'alarm_id', 'building_id');
     }
+    public function building()
+    {
+        return $this->belongsTo(FireSafetyBuilding::class, 'building_id');
+    }
     public function school()
     {
         return $this->belongsTo(FireSafetySchool::class, 'school_id');

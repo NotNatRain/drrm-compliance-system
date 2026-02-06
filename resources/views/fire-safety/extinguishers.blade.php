@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,6 +6,7 @@
     <title>Fire Extinguishers - Fire Safety</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
@@ -225,7 +226,6 @@
         </div>
     </nav>
 
-    <!-- Sidebar -->
     <div class="sidebar">
         <div class="p-3">
             <ul class="nav flex-column">
@@ -286,7 +286,335 @@
         </div>
     </div>
 
-    <!-- Main Content -->
+    <!-- Modals (Moved to top for better visibility and to avoid stacking context issues) -->
+    
+    <!-- Update Extinguisher Status Modal -->
+    <div class="modal fade" id="updateExtModal" tabindex="-1" style="z-index: 1060;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
+                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Update Extinguisher</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="updateExtForm">
+                        @csrf
+                        <input type="hidden" id="updateExtId" name="extinguisher_id">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Extinguisher Code</label>
+                            <input type="text" class="form-control bg-light" id="updateExtCode" readonly>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Status *</label>
+                                <select class="form-control" name="status" id="updateExtStatus" required onchange="handleUpdateStatusChange()">
+                                    <option value="active">OK (Active)</option>
+                                    <option value="maintenance">For Refill</option>
+                                    <option value="expired">Empty</option>
+                                    <option value="missing">Missing</option>
+                                    <option value="purchase">For Purchase</option>
+                                    <option value="decommissioned">Decommissioned</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Pressure (0-100%) *</label>
+                                <input type="number" class="form-control" name="pressure_level" id="updateExtPressure" min="0" max="100" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Notes / Remarks *</label>
+                            <textarea class="form-control" name="notes" id="updateExtNotes" rows="3" placeholder="Reason for update..." required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <!-- Remove button (initially hidden, shown via JS if status is deccomissioned) -->
+                    <button type="button" class="btn btn-outline-danger" id="removeExtBtn" style="display: none;" onclick="showExtRemovalReason()">
+                        <i class="fas fa-trash-alt me-2"></i>Remove
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="saveExtinguisherStatus()">
+                        <i class="fas fa-save me-2"></i>Update Status
+                    </button>
+                </div>
+                <!-- Reason for Removal section (initially hidden) -->
+                <div class="card-footer bg-light border-top-0 d-none" id="extRemovalReasonSection">
+                    <div class="p-3">
+                        <label class="form-label fw-bold text-danger">Reason for Removal *</label>
+                        <textarea class="form-control border-danger" id="extRemovalReason" rows="2" placeholder="State reason for decommissioning and removal..."></textarea>
+                        <div class="mt-2 text-end">
+                            <button type="button" class="btn btn-danger btn-sm" onclick="confirmRemoveExtinguisher()">
+                                <i class="fas fa-check me-2"></i>Yes, Remove It!
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inspect & Update Room Modal -->
+    <div class="modal fade" id="updateRoomModal" tabindex="-1" style="z-index: 1060;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
+                    <h5 class="modal-title"><i class="fas fa-search-plus me-2"></i>Inspect & Update Room</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="updateRoomForm">
+                        @csrf
+                        <input type="hidden" id="updateRoomId" name="room_id">
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Room Code</label>
+                                <input type="text" class="form-control" name="room_code" id="updateRoomCode" placeholder="e.g., Rm-101">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold text-muted">Floor Level</label>
+                                <input type="text" class="form-control bg-light" id="updateRoomFloor" readonly>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted small">Update Room Name (Optional)</label>
+                            <input type="text" class="form-control" name="room_name" id="updateRoomName" placeholder="Leave blank to keep current name">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Nearest Extinguisher Room</label>
+                            <select class="form-control" name="nearest_extinguisher_room_id" id="updateRoomNearest">
+                                <option value="">None / Self-Covered</option>
+                            </select>
+                            <div class="form-text small">Select the room that houses the extinguisher covering this room. Only rooms on the same floor with coverage capacity are shown.</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveRoomUpdate()">
+                        <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Room Modal -->
+    <div class="modal fade" id="addRoomModal" tabindex="-1" style="z-index: 1060;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
+                    <h5 class="modal-title"><i class="fas fa-door-open me-2"></i>Add Room</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addRoomForm">
+                        @csrf
+                        <input type="hidden" name="school_id" id="roomSchoolId">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Building *</label>
+                            <select class="form-control" name="building_id" id="roomBuildingSelect" required>
+                                <option value="">Select Building</option>
+                            </select>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Room Code</label>
+                                <input type="text" class="form-control" name="room_code" placeholder="e.g., Rm-101">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Floor No.</label>
+                                <select class="form-control" name="floor_no" id="roomFloorSelect" required disabled>
+                                    <option value="">Select Building First</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Room Name *</label>
+                            <input type="text" class="form-control" name="room_name" placeholder="e.g., Room 101, Science Lab" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Room Type *</label>
+                            <select class="form-control" name="room_type" id="room_type_select" required onchange="updateRoomPriority()">
+                                <option value="classroom">Classroom</option>
+                                <option value="laboratory">Laboratory</option>
+                                <option value="clinic">Clinic</option>
+                                <option value="department">Department</option>
+                                <option value="library">Library</option>
+                                <option value="storage">Storage</option>
+                                <option value="others">Others</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Calculated Priority</label>
+                            <input type="text" class="form-control bg-light" id="room_priority" readonly value="Shared Coverage (Up to 3 Classrooms)">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveRoom()">
+                        <i class="fas fa-save me-2"></i>Save Room
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Extinguisher Modal -->
+    <div class="modal fade" id="addExtModal" tabindex="-1" style="z-index: 1060;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
+                    <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Add Extinguisher (Room-Based)</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addExtForm">
+                        @csrf
+                        <input type="hidden" name="school_id" id="extSchoolId">
+
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-bold">Code *</label>
+                                <input type="text" class="form-control" name="code" placeholder="e.g., EXT-001" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-bold">Type *</label>
+                                <select class="form-control" name="type" id="ext_type_select" required onchange="handleExtTypeChange()">
+                                    <option value="ABC">ABC (Dry Chemical)</option>
+                                    <option value="CO2">CO2</option>
+                                    <option value="Water">Water</option>
+                                    <option value="Foam">Foam</option>
+                                    <option value="Other">Other, Please Specify...</option>
+                                </select>
+                            </div>
+                            <!-- Added Specify Other Type Field -->
+                            <div class="col-md-3 mb-3 d-none" id="otherTypeContainer">
+                                <label class="form-label fw-bold text-danger">Specify Type *</label>
+                                <input type="text" class="form-control border-danger" id="other_type_input" placeholder="Enter type...">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-bold">Status *</label>
+                                <select class="form-control" name="status" id="addExtStatus" required onchange="handleAddStatusChange()">
+                                    <option value="active">Active</option>
+                                    <option value="maintenance">For Refill</option>
+                                    <option value="expired">Empty</option>
+                                    <option value="missing">Missing</option>
+                                    <option value="purchase">For Purchase</option>
+                                    <option value="decommissioned">Decommissioned</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-bold">Pressure (0-100%)</label>
+                                <input type="number" class="form-control" name="pressure_level" id="addExtPressure" min="0" max="100" value="100" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Building *</label>
+                                <select class="form-control" name="building_id" id="extBuildingSelect" required onchange="handleExtBuildingChange()">
+                                    <option value="">Select Building</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Floor</label>
+                                <select class="form-control" id="extFloorSelect" disabled onchange="handleExtFloorChange()">
+                                    <option value="">Select Floor</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Center Room *</label>
+                                <select class="form-control" name="room_id" id="centerRoomSelect" required onchange="handleCenterRoomChange()">
+                                    <option value="">Select Center Room</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Covered Rooms (Select up to 3) *</label>
+                            <select class="form-control" id="coveredRoomsSelect" name="covered_room_ids[]" multiple size="5" required>
+                            </select>
+                            <div class="form-text small">Use Ctrl/Cmd + Click to select multiple. Laboratory rule applies.</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Date Checked *</label>
+                                <input type="date" class="form-control" name="date_checked" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Evaluation Result *</label>
+                                <select class="form-control" name="evaluation_result" required>
+                                    <option value="Passed">Passed</option>
+                                    <option value="Failed">Failed</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Remarks</label>
+                                <input type="text" class="form-control" name="remarks" placeholder="Optional remarks...">
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info mb-0 py-2 small">
+                            <i class="fas fa-info-circle me-2"></i><strong>Note:</strong> Laboratories can cover themselves + 1 clinic/auxiliary room max.
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveExtinguisher()">
+                        <i class="fas fa-save me-2"></i>Save Extinguisher
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fire Extinguisher's History Modal -->
+    <div class="modal fade" id="extHistoryModal" tabindex="-1" style="z-index: 1060;">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #6c757d; color: white;">
+                    <h5 class="modal-title"><i class="fas fa-history me-2"></i>Fire Extinguisher's History</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm" id="extHistoryTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date Removed</th>
+                                    <th>Code</th>
+                                    <th>Type</th>
+                                    <th>Last Location</th>
+                                    <th>Reason to be removed</th>
+                                    <th>Last Recorded Data</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data populated via AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="main-content">
         @if($schools->isEmpty())
             <div class="row">
@@ -337,13 +665,19 @@
             <div class="tab-content" id="schoolTabContent">
                 @foreach($schools as $school)
                     @php
-                        $allRoomsCount = $school->buildings->sum('rooms');
-                        $allRoomsCollection = $school->buildings->flatMap(fn ($b) => $b->rooms()->get());
+                        $actualTotalRooms = $school->buildings->sum('rooms');
+                        $requiredExtinguishers = $school->buildings->sum('required_extinguishers_count');
+                        $allRoomsCollection = $school->buildings->flatMap(fn ($b) => $b->actualRooms);
                         $allExts = $school->buildings->flatMap(fn ($b) => $b->fireExtinguishers);
                         $coveredRoomIds = $allExts->flatMap(fn ($e) => $e->coveredRooms->pluck('id'))->unique();
-                        $uncoveredRoomsCount = max(0, $allRoomsCollection->count() - $coveredRoomIds->count());
+                        $uncoveredRoomsCount = max(0, $allRoomsCollection->count() - $coveredRoomIds->count()); // Based on created rooms
                         $labRooms = $allRoomsCollection->where('room_type', 'laboratory');
                         $labsCovered = $labRooms->filter(fn ($r) => $coveredRoomIds->contains($r->id))->count();
+
+                        // New Metrics
+                        $evaluationCount = $allExts->where('status', 'active')->count();
+                        $evaluationPassed = $requiredExtinguishers > 0 && $evaluationCount >= $requiredExtinguishers;
+                        $compliancePercent = $actualTotalRooms > 0 ? round(($coveredRoomIds->count() / $actualTotalRooms) * 100, 1) : 0;
                     @endphp
 
                     <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="school-{{ $school->id }}">
@@ -372,7 +706,7 @@
                                             <div>
                                                 <div class="text-xs fw-bold text-dark text-uppercase mb-1">Room Coverage</div>
                                                 <div class="mb-0 fw-bold">
-                                                    <span class="text-success">{{ $coveredRoomIds->count() }} Covered ✔</span>
+                                                    <span class="text-success">{{ $coveredRoomIds->count() }} Covered<i class="bi bi-check-circle-fill ms-1"></i></span>
                                                     <span class="text-muted mx-1">|</span>
                                                     <span class="text-danger">{{ $uncoveredRoomsCount }} Uncovered X</span>
                                                 </div>
@@ -388,9 +722,9 @@
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
-                                                <div class="text-xs fw-bold text-info text-uppercase mb-1">Coverage Compliance</div>
+                                                <div class="text-xs fw-bold text-info text-uppercase mb-1">School Coverage Compliance</div>
                                                 <div class="h2 mb-0 fw-bold text-gray-800">
-                                                    {{ $allRoomsCollection->count() > 0 ? round(($coveredRoomIds->count() / $allRoomsCollection->count()) * 100, 1) : 0 }}%
+                                                    {{ $compliancePercent }}%
                                                 </div>
                                             </div>
                                             <i class="fas fa-percent fa-2x text-info"></i>
@@ -405,10 +739,10 @@
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
-                                                <div class="text-xs fw-bold text-warning text-uppercase mb-1">Evaluation Result</div>
+                                                <div class="text-xs fw-bold text-warning text-uppercase mb-1">School's Fire Extinguisher Evaluation Result</div>
                                                 <div class="h2 mb-0 fw-bold text-gray-800">
-                                                    {{ $allExts->where('status', 'active')->count() }} / {{ $allExts->count() }}
-                                                    <span class="text-xs text-muted fw-normal">{{ $allExts->where('status', 'active')->count() === $allExts->count() && $allExts->count() > 0 ? 'Passed' : 'Failed' }}</span>
+                                                    {{ $evaluationCount }} / {{ $requiredExtinguishers }}
+                                                    <span class="text-xs text-muted fw-normal">{{ $evaluationPassed ? 'Passed' : 'Failed' }}</span>
                                                 </div>
                                             </div>
                                             <i class="fas fa-clipboard-check fa-2x text-warning"></i>
@@ -421,7 +755,7 @@
                         @if($labRooms->count() > 0 && $labsCovered < $labRooms->count())
                             <div class="alert alert-warning">
                                 <strong>Laboratory coverage:</strong>
-                                {{ $labsCovered }}/{{ $labRooms->count() }} laboratory rooms currently have an assigned extinguisher coverage.
+                                {{ $labsCovered }}/{{ $labRooms->count() }} Dedicated rooms currently have an assigned extinguisher coverage.
                             </div>
                         @endif
 
@@ -446,6 +780,11 @@
                                                     data-bs-target="#addExtModal"
                                                     data-school-id="{{ $school->id }}">
                                                 <i class="fas fa-plus me-2"></i> Add Extinguisher
+                                            </button>
+                                            <button class="btn btn-sm ms-2" 
+                                                    style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;"
+                                                    onclick="openExtHistoryModal({{ $school->id }})">
+                                                <i class="fas fa-history me-1"></i> Removed Fire Extinguisher
                                             </button>
                                             @endif
                                         </div>
@@ -487,8 +826,14 @@
                                                             <div class="accordion-body">
                                                                 <div class="row">
                                                                     <div class="col-lg-7 mb-4">
-                                                                        <h6 class="fw-bold mb-2"><i class="fas fa-door-closed me-2"></i>Rooms</h6>
-                                                                        @if($building->rooms()->count() == 0)
+                                                                        <div class="d-flex align-items-center justify-content-between mb-3">
+                                                                            <h6 class="fw-bold mb-0"><i class="fas fa-door-closed me-2"></i>Rooms</h6>
+                                                                            <div class="bg-light border rounded px-3 py-1 shadow-sm d-flex align-items-center">
+                                                                                <span class="text-muted small fw-bold me-2 text-uppercase" style="font-size: 0.7rem;">Current / Total Rooms:</span>
+                                                                                <span class="fw-bold text-primary">{{ $building->actualRooms->count() }} / {{ $building->rooms }}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                        @if($building->actualRooms->isEmpty())
                                                                             <div class="alert alert-secondary mb-0">
                                                                                 No rooms defined yet for this building.
                                                                             </div>
@@ -505,7 +850,7 @@
                                                                                         </tr>
                                                                                     </thead>
                                                                                     <tbody>
-                                                                                        @foreach($building->rooms()->get() as $room)
+                                                                                        @foreach($building->actualRooms as $room)
                                                                                             @php $ext = $coverageMap[$room->id] ?? null; @endphp
                                                                                             <tr>
                                                                                                 <td>
@@ -517,7 +862,7 @@
                                                                                                         {{ ucfirst($room->room_type) }}
                                                                                                     </span>
                                                                                                 </td>
-                                                                                                <td>{{ $room->floor_no ?? '—' }}</td>
+                                                                                                <td>{{ $room->floor_no ?? 'â€”' }}</td>
                                                                                                 <td>
                                                                                                     @if($ext)
                                                                                                         <span class="badge bg-success">{{ $ext->code }}</span>
@@ -529,7 +874,7 @@
                                                                                                     @endif
                                                                                                 </td>
                                                                                                 <td class="text-end">
-                                                                                                    <button class="btn btn-sm btn-outline-primary" onclick="inspectRoom({{ $room->id }})">
+                                                                                                    <button class="btn btn-sm btn-outline-primary" onclick="openUpdateRoomModal({{ $room->id }})">
                                                                                                         <i class="fas fa-search-plus me-1"></i> Inspect & Update
                                                                                                     </button>
                                                                                                 </td>
@@ -543,81 +888,93 @@
 
                                                                     <div class="col-lg-5 mb-4">
                                                                         <div class="d-flex justify-content-between align-items-center mb-2">
-                                                                            <h6 class="fw-bold mb-0"><i class="fas fa-fire-extinguisher me-2"></i>Extinguishers</h6>
+                                                                            <h6 class="fw-bold mb-0"><i class="fas fa-fire-extinguisher me-2"></i>Extinguishers & Details</h6>
                                                                             @php
                                                                                 $bldgExts = $building->fireExtinguishers;
                                                                                 $bldgActive = $bldgExts->where('status', 'active')->count();
-                                                                                $bldgTotal = $bldgExts->count();
-                                                                                $evalText = $bldgTotal > 0 && ($bldgActive/$bldgTotal >= 1.0) ? 'Passed' : 'Failed';
+                                                                                $required = $building->required_extinguishers_count;
+                                                                                $evalText = $bldgActive >= $required ? 'Passed' : 'Failed';
                                                                                 $evalColor = $evalText === 'Passed' ? 'success' : 'danger';
                                                                             @endphp
-                                                                            <span class="badge bg-{{ $evalColor }}">Evaluation Result: {{ $evalText }} ({{ $bldgActive }}/{{ $bldgTotal }})</span>
+                                                                            <span class="badge bg-{{ $evalColor }}">Evaluation Result: {{ $evalText }} ({{ $bldgActive }}/{{ $required }})</span>
                                                                         </div>
                                                                         @if($building->fireExtinguishers->isEmpty())
                                                                             <div class="alert alert-secondary mb-0">
                                                                                 No extinguishers recorded yet for this building.
                                                                             </div>
                                                                         @else
-                                                                            <div class="table-responsive">
-                                                <table class="table table-sm table-hover align-middle border">
-                                                    <thead class="table-light">
-                                                        <tr>
-                                                            <th>Extinguisher Details</th>
-                                                            <th>Tracking</th>
-                                                            <th>Action</th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        @foreach($building->fireExtinguishers as $ext)
-                                                            @php
-                                                                $pressure = $ext->pressure_level ?? 100;
-                                                                $statusLabel = 'OK';
-                                                                $healthClass = 'health-good';
-                                                                $badgeClass = 'success';
+                                            <div class="table-responsive">
+                                                @foreach($building->fireExtinguishers as $ext)
+                                                    @php
+                                                        $pressure = $ext->pressure_level ?? 100;
+                                                        $statusLabel = 'OK';
+                                                        $healthClass = 'health-good';
+                                                        $badgeClass = 'success';
 
-                                                                if ($ext->status === 'maintenance') {
-                                                                    $statusLabel = 'For Refill';
-                                                                    $healthClass = 'health-warning';
-                                                                    $badgeClass = 'warning';
-                                                                } elseif ($ext->status === 'expired' || $ext->status === 'missing') {
-                                                                    $statusLabel = $ext->status === 'expired' ? 'Empty' : 'Missing';
-                                                                    $healthClass = 'health-danger';
-                                                                    $badgeClass = 'danger';
-                                                                }
-                                                            @endphp
+                                                            if ($ext->status === 'maintenance') {
+                                                                $statusLabel = 'For Refill';
+                                                                $healthClass = 'health-warning';
+                                                                $badgeClass = 'warning';
+                                                            } elseif ($ext->status === 'expired' || $ext->status === 'missing') {
+                                                                $statusLabel = $ext->status === 'expired' ? 'Empty' : 'Missing';
+                                                                $healthClass = 'health-danger';
+                                                                $badgeClass = 'danger';
+                                                            } elseif ($ext->status === 'purchase') {
+                                                                $statusLabel = 'For Purchase';
+                                                                $healthClass = 'health-secondary';
+                                                                $badgeClass = 'dark';
+                                                            } elseif ($ext->status === 'decommissioned') {
+                                                                $statusLabel = 'Decommissioned';
+                                                                $healthClass = 'health-danger';
+                                                                $badgeClass = 'danger';
+                                                            }
+                                                    @endphp
+                                                    <div class="mb-4 border rounded shadow-sm overflow-hidden bg-white">
+                                                        <table class="table table-bordered table-sm mb-0">
+                                                            <!-- Row 1 -->
                                                             <tr>
-                                                                <td>
-                                                                    <div class="row g-2 mb-2">
-                                                                        <div class="col-6">
-                                                                            <div class="small fw-bold">Status & Pressure:</div>
-                                                                            <span class="badge bg-{{ $badgeClass }}">{{ $statusLabel }}</span>
-                                                                        </div>
-                                                                        <div class="col-6 text-end">
-                                                                            <div class="small fw-bold">Type:</div>
-                                                                            <span class="badge bg-secondary">{{ $ext->type }}</span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="health-bar" title="Pressure: {{ $pressure }}%">
-                                                                        <div class="health-bar-fill {{ $healthClass }}" style="width: {{ $pressure }}%"></div>
-                                                                        <div class="health-bar-text">{{ $pressure }}%</div>
+                                                                <td colspan="3" class="align-middle ps-3 py-2">
+                                                                    <strong>Status & Pressure:</strong>
+                                                                    <span class="badge bg-{{ $badgeClass }} ms-1">{{ $statusLabel }}</span>
+                                                                </td>
+                                                                <td colspan="2" class="align-middle ps-3 py-2">
+                                                                    <strong>Type:</strong>
+                                                                    <span class="badge bg-secondary ms-1">{{ $ext->type }}</span>
+                                                                </td>
+                                                            </tr>
+                                                            <!-- Row 2 -->
+                                                            <tr>
+                                                                <td colspan="5" class="p-3">
+                                                                    <div class="health-bar" style="height: 30px; background-color: #e9ecef; border-radius: 4px;" title="Pressure: {{ $pressure }}%">
+                                                                        <div class="health-bar-fill {{ $healthClass }}" style="width: {{ $pressure }}%; border-radius: 4px;"></div>
+                                                                        <div class="health-bar-text" style="line-height: 30px; font-size: 14px; font-weight: bold; color: #333;">{{ $pressure }}%</div>
                                                                     </div>
                                                                 </td>
-                                                                <td>
-                                                                    <div class="small mb-1"><strong>Code:</strong> {{ $ext->code }}</div>
-                                                                    <div class="small mb-1"><strong>As Of:</strong> {{ $ext->date_checked ? \Carbon\Carbon::parse($ext->date_checked)->format('m-d-Y') : 'N/A' }}</div>
-                                                                    <div class="small mb-1"><strong>Location:</strong> {{ $ext->centerRoom->room_name ?? 'N/A' }}</div>
-                                                                    <div class="small"><strong>Covering:</strong> {{ $ext->coveredRooms->count() }} Rooms</div>
-                                                                </td>
-                                                                <td>
+                                                            </tr>
+                                                            <!-- Row 4 -->
+                                                            <tr class="table-light text-center small">
+                                                                <th>Code</th>
+                                                                <th>As Of</th>
+                                                                <th>Location</th>
+                                                                <th>Covering</th>
+                                                                <th>Action</th>
+                                                            </tr>
+                                                            <!-- Row 5 -->
+                                                            <tr class="text-center align-middle">
+                                                                <td class="fw-bold">{{ $ext->code }}</td>
+                                                                <td>{{ $ext->date_checked ? \Carbon\Carbon::parse($ext->date_checked)->format('m-d-Y') : 'N/A' }}</td>
+                                                                <td>{{ $ext->centerRoom->room_name ?? 'N/A' }}</td>
+                                                                <td>{{ $ext->coveredRooms->count() }} Rooms</td>
+                                                                <td class="p-2">
                                                                     <button class="btn btn-sm btn-primary w-100"
                                                                             onclick="openUpdateModal({{ $ext->id }}, '{{ $ext->code }}', '{{ $ext->status }}', {{ $pressure }})">
-                                                                        Update
+                                                                        <i class="fas fa-edit me-1"></i> Update
                                                                     </button>
                                                                 </td>
                                                             </tr>
-                                                        @endforeach
-                                                    </tbody>
-                                                </table>
+                                                        </table>
+                                                    </div>
+                                                @endforeach
                                             </div>
                                                                         @endif
                                                                     </div>
@@ -656,6 +1013,7 @@
                                                         <th>Inspector</th>
                                                         <th>Status</th>
                                                         <th>Pressure</th>
+                                                        <th>Notes / Remarks</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -673,228 +1031,14 @@
         @endif
     </div>
 
-    <!-- Update Extinguisher Modal -->
-    <div class="modal fade" id="updateExtModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
-                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Update Extinguisher</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="updateExtForm">
-                        @csrf
-                        <input type="hidden" id="updateExtId">
-
-                        <div class="mb-3">
-                            <label class="form-label">Extinguisher Code</label>
-                            <input type="text" class="form-control" id="updateExtCode" readonly>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Status *</label>
-                                <select class="form-control" name="status" id="updateExtStatus" required onchange="handleUpdateStatusChange()">
-                                    <option value="active">OK (Active)</option>
-                                    <option value="maintenance">For Refill</option>
-                                    <option value="expired">Empty</option>
-                                    <option value="missing">Missing</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Pressure (0-100%) *</label>
-                                <input type="number" class="form-control" name="pressure_level" id="updateExtPressure" min="0" max="100" required>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Notes / Remarks</label>
-                            <textarea class="form-control" name="notes" rows="3" placeholder="Reason for update..."></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-primary" onclick="saveExtinguisherStatus()">
-                        <i class="fas fa-save me-2"></i>Update
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Room Modal -->
-    <div class="modal fade" id="addRoomModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
-                    <h5 class="modal-title"><i class="fas fa-door-open me-2"></i>Add Room</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="addRoomForm">
-                        @csrf
-                        <input type="hidden" name="school_id" id="roomSchoolId">
-
-                        <div class="mb-3">
-                            <label class="form-label">Building *</label>
-                            <select class="form-control" name="building_id" id="roomBuildingSelect" required>
-                                <option value="">Select Building</option>
-                            </select>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Room Code</label>
-                                <input type="text" class="form-control" name="room_code" placeholder="e.g., Rm-101">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Floor No.</label>
-                                <select class="form-control" name="floor_no" id="roomFloorSelect" required disabled>
-                                    <option value="">Select Building First</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Room Name *</label>
-                            <input type="text" class="form-control" name="room_name" placeholder="e.g., Room 101, Science Lab" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Room Type *</label>
-                            <select class="form-control" name="room_type" id="room_type_select" required onchange="updateRoomPriority()">
-                                <option value="classroom">Classroom</option>
-                                <option value="laboratory">Laboratory</option>
-                                <option value="clinic">Clinic</option>
-                                <option value="department">Department</option>
-                                <option value="library">Library</option>
-                                <option value="storage">Storage</option>
-                                <option value="others">Others</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Fire Extinguisher Priority</label>
-                            <input type="text" class="form-control bg-light" id="room_priority" readonly value="Shared Coverage (Up to 3 Classrooms)">
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" onclick="saveRoom()">
-                        <i class="fas fa-save me-2"></i>Save
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Extinguisher Modal -->
-    <div class="modal fade" id="addExtModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
-                    <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Add Extinguisher (Room-Based)</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="addExtForm">
-                        @csrf
-                        <input type="hidden" name="school_id" id="extSchoolId">
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Code *</label>
-                                <input type="text" class="form-control" name="code" placeholder="e.g., EXT-001" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Type *</label>
-                                <select class="form-control" name="type" id="ext_type_select" required onchange="handleExtTypeChange()">
-                                    <option value="ABC">ABC (Dry Chemical)</option>
-                                    <option value="CO2">CO2</option>
-                                    <option value="Water">Water</option>
-                                    <option value="Foam">Foam</option>
-                                    <option value="Other">Other, Please Specify...</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Status *</label>
-                                <select class="form-control" name="status" id="addExtStatus" required onchange="handleAddStatusChange()">
-                                    <option value="active">Active</option>
-                                    <option value="maintenance">For Refill</option>
-                                    <option value="expired">Empty</option>
-                                    <option value="missing">Missing</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Pressure Level (0-100%)</label>
-                                <input type="number" class="form-control" name="pressure_level" id="addExtPressure" min="0" max="100" value="100" required>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Building *</label>
-                                <select class="form-control" name="building_id" id="extBuildingSelect" required onchange="loadRoomsForExtinguisher()">
-                                    <option value="">Select Building</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Center Room *</label>
-                                <select class="form-control" name="room_id" id="centerRoomSelect" required onchange="handleCenterRoomChange()">
-                                    <option value="">Select Center Room</option>
-                                </select>
-                                <div class="form-text">If sharing (2–3 rooms), this must be the “center” room.</div>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Covered Rooms (max 3) *</label>
-                            <select class="form-control" id="coveredRoomsSelect" name="covered_room_ids[]" multiple size="6" required>
-                            </select>
-                            <div class="form-text">
-                                Select 1–3 rooms total. Must include the center room. Rooms can only be covered by one extinguisher.
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Date Checked *</label>
-                                <input type="date" class="form-control" name="date_checked" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Evaluation Result *</label>
-                                <select class="form-control" name="evaluation_result" required>
-                                    <option value="Passed">Passed</option>
-                                    <option value="Needs Refill">Needs Refill</option>
-                                    <option value="Failed - Damaged">Failed - Damaged</option>
-                                    <option value="Failed - Low Pressure">Failed - Low Pressure</option>
-                                    <option value="Expired">Expired</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="alert alert-info mb-0">
-                            <strong>Note:</strong> Laboratory center room can cover only itself, or itself + 1 auxiliary room.
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" onclick="saveExtinguisher()">
-                        <i class="fas fa-save me-2"></i>Save
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Obsolete nested modals section removed -->
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         const schools = @json($schools);
+        let currentBuildingRooms = [];
 
         function csrfToken() {
             return document.querySelector('meta[name="csrf-token"]').content;
@@ -904,47 +1048,30 @@
         function handleAddStatusChange() {
             const status = document.getElementById('addExtStatus').value;
             const pressureInput = document.getElementById('addExtPressure');
-            
-            // Set constraints based on status
-            switch(status) {
-                case 'active':
-                    pressureInput.min = 70;
-                    pressureInput.max = 100;
-                    if (pressureInput.value < 70) pressureInput.value = 70;
-                    break;
-                case 'maintenance': // For Refill
-                    pressureInput.min = 0;
-                    pressureInput.max = 69;
-                    if (pressureInput.value >= 70) pressureInput.value = 69;
-                    break;
-                case 'expired': // Empty
-                    pressureInput.min = 0;
-                    pressureInput.max = 19;
-                    if (pressureInput.value > 19) pressureInput.value = 19;
-                    break;
-                case 'missing':
-                    pressureInput.min = 0;
-                    pressureInput.max = 100;
-                    break;
-            }
+            updatePressureConstraints(status, pressureInput);
         }
 
         // Handle status change in Update Extinguisher modal - enforce pressure ranges
         function handleUpdateStatusChange() {
             const status = document.getElementById('updateExtStatus').value;
             const pressureInput = document.getElementById('updateExtPressure');
-            
-            // Set constraints based on status
+            updatePressureConstraints(status, pressureInput);
+        }
+
+        function updatePressureConstraints(status, pressureInput) {
             switch(status) {
                 case 'active':
                     pressureInput.min = 70;
                     pressureInput.max = 100;
+                    // Reset if out of range, or clamp? User said "range of percentage are only 70-100%"
                     if (pressureInput.value < 70) pressureInput.value = 70;
+                    if (pressureInput.value > 100) pressureInput.value = 100;
                     break;
                 case 'maintenance': // For Refill
-                    pressureInput.min = 0;
+                    pressureInput.min = 20;
                     pressureInput.max = 69;
-                    if (pressureInput.value >= 70) pressureInput.value = 69;
+                    if (pressureInput.value < 20) pressureInput.value = 20;
+                    if (pressureInput.value > 69) pressureInput.value = 69;
                     break;
                 case 'expired': // Empty
                     pressureInput.min = 0;
@@ -952,6 +1079,8 @@
                     if (pressureInput.value > 19) pressureInput.value = 19;
                     break;
                 case 'missing':
+                case 'purchase':
+                case 'decommissioned':
                     pressureInput.min = 0;
                     pressureInput.max = 100;
                     break;
@@ -980,19 +1109,21 @@
                 opt1.value = b.id;
                 opt1.textContent = b.building_no + (b.building_name ? ` (${b.building_name})` : '');
                 // Store floors and type for logic
-                opt1.dataset.floors = b.floors || 1;
+                opt1.dataset.floors = b.floors || 0;
                 opt1.dataset.type = b.building_type || '';
+                opt1.dataset.rooms_limit = b.rooms || 0;
                 roomBuildingSelect.appendChild(opt1);
 
                 const opt2 = document.createElement('option');
                 opt2.value = b.id;
                 opt2.textContent = b.building_no + (b.building_name ? ` (${b.building_name})` : '');
+                opt2.dataset.floors = b.floors || 0;
                 extBuildingSelect.appendChild(opt2);
             });
         }
 
-        // Handle Building Selection in Add Room (Populate Floors & Check Type)
-        document.getElementById('roomBuildingSelect').addEventListener('change', function() {
+        // Handle Building Selection in Add Room (Populate Floors & Check Type & Check Rules)
+        document.getElementById('roomBuildingSelect').addEventListener('change', async function() {
             const select = this;
             const floorSelect = document.getElementById('roomFloorSelect');
             floorSelect.innerHTML = '<option value="">Select Floor</option>';
@@ -1001,7 +1132,11 @@
             const option = select.options[select.selectedIndex];
             if (!option || !option.value) return;
 
+            const buildingId = option.value;
             const type = option.dataset.type;
+            const totalRequiredRooms = parseInt(option.dataset.rooms_limit) || parseInt(schools.flatMap(s => s.buildings).find(b => b.id == buildingId)?.rooms) || 0;
+            const totalFloors = parseInt(option.dataset.floors) || 1;
+
             // Restriction for Gymnasium and Cafeteria
             if (type.toLowerCase() === 'gymnasium' || type.toLowerCase() === 'cafeteria or canteens') {
                 Swal.fire({
@@ -1013,21 +1148,50 @@
                 return;
             }
 
-            const floors = parseInt(option.dataset.floors) || 1;
-            floorSelect.disabled = false;
+            try {
+                // Fetch current rooms to calculate distribution
+                const resp = await fetch(`/fire-safety/rooms/${buildingId}`);
+                const existingRooms = await resp.json();
 
-            // Ordinals helper
-            const getOrdinal = (n) => {
-                const s = ["th", "st", "nd", "rd"];
-                const v = n % 100;
-                return n + (s[(v - 20) % 10] || s[v] || s[0]);
-            };
+                const currentTotalCount = existingRooms.length;
+                const roomsByFloor = {};
+                for (let i = 1; i <= totalFloors; i++) {
+                    roomsByFloor[i] = existingRooms.filter(r => r.floor_no == i).length;
+                }
 
-            for (let i = 1; i <= floors; i++) {
-                const opt = document.createElement('option');
-                opt.value = i;
-                opt.textContent = getOrdinal(i) + " Floor";
-                floorSelect.appendChild(opt);
+                const emptyFloorsCount = Object.values(roomsByFloor).filter(c => c === 0).length;
+                const remainingSlots = totalRequiredRooms - currentTotalCount;
+
+                floorSelect.disabled = false;
+                const getOrdinal = (n) => {
+                    const s = ["th", "st", "nd", "rd"];
+                    const v = n % 100;
+                    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+                };
+
+                for (let i = 1; i <= totalFloors; i++) {
+                    const floorIsEmpty = (roomsByFloor[i] === 0 || !roomsByFloor[i]);
+                    const emptyOtherFloors = floorIsEmpty ? (emptyFloorsCount - 1) : emptyFloorsCount;
+
+                    // Logic: If we add to this floor, will we have enough slots left for all other empty floors?
+                    // Needed: emptyOtherFloors slots.
+                    // Available if we take one slot now: remainingSlots - 1. (Wait, remainingSlots is totalRequiredRooms - currentTotalCount)
+                    if ((remainingSlots - 1) >= emptyOtherFloors) {
+                        const opt = document.createElement('option');
+                        opt.value = i;
+                        opt.textContent = getOrdinal(i) + " Floor" + (floorIsEmpty ? " (Empty)" : "");
+                        floorSelect.appendChild(opt);
+                    }
+                }
+
+                if (floorSelect.options.length <= 1) {
+                    Swal.fire('Limit Reached', 'No more rooms can be added without violating the minimum floor requirement or building room limit.', 'warning');
+                    floorSelect.disabled = true;
+                }
+
+            } catch (e) {
+                console.error(e);
+                floorSelect.disabled = false; // Fallback
             }
         });
 
@@ -1086,59 +1250,10 @@
             }
         }
 
-        // Inspect Room - Show room details and extinguisher info
-        function inspectRoom(roomId) {
-            Swal.fire({
-                title: 'Room Inspection',
-                html: '\u003cdiv class=\"text-center\"\u003e\u003ci class=\"fas fa-spinner fa-spin fa-2x\"\u003e\u003c/i\u003e\u003cp class=\"mt-2\"\u003eLoading room details...\u003c/p\u003e\u003c/div\u003e',
-                showConfirmButton: false,
-                allowOutsideClick: false
-            });
+        // inspectRoom function replaced by openUpdateRoomModal below
 
-            // Fetch room details
-            fetch(`/fire-safety/room/${roomId}`)
-                .then(response => response.json())
-                .then(room => {
-                    let extInfo = 'No extinguisher assigned';
-                    let actionButton = '';
-                    
-                    if (room.extinguisher) {
-                        const ext = room.extinguisher;
-                        extInfo = `
-                            \u003cdiv class=\"alert alert-info\"\u003e
-                                \u003cstrong\u003eExtinguisher:\u003c/strong\u003e ${ext.code}\u003cbr\u003e
-                                \u003cstrong\u003eType:\u003c/strong\u003e ${ext.type}\u003cbr\u003e
-                                \u003cstrong\u003eStatus:\u003c/strong\u003e ${ext.status}\u003cbr\u003e
-                                \u003cstrong\u003ePressure:\u003c/strong\u003e ${ext.pressure_level}%\u003cbr\u003e
-                                \u003cstrong\u003eDate Checked:\u003c/strong\u003e ${ext.date_checked || 'N/A'}
-                            \u003c/div\u003e
-                        `;
-                        actionButton = `\u003cbutton class=\"btn btn-primary\" onclick=\"openUpdateModal(${ext.id}, '${ext.code}', '${ext.status}', ${ext.pressure_level}); Swal.close();\"\u003e\u003ci class=\"fas fa-edit me-2\"\u003e\u003c/i\u003eUpdate Extinguisher\u003c/button\u003e`;
-                    }
+        // Room Inspection logic moved to the end of script block for cleaner organization
 
-                    Swal.fire({
-                        title: `\u003ci class=\"fas fa-door-open me-2\"\u003e\u003c/i\u003e${room.room_name}`,
-                        html: `
-                            \u003cdiv class=\"text-start\"\u003e
-                                \u003cp\u003e\u003cstrong\u003eRoom Code:\u003c/strong\u003e ${room.room_code || 'N/A'}\u003c/p\u003e
-                                \u003cp\u003e\u003cstrong\u003eType:\u003c/strong\u003e ${room.room_type}\u003c/p\u003e
-                                \u003cp\u003e\u003cstrong\u003eFloor:\u003c/strong\u003e ${room.floor_no || 'N/A'}\u003c/p\u003e
-                                \u003chr\u003e
-                                ${extInfo}
-                            \u003c/div\u003e
-                        `,
-                        showCancelButton: true,
-                        confirmButtonText: actionButton ? '' : 'Close',
-                        cancelButtonText: 'Close',
-                        footer: actionButton,
-                        width: '600px'
-                    });
-                })
-                .catch(error => {
-                    console.error('Error fetching room details:', error);
-                    Swal.fire('Error', 'Failed to load room details', 'error');
-                });
-        }
 
         function updateRoomPriority() {
             const typeSelect = document.getElementById('room_type_select');
@@ -1154,67 +1269,96 @@
             }
         }
 
-        async function loadRoomsForExtinguisher() {
-            const buildingId = document.getElementById('extBuildingSelect').value;
+        async function handleExtBuildingChange() {
+            const buildingSelect = document.getElementById('extBuildingSelect');
+            const floorSelect = document.getElementById('extFloorSelect');
             const centerSelect = document.getElementById('centerRoomSelect');
             const coveredSelect = document.getElementById('coveredRoomsSelect');
 
+            const buildingId = buildingSelect.value;
+
+            // Reset selects
+            floorSelect.innerHTML = '<option value="">Select Floor</option>';
             centerSelect.innerHTML = '<option value="">Select Center Room</option>';
             coveredSelect.innerHTML = '';
 
-            if (!buildingId) return;
+            if (!buildingId) {
+                floorSelect.disabled = true;
+                return;
+            }
 
+            // Populate Floors
+            const selectedOption = buildingSelect.options[buildingSelect.selectedIndex];
+            const floors = parseInt(selectedOption.dataset.floors) || 1;
+
+            for (let i = 1; i <= floors; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = `Floor ${i}`;
+                floorSelect.appendChild(opt);
+            }
+            floorSelect.disabled = false;
+
+            // Fetch and store rooms
             try {
                 const resp = await fetch(`/fire-safety/rooms/${buildingId}`, {
                     headers: { 'Accept': 'application/json' }
                 });
-                const rooms = await resp.json();
+                currentBuildingRooms = await resp.json();
 
-                rooms.forEach(r => {
-                    const label = `${r.room_name}${r.room_code ? ' (' + r.room_code + ')' : ''} - ${r.room_type}`;
-
-                    const optCenter = document.createElement('option');
-                    optCenter.value = r.id;
-                    optCenter.textContent = label;
-                    optCenter.dataset.roomType = r.room_type;
-                    centerSelect.appendChild(optCenter);
-
-                    const optCovered = document.createElement('option');
-                    optCovered.value = r.id;
-                    optCovered.textContent = label;
-                    optCovered.dataset.roomType = r.room_type;
-                    coveredSelect.appendChild(optCovered);
-                });
+                // If user hasn't selected a floor yet, we don't show rooms.
+                // Or should we? User request said "depending on what floor was chosen... show the rooms".
             } catch (e) {
                 console.error(e);
-                Swal.fire('Error', 'Failed to load rooms for this building.', 'error');
+                Swal.fire('Error', 'Failed to load rooms.', 'error');
             }
+        }
+
+        function handleExtFloorChange() {
+            const floorSelect = document.getElementById('extFloorSelect');
+            const centerSelect = document.getElementById('centerRoomSelect');
+            const coveredSelect = document.getElementById('coveredRoomsSelect');
+
+            const selectedFloor = floorSelect.value;
+
+            centerSelect.innerHTML = '<option value="">Select Center Room</option>';
+            coveredSelect.innerHTML = '';
+
+            if (!selectedFloor) return;
+
+            // Filter rooms by floor
+            const filteredRooms = currentBuildingRooms.filter(r => String(r.floor_no) === String(selectedFloor));
+
+            filteredRooms.forEach(r => {
+                const label = `${r.room_name}${r.room_code ? ' (' + r.room_code + ')' : ''} - ${r.room_type}`;
+
+                const optCenter = document.createElement('option');
+                optCenter.value = r.id;
+                optCenter.textContent = label;
+                optCenter.dataset.roomType = r.room_type;
+                centerSelect.appendChild(optCenter);
+
+                const optCovered = document.createElement('option');
+                optCovered.value = r.id;
+                optCovered.textContent = label;
+                optCovered.dataset.roomType = r.room_type;
+                coveredSelect.appendChild(optCovered);
+            });
         }
 
         async function handleExtTypeChange() {
             const select = document.getElementById('ext_type_select');
-            if (select.value === 'Other') {
-                const { value: otherType } = await Swal.fire({
-                    title: 'Specify Extinguisher Type',
-                    input: 'text',
-                    inputLabel: 'What type of fire extinguisher?',
-                    inputPlaceholder: 'Enter type...',
-                    showCancelButton: true,
-                    inputValidator: (value) => {
-                        if (!value) return 'You need to write something!'
-                    }
-                });
+            const otherContainer = document.getElementById('otherTypeContainer');
+            const otherInput = document.getElementById('other_type_input');
 
-                if (otherType) {
-                    // Create new option or just update the current 'Other' value
-                    const newOption = document.createElement('option');
-                    newOption.value = otherType;
-                    newOption.textContent = otherType;
-                    newOption.selected = true;
-                    select.appendChild(newOption);
-                } else {
-                    select.value = 'ABC'; // Default back
-                }
+            if (select.value === 'Other') {
+                otherContainer.classList.remove('d-none');
+                otherInput.required = true;
+                otherInput.focus();
+            } else {
+                otherContainer.classList.add('d-none');
+                otherInput.required = false;
+                otherInput.value = '';
             }
         }
 
@@ -1255,6 +1399,23 @@
                 return;
             }
 
+            const typeSelect = document.getElementById('ext_type_select');
+            const otherInput = document.getElementById('other_type_input');
+            
+            // Create a temporary cloned FormData to manipulate values if needed
+            // Actually, we can just append or change values in the original FormData object before sending
+            const formData = new FormData(form);
+
+            if (typeSelect.value === 'Other') {
+                if (!otherInput.value.trim()) {
+                    Swal.fire('Required', 'Please specify the extinguisher type.', 'warning');
+                    otherInput.focus();
+                    return;
+                }
+                // Override 'type' with the custom value
+                formData.set('type', otherInput.value.trim());
+            }
+
             const centerId = document.getElementById('centerRoomSelect').value;
             const covered = Array.from(document.getElementById('coveredRoomsSelect').selectedOptions).map(o => o.value);
 
@@ -1279,8 +1440,6 @@
 
             // Update pressure based on status if needed, or enforce validation later
             // For now, simple validation
-
-            const formData = new FormData(form);
 
             try {
                 const resp = await fetch(`{{ route('fire-safety.extinguisher.store') }}`, {
@@ -1319,21 +1478,44 @@
             }
         });
 
-        // Update Modal Logic
-        var updateModalBS = null;
         function openUpdateModal(id, code, status, pressure) {
             document.getElementById('updateExtId').value = id;
             document.getElementById('updateExtCode').value = code;
             document.getElementById('updateExtStatus').value = status;
             document.getElementById('updateExtPressure').value = pressure;
+            document.getElementById('updateExtNotes').value = '';
+            
+            // Reset removal logic
+            if (document.getElementById('removeExtBtn')) document.getElementById('removeExtBtn').style.display = 'none';
+            if (document.getElementById('extRemovalReasonSection')) document.getElementById('extRemovalReasonSection').classList.add('d-none');
+            if (document.getElementById('extRemovalReason')) document.getElementById('extRemovalReason').value = '';
 
-            updateModalBS = new bootstrap.Modal(document.getElementById('updateExtModal'));
-            updateModalBS.show();
+            const modalEl = document.getElementById('updateExtModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+
+            // Check initial status for remove button
+            handleUpdateStatusChange();
         }
 
         function handleUpdateStatusChange() {
-            const status = document.getElementById('updateExtStatus').value;
+            const statusSelect = document.getElementById('updateExtStatus');
+            if(!statusSelect) return;
+            const status = statusSelect.value;
             const pressureInput = document.getElementById('updateExtPressure');
+            
+            // Show/Hide Remove button if status is Decommissioned
+            const removeBtn = document.getElementById('removeExtBtn');
+            if (removeBtn) {
+                if (status === 'decommissioned') {
+                    removeBtn.style.display = 'inline-block';
+                } else {
+                    removeBtn.style.display = 'none';
+                    if (document.getElementById('extRemovalReasonSection')) {
+                        document.getElementById('extRemovalReasonSection').classList.add('d-none');
+                    }
+                }
+            }
 
             if (status === 'active') {
                 pressureInput.min = 70;
@@ -1350,6 +1532,108 @@
             } else {
                 pressureInput.min = 0;
                 pressureInput.max = 100;
+            }
+        }
+
+        function showExtRemovalReason() {
+            const section = document.getElementById('extRemovalReasonSection');
+            if(!section) return;
+            section.classList.toggle('d-none');
+            if (!section.classList.contains('d-none')) {
+                const input = document.getElementById('extRemovalReason');
+                if(input) input.focus();
+            }
+        }
+
+        async function confirmRemoveExtinguisher() {
+            const id = document.getElementById('updateExtId').value;
+            const code = document.getElementById('updateExtCode').value;
+            const reasonInput = document.getElementById('extRemovalReason');
+            const reason = reasonInput ? reasonInput.value : '';
+
+            if (!reason.trim()) {
+                Swal.fire('Reason Required', 'Please provide a reason for removal.', 'warning');
+                return;
+            }
+
+            const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: `You are about to remove Fire Extinguisher ${code}. This will move it to archive.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, Remove It!'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    const resp = await fetch(`/fire-safety/extinguisher/${id}/remove`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken(),
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ reason: reason })
+                    });
+
+                    const data = await resp.json();
+                    if (data.success) {
+                        Swal.fire('Removed!', 'Fire extinguisher has been archived.', 'success').then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire('Error', data.message || 'Failed to remove extinguisher', 'error');
+                    }
+                } catch (e) {
+                    console.error(e);
+                    Swal.fire('Error', 'Network error during removal.', 'error');
+                }
+            }
+        }
+
+        async function openExtHistoryModal(schoolId) {
+            const modalEl = document.getElementById('extHistoryModal');
+            if(!modalEl) return;
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            const tableBody = document.querySelector('#extHistoryTable tbody');
+            if(!tableBody) return;
+            tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Loading...</td></tr>';
+            modal.show();
+
+            try {
+                const resp = await fetch(`/fire-safety/extinguisher/history/${schoolId}`);
+                const data = await resp.json();
+
+                if (data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No removed extinguishers found.</td></tr>';
+                    return;
+                }
+
+                tableBody.innerHTML = '';
+                data.forEach(item => {
+                    const removedAt = new Date(item.removed_at).toLocaleString();
+                    const row = `
+                        <tr>
+                            <td>${removedAt}</td>
+                            <td class="fw-bold text-danger">${item.item_code || 'N/A'}</td>
+                            <td>${item.item_data.type || 'N/A'}</td>
+                            <td>${item.item_data.building_name || 'N/A'}, Floor ${item.item_data.floor_no || '?'}</td>
+                            <td>${item.reason || 'No reason provided'}</td>
+                            <td>
+                                <small>
+                                    Status: ${item.item_data.status}<br>
+                                    Pressure: ${item.item_data.pressure_level}%
+                                </small>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.insertAdjacentHTML('beforeend', row);
+                });
+            } catch (e) {
+                console.error(e);
+                tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Failed to load history.</td></tr>';
             }
         }
 
@@ -1408,6 +1692,8 @@
                     else if (item.status === 'maintenance') { badgeClass = 'warning'; statusLabel = 'For Refill'; }
                     else if (item.status === 'expired') { badgeClass = 'danger'; statusLabel = 'Empty'; }
                     else if (item.status === 'missing') { badgeClass = 'danger'; statusLabel = 'Missing'; }
+                    else if (item.status === 'purchase') { badgeClass = 'dark'; statusLabel = 'For Purchase'; }
+                    else if (item.status === 'decommissioned') { badgeClass = 'danger'; statusLabel = 'Decommissioned'; }
 
                     const row = `
                         <tr>
@@ -1417,6 +1703,7 @@
                             <td>${item.inspector}</td>
                             <td><span class="badge bg-${badgeClass}">${statusLabel}</span></td>
                             <td>${item.pressure_level}%</td>
+                            <td>${item.notes || '-'}</td>
                         </tr>
                     `;
                     tableBody.insertAdjacentHTML('beforeend', row);
@@ -1445,41 +1732,94 @@
                });
            });
         });
-        function handleAddStatusChange() {
-            const status = document.getElementById('addExtStatus').value;
-            const pressureInput = document.getElementById('addExtPressure');
 
-            if (status === 'active') {
-                pressureInput.min = 70;
-                pressureInput.max = 100;
-                if (pressureInput.value < 70) pressureInput.value = 100;
-            } else if (status === 'maintenance') {
-                pressureInput.min = 20;
-                pressureInput.max = 69;
-                if (pressureInput.value >= 70 || pressureInput.value < 20) pressureInput.value = 69;
-            } else if (status === 'expired') {
-                pressureInput.min = 0;
-                pressureInput.max = 19;
-                if (pressureInput.value > 19) pressureInput.value = 19;
-            } else {
-                pressureInput.min = 0;
-                pressureInput.max = 100;
+
+        async function openUpdateRoomModal(roomId) {
+            try {
+                const resp = await fetch(`/fire-safety/room/${roomId}`);
+                if (!resp.ok) throw new Error('Room not found');
+                const data = await resp.json();
+
+                document.getElementById('updateRoomId').value = data.id;
+                document.getElementById('updateRoomCode').value = data.room_code || '';
+                document.getElementById('updateRoomName').value = data.room_name;
+                document.getElementById('updateRoomFloor').value = data.floor_no + " Floor";
+
+                // Populate candidates for nearest extinguisher
+                const candidatesResp = await fetch(`/fire-safety/room/${roomId}/candidates`);
+                const candidates = await candidatesResp.json();
+
+                const select = document.getElementById('updateRoomNearest');
+                select.innerHTML = '<option value="">None / Self-Covered</option>';
+
+                if (data.is_center_room) {
+                    select.disabled = true;
+                    const opt = document.createElement('option');
+                    opt.value = "";
+                    opt.textContent = "HOST ROOM (Hosts own extinguisher)";
+                    opt.selected = true;
+                    select.appendChild(opt);
+                    select.classList.add('bg-light');
+                } else {
+                    select.disabled = false;
+                    select.classList.remove('bg-light');
+                    candidates.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.id;
+                        opt.textContent = `${c.room_name} (${c.room_code || 'No Code'})`;
+                        if (data.nearest_extinguisher_room_id == c.id) opt.selected = true;
+                        select.appendChild(opt);
+                    });
+                }
+
+                const modalEl = document.getElementById('updateRoomModal');
+                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                modal.show();
+
+            } catch (e) {
+                console.error(e);
+                Swal.fire('Error', 'Failed to load room details.', 'error');
+            }
+        }
+
+        async function saveRoomUpdate() {
+            const id = document.getElementById('updateRoomId').value;
+            const form = document.getElementById('updateRoomForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const formData = new FormData(form);
+            // Removed _method PUT as suggested - using POST directly
+
+
+            try {
+                const resp = await fetch(`/fire-safety/room/${id}/update`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken(),
+                        'Accept': 'application/json',
+                    },
+                    body: formData
+                });
+
+                const data = await resp.json();
+                if (data.success) {
+                    Swal.fire('Updated', 'Room details updated successfully!', 'success').then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Error', data.message || 'Failed to update room', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                Swal.fire('Error', 'Network error during room update.', 'error');
             }
         }
 
         function inspectRoom(roomId) {
-            Swal.fire({
-                title: 'Inspect & Update Room',
-                text: 'This feature allows you to update specific room safety details. Opening room management...',
-                icon: 'info',
-                timer: 1500,
-                showConfirmButton: false
-            }).then(() => {
-                // For now, redirect to customization or open a specific modal if one existed
-                // The user requested 'Inspect & Update' button, usually implying a details view
-                // Since there's no specific 'update room' modal mentioned, I'll redirect to a common place or show a placeholder
-                Swal.fire('Coming Soon', 'Room-specific inspection details are under development.', 'info');
-            });
+            openUpdateRoomModal(roomId);
         }
     </script>
 </body>

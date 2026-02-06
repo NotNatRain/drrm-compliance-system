@@ -874,7 +874,7 @@
             <div class="modal-content">
                 <div class="modal-header" style="background-color: var(--fire-red); color: white;">
                     <h5 class="modal-title">
-                        <i class="fas fa-plus me-2"></i> Create Evacuation Plan
+                        <i class="fas fa-plus me-2"></i> Create Evacuation Plan (<span id="modalBuildingCode">BLDG-XXX</span>)
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -884,80 +884,77 @@
                         <input type="hidden" name="school_id" id="planSchoolId">
                         <input type="hidden" name="building_id" id="planBuildingId">
 
+                        <!-- 1st Row: Plan Name, Number of Routes, Assembly Areas -->
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Plan Number *</label>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Plan Name *</label>
                                 <input type="text" class="form-control" name="plan_no" placeholder="e.g., EP-001" required>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Building</label>
-                                <input type="text" class="form-control" id="displayBuildingName" readonly>
-                            </div>
-                        </div>
-
-                        <div class="row">
                             <div class="col-md-4 mb-3">
-                                <label class="form-label">Number of Emergency Exits *</label>
-                                <input type="number" class="form-control" name="exits" id="planExits" min="1" required>
+                                <label class="form-label fw-bold">Number of Routes *</label>
+                                <input type="number" class="form-control" name="routes" min="1" max="10" value="2" required>
                             </div>
                             <div class="col-md-4 mb-3">
-                                <label class="form-label">Number of Routes *</label>
-                                <input type="number" class="form-control" name="routes" min="1" max="5" value="2" required>
+                                <label class="form-label fw-bold">Assembly Areas *</label>
+                                <input type="number" class="form-control" name="areas" min="1" max="5" value="1" required>
+                            </div>
+                        </div>
+
+                        <!-- 2nd Row: Primary Evacuation Route, Secondary Evacuation Route -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Primary Evacuation Route *</label>
+                                <textarea class="form-control" name="primary_route" rows="3" 
+                                          placeholder="Describe the main path to the exit..." required></textarea>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Secondary Evacuation Route</label>
+                                <textarea class="form-control" name="secondary_route" rows="3" 
+                                          placeholder="Describe the alternative path..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- 3rd Row: Primary Assembly Area, Secondary Assembly Area, Assembly Area Capacity -->
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Primary Assembly Area *</label>
+                                <input type="text" class="form-control" name="primary_assembly_area" placeholder="e.g., Main Gate" required>
                             </div>
                             <div class="col-md-4 mb-3">
-                                <label class="form-label">Assembly Areas *</label>
-                                <input type="number" class="form-control" name="areas" min="1" max="3" value="2" required>
+                                <label class="form-label fw-bold">Secondary Assembly Area</label>
+                                <input type="text" class="form-control" name="secondary_assembly_area" placeholder="e.g., Open Field">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Assembly Area Capacity</label>
+                                <input type="number" class="form-control" name="assembly_capacity" min="1" placeholder="e.g., 500">
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Primary Evacuation Route *</label>
-                            <textarea class="form-control" name="primary_route" rows="3" 
-                                      placeholder="Describe the primary evacuation route (e.g., Exit through main doors, turn left, proceed to stairwell A, exit to front parking lot)" required></textarea>
+                        <!-- 4th Row: Display Information Only (Number of Emergency Exits, Safety Features) -->
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold text-muted">Number of Emergency Exits</label>
+                                <input type="number" class="form-control bg-light" id="displayEmergencyExits" readonly disabled>
+                                <input type="hidden" name="exits" id="hiddenEmergencyExits">
+                            </div>
+                            <div class="col-md-8 mb-3">
+                                <label class="form-label fw-bold text-muted">Safety Features Installed</label>
+                                <textarea class="form-control bg-light" id="displaySafetyFeatures" rows="2" readonly disabled placeholder="Auto-retrieved from building records"></textarea>
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Secondary Evacuation Route</label>
-                            <textarea class="form-control" name="secondary_route" rows="3" 
-                                      placeholder="Describe the secondary evacuation route (use if primary route is blocked)"></textarea>
-                        </div>
-
+                        <!-- 5th Row: Emergency Contacts & Special Instructions -->
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Primary Assembly Area *</label>
-                                <input type="text" class="form-control" name="primary_assembly_area" placeholder="e.g., Front Parking Lot" required>
+                                <label class="form-label fw-bold">Emergency Contacts</label>
+                                <textarea class="form-control" name="emergency_contacts" rows="3" 
+                                          placeholder="Key personnel and contact numbers..."></textarea>
                             </div>
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Secondary Assembly Area</label>
-                                <input type="text" class="form-control" name="secondary_assembly_area" placeholder="e.g., Sports Field">
+                                <label class="form-label fw-bold">Special Instructions</label>
+                                <textarea class="form-control" name="special_instructions" rows="3" 
+                                          placeholder="e.g., Instructions for persons with disabilities..."></textarea>
                             </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Assembly Area Capacity *</label>
-                                <input type="number" class="form-control" name="assembly_capacity" min="1" placeholder="e.g., 500" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Plan Status *</label>
-                                <select class="form-control" name="status" required>
-                                    <option value="active">Active</option>
-                                    <option value="draft">Draft</option>
-                                    <option value="review">Under Review</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Emergency Contacts</label>
-                            <textarea class="form-control" name="emergency_contacts" rows="2" 
-                                      placeholder="List emergency contacts (name, role, phone number)"></textarea>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Special Instructions</label>
-                            <textarea class="form-control" name="special_instructions" rows="3" 
-                                      placeholder="Any special evacuation instructions for disabled persons, hazardous materials, etc."></textarea>
                         </div>
 
                         <div class="alert alert-info">
@@ -981,7 +978,7 @@
             <div class="modal-content">
                 <div class="modal-header" style="background-color: var(--fire-red); color: white;">
                     <h5 class="modal-title">
-                        <i class="fas fa-edit me-2"></i> Edit Evacuation Plan
+                        <i class="fas fa-edit me-2"></i> Edit Evacuation Plan (<span id="editModalBuildingCode">BLDG-XXX</span>)
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -990,61 +987,60 @@
                         @csrf
                         @method('PUT')
                         <input type="hidden" name="plan_id" id="editPlanId">
+                        <input type="hidden" name="building_id" id="editBuildingId">
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Plan Number</label>
-                                <input type="text" class="form-control" name="plan_no" id="editPlanNo" readonly>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Building</label>
-                                <input type="text" class="form-control" id="editBuildingName" readonly>
-                            </div>
-                        </div>
-
+                        <!-- 1st Row: Plan Name, Number of Routes, Assembly Areas -->
                         <div class="row">
                             <div class="col-md-4 mb-3">
-                                <label class="form-label">Number of Emergency Exits *</label>
-                                <input type="number" class="form-control" name="exits" id="editExits" min="1" required>
+                                <label class="form-label fw-bold">Plan Number</label>
+                                <input type="text" class="form-control bg-light" name="plan_no" id="editPlanNo" readonly>
                             </div>
                             <div class="col-md-4 mb-3">
-                                <label class="form-label">Number of Routes *</label>
-                                <input type="number" class="form-control" name="routes" id="editRoutes" min="1" max="5" required>
+                                <label class="form-label fw-bold">Number of Routes *</label>
+                                <input type="number" class="form-control" name="routes" id="editRoutes" min="1" max="10" required>
                             </div>
                             <div class="col-md-4 mb-3">
-                                <label class="form-label">Assembly Areas *</label>
-                                <input type="number" class="form-control" name="areas" id="editAreas" min="1" max="3" required>
+                                <label class="form-label fw-bold">Assembly Areas *</label>
+                                <input type="number" class="form-control" name="areas" id="editAreas" min="1" max="5" required>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Primary Evacuation Route *</label>
-                            <textarea class="form-control" name="primary_route" id="editPrimaryRoute" rows="3" required></textarea>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Secondary Evacuation Route</label>
-                            <textarea class="form-control" name="secondary_route" id="editSecondaryRoute" rows="3"></textarea>
-                        </div>
-
+                        <!-- 2nd Row: Primary Evacuation Route, Secondary Evacuation Route -->
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Primary Assembly Area *</label>
+                                <label class="form-label fw-bold">Primary Evacuation Route *</label>
+                                <textarea class="form-control" name="primary_route" id="editPrimaryRoute" rows="3" required></textarea>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Secondary Evacuation Route</label>
+                                <textarea class="form-control" name="secondary_route" id="editSecondaryRoute" rows="3"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- 3rd Row: Primary Assembly Area, Secondary Assembly Area, Assembly Area Capacity -->
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Primary Assembly Area *</label>
                                 <input type="text" class="form-control" name="primary_assembly_area" id="editPrimaryArea" required>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Secondary Assembly Area</label>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Secondary Assembly Area</label>
                                 <input type="text" class="form-control" name="secondary_assembly_area" id="editSecondaryArea">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Assembly Area Capacity</label>
+                                <input type="number" class="form-control" name="assembly_capacity" id="editCapacity" min="1">
                             </div>
                         </div>
 
+                        <!-- 4th Row: Display Information Only (Number of Emergency Exits, Safety Features) -->
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Assembly Area Capacity *</label>
-                                <input type="number" class="form-control" name="assembly_capacity" id="editCapacity" min="1" required>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold text-muted">Number of Emergency Exits</label>
+                                <input type="number" class="form-control bg-light" name="exits" id="editExits" readonly disabled>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Plan Status *</label>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Plan Status *</label>
                                 <select class="form-control" name="status" id="editStatus" required>
                                     <option value="active">Active</option>
                                     <option value="draft">Draft</option>
@@ -1052,16 +1048,22 @@
                                     <option value="inactive">Inactive</option>
                                 </select>
                             </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold text-muted text-truncate">Safety Features</label>
+                                <input type="text" class="form-control bg-light" id="editSafetyFeatures" readonly disabled placeholder="Auto-retrieved">
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Emergency Contacts</label>
-                            <textarea class="form-control" name="emergency_contacts" id="editContacts" rows="2"></textarea>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Special Instructions</label>
-                            <textarea class="form-control" name="special_instructions" id="editInstructions" rows="3"></textarea>
+                        <!-- 5th Row: Emergency Contacts & Special Instructions -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Emergency Contacts</label>
+                                <textarea class="form-control" name="emergency_contacts" id="editContacts" rows="3"></textarea>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Special Instructions</label>
+                                <textarea class="form-control" name="special_instructions" id="editInstructions" rows="3"></textarea>
+                            </div>
                         </div>
 
                         <div class="alert alert-info">
@@ -1204,76 +1206,108 @@
             });
         });
 
-        // Create Plan button click
-        document.querySelectorAll('.create-plan-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                const buildingId = this.getAttribute('data-building-id');
-                const buildingName = this.getAttribute('data-building-name');
-                const schoolId = this.getAttribute('data-school-id');
+        // Create Plan logic - Unify in modal show event
+        document.getElementById('addPlanModal').addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const form = document.getElementById('addPlanForm');
+            form.reset();
+
+            if (button && button.classList.contains('create-plan-btn')) {
+                const buildingId = button.getAttribute('data-building-id');
+                const buildingName = button.getAttribute('data-building-name');
+                const schoolId = button.getAttribute('data-school-id') || currentSchoolId;
 
                 document.getElementById('planSchoolId').value = schoolId;
                 document.getElementById('planBuildingId').value = buildingId;
-                document.getElementById('displayBuildingName').value = buildingName;
+                document.getElementById('modalBuildingCode').textContent = buildingName;
 
-                // Load building details for defaults
-                loadBuildingDetails(buildingId);
-            });
+                // Load building details (Exits, Features)
+                loadBuildingDetailsForPlan(buildingId);
+            } else {
+                // Fallback for general Add Plan button
+                const schoolId = button?.getAttribute('data-school-id') || currentSchoolId;
+                document.getElementById('planSchoolId').value = schoolId;
+                document.getElementById('planBuildingId').value = '';
+                document.getElementById('modalBuildingCode').textContent = 'Select Building';
+                
+                document.getElementById('displayEmergencyExits').value = 0;
+                document.getElementById('hiddenEmergencyExits').value = 0;
+                document.getElementById('displaySafetyFeatures').value = 'Please select a building by clicking "Create Plan" on a building card.';
+            }
         });
 
-        // Add Plan modal open
-        document.getElementById('addPlanModal').addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            if (button && button.classList.contains('create-plan-btn')) return; // Already handled
-            
-            const schoolId = button?.getAttribute('data-school-id') || currentSchoolId;
-            document.getElementById('planSchoolId').value = schoolId;
-            
-            // Reset form
-            document.getElementById('addPlanForm').reset();
-            document.getElementById('planBuildingId').value = '';
-            document.getElementById('displayBuildingName').value = 'Select building after saving';
+        // Load building details for evacuation plan
+        async function loadBuildingDetailsForPlan(buildingId) {
+            try {
+                const response = await fetch(`/fire-safety/building/${buildingId}`);
+                const building = await response.json();
+
+                // Populate emergency exits (read-only)
+                const exits = building.emergency_exits || 0;
+                document.getElementById('displayEmergencyExits').value = exits;
+                document.getElementById('hiddenEmergencyExits').value = exits;
+
+                // Populate safety features (read-only)
+                const features = building.features ? building.features.split(',').join(', ') : 'No safety features recorded';
+                document.getElementById('displaySafetyFeatures').value = features;
+
+            } catch (error) {
+                console.error('Error loading building details:', error);
+                document.getElementById('displayEmergencyExits').value = 0;
+                document.getElementById('hiddenEmergencyExits').value = 0;
+                document.getElementById('displaySafetyFeatures').value = 'Error loading features';
+            }
+        }
+
+        // Edit Plan button click logic with event delegation
+        document.addEventListener('click', async function(e) {
+            const button = e.target.closest('.edit-plan-btn');
+            if (!button) return;
+
+            const planId = button.getAttribute('data-plan-id');
+            currentPlanId = planId;
+
+            try {
+                const response = await fetch(`/fire-safety/evacuation-plan/${planId}`);
+                const plan = await response.json();
+
+                // Populate form
+                document.getElementById('editPlanId').value = plan.id;
+                document.getElementById('editBuildingId').value = plan.building_id;
+                document.getElementById('editPlanNo').value = plan.plan_no;
+                document.getElementById('editModalBuildingCode').textContent = plan.building?.building_no || 'N/A';
+                
+                // Display from building record (read-only in modal)
+                document.getElementById('editExits').value = plan.building?.emergency_exits || 0;
+                const features = plan.building?.features ? plan.building.features.split(',').join(', ') : 'No safety features recorded';
+                document.getElementById('editSafetyFeatures').value = features;
+
+                document.getElementById('editRoutes').value = plan.routes;
+                document.getElementById('editAreas').value = plan.areas;
+                document.getElementById('editPrimaryRoute').value = plan.primary_route || '';
+                document.getElementById('editSecondaryRoute').value = plan.secondary_route || '';
+                document.getElementById('editPrimaryArea').value = plan.primary_assembly_area || '';
+                document.getElementById('editSecondaryArea').value = plan.secondary_assembly_area || '';
+                document.getElementById('editCapacity').value = plan.assembly_capacity || '';
+                document.getElementById('editStatus').value = plan.status;
+                document.getElementById('editContacts').value = plan.emergency_contacts || '';
+                document.getElementById('editInstructions').value = plan.special_instructions || '';
+
+            } catch (error) {
+                console.error('Error loading plan data:', error);
+                Swal.fire('Error', 'Failed to load plan data', 'error');
+            }
         });
 
-        // Edit Plan button click
-        document.querySelectorAll('.edit-plan-btn').forEach(button => {
-            button.addEventListener('click', async function() {
-                const planId = this.getAttribute('data-plan-id');
-                currentPlanId = planId;
+        // View Plan button click logic with event delegation
+        document.addEventListener('click', async function(e) {
+            const button = e.target.closest('.view-plan-btn');
+            if (!button) return;
 
-                try {
-                    const response = await fetch(`/fire-safety/evacuation-plan/${planId}`);
-                    const plan = await response.json();
+            const planId = button.getAttribute('data-plan-id');
+            currentPlanId = planId;
 
-                    // Populate form
-                    document.getElementById('editPlanId').value = plan.id;
-                    document.getElementById('editPlanNo').value = plan.plan_no;
-                    document.getElementById('editBuildingName').value = plan.building?.building_no || 'N/A';
-                    document.getElementById('editExits').value = plan.exits;
-                    document.getElementById('editRoutes').value = plan.routes;
-                    document.getElementById('editAreas').value = plan.areas;
-                    document.getElementById('editPrimaryRoute').value = plan.primary_route || '';
-                    document.getElementById('editSecondaryRoute').value = plan.secondary_route || '';
-                    document.getElementById('editPrimaryArea').value = plan.primary_assembly_area || '';
-                    document.getElementById('editSecondaryArea').value = plan.secondary_assembly_area || '';
-                    document.getElementById('editCapacity').value = plan.assembly_capacity || '';
-                    document.getElementById('editStatus').value = plan.status;
-                    document.getElementById('editContacts').value = plan.emergency_contacts || '';
-                    document.getElementById('editInstructions').value = plan.special_instructions || '';
-
-                } catch (error) {
-                    console.error('Error loading plan data:', error);
-                    Swal.fire('Error', 'Failed to load plan data', 'error');
-                }
-            });
-        });
-
-        // View Plan button click
-        document.querySelectorAll('.view-plan-btn').forEach(button => {
-            button.addEventListener('click', async function() {
-                const planId = this.getAttribute('data-plan-id');
-                currentPlanId = planId;
-
-                try {
+            try {
                     const response = await fetch(`/fire-safety/evacuation-plan/${planId}/details`);
                     const responseData = await response.json();
                     const plan = responseData.plan;

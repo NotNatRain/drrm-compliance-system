@@ -17,6 +17,7 @@ class FireSafetyRoom extends Model
         'room_name',
         'room_type',
         'floor_no',
+        'nearest_extinguisher_room_id'
     ];
 
     protected $casts = [
@@ -31,6 +32,11 @@ class FireSafetyRoom extends Model
     public function building(): BelongsTo
     {
         return $this->belongsTo(FireSafetyBuilding::class, 'building_id');
+    }
+
+    public function nearestExtinguisherRoom(): BelongsTo
+    {
+        return $this->belongsTo(FireSafetyRoom::class, 'nearest_extinguisher_room_id');
     }
 
     public function extinguishersCoveringThisRoom(): BelongsToMany
