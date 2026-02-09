@@ -140,7 +140,24 @@ Route::prefix('typhoon')->middleware(['auth', 'module.access:typhoon_flood'])->g
 
 
 //Incident Routes
-Route::prefix('incidents')->middleware(['auth', 'module.access:incidents'])->group(function () {
-    Route::get('/dashboard', [IncidentController::class, 'dashboard'])->name('incidents.dashboard');
-    // Add other incident routes here
+Route::middleware(['auth'])->group(function () {
+    Route::get('/incidents/dashboard', [IncidentController::class, 'dashboard'])->name('incidents.dashboard');
+    Route::post('/incidents/store', [IncidentController::class, 'store'])->name('incidents.store');
+    Route::get('/incidents/date/{date}', [IncidentController::class, 'getDateIncidents'])->name('incidents.date');
+    Route::delete('/incidents/{id}', [IncidentController::class, 'destroy'])->name('incidents.destroy');
+    Route::get('/incidents/search-schools', [IncidentController::class, 'searchSchools'])->name('incidents.search-schools');
+});
+
+// Comprehensive School Safety (placeholder – replace with real controller when module is ready)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/comprehensive-school-safety/dashboard', function () {
+        return redirect()->route('dashboard')->with('info', 'Comprehensive School Safety module is under development.');
+    })->name('comprehensive-school-safety.dashboard');
+});
+
+// Hazard Mapping (placeholder – replace with real controller when module is ready)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/hazard-mapping/dashboard', function () {
+        return redirect()->route('dashboard')->with('info', 'Hazard Mapping module is under development.');
+    })->name('hazard-mapping.dashboard');
 });

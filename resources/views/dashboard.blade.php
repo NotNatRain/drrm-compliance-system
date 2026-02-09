@@ -87,6 +87,50 @@
                 </div>
             </a>
         </div>
+
+        <!-- Comprehensive School Safety (4th compliant - below Fire Safety) -->
+        <div class="col-md-4 mb-4">
+            <a href="{{ route('comprehensive-school-safety.dashboard') }}" class="text-decoration-none">
+                <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #5C4033;">
+                    <div class="card-body text-center p-5">
+                        <div class="mb-4">
+                            <i class="fas fa-school fa-4x" style="color: #5C4033;"></i>
+                        </div>
+                        <h3 class="card-title fw-bold" style="color: #5C4033;">Comprehensive School Safety</h3>
+                        <p class="card-text text-muted">
+                            Evaluation compliance system that assesses tools, school disaster risk management, DRR in education, and safe learning facilities.
+                        </p>
+                    </div>
+                    <div class="card-footer bg-transparent text-center">
+                        <span class="btn" style="background-color: #5C4033; color: white;">
+                            <i class="fas fa-arrow-right"></i> Enter
+                        </span>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Hazard Mapping (5th compliant) -->
+        <div class="col-md-4 mb-4">
+            <a href="{{ route('hazard-mapping.dashboard') }}" class="text-decoration-none">
+                <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #0D7377;">
+                    <div class="card-body text-center p-5">
+                        <div class="mb-4">
+                            <i class="fas fa-map-marked-alt fa-4x" style="color: #0D7377;"></i>
+                        </div>
+                        <h3 class="card-title fw-bold" style="color: #0D7377;">Hazard Mapping</h3>
+                        <p class="card-text text-muted">
+                            Identify, assess, and map hazards affecting school sites and surrounding areas for risk reduction and preparedness planning.
+                        </p>
+                    </div>
+                    <div class="card-footer bg-transparent text-center">
+                        <span class="btn" style="background-color: #0D7377; color: white;">
+                            <i class="fas fa-arrow-right"></i> Enter
+                        </span>
+                    </div>
+                </div>
+            </a>
+        </div>
     </div>
 
     <!-- Quick Stats -->
