@@ -45,6 +45,12 @@ class FireSafetyExtinguisher extends Model
         return $this->belongsTo(FireSafetyRoom::class, 'room_id');
     }
 
+    // Alias for backward compatibility or if code refers to 'room'
+    public function room(): BelongsTo
+    {
+        return $this->belongsTo(FireSafetyRoom::class, 'room_id');
+    }
+
     public function coveredRooms(): BelongsToMany
     {
         return $this->belongsToMany(

@@ -15,11 +15,17 @@ class FireSafetySchool extends Model
         'address', 
         'school_head', 
         'school_drrm_coordinator', 
-        'status'
+        'status',
+        'evacuation_map_layout',
+        'alerts',
+        'events'
     ];
 
     protected $casts = [
-        'status' => 'string'
+        'status' => 'string',
+        'evacuation_map_layout' => 'array',
+        'alerts' => 'array',
+        'events' => 'array'
     ];
 
     // Relationships

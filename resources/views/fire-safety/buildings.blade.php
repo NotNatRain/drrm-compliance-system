@@ -449,12 +449,7 @@
                                     <i class="fas fa-building me-2"></i> Buildings - {{ $school->school_name }}
                                 </h6>
                                 <div>
-                                    @if(auth()->user()->role === 'admin')
-                                    <button class="btn btn-sm me-2" 
-                                            style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;"
-                                            onclick="openBuildingHistoryModal({{ $school->id }})">
-                                        <i class="fas fa-history me-1"></i> Removed Floor/Room
-                                    </button>
+                                    @if(auth()->user()->role === 'admin')                             
                                     <button class="btn btn-primary btn-sm me-2 add-building-btn"
                                             data-school-id="{{ $school->id }}"
                                             data-bs-toggle="modal"
@@ -467,6 +462,16 @@
                                             data-bs-target="#scheduleInspectionModal">
                                         <i class="fas fa-calendar-plus me-2"></i> Schedule Inspection
                                     </button>
+                                    <button class="btn btn-sm me-2" 
+                                            style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;"
+                                            onclick="openBuildingHistoryModal({{ $school->id }})">
+                                        <i class="fas fa-history me-1"></i> Removed Floor/Room
+                                    </button>
+                                    <a href="{{ route('fire-safety.report.building-summary', $school->id) }}" target="_blank"
+                                            class="btn btn-sm" 
+                                            style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;">
+                                        <i class="fas fa-print me-1"></i> Print Building Reports
+                                    </a>
                                     @endif
                                 </div>
                             </div>
@@ -1335,6 +1340,31 @@
             const formData = new FormData(form);
             const newBuildingNo = formData.get('building_no');
 
+            // Handle Floor Removal Logic
+            const floorToRemove = document.getElementById('removeFloorSelect').value;
+            const floorReason = document.getElementById('floorRemovalReason').value;
+
+            if (floorToRemove) {
+                 if (!floorReason.trim()) {
+                    Swal.fire('Reason Required', 'Please provide a reason for removing the floor.', 'warning');
+                    return;
+                }
+
+                const confirmFloor = await Swal.fire({
+                    title: 'Floor Removal Warning',
+                    text: `Are you sure you want to remove Floor ${floorToRemove}? This will remove all associated rooms and alarms.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#A8191F',
+                    confirmButtonText: 'Yes, remove floor!',
+                    cancelButtonText: 'No, cancel!'
+                });
+
+                if (!confirmFloor.isConfirmed) return;
+                formData.append('removed_floor', floorToRemove);
+                formData.append('floor_removal_reason', floorReason);
+            }
+
             if (newBuildingNo !== oldBuildingNo) {
                 const result = await Swal.fire({
                     title: 'Confirmation',
@@ -1346,9 +1376,7 @@
                     cancelButtonText: 'No, cancel!'
                 });
 
-                if (!result.isConfirmed) return;
-                formData.append('removed_floor', floorToRemove);
-                formData.append('floor_removal_reason', document.getElementById('floorRemovalReason').value);
+                 if (!result.isConfirmed) return;
             }
 
             // Room Removal Confirmation
@@ -1750,6 +1778,14 @@
             // Validation
             if (yearConstructed && lastRenovation && lastRenovation < yearConstructed) {
                 Swal.fire('Invalid Dates', 'Last renovation year cannot be earlier than the year constructed.', 'warning');
+                return;
+            }
+
+            const floors = parseInt(formData.get('floors')) || 1;
+            const rooms = parseInt(formData.get('rooms')) || 1;
+
+            if (rooms < floors) {
+                Swal.fire('Invalid Configuration', 'Total rooms cannot be less than total floors. Each floor must have at least one room.', 'warning');
                 return;
             }
 

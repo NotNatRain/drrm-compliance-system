@@ -262,12 +262,21 @@
         <div class="quick-actions">
             <h6 class="text-white mb-3">Quick Actions</h6>
             <div class="d-grid gap-2">
-                <button class="btn btn-light btn-sm">
+                <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addInspectionModal">
                     <i class="fas fa-plus me-2"></i> Add Inspection
                 </button>
-                <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#alarmInfoModal">
-                    <i class="fas fa-bell me-2"></i> Simulate Alarm
-                </button>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <button class="btn btn-danger btn-sm w-100" data-bs-toggle="modal" data-bs-target="#addAlertModal">
+                            <i class="fas fa-exclamation-triangle me-1"></i> Add Alert
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-primary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#addEventModal">
+                            <i class="fas fa-calendar-plus me-1"></i> Add Event
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -451,18 +460,21 @@
                                         <div class="card dashboard-card">
                                             <div class="card-body">
                                                 <div class="d-flex justify-content-center gap-3">
-                                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addInspectionModal">
-                                                        <i class="fas fa-plus me-2"></i> Add Inspection
+                                                    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addInspectionModal">
+                                                        <i class="fas fa-plus-circle me-2"></i> Add Inspection
                                                     </button>
-                                                    <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#alarmInfoModal">
-                                                        <i class="fas fa-bell me-2"></i> Simulate Alarm
+                                                    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#addAlertModal">
+                                                        <i class="fas fa-exclamation-triangle me-2"></i> Add Alert
+                                                    </button>
+                                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEventModal">
+                                                        <i class="fas fa-calendar-plus me-2"></i> Add Event
                                                     </button>
                                                     <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#evacInfoModal">
                                                         <i class="fas fa-map-signs me-2"></i> View Evacuation Plans
                                                     </button>
-                                                    <button class="btn btn-success">
+                                                    <a href="{{ route('fire-safety.report.school-summary') }}" target="_blank" class="btn btn-success">
                                                         <i class="fas fa-file-pdf me-2"></i> Generate Report
-                                                    </button>
+                                                    </a>
                                                 </div>
                                             </div>
                                         </div>
@@ -474,14 +486,25 @@
                                 <div class="card dashboard-card mb-4">
                                     <div class="card-header py-3 bg-danger text-white">
                                         <h6 class="m-0 fw-bold">
-                                            <i class="fas fa-exclamation-circle me-2"></i> Alerts - All Schools
+                                            <i class="fas fa-exclamation-circle me-2"></i> Alerts
                                         </h6>
                                     </div>
                                     <div class="card-body" id="allAlerts">
-                                        <div class="text-center text-muted py-3">
-                                            <i class="fas fa-info-circle me-2"></i>
-                                            Select a school to see alerts
-                                        </div>
+                                        @forelse($allAlerts as $alert)
+                                            <div class="card mb-2 border-start border-4 {{ $alert['type'] == 'danger' ? 'border-danger' : ($alert['type'] == 'warning' ? 'border-warning' : 'border-info') }}">
+                                                <div class="card-body p-2">
+                                                    <div class="d-flex justify-content-between">
+                                                        <h6 class="mb-1 fw-bold text-{{ $alert['type'] }}">{{ $alert['school_name'] }}: {{ $alert['title'] }}</h6>
+                                                        <small class="text-muted" style="font-size: 0.7rem;">{{ \Carbon\Carbon::parse($alert['created_at'])->diffForHumans() }}</small>
+                                                    </div>
+                                                    <p class="mb-0 small text-dark">{{ $alert['description'] }}</p>
+                                                </div>
+                                            </div>
+                                        @empty
+                                            <div class="text-center text-muted py-3">
+                                                <i class="fas fa-check-circle me-2"></i> No active alerts
+                                            </div>
+                                        @endforelse
                                     </div>
                                 </div>
 
@@ -489,14 +512,25 @@
                                 <div class="card dashboard-card">
                                     <div class="card-header py-3 bg-primary text-white">
                                         <h6 class="m-0 fw-bold">
-                                            <i class="fas fa-calendar-alt me-2"></i> Events - All Schools
+                                            <i class="fas fa-calendar-alt me-2"></i> Events
                                         </h6>
                                     </div>
                                     <div class="card-body" id="allEvents">
-                                        <div class="text-center text-muted py-3">
-                                            <i class="fas fa-info-circle me-2"></i>
-                                            Select a school to see events
-                                        </div>
+                                        @forelse($allEvents as $event)
+                                            <div class="card mb-2 border-start border-4 border-primary">
+                                                <div class="card-body p-2">
+                                                    <div class="d-flex justify-content-between">
+                                                        <h6 class="mb-1 fw-bold text-primary">{{ $event['school_name'] }}: {{ $event['title'] }}</h6>
+                                                        <small class="text-muted" style="font-size: 0.7rem;">{{ $event['date'] }} {{ $event['time'] }}</small>
+                                                    </div>
+                                                    <p class="mb-0 small text-dark">{{ $event['description'] }}</p>
+                                                </div>
+                                            </div>
+                                        @empty
+                                            <div class="text-center text-muted py-3">
+                                                <i class="fas fa-calendar me-2"></i> No upcoming events
+                                            </div>
+                                        @endforelse
                                     </div>
                                 </div>
                             </div>
@@ -650,16 +684,96 @@
                 </div>
             </div>
         </div>
-        <!-- Alarm Info Modal -->
-        <div class="modal fade" id="alarmInfoModal">
-            <div class="modal-dialog modal-sm">
+        <!-- Add Alert Modal -->
+        <div class="modal fade" id="addAlertModal" tabindex="-1">
+            <div class="modal-dialog">
                 <div class="modal-content">
-                    <div class="modal-body text-center">
-                        <i class="fas fa-bell fa-3x text-warning mb-3"></i>
-                        <h5>Alarm Systems</h5>
-                        <p>View and manage all fire alarm systems, test schedules, and maintenance records.</p>
-                        <a href="{{ route('fire-safety.alarm-systems') }}" class="btn btn-warning">Go to Alarm Systems</a>
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i> Add Safety Alert</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
+                    <form id="addAlertForm">
+                        @csrf
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">School *</label>
+                                <select class="form-select" name="school_id" required>
+                                    <option value="">Select School</option>
+                                    @foreach($schools as $school)
+                                        <option value="{{ $school->id }}">{{ $school->school_name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Alert Title *</label>
+                                <input type="text" class="form-control" name="title" placeholder="e.g., Blockage in Fire Exit" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Alert Type *</label>
+                                <select class="form-select" name="type" required>
+                                    <option value="danger">Critical (Red)</option>
+                                    <option value="warning">Warning (Yellow)</option>
+                                    <option value="info">Information (Blue)</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Description *</label>
+                                <textarea class="form-control" name="description" rows="3" placeholder="Provide more details about the alert..." required></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger">Post Alert</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Event Modal -->
+        <div class="modal fade" id="addEventModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title"><i class="fas fa-calendar-plus me-2"></i> Add Safety Event</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <form id="addEventForm">
+                        @csrf
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">School *</label>
+                                <select class="form-select" name="school_id" required>
+                                    <option value="">Select School</option>
+                                    @foreach($schools as $school)
+                                        <option value="{{ $school->id }}">{{ $school->school_name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Event Title *</label>
+                                <input type="text" class="form-control" name="title" placeholder="e.g., Annual Fire Drill" required>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Date *</label>
+                                    <input type="date" class="form-control" name="date" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Time</label>
+                                    <input type="time" class="form-control" name="time">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Description *</label>
+                                <textarea class="form-control" name="description" rows="3" placeholder="Provide more details about the event..." required></textarea>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Schedule Event</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -744,6 +858,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Update modal title
                 document.getElementById('schoolNameTitle').textContent = `${data.name} Details`;
+
+                // Render Alerts and Events
+                renderAlerts(data.alerts, data.name);
+                renderEvents(data.events, data.name);
             })
             .catch(error => {
                 Swal.fire({
@@ -929,6 +1047,114 @@ function loadSchoolIssues(schoolId) {
                 });
             });
         });
+    }
+
+    // Add Alert Form Submission
+    const addAlertForm = document.getElementById('addAlertForm');
+    if (addAlertForm) {
+        addAlertForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+
+            fetch('{{ route("fire-safety.school.alert.store") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(res => {
+                if (res.success) {
+                    Swal.fire('Success', 'Alert posted successfully!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('addAlertModal')).hide();
+                    this.reset();
+                    // If the school being edited is the one currently viewed, refresh display
+                    // For now, simpler to just reload or re-fetch details if we have an active school ID
+                    location.reload(); 
+                }
+            });
+        });
+    }
+
+    // Add Event Form Submission
+    const addEventForm = document.getElementById('addEventForm');
+    if (addEventForm) {
+        addEventForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+
+            fetch('{{ route("fire-safety.school.event.store") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(res => {
+                if (res.success) {
+                    Swal.fire('Success', 'Event scheduled successfully!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('addEventModal')).hide();
+                    this.reset();
+                    location.reload();
+                }
+            });
+        });
+    }
+
+    function renderAlerts(alerts, schoolName) {
+        const container = document.getElementById('allAlerts');
+        if (!alerts || alerts.length === 0) {
+            container.innerHTML = `<div class="text-center text-muted py-3">No active alerts for ${schoolName}</div>`;
+            return;
+        }
+
+        let html = '';
+        alerts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).forEach(alert => {
+            const icon = alert.type === 'danger' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+            const border = alert.type === 'danger' ? 'border-danger' : (alert.type === 'warning' ? 'border-warning' : 'border-info');
+            const bg = alert.type === 'danger' ? 'bg-light-danger' : (alert.type === 'warning' ? 'bg-light-warning' : 'bg-light-info');
+
+            html += `
+                <div class="card mb-2 border-start border-4 ${border}">
+                    <div class="card-body p-2">
+                        <div class="d-flex justify-content-between">
+                            <h6 class="mb-1 fw-bold text-${alert.type}">${alert.title}</h6>
+                            <small class="text-muted" style="font-size: 0.7rem;">${alert.created_at}</small>
+                        </div>
+                        <p class="mb-0 small text-dark">${alert.description}</p>
+                    </div>
+                </div>`;
+        });
+        container.innerHTML = html;
+    }
+
+    function renderEvents(events, schoolName) {
+        const container = document.getElementById('allEvents');
+        if (!events || events.length === 0) {
+            container.innerHTML = `<div class="text-center text-muted py-3">No upcoming events for ${schoolName}</div>`;
+            return;
+        }
+
+        let html = '';
+        events.sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(event => {
+            html += `
+                <div class="card mb-2 border-start border-4 border-primary">
+                    <div class="card-body p-2">
+                        <div class="d-flex justify-content-between">
+                            <h6 class="mb-1 fw-bold text-primary">${event.title}</h6>
+                            <small class="text-muted" style="font-size: 0.7rem;">${event.date} ${event.time || ''}</small>
+                        </div>
+                        <p class="mb-0 small text-dark">${event.description}</p>
+                    </div>
+                </div>`;
+        });
+        container.innerHTML = html;
     }
 });
 

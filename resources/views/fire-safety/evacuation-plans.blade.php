@@ -655,24 +655,41 @@
                 <div class="row">
                     <div class="col-12 mb-4">
                         <div class="card dashboard-card">
-                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                                <h6 class="m-0 fw-bold text-primary">
-                                    <i class="fas fa-map me-2"></i> Building Evacuation Plans - {{ $school->school_name }}
-                                </h6>
-                                <div>
-                                    <button class="btn btn-primary btn-sm me-2"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#addPlanModal"
-                                            data-school-id="{{ $school->id }}">
-                                        <i class="fas fa-plus me-2"></i> Add Plan
-                                    </button>
-                                    <button class="btn btn-success btn-sm"
-                                            onclick="scheduleDrill({{ $school->id }})">
-                                        <i class="fas fa-bullhorn me-2"></i> Schedule Drill
-                                    </button>
+                            <div class="card-header p-0">
+                                <div class="school-tabs">
+                                    <nav>
+                                        <div class="nav nav-tabs border-0" id="evacuationTabs-{{ $school->id }}" role="tablist">
+                                            <button class="nav-link school-tab-btn active" id="plans-tab-{{ $school->id }}" data-bs-toggle="tab" data-bs-target="#plans-content-{{ $school->id }}" type="button" role="tab" aria-controls="plans-content-{{ $school->id }}" aria-selected="true">
+                                                <i class="fas fa-list me-2"></i> Building Evacuation Plans
+                                            </button>
+                                            <button class="nav-link school-tab-btn" id="map-tab-{{ $school->id }}" data-bs-toggle="tab" data-bs-target="#map-content-{{ $school->id }}" type="button" role="tab" aria-controls="map-content-{{ $school->id }}" aria-selected="false" onclick="initEvacuationMap({{ $school->id }})">
+                                                <i class="fas fa-map-marked-alt me-2"></i> Evacuation Map
+                                            </button>
+                                        </div>
+                                    </nav>
                                 </div>
                             </div>
                             <div class="card-body">
+                                <div class="tab-content" id="evacuationTabsContent-{{ $school->id }}">
+                                    <!-- TAB 1: PLANS LIST -->
+                                    <div class="tab-pane fade show active" id="plans-content-{{ $school->id }}" role="tabpanel" aria-labelledby="plans-tab-{{ $school->id }}">
+                                        <div class="d-flex justify-content-between align-items-center mb-4">
+                                            <h6 class="m-0 fw-bold text-primary">
+                                                {{ $school->school_name }} - Plans Overview
+                                            </h6>
+                                            <div>
+                                                <button class="btn btn-primary btn-sm me-2"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#addPlanModal"
+                                                        data-school-id="{{ $school->id }}">
+                                                    <i class="fas fa-plus me-2"></i> Add Plan
+                                                </button>
+                                                <button class="btn btn-success btn-sm"
+                                                        onclick="openScheduleDrillModal({{ $school->id }})">
+                                                    <i class="fas fa-bullhorn me-2"></i> Schedule Drill
+                                                </button>
+                                            </div>
+                                        </div>
                                 @if($school->buildings->count() > 0)
                                 <div class="row">
                                     @foreach($school->buildings as $building)
@@ -793,7 +810,8 @@
                                                     @else
                                                     <button class="btn btn-sm btn-outline-danger create-plan-btn"
                                                             data-building-id="{{ $building->id }}"
-                                                            data-building-name="{{ $building->building_no }}"
+                                                            data-building-name="{{ $building->building_name ?? $building->building_no }}"
+                                                            data-building-code="{{ $building->building_no }}"
                                                             data-school-id="{{ $school->id }}"
                                                             data-bs-toggle="modal"
                                                             data-bs-target="#addPlanModal">
@@ -816,6 +834,50 @@
                                     </a>
                                 </div>
                                 @endif
+                                </div> <!-- End Tab 1 -->
+
+                                <!-- TAB 2: EVACUATION MAP -->
+                                <div class="tab-pane fade" id="map-content-{{ $school->id }}" role="tabpanel" aria-labelledby="map-tab-{{ $school->id }}">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <div>
+                                            <h6 class="fw-bold text-primary mb-1">Visual Evacuation Map - {{ $school->school_name }}</h6>
+                                            <small class="text-muted"><i class="fas fa-info-circle me-1"></i>Drag buildings to arrange layout. Click 'Edit Placement' to unlock.</small>
+                                        </div>
+                                        <div>
+                                            <button class="btn btn-outline-primary btn-sm me-2" id="edit-placement-btn-{{ $school->id }}" onclick="toggleMapEdit({{ $school->id }})">
+                                                <i class="fas fa-arrows-alt me-2"></i> Edit Placement
+                                            </button>
+                                            <button class="btn btn-primary btn-sm" id="save-placement-btn-{{ $school->id }}" onclick="saveMapLayout({{ $school->id }})" disabled>
+                                                <i class="fas fa-save me-2"></i> Save Layout
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="school-map-canvas-container" style="position: relative; width: 100%; height: 800px; background: #e9ecef; border: 2px solid #333; overflow: hidden; border-radius: 4px; box-shadow: inset 0 0 20px rgba(0,0,0,0.1);">
+                                        <div id="school-map-canvas-{{ $school->id }}" class="school-map-canvas" style="width: 100%; height: 100%; position: relative;">
+                                            <!-- Map Elements will be rendered here by JS -->
+                                            <div class="text-center pt-5 text-muted">
+                                                <i class="fas fa-spinner fa-spin fa-3x mb-3"></i><br>Loading Map Data...
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Legend -->
+                                    <div class="mt-3 p-3 bg-white border rounded shadow-sm">
+                                        <h6 class="fw-bold fs-sm mb-2 text-dark border-bottom pb-2">Map Legend:</h6>
+                                        <div class="d-flex flex-wrap gap-4 text-secondary small">
+                                            <div class="d-flex align-items-center"><span style="width: 20px; height: 20px; background: white; border: 3px solid black; margin-right: 8px; display:inline-block;"></span> <strong>Building</strong></div>
+                                            <div class="d-flex align-items-center"><span style="width: 12px; height: 12px; border: 1px solid #333; margin-right: 8px; background:#f8f9fa; display:inline-block;"></span> Room</div>
+                                            <div class="d-flex align-items-center"><i class="fas fa-stairs me-2 text-dark"></i> Stairway</div>
+                                            <div class="d-flex align-items-center"><i class="fas fa-circle text-danger me-2" style="font-size: 14px;"></i> Alarm</div>
+                                            <div class="d-flex align-items-center"><span style="width: 14px; height: 8px; background: #dc3545; margin-right: 8px; display:inline-block; border-radius:2px;"></span> Extinguisher</div>
+                                            <div class="d-flex align-items-center"><i class="fas fa-door-open me-2 text-success"></i> Exit</div>
+                                            <div class="d-flex align-items-center"><span style="color: green; font-weight: 800; margin-right: 8px;">ROUTE</span> Evacuation Route</div>
+                                            <div class="d-flex align-items-center"><span style="border: 2px dashed #0d6efd; background: #e7f5ff; width: 24px; height: 16px; margin-right: 8px; display:inline-block;"></span> Assembly Area</div>
+                                        </div>
+                                    </div>
+                                </div> <!-- End Tab 2 -->
+                                </div> <!-- End Tab Content -->
                             </div>
                         </div>
                     </div>
@@ -1108,7 +1170,7 @@
 
     <!-- Schedule Drill Modal -->
     <div class="modal fade" id="scheduleDrillModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header" style="background-color: var(--fire-red); color: white;">
                     <h5 class="modal-title">
@@ -1121,49 +1183,81 @@
                         @csrf
                         <input type="hidden" name="school_id" id="drillSchoolId">
 
-                        <div class="mb-3">
-                            <label class="form-label">Drill Date *</label>
-                            <input type="date" class="form-control" name="drill_date" required>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Drill Type *</label>
+                                <select class="form-control" name="drill_type" required>
+                                    <option value="Announced">Announced Drill</option>
+                                    <option value="Unannounced">Unannounced Drill</option>
+                                    <option value="Partial">Partial Building Drill</option>
+                                    <option value="Full">Full Evacuation Drill</option>
+                                    <option value="Night">Night Drill</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Drill Date *</label>
+                                <input type="date" class="form-control" name="drill_date" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Start Time <i>(optional)</i></label>
+                                <input type="time" class="form-control" name="start_time">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">End Time <i>(optional)</i></label>
+                                <input type="time" class="form-control" name="end_time">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Status *</label>
+                                <select class="form-control" name="status" required>
+                                    <option value="scheduled">Scheduled</option>
+                                    <option value="ongoing">Ongoing</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Participants Count</label>
+                                <input type="number" class="form-control" name="participants_count" min="0" placeholder="e.g., 500">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Evacuation Time (min)</label>
+                                <input type="number" class="form-control" name="evacuation_time_minutes" min="0" placeholder="e.g., 5">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Coordinator</label>
+                                <input type="text" class="form-control" name="coordinator" value="{{ Auth::user()->name }}">
+                            </div>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Drill Time *</label>
-                            <input type="time" class="form-control" name="drill_time" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Drill Type *</label>
-                            <select class="form-control" name="drill_type" required>
-                                <option value="announced">Announced Drill</option>
-                                <option value="unannounced">Unannounced Drill</option>
-                                <option value="partial">Partial Building Drill</option>
-                                <option value="full">Full Evacuation Drill</option>
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Buildings to Include *</label>
-                            <select class="form-control" name="building_ids[]" multiple id="drillBuildingsSelect" required>
+                            <label class="form-label fw-bold">Buildings to Include *</label>
+                            <select class="form-control" name="building_ids[]" multiple id="drillBuildingsSelect" required style="height: 100px;">
                                 <!-- Buildings will be populated by JavaScript -->
                             </select>
-                            <small class="form-text">Hold Ctrl/Cmd to select multiple buildings</small>
+                            <small class="form-text text-muted">Hold Ctrl (Windows) or Cmd (Mac) to select multiple buildings.</small>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Coordinator *</label>
-                            <input type="text" class="form-control" name="coordinator" value="{{ Auth::user()->name }}" required>
+                            <label class="form-label fw-bold">Remarks</label>
+                            <input type="text" class="form-control" name="remarks" placeholder="Brief summary of drill result...">
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Notes</label>
-                            <textarea class="form-control" name="notes" rows="3" placeholder="Additional instructions..."></textarea>
+                            <label class="form-label">Notes <i>(optional)</i></label>
+                            <textarea class="form-control" name="notes" rows="2" placeholder="Additional instructions or detailed observations..."></textarea>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" onclick="saveDrillSchedule()">
-                        <i class="fas fa-calendar-check me-2"></i> Schedule Drill
+                        <i class="fas fa-calendar-check me-2"></i> Confirm Schedule
                     </button>
                 </div>
             </div>
@@ -1215,11 +1309,12 @@
             if (button && button.classList.contains('create-plan-btn')) {
                 const buildingId = button.getAttribute('data-building-id');
                 const buildingName = button.getAttribute('data-building-name');
+                const buildingCode = button.getAttribute('data-building-code') || buildingName; // Fallback
                 const schoolId = button.getAttribute('data-school-id') || currentSchoolId;
 
                 document.getElementById('planSchoolId').value = schoolId;
                 document.getElementById('planBuildingId').value = buildingId;
-                document.getElementById('modalBuildingCode').textContent = buildingName;
+                document.getElementById('modalBuildingCode').textContent = buildingCode;
 
                 // Load building details (Exits, Features)
                 loadBuildingDetailsForPlan(buildingId);
@@ -1239,17 +1334,34 @@
         // Load building details for evacuation plan
         async function loadBuildingDetailsForPlan(buildingId) {
             try {
-                const response = await fetch(`/fire-safety/building/${buildingId}`);
+                const response = await fetch(`/fire-safety/building/${buildingId}/evacuation-data`);
                 const building = await response.json();
 
                 // Populate emergency exits (read-only)
-                const exits = building.emergency_exits || 0;
+                const exits = building.exits || 0;
                 document.getElementById('displayEmergencyExits').value = exits;
                 document.getElementById('hiddenEmergencyExits').value = exits;
 
-                // Populate safety features (read-only)
-                const features = building.features ? building.features.split(',').join(', ') : 'No safety features recorded';
-                document.getElementById('displaySafetyFeatures').value = features;
+                // Populate safety features via array or string check
+                let featuresText = 'No safety features recorded';
+                if (building.features) {
+                    if (Array.isArray(building.features)) {
+                        featuresText = building.features.join(', ');
+                    } else if (typeof building.features === 'string') {
+                        // Clean up JSON format if it looks like ["Feature"]
+                        if (building.features.startsWith('[') && building.features.endsWith(']')) {
+                            try {
+                                const parsed = JSON.parse(building.features);
+                                featuresText = Array.isArray(parsed) ? parsed.join(', ') : building.features;
+                            } catch (e) {
+                                featuresText = building.features.split(',').join(', ');
+                            }
+                        } else {
+                            featuresText = building.features;
+                        }
+                    }
+                }
+                document.getElementById('displaySafetyFeatures').value = featuresText;
 
             } catch (error) {
                 console.error('Error loading building details:', error);
@@ -1436,27 +1548,19 @@
         // Load school data
         async function loadSchoolData(schoolId) {
             if (!schoolId) return;
+            currentSchoolId = schoolId;
 
-            try {
-                // Load drill history if container exists
-                const drillContainer = document.getElementById(`drillHistory-${schoolId}`);
-                if (drillContainer) {
-                    await loadDrillHistory(schoolId);
-                }
-
-                // Load plan stats if container exists
-                const statsContainer = document.getElementById(`planStats-${schoolId}`);
-                if (statsContainer) {
-                    await loadPlanStats(schoolId);
-                }
-
-                // Load sidebar stats
-                const sidebarStats = document.getElementById('sidebarStats');
-                if (sidebarStats) {
-                    await loadSidebarStats(schoolId);
-                }
-            } catch (error) {
-                console.error('Error loading school data:', error);
+            // Load drill history
+            loadDrillHistory(schoolId);
+            // Load plan stats
+            loadPlanStats(schoolId);
+            // Load sidebar stats
+            loadSidebarStats(schoolId);
+            
+            // Check if map tab is active, if so init map
+            const mapTab = document.getElementById(`map-tab-${schoolId}`);
+            if (mapTab && mapTab.classList.contains('active')) {
+                initEvacuationMap(schoolId);
             }
         }
 
@@ -1486,11 +1590,11 @@
 
                 if (!drills || drills.length === 0) {
                     container.innerHTML = `
-                        <div class="text-center text-muted py-4">
-                            <i class="fas fa-calendar-times fa-2x mb-3"></i>
-                            <p>No evacuation drills scheduled.</p>
-                            <button class="btn btn-sm btn-primary" onclick="scheduleDrill(${schoolId})">
-                                <i class="fas fa-calendar-plus me-1"></i> Schedule One Now
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-calendar-times fa-3x mb-3" style="opacity: 0.2;"></i>
+                            <p class="mb-3">No evacuation drills recorded for this school.</p>
+                            <button class="btn btn-primary" onclick="openScheduleDrillModal(${schoolId})">
+                                <i class="fas fa-calendar-plus me-2"></i> Schedule First Drill
                             </button>
                         </div>
                     `;
@@ -1499,45 +1603,51 @@
 
                 let html = `
                     <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Time</th>
-                                    <th>Type</th>
-                                    <th>Buildings</th>
-                                    <th>Coordinator</th>
+                                    <th>Date & Time</th>
+                                    <th>Drill Type</th>
                                     <th>Status</th>
-                                    <th>Actions</th>
+                                    <th>Coordinator</th>
+                                    <th>Result / Remarks</th>
+                                    <th class="text-center">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                 `;
 
                 drills.forEach(drill => {
-                    const date = new Date(drill.drill_date).toLocaleDateString();
-                    const time = drill.drill_time || '10:00';
-                    const statusClass = drill.status === 'completed' ? 'success' : 
-                                      drill.status === 'scheduled' ? 'primary' : 
-                                      drill.status === 'cancelled' ? 'secondary' : 'warning';
+                    const date = new Date(drill.drill_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    const startTime = drill.start_time ? drill.start_time.substring(0, 5) : '--:--';
+                    const endTime = drill.end_time ? drill.end_time.substring(0, 5) : '--:--';
+                    
+                    const statusColors = {
+                        'scheduled': 'primary',
+                        'ongoing': 'warning',
+                        'completed': 'success',
+                        'cancelled': 'secondary'
+                    };
+                    const color = statusColors[drill.status] || 'info';
 
                     html += `
                         <tr>
-                            <td>${date}</td>
-                            <td>${time}</td>
-                            <td>${drill.drill_type}</td>
-                            <td>${drill.buildings_count || 0} buildings</td>
-                            <td>${drill.coordinator}</td>
-                            <td><span class="badge bg-${statusClass}">${drill.status}</span></td>
                             <td>
-                                <button class="btn btn-sm btn-outline-primary" onclick="viewDrill(${drill.id})">
-                                    <i class="fas fa-eye"></i>
+                                <div class="fw-bold">${date}</div>
+                                <small class="text-muted"><i class="far fa-clock me-1"></i>${startTime} - ${endTime}</small>
+                            </td>
+                            <td><span class="fw-bold">${drill.drill_type}</span></td>
+                            <td><span class="badge bg-${color} text-uppercase">${drill.status}</span></td>
+                            <td>${drill.coordinator || 'N/A'}</td>
+                            <td>
+                                <div class="text-truncate" style="max-width: 200px;" title="${drill.remarks || 'No remarks'}">
+                                    ${drill.remarks || '<span class="text-muted italic">No remarks recorded</span>'}
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-light border" onclick="viewDrill(${drill.id})" title="View Full Details">
+                                    <i class="fas fa-info-circle text-primary"></i>
                                 </button>
-                                ${drill.status === 'scheduled' ? `
-                                <button class="btn btn-sm btn-outline-danger" onclick="cancelDrill(${drill.id})">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                                ` : ''}
                             </td>
                         </tr>
                     `;
@@ -1554,12 +1664,9 @@
             } catch (error) {
                 console.error('Error loading drill history:', error);
                 container.innerHTML = `
-                    <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-circle me-2"></i>
-                        Failed to load drill history. Please try again.
-                        <button class="btn btn-sm btn-light ms-3" onclick="loadDrillHistory(${schoolId})">
-                            <i class="fas fa-redo"></i> Retry
-                        </button>
+                    <div class="alert alert-danger m-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i> Failed to load drill history.
+                        <button class="btn btn-sm btn-outline-danger ms-3" onclick="loadDrillHistory(${schoolId})">Retry</button>
                     </div>
                 `;
             }
@@ -1567,66 +1674,63 @@
 
         // Load plan statistics
         async function loadPlanStats(schoolId) {
+            const container = document.getElementById(`planStats-${schoolId}`);
+            if (!container) return;
+
             try {
                 const response = await fetch(`/fire-safety/plan-stats/${schoolId}`);
                 const stats = await response.json();
 
-                const activePlans = stats.active_plans || 0;
-                const totalBuildings = stats.total_buildings || 0;
-                const coverage = totalBuildings > 0 ? Math.round((activePlans / totalBuildings) * 100) : 0;
+                const total = stats.total_buildings || 0;
+                const active = stats.active_plans || 0;
+                const draft = stats.draft_plans || 0;
+                const none = stats.no_plan || 0;
+                const score = stats.avg_safety_score || 0;
 
-                let html = `
-                    <div class="text-center mb-4">
-                        <div class="mb-3">
-                            <h3>${coverage}% Coverage</h3>
-                            <div class="progress" style="height: 20px;">
-                                <div class="progress-bar ${coverage >= 80 ? 'bg-success' : coverage >= 50 ? 'bg-warning' : 'bg-danger'}"
-                                     style="width: ${coverage}%"></div>
+                const coverage = total > 0 ? Math.round((active / total) * 100) : 0;
+
+                container.innerHTML = `
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-bold">Plan Coverage</span>
+                            <span class="badge bg-${coverage >= 80 ? 'success' : (coverage >= 50 ? 'warning' : 'danger')}">${coverage}%</span>
+                        </div>
+                        <div class="progress" style="height: 10px;">
+                            <div class="progress-bar ${coverage >= 80 ? 'bg-success' : (coverage >= 50 ? 'bg-warning' : 'bg-danger')}" 
+                                 role="progressbar" style="width: ${coverage}%"></div>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-4">
+                        <div class="col-6">
+                            <div class="p-2 border rounded bg-light text-center">
+                                <div class="small text-muted">Active</div>
+                                <div class="h5 mb-0 fw-bold text-success">${active}</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-2 border rounded bg-light text-center">
+                                <div class="small text-muted">No Plan</div>
+                                <div class="h5 mb-0 fw-bold text-danger">${none}</div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="row text-center">
-                        <div class="col-4">
-                            <h5 class="text-success">${activePlans}</h5>
-                            <small>Active Plans</small>
-                        </div>
-                        <div class="col-4">
-                            <h5 class="text-warning">${stats.draft_plans || 0}</h5>
-                            <small>Draft Plans</small>
-                        </div>
-                        <div class="col-4">
-                            <h5 class="text-danger">${totalBuildings - activePlans}</h5>
-                            <small>No Plan</small>
-                        </div>
+                    <div class="mb-4 text-center">
+                        <div class="text-xs fw-bold text-uppercase text-muted mb-2">Avg. Safety Score</div>
+                        <div class="h2 fw-bold mb-0 ${score >= 80 ? 'text-success' : (score >= 60 ? 'text-warning' : 'text-danger')}">${score}%</div>
+                        <div class="small text-muted">Based on safety equipment</div>
+                    </div>
+
+                    <div class="alert alert-info py-2 small mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Tip:</strong> Buildings with plans and functional alarms score 30% higher in safety assessments.
                     </div>
                 `;
-
-                // Add recommendations if coverage is low
-                if (coverage < 80) {
-                    html += `
-                        <hr>
-                        <div class="mt-3">
-                            <h6>Recommendations:</h6>
-                            <ol class="small">
-                                <li>Create evacuation plans for buildings without one</li>
-                                <li>Review and update existing plans</li>
-                                <li>Schedule evacuation drills</li>
-                            </ol>
-                        </div>
-                    `;
-                }
-
-                document.getElementById(`planStats-${schoolId}`).innerHTML = html;
 
             } catch (error) {
-                console.error('Error loading plan stats:', error);
-                document.getElementById(`planStats-${schoolId}`).innerHTML = `
-                    <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-circle me-2"></i>
-                        Failed to load statistics.
-                    </div>
-                `;
+                console.error('Error loading statistics:', error);
+                container.innerHTML = `<div class="text-center text-danger py-4 small">Failed to load statistics.</div>`;
             }
         }
 
@@ -1858,11 +1962,16 @@
         }
 
         // Schedule Drill
-        async function scheduleDrill(schoolId) {
+        async function openScheduleDrillModal(schoolId) {
             // Show modal and load buildings
-            const modal = new bootstrap.Modal(document.getElementById('scheduleDrillModal'));
+            const modalElement = document.getElementById('scheduleDrillModal');
+            const modal = new bootstrap.Modal(modalElement);
             document.getElementById('drillSchoolId').value = schoolId;
             
+            // Set today as default date
+            const today = new Date().toISOString().split('T')[0];
+            modalElement.querySelector('input[name="drill_date"]').value = today;
+
             // Load buildings for this school
             await loadBuildingsForDrill(schoolId);
             
@@ -1881,14 +1990,17 @@
                 buildings.forEach(building => {
                     const option = document.createElement('option');
                     option.value = building.id;
-                    option.textContent = building.building_no + (building.building_name ? ` (${building.building_name})` : '');
-                    option.selected = building.has_plan; // Auto-select buildings with plans
+                    option.textContent = (building.building_no || 'BLDG') + (building.building_name ? ` (${building.building_name})` : '');
+                    // Auto-select buildings if they have an evacuation plan
+                    if (building.has_plan) {
+                        option.selected = true;
+                    }
                     select.appendChild(option);
                 });
 
             } catch (error) {
                 console.error('Error loading buildings:', error);
-                Swal.fire('Error', 'Failed to load buildings. Please try again.', 'error');
+                Swal.fire('Error', 'Failed to load buildings list.', 'error');
             }
         }
 
@@ -1904,13 +2016,21 @@
             // Check if at least one building is selected
             const selectedBuildings = Array.from(document.getElementById('drillBuildingsSelect').selectedOptions);
             if (selectedBuildings.length === 0) {
-                Swal.fire('Warning', 'Please select at least one building for the drill.', 'warning');
+                Swal.fire('Warning', 'Please select at least one building for this drill.', 'warning');
                 return;
             }
 
             const formData = new FormData(form);
 
             try {
+                // Show loading state
+                Swal.fire({
+                    title: 'Saving...',
+                    text: 'Recording drill schedule',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+
                 const response = await fetch('/fire-safety/drill/schedule', {
                     method: 'POST',
                     headers: {
@@ -1923,16 +2043,23 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    Swal.fire('Success', 'Evacuation drill scheduled successfully!', 'success').then(() => {
-                        location.reload();
+                    Swal.fire({
+                        title: 'Scheduled!',
+                        text: 'Evacuation drill has been recorded.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    }).then(() => {
+                        bootstrap.Modal.getInstance(document.getElementById('scheduleDrillModal')).hide();
+                        loadDrillHistory(document.getElementById('drillSchoolId').value);
                     });
                 } else {
-                    Swal.fire('Error', data.message || 'Failed to schedule drill', 'error');
+                    Swal.fire('Failed', data.message || 'Could not save drill schedule.', 'error');
                 }
 
             } catch (error) {
                 console.error('Error:', error);
-                Swal.fire('Error', 'Failed to schedule evacuation drill', 'error');
+                Swal.fire('Error', 'An unexpected error occurred while saving.', 'error');
             }
         }
 
@@ -2134,6 +2261,402 @@
                     window.open('/fire-safety/evacuation-plans/report', '_blank');
                 }
             });
+        }
+
+        // ==========================================
+        // EVACUATION MAP LOGIC (Interactive Canvas)
+        // ==========================================
+        let mapData = {};
+        let isMapEditable = {}; // Track edit mode per school
+        let draggingElement = null;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+
+        async function initEvacuationMap(schoolId) {
+            const canvasContainer = document.getElementById(`school-map-canvas-${schoolId}`);
+            if (!canvasContainer) return;
+            
+            // If already loaded, don't reload unless forced
+            if (canvasContainer.dataset.loaded === 'true') return;
+
+            // Show loading state if it was cleared
+            if (!canvasContainer.innerHTML.includes('fa-spinner')) {
+                canvasContainer.innerHTML = `
+                    <div class="text-center pt-5 text-muted">
+                        <i class="fas fa-spinner fa-spin fa-3x mb-3"></i><br>Loading Map Data...
+                    </div>
+                `;
+            }
+
+            try {
+                // Set a timeout to prevent infinite loading if the server is slow or errors silently
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+                const response = await fetch(`/fire-safety/school/${schoolId}/map-data`, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                
+                if (!response.ok) throw new Error('Network response was not ok');
+                
+                const school = await response.json();
+                mapData[schoolId] = school;
+                
+                renderSchoolMap(school, schoolId);
+                canvasContainer.dataset.loaded = 'true';
+            } catch (error) {
+                console.error('Error loading map data:', error);
+                const errorMsg = error.name === 'AbortError' ? 'Loading timed out.' : 'Failed to load map data.';
+                canvasContainer.innerHTML = `
+                    <div class="text-center pt-5 text-danger">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-2"></i><br>
+                        ${errorMsg}<br>
+                        <button class="btn btn-sm btn-outline-danger mt-3" onclick="canvasContainer.dataset.loaded=''; initEvacuationMap(${schoolId})">Retry</button>
+                    </div>
+                `;
+            }
+        }
+
+        function renderSchoolMap(school, schoolId) {
+            const canvas = document.getElementById(`school-map-canvas-${schoolId}`);
+            canvas.innerHTML = ''; // Clear loading
+
+            const layout = school.evacuation_map_layout || {};
+            let xCounter = 50;
+            let yCounter = 50;
+
+            // 1. Render Buildings
+            school.buildings.forEach((building, index) => {
+                const savedPos = layout[`building_${building.id}`] || { x: xCounter, y: yCounter };
+                if (!layout[`building_${building.id}`]) {
+                    xCounter += 250;
+                    if (xCounter > 800) { xCounter = 50; yCounter += 300; }
+                }
+
+                const bDiv = document.createElement('div');
+                bDiv.className = 'map-element building-element';
+                bDiv.id = `map-bldg-${building.id}`;
+                bDiv.dataset.id = `building_${building.id}`; // Key for saving
+                bDiv.dataset.schoolId = schoolId;
+                bDiv.style.position = 'absolute';
+                bDiv.style.left = savedPos.x + 'px';
+                bDiv.style.top = savedPos.y + 'px';
+                bDiv.style.width = '220px'; // Fixed width for simplicity
+                bDiv.style.minHeight = '150px';
+                bDiv.style.backgroundColor = 'white';
+                bDiv.style.border = '3px solid black';
+                bDiv.style.boxShadow = '2px 2px 5px rgba(0,0,0,0.2)';
+                bDiv.style.zIndex = '10';
+                bDiv.style.cursor = 'default'; // Changed by edit mode
+
+                // Building Title
+                const title = document.createElement('div');
+                title.style.textAlign = 'center';
+                title.style.fontWeight = 'bold';
+                title.style.padding = '5px';
+                title.style.backgroundColor = '#f1f1f1';
+                title.style.borderBottom = '1px solid #ddd';
+                title.innerText = building.building_no;
+                bDiv.appendChild(title);
+
+                // Container for Floors/Rooms
+                const contentDiv = document.createElement('div');
+                contentDiv.style.padding = '10px';
+                
+                // Draw Rooms inside
+                // We'll create a simple grid representation
+                const floors = building.floors || 1;
+                for (let f = floors; f >= 1; f--) {
+                    const floorLabel = document.createElement('div');
+                    floorLabel.style.fontSize = '10px';
+                    floorLabel.style.fontWeight = 'bold';
+                    floorLabel.style.marginTop = '5px';
+                    floorLabel.innerText = `Floor ${f}`;
+                    contentDiv.appendChild(floorLabel);
+
+                    const roomGrid = document.createElement('div');
+                    roomGrid.style.display = 'grid';
+                    roomGrid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+                    roomGrid.style.gap = '2px';
+                    
+                    // Filter rooms for this floor
+                    const floorRooms = building.rooms ? building.rooms.filter(r => r.floor_no == f) : [];
+                    
+                    if (floorRooms.length > 0) {
+                        floorRooms.forEach(room => {
+                            const rDiv = document.createElement('div');
+                            rDiv.style.border = '1px solid #333';
+                            rDiv.style.height = '30px';
+                            rDiv.style.fontSize = '8px';
+                            rDiv.style.display = 'flex';
+                            rDiv.style.alignItems = 'center';
+                            rDiv.style.justifyContent = 'center';
+                            rDiv.style.position = 'relative'; // For icons
+                            rDiv.style.backgroundColor = '#f8f9fa';
+                            rDiv.title = room.room_name;
+                            rDiv.innerText = room.room_name.substring(0, 6);
+
+                            // Extinguisher Icon Check
+                            if (building.fire_extinguishers && building.fire_extinguishers.some(e => e.room_id == room.id)) {
+                                const extIcon = document.createElement('div');
+                                extIcon.style.position = 'absolute';
+                                extIcon.style.bottom = '1px';
+                                extIcon.style.right = '1px';
+                                extIcon.style.width = '8px';
+                                extIcon.style.height = '5px';
+                                extIcon.style.backgroundColor = '#dc3545'; // Red reverse rect
+                                rDiv.appendChild(extIcon);
+                            }
+
+                            roomGrid.appendChild(rDiv);
+                        });
+                    } else {
+                        // Placeholder rooms
+                         const rDiv = document.createElement('div');
+                         rDiv.style.gridColumn = '1 / span 3';
+                         rDiv.style.fontSize = '9px';
+                         rDiv.style.textAlign = 'center';
+                         rDiv.innerText = '(No rooms configured)';
+                         roomGrid.appendChild(rDiv);
+                    }
+                    contentDiv.appendChild(roomGrid);
+                }
+                bDiv.appendChild(contentDiv);
+
+                // Stairways (Visual Only)
+                // If two_stairways is true (check features string) or default
+                // Assuming defaults for visual
+                const stairLeft = document.createElement('div');
+                stairLeft.innerHTML = '<i class="fas fa-stairs"></i>';
+                stairLeft.style.position = 'absolute';
+                stairLeft.style.left = '-15px';
+                stairLeft.style.top = '50%';
+                bDiv.appendChild(stairLeft);
+
+                if (building.features && building.features.includes('Two Stairways')) {
+                    const stairRight = document.createElement('div');
+                    stairRight.innerHTML = '<i class="fas fa-stairs"></i>';
+                    stairRight.style.position = 'absolute';
+                    stairRight.style.right = '-15px';
+                    stairRight.style.top = '50%';
+                    bDiv.appendChild(stairRight);
+                }
+
+                // Exits
+                if (building.emergency_exits > 0) {
+                    const exit = document.createElement('div');
+                    exit.innerHTML = '<i class="fas fa-door-open text-success"></i>';
+                    exit.style.position = 'absolute';
+                    exit.style.bottom = '-10px';
+                    exit.style.left = '50%';
+                    bDiv.appendChild(exit);
+                }
+                
+                // Alarms
+                if (building.alarm_systems && building.alarm_systems.length > 0) {
+                    // Just show one indicator per floor or on top right
+                    // User asked: "red circle and add a label on what floor..."
+                    // Since we are top-level view, let's put them on the side list attached to building
+                    const alarmContainer = document.createElement('div');
+                    alarmContainer.style.position = 'absolute';
+                    alarmContainer.style.top = '5px';
+                    alarmContainer.style.right = '-25px';
+                    alarmContainer.style.display = 'flex';
+                    alarmContainer.style.flexDirection = 'column';
+                    alarmContainer.style.gap = '2px';
+
+                    building.alarm_systems.forEach(alarm => {
+                        const aBadge = document.createElement('div');
+                        aBadge.style.width = '20px';
+                        aBadge.style.height = '20px';
+                        aBadge.style.borderRadius = '50%';
+                        aBadge.style.backgroundColor = '#dc3545';
+                        aBadge.style.color = 'white';
+                        aBadge.style.fontSize = '8px';
+                        aBadge.style.display = 'flex';
+                        aBadge.style.alignItems = 'center';
+                        aBadge.style.justifyContent = 'center';
+                        aBadge.title = `Alarm: ${alarm.location || 'Unknown'}`;
+                        
+                        // Try to extract floor number from location if possible, otherwise 'A'
+                        let floorTxt = 'A';
+                        if (alarm.location && alarm.location.toLowerCase().includes('floor')) {
+                            const match = alarm.location.match(/(\d+)/);
+                            if (match) floorTxt = match[0];
+                        }
+                        aBadge.innerText = floorTxt;
+                        alarmContainer.appendChild(aBadge);
+                    });
+                    bDiv.appendChild(alarmContainer);
+                }
+
+                canvas.appendChild(bDiv);
+                
+                // Make draggable
+                makeDraggable(bDiv, schoolId);
+            });
+
+            // 2. Render Evacuation Routes (Text) & Assembly Areas
+            // We need to create these if not present, or load them
+            // Since we can't create them from scratch in this view easily without a toolbox,
+            // we will create defaults for each building if they don't exist in layout.
+            // Or better: Create a fixed set of "Movable Assets" that are always available?
+            // User requirement: "Primary/secondary evacuation route... strategize where to put the placement"
+            
+            // We'll create one "Evacuation Route" text per building + 1 general Assembly Area info
+            school.buildings.forEach(building => {
+                 // Route Text
+                 const routeKey = `route_${building.id}`;
+                 const savedRoutePos = layout[routeKey] || { x: savedPos.x + 230, y: savedPos.y + 50 };
+                 
+                 const routeDiv = document.createElement('div');
+                 routeDiv.className = 'map-element route-element';
+                 routeDiv.id = `map-route-${building.id}`;
+                 routeDiv.dataset.id = routeKey;
+                 routeDiv.dataset.schoolId = schoolId;
+                 routeDiv.style.position = 'absolute';
+                 routeDiv.style.left = savedRoutePos.x + 'px';
+                 routeDiv.style.top = savedRoutePos.y + 'px';
+                 routeDiv.style.color = 'green';
+                 routeDiv.style.fontWeight = 'bold';
+                 routeDiv.style.zIndex = '5';
+                 routeDiv.innerText = "EVACUATION ROUTE ->";
+                 routeDiv.style.whiteSpace = 'nowrap';
+                 routeDiv.style.cursor = 'default';
+                 canvas.appendChild(routeDiv);
+                 makeDraggable(routeDiv, schoolId);
+
+                 // Assembly Area Info (if building has plan)
+                 if (building.evacuation_plan) {
+                     const areaKey = `assembly_${building.id}`;
+                     const savedAreaPos = layout[areaKey] || { x: savedPos.x, y: savedPos.y + 200 };
+                     
+                     const areaDiv = document.createElement('div');
+                     areaDiv.className = 'map-element assembly-element';
+                     areaDiv.id = `map-assembly-${building.id}`;
+                     areaDiv.dataset.id = areaKey;
+                     areaDiv.dataset.schoolId = schoolId;
+                     areaDiv.style.position = 'absolute';
+                     areaDiv.style.left = savedAreaPos.x + 'px';
+                     areaDiv.style.top = savedAreaPos.y + 'px';
+                     areaDiv.style.border = '2px dashed #0d6efd';
+                     areaDiv.style.backgroundColor = '#e7f5ff';
+                     areaDiv.style.padding = '5px';
+                     areaDiv.style.fontSize = '10px';
+                     areaDiv.style.zIndex = '5';
+                     areaDiv.style.width = '150px';
+                     areaDiv.innerHTML = `<strong>Assembly Area:</strong><br>${building.evacuation_plan.primary_assembly_area || 'Not Set'}`;
+                     areaDiv.style.cursor = 'default';
+                     canvas.appendChild(areaDiv);
+                     makeDraggable(areaDiv, schoolId);
+                 }
+            });
+
+        }
+
+        function toggleMapEdit(schoolId) {
+            isMapEditable[schoolId] = !isMapEditable[schoolId];
+            const btn = document.getElementById(`edit-placement-btn-${schoolId}`);
+            const saveBtn = document.getElementById(`save-placement-btn-${schoolId}`);
+            
+            if (isMapEditable[schoolId]) {
+                btn.innerHTML = '<i class="fas fa-lock me-2"></i> Lock Placement';
+                btn.classList.replace('btn-outline-primary', 'btn-warning');
+                saveBtn.disabled = false;
+                
+                // Enable dragging visually
+                document.querySelectorAll(`#school-map-canvas-${schoolId} .map-element`).forEach(el => {
+                    el.style.cursor = 'move';
+                    el.style.outline = '2px dashed #999';
+                });
+            } else {
+                btn.innerHTML = '<i class="fas fa-arrows-alt me-2"></i> Edit Placement';
+                btn.classList.replace('btn-warning', 'btn-outline-primary');
+                saveBtn.disabled = true;
+
+                // Disable dragging visually
+                document.querySelectorAll(`#school-map-canvas-${schoolId} .map-element`).forEach(el => {
+                    el.style.cursor = 'default';
+                    el.style.outline = 'none';
+                });
+            }
+        }
+
+        function makeDraggable(element, schoolId) {
+            let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+            
+            element.onmousedown = dragMouseDown;
+
+            function dragMouseDown(e) {
+                if (!isMapEditable[schoolId]) return;
+                
+                e = e || window.event;
+                e.preventDefault();
+                // get the mouse cursor position at startup:
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                document.onmouseup = closeDragElement;
+                // call a function whenever the cursor moves:
+                document.onmousemove = elementDrag;
+                
+                // Bring to front
+                element.style.zIndex = '100';
+            }
+
+            function elementDrag(e) {
+                e = e || window.event;
+                e.preventDefault();
+                // calculate the new cursor position:
+                pos1 = pos3 - e.clientX;
+                pos2 = pos4 - e.clientY;
+                pos3 = e.clientX;
+                pos4 = e.clientY;
+                // set the element's new position:
+                element.style.top = (element.offsetTop - pos2) + "px";
+                element.style.left = (element.offsetLeft - pos1) + "px";
+            }
+
+            function closeDragElement() {
+                // stop moving when mouse button is released:
+                document.onmouseup = null;
+                document.onmousemove = null;
+                element.style.zIndex = '10'; // Reset z-index
+            }
+        }
+
+        async function saveMapLayout(schoolId) {
+            const canvas = document.getElementById(`school-map-canvas-${schoolId}`);
+            const elements = canvas.querySelectorAll('.map-element');
+            const layout = {};
+
+            elements.forEach(el => {
+                layout[el.dataset.id] = {
+                    x: el.offsetLeft,
+                    y: el.offsetTop
+                };
+            });
+
+            try {
+                const response = await fetch(`/fire-safety/school/${schoolId}/map-save`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({ layout: layout })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    Swal.fire('Saved', 'Map layout saved successfully!', 'success');
+                    // Toggle off edit mode
+                    toggleMapEdit(schoolId);
+                } else {
+                    Swal.fire('Error', 'Failed to save layout', 'error');
+                }
+            } catch (error) {
+                console.error('Error saving map:', error);
+                Swal.fire('Error', 'Failed to save layout', 'error');
+            }
         }
     </script>
 </body>

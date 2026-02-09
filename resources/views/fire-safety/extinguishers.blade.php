@@ -786,6 +786,11 @@
                                                     onclick="openExtHistoryModal({{ $school->id }})">
                                                 <i class="fas fa-history me-1"></i> Removed Fire Extinguisher
                                             </button>
+                                            <a href="{{ route('fire-safety.report.extinguisher-details', $school->id) }}" target="_blank"
+                                                    class="btn btn-sm ms-2" 
+                                                    style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;">
+                                                <i class="fas fa-print me-1"></i> Print Fire Extinguisher Details
+                                            </a>
                                             @endif
                                         </div>
                                     </div>

@@ -65,7 +65,33 @@ class FireSafetyController extends Controller
                 return $school;
             });
 
-        return view('fire-safety.dashboard', ['schools' => $schools]);
+        $allAlerts = [];
+        $allEvents = [];
+
+        foreach ($schools as $school) {
+            if ($school->alerts) {
+                foreach ($school->alerts as $alert) {
+                    $alert['school_name'] = $school->school_name;
+                    $allAlerts[] = $alert;
+                }
+            }
+            if ($school->events) {
+                foreach ($school->events as $event) {
+                    $event['school_name'] = $school->school_name;
+                    $allEvents[] = $event;
+                }
+            }
+        }
+
+        // Sort by date
+        usort($allAlerts, fn($a, $b) => strtotime($b['created_at']) - strtotime($a['created_at']));
+        usort($allEvents, fn($a, $b) => strtotime($a['date']) - strtotime($b['date']));
+
+        return view('fire-safety.dashboard', [
+            'schools' => $schools,
+            'allAlerts' => array_slice($allAlerts, 0, 10),
+            'allEvents' => array_slice($allEvents, 0, 10)
+        ]);
     }
 
     private function calculateStatus($school)
@@ -859,6 +885,14 @@ public function getRoom($id)
             ], 422);
         }
 
+        // Ensure rooms >= floors
+        if ($validated['rooms'] < $validated['floors']) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Total rooms cannot be less than total floors.'
+            ], 422);
+        }
+
         // Gymnasium & Cafeteria restriction: only 1 room
     if (in_array(strtolower($validated['building_type']), ['gymnasium', 'cafeteria'])) {
         $validated['rooms'] = 1;
@@ -1411,6 +1445,7 @@ public function getRoom($id)
             'exits' => $building->emergency_exits,
             'alarms' => $building->functional_alarms_count,
             'extinguishers' => $building->active_extinguishers_count,
+            'features' => $building->features
         ]);
     }
 
@@ -1426,18 +1461,22 @@ public function getRoom($id)
             'school_id' => 'required|exists:firesafety_school_information,id',
             'drill_type' => 'required|string',
             'drill_date' => 'required|date',
+            'start_time' => 'nullable',
+            'end_time' => 'nullable',
+            'participants_count' => 'nullable|integer',
+            'evacuation_time_minutes' => 'nullable|integer',
+            'status' => 'required|string',
+            'coordinator' => 'nullable|string',
+            'remarks' => 'nullable|string',
+            'notes' => 'nullable|string',
             'building_ids' => 'required|array',
-            'coordinator' => 'required|string',
         ]);
 
-        $drill = FireSafetyEvacuationDrill::create([
-            'school_id' => $request->school_id,
-            'drill_type' => $request->drill_type,
-            'drill_date' => $request->drill_date,
-            'status' => 'scheduled',
-            'coordinator' => $request->coordinator,
-            'notes' => $request->notes,
-        ]);
+        $drill = FireSafetyEvacuationDrill::create($request->only([
+            'school_id', 'drill_type', 'drill_date', 'start_time', 'end_time',
+            'participants_count', 'evacuation_time_minutes', 'status',
+            'remarks', 'coordinator', 'notes'
+        ]));
 
         $drill->buildings()->attach($request->building_ids);
 
@@ -1461,17 +1500,20 @@ public function getRoom($id)
     {
         $school = FireSafetySchool::withCount(['buildings', 'evacuationPlans'])->findOrFail($schoolId);
         $activePlans = FireSafetyEvacuationPlan::where('school_id', $schoolId)->where('status', 'active')->count();
+        $draftPlans = FireSafetyEvacuationPlan::where('school_id', $schoolId)->where('status', 'draft')->count();
 
         return response()->json([
             'total_buildings' => $school->buildings_count,
             'total_plans' => $school->evacuation_plans_count,
             'active_plans' => $activePlans,
-            'buildings_without_plans' => $school->buildings_count - $school->evacuation_plans_count,
+            'draft_plans' => $draftPlans,
+            'no_plan' => $school->buildings_count - ($activePlans + $draftPlans),
         ]);
     }
+
     public function getPlanStats($schoolId)
     {
-        $school = FireSafetySchool::withCount(['buildings'])->findOrFail($schoolId);
+        $school = FireSafetySchool::withCount(['buildings', 'evacuationPlans'])->findOrFail($schoolId);
 
         $activePlans = FireSafetyEvacuationPlan::where('school_id', $schoolId)
             ->where('status', 'active')
@@ -1481,11 +1523,33 @@ public function getRoom($id)
             ->where('status', 'draft')
             ->count();
 
+        $buildingsWithPlansIds = FireSafetyEvacuationPlan::where('school_id', $schoolId)->pluck('building_id');
+        $buildingsWithoutPlans = FireSafetyBuilding::where('school_id', $schoolId)
+            ->whereNotIn('id', $buildingsWithPlansIds)
+            ->count();
+
+        // Safety score average
+        $buildings = FireSafetyBuilding::where('school_id', $schoolId)->with(['fireExtinguishers', 'alarmSystems'])->get();
+        $totalScore = 0;
+        foreach ($buildings as $building) {
+            $alarmCount = $building->alarmSystems->whereIn('status', ['functional', 'online'])->count();
+            $extinguisherCount = $building->fireExtinguishers->where('status', 'active')->count();
+            $emergencyExits = $building->emergency_exits ?? 0;
+            
+            $score = 0;
+            if($alarmCount > 0) $score += 30;
+            if($extinguisherCount >= max(1, ceil(($building->rooms ?? 0) / 3))) $score += 40;
+            if($emergencyExits >= min(2, ceil(($building->floors ?? 1) * 0.5))) $score += 30;
+            $totalScore += $score;
+        }
+        $avgSafetyScore = $buildings->count() > 0 ? round($totalScore / $buildings->count()) : 0;
+
         return response()->json([
             'active_plans' => $activePlans,
             'draft_plans' => $draftPlans,
             'total_buildings' => $school->buildings_count,
-            'no_plan' => $school->buildings_count - ($activePlans + $draftPlans),
+            'no_plan' => $buildingsWithoutPlans,
+            'avg_safety_score' => $avgSafetyScore
         ]);
     }
 
@@ -1571,7 +1635,9 @@ public function getRoom($id)
             'fire_extinguishers_count' => $school->extinguishers_count,
             'alarm_systems_count' => $school->alarm_systems_count,
             'evacuation_plans_count' => $school->evacuation_plans_count,
-            'buildings_count' => $school->buildings_count
+            'buildings_count' => $school->buildings_count,
+            'alerts' => $school->alerts ?? [],
+            'events' => $school->events ?? []
         ]);
     }
 
@@ -1688,6 +1754,60 @@ public function getRoom($id)
             'message' => 'School added successfully!',
             'school' => $school
         ]);
+    }
+
+    public function storeAlert(Request $request)
+    {
+        $validated = $request->validate([
+            'school_id' => 'required|exists:firesafety_school_information,id',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'type' => 'required|string|in:danger,warning,info'
+        ]);
+
+        $school = FireSafetySchool::findOrFail($validated['school_id']);
+        
+        $alerts = $school->alerts ?? [];
+        $alerts[] = [
+            'id' => uniqid(),
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'type' => $validated['type'],
+            'created_at' => now()->toDateTimeString()
+        ];
+
+        $school->alerts = $alerts;
+        $school->save();
+
+        return response()->json(['success' => true, 'message' => 'Alert added successfully!', 'alerts' => $alerts]);
+    }
+
+    public function storeEvent(Request $request)
+    {
+        $validated = $request->validate([
+            'school_id' => 'required|exists:firesafety_school_information,id',
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'date' => 'required|date',
+            'time' => 'nullable'
+        ]);
+
+        $school = FireSafetySchool::findOrFail($validated['school_id']);
+        
+        $events = $school->events ?? [];
+        $events[] = [
+            'id' => uniqid(),
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'date' => $validated['date'],
+            'time' => $validated['time'],
+            'created_at' => now()->toDateTimeString()
+        ];
+
+        $school->events = $events;
+        $school->save();
+
+        return response()->json(['success' => true, 'message' => 'Event added successfully!', 'events' => $events]);
     }
 
     public function checkAlarmCode($code)
@@ -1825,5 +1945,76 @@ public function getRoom($id)
             ->get();
 
         return response()->json($archives);
+    }
+
+    // MAP: Get Full Data for School Map
+    public function getSchoolMapData($schoolId)
+    {
+        $school = FireSafetySchool::with([
+            'buildings.rooms',
+            'buildings.alarmSystems',
+            'buildings.fireExtinguishers',
+            'buildings.evacuationPlan'
+        ])->findOrFail($schoolId);
+
+        return response()->json($school);
+    }
+
+    // MAP: Save Layout Coordinates
+    public function saveMapLayout(Request $request, $schoolId)
+    {
+        $request->validate([
+            'layout' => 'required|array'
+        ]);
+
+        $school = FireSafetySchool::findOrFail($schoolId);
+        $school->evacuation_map_layout = $request->layout;
+        $school->save();
+
+        return response()->json(['success' => true, 'message' => 'Map layout saved successfully!']);
+    }
+
+    // --- Report Printing Methods ---
+
+    public function printSchoolSummary()
+    {
+        $schools = FireSafetySchool::with([
+            'buildings.actualRooms',
+            'buildings.fireExtinguishers',
+            'buildings.alarmSystems'
+        ])->get();
+
+        return view('fire-safety.reports.school-summary', compact('schools'));
+    }
+
+    public function printBuildingSummary($schoolId)
+    {
+        $school = FireSafetySchool::with([
+            'buildings.actualRooms',
+            'buildings.fireExtinguishers',
+            'buildings.alarmSystems'
+        ])->findOrFail($schoolId);
+
+        return view('fire-safety.reports.building-summary', compact('school'));
+    }
+
+    public function printAlarmDetails($schoolId)
+    {
+        $school = FireSafetySchool::findOrFail($schoolId);
+        $alarms = FireSafetyAlarmSystem::where('school_id', $schoolId)
+            ->with('building')
+            ->get();
+
+        return view('fire-safety.reports.alarm-details', compact('school', 'alarms'));
+    }
+
+    public function printExtinguisherDetails($schoolId)
+    {
+        $school = FireSafetySchool::findOrFail($schoolId);
+        $extinguishers = FireSafetyExtinguisher::where('school_id', $schoolId)
+            ->with(['building', 'centerRoom', 'coveredRooms'])
+            ->get();
+
+        return view('fire-safety.reports.extinguisher-details', compact('school', 'extinguishers'));
     }
 }

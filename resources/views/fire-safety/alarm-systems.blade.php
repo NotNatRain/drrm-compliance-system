@@ -264,7 +264,7 @@
     </div>
 
     <!-- Alarm Details & Update Modal -->
-    <div class="modal fade" id="alarmDetailsModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal fade" id="updateAlarmModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header" style="background-color: var(--fire-red); color: white;">
@@ -503,17 +503,22 @@
                                     <i class="fas fa-list me-2"></i> Alarm Systems List - {{ $school->school_name }}
                                 </h6>
                                 <div class="d-flex">
-                                    <button class="btn btn-sm ms-2" 
-                                            style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;"
-                                            onclick="openAlarmHistoryModal({{ $school->id }})">
-                                        <i class="fas fa-history me-1"></i> Removed Alarm System
-                                    </button>
                                     <button class="btn btn-primary btn-sm add-alarm-btn ms-2"
                                             data-school-id="{{ $school->id }}"
                                             data-bs-toggle="modal"
                                             data-bs-target="#addAlarmModal">
                                         <i class="fas fa-plus me-2"></i> Add New Alarm
                                     </button>
+                                    <button class="btn btn-sm ms-2" 
+                                            style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;"
+                                            onclick="openAlarmHistoryModal({{ $school->id }})">
+                                        <i class="fas fa-history me-1"></i> Removed Alarm System
+                                    </button>
+                                    <a href="{{ route('fire-safety.report.alarm-details', $school->id) }}" target="_blank"
+                                            class="btn btn-sm ms-2" 
+                                            style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;">
+                                        <i class="fas fa-print me-1"></i> Print Alarm Details
+                                    </a>
                                 </div>
                             </div>
                             <div class="card-body">
@@ -980,8 +985,8 @@
                 });
 
                 // Show modal using Vanilla JS for maximum compatibility with BS5
-                const modalEl = document.getElementById('alarmDetailsModal');
-                const modal = new bootstrap.Modal(modalEl);
+                const modalEl = document.getElementById('updateAlarmModal');
+                const modal = new bootstrap.Modal(modalEl); // Use direct constructor or getOrCreateInstance if safer
                 modal.show();
 
             } catch (error) {
@@ -1405,7 +1410,18 @@
 
         // Open Removal Modal
         function removeAlarmSystem() {
-            // currentAlarmId is already set by the button onclick
+            // currentAlarmId is already set by the button onclick which is set in update-alarm-btn click handler or table button
+            // If called from the Update Modal, we need to ensure currentAlarmId works
+            if (!window.currentAlarmId) {
+                 window.currentAlarmId = document.getElementById('updateAlarmId').value;
+            }
+
+            // Close update modal if open
+            const updateModal = bootstrap.Modal.getInstance(document.getElementById('updateAlarmModal'));
+            if (updateModal) {
+                updateModal.hide();
+            }
+
             document.getElementById('alarmRemovalReason').value = '';
             const modalEl = document.getElementById('alarmRemovalModal');
             const modal = bootstrap.Modal.getOrCreateInstance(modalEl);

@@ -41,6 +41,8 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     Route::delete('/evacuation-plan/{id}', [FireSafetyController::class, 'deleteEvacuationPlan']);
     Route::get('/building/{buildingId}/has-plan', [FireSafetyController::class, 'checkBuildingPlan']);
     Route::get('/building/{buildingId}/evacuation-data', [FireSafetyController::class, 'getBuildingEvacuationData']);
+    Route::get('/school/{schoolId}/map-data', [FireSafetyController::class, 'getSchoolMapData']);
+    Route::post('/school/{schoolId}/map-save', [FireSafetyController::class, 'saveMapLayout']);
     
     // Drill routes
     Route::get('/drill-history/{schoolId}', [FireSafetyController::class, 'getDrillHistory']);
@@ -68,6 +70,14 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     // AJAX routes for dynamic loading
     Route::get('/school/{id}', [FireSafetyController::class, 'getSchoolDetails'])->name('fire-safety.school.details');
     Route::get('/school/{id}/issues', [FireSafetyController::class, 'getSchoolIssues'])->name('fire-safety.school.issues');
+    Route::post('/school/alert', [FireSafetyController::class, 'storeAlert'])->name('fire-safety.school.alert.store');
+    Route::post('/school/event', [FireSafetyController::class, 'storeEvent'])->name('fire-safety.school.event.store');
+
+    // Report Printing Routes
+    Route::get('/reports/school-summary', [FireSafetyController::class, 'printSchoolSummary'])->name('fire-safety.report.school-summary');
+    Route::get('/reports/building-summary/{schoolId}', [FireSafetyController::class, 'printBuildingSummary'])->name('fire-safety.report.building-summary');
+    Route::get('/reports/alarm-details/{schoolId}', [FireSafetyController::class, 'printAlarmDetails'])->name('fire-safety.report.alarm-details');
+    Route::get('/reports/extinguisher-details/{schoolId}', [FireSafetyController::class, 'printExtinguisherDetails'])->name('fire-safety.report.extinguisher-details');
 
     Route::post('/fire-safety/school/store', [FireSafetyController::class, 'storeSchool'])
         ->name('fire-safety.school.store')
