@@ -984,9 +984,14 @@ public function getRoom($id)
                 ]);
 
                 // Archive & Remove Alarms on this floor
-                $locationPrefix = "Floor " . $floorNo . " -";
+                // Location is stored like "1st Floor - Hallway", so match ordinal forms
                 $alarmsToRemove = FireSafetyAlarmSystem::where('building_id', $id)
-                    ->where('location', 'like', "%Floor " . $floorNo . "%")
+                    ->where(function ($q) use ($floorNo) {
+                        $q->where('location', 'like', "%{$floorNo}st Floor%")
+                          ->orWhere('location', 'like', "%{$floorNo}nd Floor%")
+                          ->orWhere('location', 'like', "%{$floorNo}rd Floor%")
+                          ->orWhere('location', 'like', "%{$floorNo}th Floor%");
+                    })
                     ->get();
                 
                 foreach ($alarmsToRemove as $alarm) {

@@ -140,12 +140,22 @@ Route::prefix('typhoon')->middleware(['auth', 'module.access:typhoon_flood'])->g
 
 
 //Incident Routes
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/incidents/dashboard', [IncidentController::class, 'dashboard'])->name('incidents.dashboard');
+    Route::get('/incidents/print', [IncidentController::class, 'printMonth'])->name('incidents.print');
     Route::post('/incidents/store', [IncidentController::class, 'store'])->name('incidents.store');
     Route::get('/incidents/date/{date}', [IncidentController::class, 'getDateIncidents'])->name('incidents.date');
     Route::delete('/incidents/{id}', [IncidentController::class, 'destroy'])->name('incidents.destroy');
     Route::get('/incidents/search-schools', [IncidentController::class, 'searchSchools'])->name('incidents.search-schools');
+    Route::get('/incidents/export', [IncidentController::class, 'export'])->name('incidents.export');
+    Route::post('/incidents/import', [IncidentController::class, 'import'])->name('incidents.import');
+    Route::post('/incidents/types', [IncidentController::class, 'storeIncidentType'])->name('incidents.types.store');
+    Route::post('/incidents/statuses', [IncidentController::class, 'storeIncidentStatus'])->name('incidents.statuses.store');
+    // Checklist APIs
+    Route::get('/incidents/checklist', [IncidentController::class, 'getChecklist'])->name('incidents.checklist.index');
+    Route::post('/incidents/checklist', [IncidentController::class, 'storeChecklistItem'])->name('incidents.checklist.store');
+    Route::put('/incidents/checklist/{id}', [IncidentController::class, 'updateChecklistItem'])->name('incidents.checklist.update');
+    Route::delete('/incidents/checklist/{id}', [IncidentController::class, 'destroyChecklistItem'])->name('incidents.checklist.destroy');
 });
 
 // Comprehensive School Safety (placeholder – replace with real controller when module is ready)

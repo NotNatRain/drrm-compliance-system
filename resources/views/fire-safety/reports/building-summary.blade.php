@@ -100,7 +100,7 @@
             <div class="info-item"><strong>Name of School:</strong> {{ $school->school_name }}</div>
             <div class="info-item"><strong>Name of School Head:</strong> {{ $school->school_head }}</div>
             <div class="info-item"><strong>School ID:</strong> {{ $school->school_id }}</div>
-            <div class="info-item"><strong>Name of School DRRM Coordinator:</strong> {{ $school->drrm_coordinator }}</div>
+            <div class="info-item"><strong>Name of School DRRM Coordinator:</strong> {{ $school->school_drrm_coordinator }}</div>
         </div>
     </div>
 
@@ -152,7 +152,7 @@
         <div style="text-align: center;">
             <p>Prepared by:</p>
             <br><br>
-            <p><strong>{{ $school->drrm_coordinator }}</strong></p>
+            <p><strong>{{ $school->school_drrm_coordinator }}</strong></p>
             <p>School DRRM Coordinator</p>
         </div>
         <div style="text-align: center;">

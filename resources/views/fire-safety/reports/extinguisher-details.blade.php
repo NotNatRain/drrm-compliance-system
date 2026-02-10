@@ -96,7 +96,7 @@
             </div>
             <div class="info-row">
                 <div><strong>School ID:</strong> {{ $school->school_id }}</div>
-                <div><strong>DRRM Coordinator:</strong> {{ $school->drrm_coordinator }}</div>
+                <div><strong>DRRM Coordinator:</strong> {{ $school->school_drrm_coordinator }}</div>
             </div>
         </div>
     </div>

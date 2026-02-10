@@ -67,8 +67,13 @@
 
         /* Calendar Styling */
         .calendar-container {
-            padding: 20px;
+            padding: 20px 20px 15px 20px;
         }
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+        }
+        
 
         .calendar-header {
             display: flex;
@@ -329,6 +334,64 @@
         </div>
     </div>
 
+    <!-- Add Incident Type Modal -->
+    <div class="modal fade" id="addIncidentTypeModal" tabindex="-1" aria-labelledby="addIncidentTypeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title" id="addIncidentTypeModalLabel">
+                        <i class="fas fa-plus-circle me-1 text-warning"></i> New Incident Type
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-3">
+                    <form id="addIncidentTypeForm">
+                        @csrf
+                        <div class="mb-2">
+                            <label for="newIncidentTypeName" class="form-label small">Incident Type Name</label>
+                            <input type="text" id="newIncidentTypeName" class="form-control form-control-sm" required placeholder="e.g., Storm Surge">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-sm btn-warning" id="saveIncidentTypeBtn">
+                        <i class="fas fa-save me-1"></i> Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Incident Status/Event Modal -->
+    <div class="modal fade" id="addIncidentStatusModal" tabindex="-1" aria-labelledby="addIncidentStatusModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header py-2">
+                    <h6 class="modal-title" id="addIncidentStatusModalLabel">
+                        <i class="fas fa-plus-circle me-1 text-warning"></i> New Status / Event
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-3">
+                    <form id="addIncidentStatusForm">
+                        @csrf
+                        <div class="mb-2">
+                            <label for="newIncidentStatusName" class="form-label small">Status / Event Name</label>
+                            <input type="text" id="newIncidentStatusName" class="form-control form-control-sm" required placeholder="e.g., Division Memo Suspension">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer py-2">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-sm btn-warning" id="saveIncidentStatusBtn">
+                        <i class="fas fa-save me-1"></i> Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="container-fluid px-4">
         <div class="row">
             <!-- Left Panel: Calendar -->
@@ -354,6 +417,9 @@
                             <a href="{{ route('incidents.dashboard', ['year' => date('Y'), 'month' => date('n')]) }}" class="btn btn-sm btn-warning rounded-pill mx-2 px-3">Today</a>
                             <a href="{{ route('incidents.dashboard', ['year' => $nextYear, 'month' => $nextMonth]) }}" class="btn btn-sm btn-outline-secondary rounded-circle" title="Next month">
                                 <i class="fas fa-chevron-right"></i>
+                            </a>
+                            <a href="{{ route('incidents.print', ['year' => $calYear, 'month' => $calMonth]) }}" class="btn btn-sm btn-outline-secondary ms-2" title="Print calendar">
+                                <i class="fas fa-print me-1"></i> Print Calendar
                             </a>
                         </div>
                     </div>
@@ -401,6 +467,18 @@
                             </div>
                             @endforeach
                         @endforeach
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                        <div class="d-flex align-items-center gap-2">
+                            <button id="exportIncidentsBtn" type="button" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-file-export me-1"></i> Export Backup
+                            </button>
+                            <label class="btn btn-sm btn-outline-secondary mb-0">
+                                <i class="fas fa-file-import me-1"></i> Import Backup
+                                <input type="file" id="importIncidentsInput" accept=".json" hidden>
+                            </label>
+                            <small class="text-muted ms-2" style="font-size: 0.8rem;">Backup & restore data</small>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -463,6 +541,25 @@
                                 <div class="stat-label">Events</div>
                             </div>
                         </div>
+                        <div class="mt-4">
+                            <div class="row">
+                                <!-- Left Chart: Incident Type Distribution -->
+                                <div class="col-md-6 mb-3">
+                                    <h6 class="text-muted text-uppercase small mb-2">
+                                        <i class="fas fa-chart-pie me-2 text-warning"></i> Incident Type Distribution
+                                    </h6>
+                                    <canvas id="incidentTypeChart" height="100"></canvas>
+                                </div>
+                                
+                                <!-- Right Chart: Incident Trend (Daily) -->
+                                <div class="col-md-6 mb-3">
+                                    <h6 class="text-muted text-uppercase small mb-2">
+                                        <i class="fas fa-chart-line me-2 text-warning"></i> Incident Trend (Daily)
+                                    </h6>
+                                    <canvas id="incidentTrendChart" height="100"></canvas>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -475,27 +572,34 @@
                     <h5 class="fw-bold mb-4">Legend & Filters</h5>
                     <div class="row">
                         <div class="col-md-6 border-end">
-                            <h6 class="text-muted small mb-3 text-uppercase">Incident Types</h6>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="text-muted small text-uppercase mb-0">Incident Types</h6>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="addIncidentTypeBtn" title="Add incident type">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
                             <div class="d-flex flex-wrap gap-2">
-                                <div class="legend-tag type-cyclone"><div class="tag-dot" style="background: #fff;"></div> Tropical Cyclone</div>
-                                <div class="legend-tag type-rainfall"><div class="tag-dot" style="background: #fff;"></div> Heavy Rainfall</div>
-                                <div class="legend-tag type-earthquake"><div class="tag-dot" style="background: #fff;"></div> Earthquake</div>
-                                <div class="legend-tag type-landslide"><div class="tag-dot" style="background: #fff;"></div> Landslide</div>
-                                <div class="legend-tag type-flooding"><div class="tag-dot" style="background: #333;"></div> Flooding</div>
-                                <div class="legend-tag type-fire"><div class="tag-dot" style="background: #fff;"></div> Fire</div>
-                                <div class="legend-tag type-accident"><div class="tag-dot" style="background: #fff;"></div> Accidents</div>
-                                <div class="legend-tag type-violence"><div class="tag-dot" style="background: #fff;"></div> Violence/Violence</div>
-                                <div class="legend-tag type-others"><div class="tag-dot" style="background: #333;"></div> Others</div>
+                                @foreach($incidentTypes as $type)
+                                    <div class="legend-tag {{ $type->color_class ?? 'type-others' }}">
+                                        <div class="tag-dot" style="background: {{ in_array($type->color_class, ['type-flooding','type-others']) ? '#333' : '#fff' }};"></div>
+                                        <span>{{ $type->name }}</span>
+                                    </div>
+                                @endforeach
                             </div>
                         </div>
                         <div class="col-md-6 ps-md-4">
-                            <h6 class="text-muted small mb-3 text-uppercase">Compliance Status / Events</h6>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="text-muted small text-uppercase mb-0">Compliance Status / Events</h6>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" id="addIncidentStatusBtn" title="Add status/event">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
                             <div class="d-flex flex-wrap gap-2">
-                                <div class="legend-tag status-holiday">Holiday</div>
-                                <div class="legend-tag status-incident">Incident In School</div>
-                                <div class="legend-tag status-suspended">Classes/Work Suspended</div>
-                                <div class="legend-tag status-no-suspension">No Class Suspension</div>
-                                <div class="legend-tag status-f2f-suspended">Suspended F2F Classes</div>
+                                @foreach($incidentStatuses as $status)
+                                    <div class="legend-tag {{ $status->color_class ?? 'status-no-suspension' }}">
+                                        <span>{{ $status->name }}</span>
+                                    </div>
+                                @endforeach
                             </div>
                         </div>
                     </div>
@@ -507,31 +611,27 @@
                     <div style="position: absolute; top: -20px; right: -20px; font-size: 8rem; color: rgba(242, 201, 76, 0.05);">
                         <i class="fas fa-shield-alt"></i>
                     </div>
-                    <h5 class="fw-bold mb-4">Quick Compliance Checklist</h5>
-                    <div class="list-group list-group-flush bg-transparent">
-                        <div class="list-group-item bg-transparent border-0 px-0 py-3">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="c1">
-                                <label class="form-check-label fw-600" for="c1">Daily Monitoring Report Submitted</label>
+                    <h5 class="fw-bold mb-1">Quick Compliance Checklist</h5>
+                    <p class="text-muted small mb-3">For {{ \Carbon\Carbon::parse($checklistDate)->format('F j, Y') }} (resets daily)</p>
+                    <div id="checklistContainer" class="list-group list-group-flush bg-transparent">
+                        @foreach($checklistItems as $item)
+                        <div class="list-group-item bg-transparent border-0 px-0 py-2 d-flex align-items-center justify-content-between checklist-item-row" data-id="{{ $item->id }}">
+                            <div class="form-check flex-grow-1">
+                                <input class="form-check-input checklist-toggle" type="checkbox" id="checklist_{{ $item->id }}" {{ $item->is_completed ? 'checked' : '' }}>
+                                <label class="form-check-label fw-600 ms-1" for="checklist_{{ $item->id }}">{{ $item->label }}</label>
                             </div>
+                            <button type="button" class="btn btn-sm btn-outline-danger ms-2 checklist-delete" title="Remove item">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
-                        <div class="list-group-item bg-transparent border-0 px-0 py-3">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="c2">
-                                <label class="form-check-label fw-600" for="c2">Incident Verification Completed</label>
-                            </div>
-                        </div>
-                        <div class="list-group-item bg-transparent border-0 px-0 py-3">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="c3">
-                                <label class="form-check-label fw-600" for="c3">Victim Assistance Log Updated</label>
-                            </div>
-                        </div>
-                        <div class="list-group-item bg-transparent border-0 px-0 py-3">
-                            <div class="form-check text-muted">
-                                <input class="form-check-input" type="checkbox" id="c4">
-                                <label class="form-check-label" for="c4">School Head Confirmation Received</label>
-                            </div>
+                        @endforeach
+                    </div>
+                    <div class="mt-3">
+                        <div class="input-group input-group-sm">
+                            <input type="text" id="newChecklistLabel" class="form-control" placeholder="Add checklist item...">
+                            <button class="btn btn-warning" type="button" id="addChecklistItemBtn">
+                                <i class="fas fa-plus"></i>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -576,15 +676,9 @@
                                         <label for="incident_type_id" class="form-label">Incident Type *</label>
                                         <select class="form-select" id="incident_type_id" name="incident_type_id" required>
                                             <option value="">Select Incident Type</option>
-                                            <option value="1">Tropical Cyclone</option>
-                                            <option value="2">Heavy Rainfall</option>
-                                            <option value="3">Earthquake</option>
-                                            <option value="4">Landslide</option>
-                                            <option value="5">Flooding</option>
-                                            <option value="6">Fire</option>
-                                            <option value="7">Accidents</option>
-                                            <option value="8">Violence/Conflict</option>
-                                            <option value="9">Others</option>
+                                            @foreach($incidentTypes as $type)
+                                                <option value="{{ $type->id }}">{{ $type->name }}</option>
+                                            @endforeach
                                         </select>
                                     </div>
                                     
@@ -638,11 +732,9 @@
                                         <label for="incident_status_id" class="form-label">Compliance Status/Event *</label>
                                         <select class="form-select" id="incident_status_id" name="incident_status_id" required>
                                             <option value="">Select Status/Event</option>
-                                            <option value="1">Holiday</option>
-                                            <option value="2">Incident In School</option>
-                                            <option value="3">Classes/Work Suspended</option>
-                                            <option value="4">No Class Suspension</option>
-                                            <option value="5">Suspended F2F Classes</option>
+                                            @foreach($incidentStatuses as $status)
+                                                <option value="{{ $status->id }}">{{ $status->name }}</option>
+                                            @endforeach
                                         </select>
                                     </div>
                                     
@@ -733,10 +825,28 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         const incidentsDateUrl = '{{ url("/incidents/date") }}';
         const incidentsStoreUrl = '{{ route("incidents.store") }}';
+        const incidentTypeStoreUrl = '{{ route("incidents.types.store") }}';
+        const incidentStatusStoreUrl = '{{ route("incidents.statuses.store") }}';
+        const incidentsExportUrl = '{{ url("/incidents/export") }}';
+        const incidentsImportUrl = '{{ url("/incidents/import") }}';
+        const checklistIndexUrl = '{{ route("incidents.checklist.index") }}';
+        const checklistStoreUrl = '{{ route("incidents.checklist.store") }}';
+        const checklistUpdateBaseUrl = '{{ url("/incidents/checklist") }}';
+        const checklistDate = '{{ $checklistDate }}';
+
+        const typeChartData = {
+            labels: @json($stats['type_distribution']['labels'] ?? []),
+            values: @json($stats['type_distribution']['values'] ?? []),
+        };
+        const trendChartData = {
+            labels: @json($stats['trend']['labels'] ?? []),
+            values: @json($stats['trend']['values'] ?? []),
+        };
 
         // Day hover: custom info box (Incident/Event Type + School name)
         let tooltipEl = null;
@@ -940,6 +1050,317 @@
             }
             complianceSchoolInput.addEventListener('input', () => showSchoolSuggestions(complianceSchoolInput, 'compliance_school_autocomplete'));
         }
+
+        // Charts
+        document.addEventListener('DOMContentLoaded', function () {
+        const typeCtx = document.getElementById('incidentTypeChart');
+        if (typeCtx && typeChartData.labels.length) {
+            new Chart(typeCtx, {
+                type: 'pie',
+                data: {
+                    labels: typeChartData.labels,
+                    datasets: [{
+                        data: typeChartData.values,
+                        backgroundColor: [
+                            '#4facfe', '#00f2fe', '#667eea', '#a18cd1', '#38f9d7',
+                            '#ff0844', '#f093fb', '#84fab0', '#f2c94c'
+                        ],
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: { 
+                            position: 'bottom',
+                            labels: {
+                                font: { size: 10 }, // Smaller font for compact size
+                                boxWidth: 12, // Smaller legend boxes
+                                padding: 8 // Less padding
+                            }
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: true
+                }
+            });
+        }
+
+        const trendCtx = document.getElementById('incidentTrendChart');
+        if (trendCtx && trendChartData.labels.length) {
+            new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: trendChartData.labels,
+                    datasets: [{
+                        label: 'Incidents',
+                        data: trendChartData.values,
+                        borderColor: '#F2994A',
+                        backgroundColor: 'rgba(242,153,74,0.15)',
+                        tension: 0.25,
+                        fill: true,
+                        pointRadius: 3, // Smaller points
+                        pointHoverRadius: 5,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: { 
+                            ticks: { 
+                                autoSkip: true, 
+                                maxTicksLimit: 8,
+                                font: { size: 9 }
+                            }
+                        },
+                        y: { 
+                            beginAtZero: true, 
+                            precision: 0,
+                            ticks: { font: { size: 9 } }
+                        }
+                    },
+                    plugins: {
+                        legend: { 
+                            display: false 
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: true
+                }
+            });
+        }
+        });
+
+        // Dynamic incident type/status add buttons with small modals
+        const addIncidentTypeBtn = document.getElementById('addIncidentTypeBtn');
+        const addIncidentStatusBtn = document.getElementById('addIncidentStatusBtn');
+        const addIncidentTypeModalEl = document.getElementById('addIncidentTypeModal');
+        const addIncidentStatusModalEl = document.getElementById('addIncidentStatusModal');
+
+        if (addIncidentTypeBtn && addIncidentTypeModalEl) {
+            const addIncidentTypeModal = new bootstrap.Modal(addIncidentTypeModalEl);
+            addIncidentTypeBtn.addEventListener('click', function () {
+                document.getElementById('newIncidentTypeName').value = '';
+                addIncidentTypeModal.show();
+            });
+            document.getElementById('saveIncidentTypeBtn').addEventListener('click', function () {
+                const nameInput = document.getElementById('newIncidentTypeName');
+                const name = nameInput.value.trim();
+                if (!name) {
+                    nameInput.focus();
+                    return;
+                }
+                fetch(incidentTypeStoreUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ name })
+                }).then(r => r.json()).then(resp => {
+                    if (!resp.success) {
+                        alert('Failed to add incident type.');
+                        return;
+                    }
+                    addIncidentTypeModal.hide();
+                    alert('Incident type added. The page will reload to show it.');
+                    window.location.reload();
+                }).catch(() => alert('Failed to add incident type.'));
+            });
+        }
+
+        if (addIncidentStatusBtn && addIncidentStatusModalEl) {
+            const addIncidentStatusModal = new bootstrap.Modal(addIncidentStatusModalEl);
+            addIncidentStatusBtn.addEventListener('click', function () {
+                document.getElementById('newIncidentStatusName').value = '';
+                addIncidentStatusModal.show();
+            });
+            document.getElementById('saveIncidentStatusBtn').addEventListener('click', function () {
+                const nameInput = document.getElementById('newIncidentStatusName');
+                const name = nameInput.value.trim();
+                if (!name) {
+                    nameInput.focus();
+                    return;
+                }
+                fetch(incidentStatusStoreUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ name })
+                }).then(r => r.json()).then(resp => {
+                    if (!resp.success) {
+                        alert('Failed to add status/event.');
+                        return;
+                    }
+                    addIncidentStatusModal.hide();
+                    alert('Status/event added. The page will reload to show it.');
+                    window.location.reload();
+                }).catch(() => alert('Failed to add status/event.'));
+            });
+        }
+
+        // Quick Compliance Checklist JS
+        function updateChecklistItem(id, payload) {
+            fetch(checklistUpdateBaseUrl + '/' + id, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(payload)
+            }).then(r => r.json()).then(resp => {
+                if (!resp.success) {
+                    alert('Failed to update checklist item.');
+                }
+            }).catch(() => {
+                alert('Failed to update checklist item.');
+            });
+        }
+
+        document.querySelectorAll('#checklistContainer .checklist-toggle').forEach(cb => {
+            cb.addEventListener('change', function () {
+                const row = this.closest('.checklist-item-row');
+                const id = row.getAttribute('data-id');
+                updateChecklistItem(id, { is_completed: this.checked ? 1 : 0 });
+            });
+        });
+
+        document.querySelectorAll('#checklistContainer .checklist-delete').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const row = this.closest('.checklist-item-row');
+                const id = row.getAttribute('data-id');
+                if (!confirm('Remove this checklist item?')) return;
+                fetch(checklistUpdateBaseUrl + '/' + id, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                }).then(r => r.json()).then(resp => {
+                    if (resp.success) {
+                        row.remove();
+                    } else {
+                        alert('Failed to delete checklist item.');
+                    }
+                }).catch(() => {
+                    alert('Failed to delete checklist item.');
+                });
+            });
+        });
+
+        // Export / Import backup
+        const exportBtn = document.getElementById('exportIncidentsBtn');
+        const importInput = document.getElementById('importIncidentsInput');
+
+        if (exportBtn) {
+            exportBtn.addEventListener('click', function () {
+                window.location.href = incidentsExportUrl;
+            });
+        }
+
+        if (importInput) {
+            importInput.addEventListener('change', function () {
+                if (!this.files.length) return;
+                if (!confirm('Importing a backup will overwrite existing incident data. Continue?')) {
+                    this.value = '';
+                    return;
+                }
+                const file = this.files[0];
+                const fd = new FormData();
+                fd.append('file', file);
+                fd.append('_token', csrfToken);
+                fetch(incidentsImportUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: fd
+                }).then(r => r.json()).then(resp => {
+                    if (!resp.success) {
+                        alert(resp.message || 'Failed to import backup.');
+                        return;
+                    }
+                    alert('Backup imported successfully.');
+                    window.location.reload();
+                }).catch(() => alert('Failed to import backup.'));
+            });
+        }
+
+        document.getElementById('addChecklistItemBtn').addEventListener('click', function () {
+            const input = document.getElementById('newChecklistLabel');
+            const label = input.value.trim();
+            if (!label) return;
+            fetch(checklistStoreUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    checklist_date: checklistDate,
+                    label: label
+                })
+            }).then(r => r.json()).then(resp => {
+                if (!resp.success) {
+                    alert('Failed to add checklist item.');
+                    return;
+                }
+                const item = resp.item;
+                const container = document.getElementById('checklistContainer');
+                const div = document.createElement('div');
+                div.className = 'list-group-item bg-transparent border-0 px-0 py-2 d-flex align-items-center justify-content-between checklist-item-row';
+                div.setAttribute('data-id', item.id);
+                div.innerHTML = '' +
+                    '<div class="form-check flex-grow-1">' +
+                    '  <input class="form-check-input checklist-toggle" type="checkbox" id="checklist_' + item.id + '">' +
+                    '  <label class="form-check-label fw-600 ms-1" for="checklist_' + item.id + '">' + escapeHtml(item.label) + '</label>' +
+                    '</div>' +
+                    '<button type="button" class="btn btn-sm btn-outline-danger ms-2 checklist-delete" title="Remove item">' +
+                    '  <i class="fas fa-trash"></i>' +
+                    '</button>';
+                container.appendChild(div);
+                input.value = '';
+
+                div.querySelector('.checklist-toggle').addEventListener('change', function () {
+                    const row = this.closest('.checklist-item-row');
+                    const id = row.getAttribute('data-id');
+                    updateChecklistItem(id, { is_completed: this.checked ? 1 : 0 });
+                });
+                div.querySelector('.checklist-delete').addEventListener('click', function () {
+                    const row = this.closest('.checklist-item-row');
+                    const id = row.getAttribute('data-id');
+                    if (!confirm('Remove this checklist item?')) return;
+                    fetch(checklistUpdateBaseUrl + '/' + id, {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    }).then(r => r.json()).then(resp => {
+                        if (resp.success) {
+                            row.remove();
+                        } else {
+                            alert('Failed to delete checklist item.');
+                        }
+                    }).catch(() => {
+                        alert('Failed to delete checklist item.');
+                    });
+                });
+            }).catch(() => {
+                alert('Failed to add checklist item.');
+            });
+        });
     </script>
 </body>
 </html>

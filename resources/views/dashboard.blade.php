@@ -68,7 +68,10 @@
 
         <!-- Incidents Compliance -->
         <div class="col-md-4 mb-4">
-            <a href="{{ route('incidents.dashboard') }}" class="text-decoration-none">
+            @php
+                $canAccessIncidents = auth()->check() && (auth()->user()->role === 'admin');
+            @endphp
+            <a href="{{ $canAccessIncidents ? route('incidents.dashboard') : '#' }}" class="text-decoration-none {{ $canAccessIncidents ? '' : 'disabled' }}">
                 <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #F2C94C;">
                     <div class="card-body text-center p-5">
                         <div class="mb-4">
@@ -80,8 +83,8 @@
                         </p>
                     </div>
                     <div class="card-footer bg-transparent text-center">
-                        <span class="btn" style="background-color: #F2C94C; color: #333;">
-                            <i class="fas fa-arrow-right"></i> Enter
+                        <span class="btn {{ $canAccessIncidents ? '' : 'disabled' }}" style="background-color: #F2C94C; color: #333; {{ $canAccessIncidents ? '' : 'opacity: 0.7; cursor: not-allowed;' }}">
+                            <i class="fas fa-arrow-right"></i> {{ $canAccessIncidents ? 'Enter' : 'Admin Only' }}
                         </span>
                     </div>
                 </div>
