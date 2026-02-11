@@ -1,497 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Evacuation Plans - Fire Safety</title>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
-        :root {
-            --fire-red: #A8191F;
-            --fire-dark-red: #8A1217;
-        }
+@extends('layouts.fire-safety')
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow-x: hidden;
-        }
+@section('title', 'Evacuation Plans - Fire Safety')
 
-        .top-nav {
-            background-color: var(--fire-red);
-            height: 60px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1030;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
+@section('content')
+    <div class="container-fluid">
+        <!-- Page Heading -->
+        <div class="d-sm-flex align-items-center justify-content-between mb-4">
+            <h1 class="h3 mb-0 text-gray-800">Evacuation Plans</h1>
+            <button class="btn btn-primary" onclick="printAllPlans()">
+                <i class="fas fa-print me-2"></i> Print Plans Report
+            </button>
+        </div>
 
-        .sidebar {
-            background-color: var(--fire-red);
-            width: 250px;
-            position: fixed;
-            top: 60px;
-            left: 0;
-            bottom: 0;
-            z-index: 1020;
-            overflow-y: auto;
-        }
-
-        .main-content {
-            margin-left: 250px;
-            margin-top: 60px;
-            padding: 20px;
-            min-height: calc(100vh - 60px);
-            background-color: #f8f9fa;
-        }
-
-        .nav-link {
-            color: rgba(255, 255, 255, 0.9);
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-        }
-
-        .nav-link:hover, .nav-link.active {
-            background-color: var(--fire-dark-red);
-            color: white;
-            text-decoration: none;
-        }
-
-        .nav-link.active {
-            border-left: 4px solid white;
-        }
-
-        .nav-icon {
-            width: 24px;
-            margin-right: 10px;
-            text-align: center;
-        }
-
-        .dashboard-card {
-            border-radius: 10px;
-            border: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .evacuation-card {
-            transition: transform 0.2s;
-            height: 100%;
-        }
-
-        .evacuation-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 15px rgba(0,0,0,0.1);
-        }
-
-        .map-container {
-            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-            border-radius: 8px;
-            padding: 15px;
-            color: white;
-            text-align: center;
-            margin-bottom: 15px;
-            cursor: pointer;
-        }
-
-        /* Visual Evacuation Map Styles */
-        .school-layout-container {
-            background-color: #f8f9fa;
-            padding: 20px;
-            border-radius: 10px;
-            border: 2px solid #dee2e6;
-            min-height: 300px;
-            max-height: 600px;
-            overflow: auto;
-        }
-        .main-division-box {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            justify-content: center;
-        }
-        .building-box {
-            background-color: white;
-            border: 2px solid #495057;
-            padding: 15px;
-            border-radius: 8px;
-            min-width: 220px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            position: relative;
-        }
-        .building-box.current-building {
-            border-color: var(--fire-red);
-            border-width: 3px;
-        }
-        .building-box.current-building::after {
-            content: "\f111";
-            font-family: "Font Awesome 6 Free";
-            font-weight: 900;
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            color: var(--fire-red);
-            background: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-        }
-        .building-title {
-            font-weight: 700;
-            text-align: center;
-            border-bottom: 2px solid #f1f1f1;
-            margin-bottom: 10px;
-            padding-bottom: 5px;
-            font-size: 1rem;
-            color: #212529;
-        }
-        .floor-box {
-            border: 1px solid #ced4da;
-            margin-bottom: 8px;
-            padding: 8px;
-            background-color: #fbfbfb;
-            border-radius: 4px;
-        }
-        .floor-title {
-            font-size: 0.7rem;
-            color: #6c757d;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .rooms-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px;
-        }
-        .room-unit {
-            width: 24px;
-            height: 24px;
-            border: 1px solid #ced4da;
-            background-color: #e9ecef;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.55rem;
-            border-radius: 2px;
-            font-weight: bold;
-        }
-        .room-unit.has-extinguisher {
-            background-color: #ffebee;
-            border-color: #dc3545;
-            color: #dc3545;
-        }
-        .building-box.has-alarm {
-            background-color: #fffde7;
-            border-color: #ffc107;
-        }
-        .legend-container {
-            margin-top: 15px;
-            padding: 12px;
-            background-color: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 6px;
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-            font-size: 0.8rem;
-        }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .legend-color {
-            width: 14px;
-            height: 14px;
-            border-radius: 2px;
-        }
-
-        .route-step {
-            padding: 8px;
-            margin-bottom: 5px;
-            background-color: #f8f9fa;
-            border-left: 4px solid var(--fire-red);
-            border-radius: 4px;
-        }
-
-        .assembly-area {
-            background-color: #e7f5ff;
-            border: 2px dashed #0d6efd;
-            border-radius: 8px;
-            padding: 10px;
-            margin-top: 10px;
-        }
-
-        /* School tabs + inner Building Evacuation Plans / Evacuation Map tabs - same pattern as Buildings & Alarm pages */
-        .school-tabs {
-            border-bottom: 2px solid #dee2e6;
-        }
-
-        .school-tabs .nav-tabs {
-            border-bottom: none;
-        }
-
-        .school-tab-btn {
-            color: #495057;
-            background-color: transparent;
-            border: 1px solid transparent;
-            border-top-left-radius: 0.25rem;
-            border-top-right-radius: 0.25rem;
-            padding: 0.5rem 1rem;
-            font-weight: 500;
-            transition: all 0.3s;
-            position: relative;
-            margin-bottom: -2px;
-        }
-
-        .school-tab-btn:hover {
-            color: white;
-            background-color: #8A1217;
-            border-color: #8A1217 #8A1217 #dee2e6;
-        }
-
-        .school-tab-btn.active {
-            color: white !important;
-            background-color: #8A1217 !important;
-            border-color: #8A1217 #8A1217 #8A1217 !important;
-            position: relative;
-            z-index: 1;
-        }
-
-        .school-tab-btn:not(.active):not(:hover) {
-            color: #495057;
-            background-color: #f8f9fa;
-            border-color: #dee2e6 #dee2e6 #dee2e6;
-        }
-
-        .school-tab-btn:focus {
-            outline: none;
-            box-shadow: 0 0 0 0.2rem rgba(168, 25, 31, 0.25);
-        }
-
-        .safety-indicator {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: 5px;
-        }
-
-        .safety-good { background-color: #28a745; }
-        .safety-warning { background-color: #ffc107; }
-        .safety-danger { background-color: #dc3545; }
-        .safety-unknown { background-color: #6c757d; }
-
-        .no-plans {
-            text-align: center;
-            padding: 3rem;
-            color: #6c757d;
-        }
-
-        .no-plans i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            color: #adb5bd;
-        }
-
-        /* Drill History Table */
-        .drill-table {
-            font-size: 0.9rem;
-        }
-        .drill-table th {
-            background-color: #f8f9fa;
-            font-weight: 600;
-            border-bottom: 2px solid #dee2e6;
-        }
-        .drill-table td {
-            vertical-align: middle;
-        }
-        .drill-remarks {
-            max-width: 200px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Loading States */
-        .loading-placeholder {
-            text-align: center;
-            padding: 3rem;
-            color: #6c757d;
-        }
-        .loading-placeholder i {
-            font-size: 2rem;
-            margin-bottom: 1rem;
-        }
-    </style>
-</head>
-<body>
-    <!-- Top Navigation Bar -->
-    <nav class="top-nav">
-        <div class="container-fluid h-100">
-            <div class="row h-100 align-items-center">
-                <div class="col-auto">
-                    <a href="{{ route('fire-safety.dashboard') }}" class="text-white text-decoration-none">
-                        <i class="fas fa-arrow-left me-2"></i>
-                        <i class="fas fa-fire me-2"></i>
-                        <span class="fw-bold">Fire Safety Checklist System</span>
-                    </a>
-                </div>
-
-                <div class="col text-center">
-                    <h4 class="text-white mb-0">Evacuation Plans Management</h4>
-                </div>
-
-                <div class="col-auto">
-                    <div class="d-flex align-items-center">
-                        <!-- Notifications -->
-                        <div class="dropdown me-3">
-                            <a href="#" class="text-white position-relative" data-bs-toggle="dropdown">
-                                <i class="fas fa-bell fa-lg"></i>
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                    0
-                                </span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end">
-                                <h6 class="dropdown-header">Notifications</h6>
-                                <div class="dropdown-item text-muted">No new notifications</div>
-                            </div>
-                        </div>
-
-                        <div class="dropdown">
-                            <a href="#" class="text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
-                                <i class="fas fa-user-circle fa-lg me-2"></i>
-                                <span>{{ Auth::user()->name ?? 'User' }}</span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end">
-                                <a class="dropdown-item" href="{{ route('fire-safety.dashboard') }}">
-                                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
-                                </a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="{{ route('logout') }}"
-                                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                   <i class="fas fa-sign-out-alt me-2"></i> Logout
-                                </a>
-                                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                                    @csrf
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        @if(!$activeSchool)
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i> No active school selected. Please select a school from the dashboard.
             </div>
-        </div>
-    </nav>
-
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="p-3">
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.dashboard') }}">
-                        <span class="nav-icon"><i class="fas fa-tachometer-alt"></i></span>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.buildings') }}">
-                        <span class="nav-icon"><i class="fas fa-building"></i></span>
-                        <span>Buildings</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.alarm-systems') }}">
-                        <span class="nav-icon"><i class="fas fa-bell"></i></span>
-                        <span>Alarm Systems</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.extinguishers') }}">
-                        <span class="nav-icon"><i class="fas fa-fire-extinguisher"></i></span>
-                        <span>Fire Extinguishers & Rooms</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="{{ route('fire-safety.evacuation-plans') }}">
-                        <span class="nav-icon"><i class="fas fa-map-signs"></i></span>
-                        <span>Evacuation Plans</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.customization') }}">
-                        <span class="nav-icon"><i class="fas fa-cog"></i></span>
-                        <span>Customization</span>
-                    </a>
-                </li>
-            </ul>
-
-            <hr class="bg-white my-4">
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content">
-        @if($schools->isEmpty())
-        <!-- No Schools Found Message -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card dashboard-card">
-                    <div class="card-body text-center py-5">
-                        <i class="fas fa-school fa-4x text-muted mb-4"></i>
-                        <h4 class="text-muted mb-3">No Schools Found</h4>
-                        <p class="text-muted mb-4">You need to add a school that will be under inspection first.</p>
-                        <a href="{{ route('fire-safety.dashboard') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i> Go to Dashboard to Add School
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
         @else
-        <!-- School Tabs -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card dashboard-card">
-                    <div class="card-body p-0">
-                        <div class="school-tabs">
-                            <nav>
-                                <div class="nav nav-tabs border-0" id="schoolTab" role="tablist">
-                                    @foreach($schools as $school)
-                                    <button class="nav-link school-tab-btn {{ $loop->first ? 'active' : '' }}"
-                                            id="school-tab-{{ $school->id }}"
-                                            data-bs-toggle="tab"
-                                            data-bs-target="#school-{{ $school->id }}"
-                                            type="button"
-                                            role="tab"
-                                            aria-controls="school-{{ $school->id }}"
-                                            aria-selected="{{ $loop->first ? 'true' : 'false' }}"
-                                            data-school-id="{{ $school->id }}">
-                                        {{ $school->school_name }}
-                                    </button>
-                                    @endforeach
-                                </div>
-                            </nav>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab Content -->
-        <div class="tab-content" id="schoolTabContent">
-            @foreach($schools as $school)
-            <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="school-{{ $school->id }}">
-                <!-- Evacuation Plan Overview -->
-                <div class="row mb-4">
+            @php $school = $activeSchool; @endphp
+            <!-- Summary Stats -->
+            <div class="row mb-4">
                     @php
                         $totalBuildings = $school->buildings->count();
                         $buildingsWithPlans = $school->buildings->filter(function($building) {
@@ -864,11 +392,11 @@
                         </div>
                     </div>
                 </div>
-            </div>
-            @endforeach
-        </div>
         @endif
     </div>
+@endsection
+
+@section('modals')
 
     <!-- Add Plan Modal -->
     <div class="modal fade" id="addPlanModal" tabindex="-1">
@@ -1161,6 +689,30 @@
                             </div>
                         </div>
 
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Target Buildings *</label>
+                            <div class="d-flex gap-4 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="building_scope" id="scopeAll" value="all" checked onchange="toggleBuildingSelection()">
+                                    <label class="form-check-label" for="scopeAll">All Buildings</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="building_scope" id="scopeSpecific" value="specific" onchange="toggleBuildingSelection()">
+                                    <label class="form-check-label" for="scopeSpecific">Specific Building/s</label>
+                                </div>
+                            </div>
+                            
+                            <div id="specificBuildingsContainer" style="display: none;" class="border rounded p-3 bg-light">
+                                <p class="small text-muted mb-2">Select the buildings participating in this drill:</p>
+                                <div id="drillBuildingsList" class="row g-2">
+                                    <!-- Populated via JS -->
+                                    <div class="col-12 text-center py-2">
+                                        <i class="fas fa-spinner fa-spin me-2"></i> Loading buildings...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">Participants Count</label>
@@ -1197,6 +749,10 @@
         </div>
     </div>
 
+
+@endsection
+
+@section('scripts')
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -1207,27 +763,19 @@
         let drillsData = {}; // Store drill data by school ID
 
         // Initialize with first school
+        // Initialize with active school
         document.addEventListener('DOMContentLoaded', function() {
-            const firstTab = document.querySelector('#schoolTab button.active');
-            if (firstTab) {
-                currentSchoolId = firstTab.getAttribute('data-school-id');
+            @if($activeSchool)
+                currentSchoolId = "{{ $activeSchool->id }}";
                 // Small delay to ensure DOM is fully ready
                 setTimeout(() => loadSchoolData(currentSchoolId), 100);
-            }
+            @endif
 
             // Set default drill date to tomorrow
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
             document.getElementById('drillDate').value = tomorrow.toISOString().split('T')[0];
 
-            // School tab switching
-            document.querySelectorAll('#schoolTab button').forEach(button => {
-                button.addEventListener('shown.bs.tab', function(event) {
-                    const schoolId = this.getAttribute('data-school-id');
-                    currentSchoolId = schoolId;
-                    loadSchoolData(schoolId);
-                });
-            });
 
             // Add Plan Modal show event - FIXED
             document.getElementById('addPlanModal').addEventListener('show.bs.modal', function(event) {
@@ -1288,17 +836,21 @@
                     // Display from building record (read-only in modal)
                     document.getElementById('editExits').value = plan.building?.emergency_exits ?? '';
                     
-                    // Format safety features
+                    // Display safety features
                     let featuresText = 'No safety features recorded';
                     if (plan.building?.features) {
                         const features = plan.building.features;
-                        const featureLabels = [];
-                        if (features.sprinklers) featureLabels.push('Sprinkler System');
-                        if (features.emergency_lights) featureLabels.push('Emergency Lighting');
-                        if (features.exit_signs) featureLabels.push('Exit Signs');
-                        if (features.fire_doors) featureLabels.push('Fire Doors');
-                        if (features.two_stairways) featureLabels.push('Two Stairways');
-                        featuresText = featureLabels.join(', ');
+                        if (typeof features === 'string') {
+                            featuresText = features;
+                        } else {
+                            const featureLabels = [];
+                            if (features.sprinklers) featureLabels.push('Sprinkler System');
+                            if (features.emergency_lights) featureLabels.push('Emergency Lighting');
+                            if (features.exit_signs) featureLabels.push('Exit Signs');
+                            if (features.fire_doors) featureLabels.push('Fire Doors');
+                            if (features.two_stairways) featureLabels.push('Two Stairways');
+                            featuresText = featureLabels.length > 0 ? featureLabels.join(', ') : 'None recorded';
+                        }
                     }
                     document.getElementById('editSafetyFeatures').value = featuresText;
 
@@ -1458,6 +1010,63 @@
             loadSchoolData(currentSchoolId);
         });
 
+        // Save Plan via AJAX
+        async function savePlan() {
+             const form = document.getElementById('addPlanForm');
+             if (!form.checkValidity()) {
+                 form.reportValidity();
+                 return;
+             }
+ 
+             const formData = new FormData(form);
+             
+             try {
+                 // Show loading
+                 Swal.fire({
+                     title: 'Saving Plan...',
+                     text: 'Please wait while we create the evacuation plan.',
+                     allowOutsideClick: false,
+                     didOpen: () => {
+                         Swal.showLoading();
+                     }
+                 });
+ 
+                 const response = await fetch(form.action, {
+                     method: 'POST',
+                     body: formData,
+                     headers: {
+                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                         'Accept': 'application/json'
+                     }
+                 });
+ 
+                 const data = await response.json();
+ 
+                 if (data.success) {
+                     Swal.fire({
+                         title: 'Success!',
+                         text: 'Evacuation plan created successfully!',
+                         icon: 'success',
+                         timer: 2000,
+                         showConfirmButton: false
+                     }).then(() => {
+                         // Reload page to show new plan
+                         location.reload();
+                     });
+                 } else {
+                     let errorMessage = data.message || 'Failed to create plan.';
+                     if (data.errors) {
+                         const errorList = Object.values(data.errors).flat().join('\n');
+                         errorMessage += '\n' + errorList;
+                     }
+                     Swal.fire('Error', errorMessage, 'error');
+                 }
+             } catch (error) {
+                 console.error('Error saving plan:', error);
+                 Swal.fire('Error', 'An unexpected error occurred.', 'error');
+             }
+         }
+
         // Load building details for plan creation - FIXED
         async function loadBuildingDetailsForPlan(buildingId, schoolId) {
             try {
@@ -1474,18 +1083,7 @@
                     document.getElementById('hiddenEmergencyExits').value = building.emergency_exits || 0;
                     
                     // Format and display safety features
-                    let featuresText = 'No safety features recorded';
-                    if (building.features) {
-                        const features = building.features;
-                        const featureLabels = [];
-                        if (features.sprinklers) featureLabels.push('Sprinkler System');
-                        if (features.emergency_lights) featureLabels.push('Emergency Lighting');
-                        if (features.exit_signs) featureLabels.push('Exit Signs');
-                        if (features.fire_doors) featureLabels.push('Fire Doors');
-                        if (features.two_stairways) featureLabels.push('Two Stairways');
-                        featuresText = featureLabels.join(', ');
-                    }
-                    document.getElementById('displaySafetyFeatures').value = featuresText;
+                    document.getElementById('displaySafetyFeatures').value = building.features || 'No safety features recorded';
                     
                 } else {
                     throw new Error(data.message || 'Failed to load building data');
@@ -1508,8 +1106,6 @@
             await loadDrillHistory(schoolId);
             // Load plan stats
             loadPlanStats(schoolId);
-            // Load sidebar stats
-            loadSidebarStats(schoolId);
 
             // Check if map tab is active, if so init map
             const mapTab = document.getElementById(`map-tab-${schoolId}`);
@@ -1913,6 +1509,13 @@
             });
         }
 
+        // Toggle Building Selection Display
+        function toggleBuildingSelection() {
+            const scope = document.querySelector('input[name="building_scope"]:checked').value;
+            const container = document.getElementById('specificBuildingsContainer');
+            container.style.display = scope === 'specific' ? 'block' : 'none';
+        }
+
         // Open Schedule Drill Modal
         async function openScheduleDrillModal(schoolId) {
             const modalElement = document.getElementById('scheduleDrillModal');
@@ -1924,6 +1527,41 @@
             // Set default times
             document.getElementById('startTime').value = '09:00';
             document.getElementById('endTime').value = '10:00';
+            
+            // Reset scope to All
+            document.getElementById('scopeAll').checked = true;
+            toggleBuildingSelection();
+
+            // Load buildings for this school
+            const buildingsList = document.getElementById('drillBuildingsList');
+            buildingsList.innerHTML = '<div class="col-12 text-center py-2"><i class="fas fa-spinner fa-spin me-2"></i> Loading buildings...</div>';
+
+            try {
+                const response = await fetch(`/fire-safety/drill-buildings/${schoolId}`);
+                const buildings = await response.json();
+                
+                if (buildings && buildings.length > 0) {
+                    let html = '';
+                    buildings.forEach(b => {
+                        html += `
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input building-checkbox" type="checkbox" value="${b.id}" id="drillBldg${b.id}">
+                                    <label class="form-check-label small" for="drillBldg${b.id}">
+                                        ${b.building_no}${b.building_name ? ' - ' + b.building_name : ''}
+                                    </label>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    buildingsList.innerHTML = html;
+                } else {
+                    buildingsList.innerHTML = '<div class="col-12 text-center py-2 text-muted">No buildings found for this school.</div>';
+                }
+            } catch (error) {
+                console.error('Error loading buildings for drill:', error);
+                buildingsList.innerHTML = '<div class="col-12 text-center py-2 text-danger">Error loading buildings.</div>';
+            }
             
             modal.show();
         }
@@ -1939,6 +1577,32 @@
 
             const formData = new FormData(form);
             const schoolId = document.getElementById('drillSchoolId').value;
+            
+            // Handle Buildings Selection
+            const scope = document.querySelector('input[name="building_scope"]:checked').value;
+            let buildingIds = [];
+            
+            if (scope === 'all') {
+                // Get all buildings in the list
+                document.querySelectorAll('.building-checkbox').forEach(cb => {
+                    buildingIds.push(cb.value);
+                });
+            } else {
+                // Get only checked buildings
+                document.querySelectorAll('.building-checkbox:checked').forEach(cb => {
+                    buildingIds.push(cb.value);
+                });
+            }
+
+            if (buildingIds.length === 0) {
+                Swal.fire('Error', 'Please select at least one building for the drill.', 'error');
+                return;
+            }
+
+            // Append building_ids as array
+            buildingIds.forEach(id => {
+                formData.append('building_ids[]', id);
+            });
 
             try {
                 Swal.fire({
@@ -2282,5 +1946,4 @@
             }
         }
     </script>
-</body>
-</html>
+@endsection

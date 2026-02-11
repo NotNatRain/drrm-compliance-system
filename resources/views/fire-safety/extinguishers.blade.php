@@ -1,133 +1,8 @@
-﻿<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fire Extinguishers - Fire Safety</title>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
-        :root {
-            --fire-red: #A8191F;
-            --fire-dark-red: #8A1217;
-        }
+﻿@extends('layouts.fire-safety')
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow-x: hidden;
-        }
+@section('title', 'Fire Extinguishers - Fire Safety')
 
-        .top-nav {
-            background-color: var(--fire-red);
-            height: 60px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1030;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .sidebar {
-            background-color: var(--fire-red);
-            width: 250px;
-            position: fixed;
-            top: 60px;
-            left: 0;
-            bottom: 0;
-            z-index: 1020;
-            overflow-y: auto;
-        }
-
-        .main-content {
-            margin-left: 250px;
-            margin-top: 60px;
-            padding: 20px;
-            min-height: calc(100vh - 60px);
-            background-color: #f8f9fa;
-        }
-
-        .nav-link {
-            color: rgba(255, 255, 255, 0.9);
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-        }
-
-        .nav-link:hover, .nav-link.active {
-            background-color: var(--fire-dark-red);
-            color: white;
-            text-decoration: none;
-        }
-
-        .nav-link.active {
-            border-left: 4px solid white;
-        }
-
-        .nav-icon {
-            width: 24px;
-            margin-right: 10px;
-            text-align: center;
-        }
-
-        .dashboard-card {
-            border-radius: 10px;
-            border: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .school-tabs {
-            border-bottom: 2px solid #dee2e6;
-        }
-
-        .school-tab-btn {
-            color: #495057;
-            background-color: transparent;
-            border: 1px solid transparent;
-            border-top-left-radius: 0.25rem;
-            border-top-right-radius: 0.25rem;
-            padding: 0.5rem 1rem;
-            font-weight: 500;
-            transition: all 0.3s;
-            position: relative;
-            margin-bottom: -2px;
-        }
-
-        .school-tab-btn:hover {
-            color: white;
-            background-color: #8A1217;
-            border-color: #8A1217 #8A1217 #dee2e6;
-        }
-
-        .school-tab-btn.active {
-            color: white !important;
-            background-color: #8A1217 !important;
-            border-color: #8A1217 #8A1217 #8A1217 !important;
-            position: relative;
-            z-index: 1;
-        }
-
-        .school-tab-btn:not(.active):not(:hover) {
-            color: #495057;
-            background-color: #f8f9fa;
-            border-color: #dee2e6 #dee2e6 #dee2e6;
-        }
-
-        .no-data {
-            text-align: center;
-            padding: 3rem;
-            color: #6c757d;
-        }
-
-        .no-data i {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            color: #adb5bd;
-        }
-    </style>
+@section('styles')
     <style>
         .health-bar {
             height: 25px; /* Fatten/Large height */
@@ -167,510 +42,34 @@
             background-color: var(--fire-red) !important;
         }
     </style>
-</head>
-<body>
-    <!-- Top Navigation Bar -->
-    <nav class="top-nav">
-        <div class="container-fluid h-100">
-            <div class="row h-100 align-items-center">
-                <div class="col-auto">
-                    <a href="{{ route('fire-safety.dashboard') }}" class="text-white text-decoration-none">
-                        <i class="fas fa-arrow-left me-2"></i>
-                        <i class="fas fa-fire me-2"></i>
-                        <span class="fw-bold">Fire Safety Checklist System</span>
-                    </a>
-                </div>
+@endsection
 
-                <div class="col text-center">
-                    <h4 class="text-white mb-0">Fire Extinguishers (Room-Based)</h4>
-                </div>
+@section('content')
+    <!-- Main Content -->
 
-                <div class="col-auto">
-                    <div class="d-flex align-items-center">
-                        <!-- Notifications -->
-                        <div class="dropdown me-3">
-                            <a href="#" class="text-white position-relative" data-bs-toggle="dropdown">
-                                <i class="fas fa-bell fa-lg"></i>
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                    0
-                                </span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end">
-                                <h6 class="dropdown-header">Notifications</h6>
-                                <div class="dropdown-item text-muted">No new notifications</div>
-                            </div>
-                        </div>
+    @if(!$activeSchool)
+        <!-- Layout handles the "No Schools" alert -->
+    @else
+        @php
+            $school = $activeSchool;
+            $actualTotalRooms = $school->buildings->sum('rooms');
+            $requiredExtinguishers = $school->buildings->sum('required_extinguishers_count');
+            $allRoomsCollection = $school->buildings->flatMap(fn ($b) => $b->actualRooms);
+            $allExts = $school->buildings->flatMap(fn ($b) => $b->fireExtinguishers);
+            $coveredRoomIds = $allExts->flatMap(fn ($e) => $e->coveredRooms->pluck('id'))->unique();
+            $uncoveredRoomsCount = max(0, $allRoomsCollection->count() - $coveredRoomIds->count()); // Based on created rooms
+            $labRooms = $allRoomsCollection->where('room_type', 'laboratory');
+            $labsCovered = $labRooms->filter(fn ($r) => $coveredRoomIds->contains($r->id))->count();
 
-                        <div class="dropdown">
-                            <a href="#" class="text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
-                                <i class="fas fa-user-circle fa-lg me-2"></i>
-                                <span>{{ Auth::user()->name ?? 'User' }}</span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end">
-                                <a class="dropdown-item" href="{{ route('fire-safety.dashboard') }}">
-                                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
-                                </a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="{{ route('logout') }}"
-                                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                   <i class="fas fa-sign-out-alt me-2"></i> Logout
-                                </a>
-                                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                                    @csrf
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
+            // New Metrics
+            $evaluationCount = $allExts->where('status', 'active')->count();
+            $evaluationPassed = $requiredExtinguishers > 0 && $evaluationCount >= $requiredExtinguishers;
+            $compliancePercent = $actualTotalRooms > 0 ? round(($coveredRoomIds->count() / $actualTotalRooms) * 100, 1) : 0;
+        @endphp
 
-    <div class="sidebar">
-        <div class="p-3">
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.dashboard') }}">
-                        <span class="nav-icon"><i class="fas fa-tachometer-alt"></i></span>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.buildings') }}">
-                        <span class="nav-icon"><i class="fas fa-building"></i></span>
-                        <span>Buildings</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.alarm-systems') }}">
-                        <span class="nav-icon"><i class="fas fa-bell"></i></span>
-                        <span>Alarm Systems</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="{{ route('fire-safety.extinguishers') }}">
-                        <span class="nav-icon"><i class="fas fa-fire-extinguisher"></i></span>
-                        <span>Fire Extinguishers & Rooms</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.evacuation-plans') }}">
-                        <span class="nav-icon"><i class="fas fa-map-signs"></i></span>
-                        <span>Evacuation Plans</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.customization') }}">
-                        <span class="nav-icon"><i class="fas fa-cog"></i></span>
-                        <span>Customization</span>
-                    </a>
-                </li>
-            </ul>
-            <hr class="bg-white my-4">
-        </div>
-    </div>
+        <!-- Summary -->
+        <div class="row mb-4">
 
-    <!-- Modals (Moved to top for better visibility and to avoid stacking context issues) -->
-    
-    <!-- Update Extinguisher Status Modal -->
-    <div class="modal fade" id="updateExtModal" tabindex="-1" style="z-index: 1060;">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
-                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Update Extinguisher</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="updateExtForm">
-                        @csrf
-                        <input type="hidden" id="updateExtId" name="extinguisher_id">
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Extinguisher Code</label>
-                            <input type="text" class="form-control bg-light" id="updateExtCode" readonly>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Status *</label>
-                                <select class="form-control" name="status" id="updateExtStatus" required onchange="handleUpdateStatusChange()">
-                                    <option value="active">OK (Active)</option>
-                                    <option value="maintenance">For Refill</option>
-                                    <option value="expired">Empty</option>
-                                    <option value="missing">Missing</option>
-                                    <option value="purchase">For Purchase</option>
-                                    <option value="decommissioned">Decommissioned</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Pressure (0-100%) *</label>
-                                <input type="number" class="form-control" name="pressure_level" id="updateExtPressure" min="0" max="100" required>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Notes / Remarks *</label>
-                            <textarea class="form-control" name="notes" id="updateExtNotes" rows="3" placeholder="Reason for update..." required></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <!-- Remove button (initially hidden, shown via JS if status is deccomissioned) -->
-                    <button type="button" class="btn btn-outline-danger" id="removeExtBtn" style="display: none;" onclick="showExtRemovalReason()">
-                        <i class="fas fa-trash-alt me-2"></i>Remove
-                    </button>
-                    <button type="button" class="btn btn-primary" onclick="saveExtinguisherStatus()">
-                        <i class="fas fa-save me-2"></i>Update Status
-                    </button>
-                </div>
-                <!-- Reason for Removal section (initially hidden) -->
-                <div class="card-footer bg-light border-top-0 d-none" id="extRemovalReasonSection">
-                    <div class="p-3">
-                        <label class="form-label fw-bold text-danger">Reason for Removal *</label>
-                        <textarea class="form-control border-danger" id="extRemovalReason" rows="2" placeholder="State reason for decommissioning and removal..."></textarea>
-                        <div class="mt-2 text-end">
-                            <button type="button" class="btn btn-danger btn-sm" onclick="confirmRemoveExtinguisher()">
-                                <i class="fas fa-check me-2"></i>Yes, Remove It!
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Inspect & Update Room Modal -->
-    <div class="modal fade" id="updateRoomModal" tabindex="-1" style="z-index: 1060;">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
-                    <h5 class="modal-title"><i class="fas fa-search-plus me-2"></i>Inspect & Update Room</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="updateRoomForm">
-                        @csrf
-                        <input type="hidden" id="updateRoomId" name="room_id">
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Room Code</label>
-                                <input type="text" class="form-control" name="room_code" id="updateRoomCode" placeholder="e.g., Rm-101">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold text-muted">Floor Level</label>
-                                <input type="text" class="form-control bg-light" id="updateRoomFloor" readonly>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold text-muted small">Update Room Name (Optional)</label>
-                            <input type="text" class="form-control" name="room_name" id="updateRoomName" placeholder="Leave blank to keep current name">
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Nearest Extinguisher Room</label>
-                            <select class="form-control" name="nearest_extinguisher_room_id" id="updateRoomNearest">
-                                <option value="">None / Self-Covered</option>
-                            </select>
-                            <div class="form-text small">Select the room that houses the extinguisher covering this room. Only rooms on the same floor with coverage capacity are shown.</div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="saveRoomUpdate()">
-                        <i class="fas fa-save me-2"></i>Save Changes
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Room Modal -->
-    <div class="modal fade" id="addRoomModal" tabindex="-1" style="z-index: 1060;">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
-                    <h5 class="modal-title"><i class="fas fa-door-open me-2"></i>Add Room</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="addRoomForm">
-                        @csrf
-                        <input type="hidden" name="school_id" id="roomSchoolId">
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Building *</label>
-                            <select class="form-control" name="building_id" id="roomBuildingSelect" required>
-                                <option value="">Select Building</option>
-                            </select>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Room Code</label>
-                                <input type="text" class="form-control" name="room_code" placeholder="e.g., Rm-101">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Floor No.</label>
-                                <select class="form-control" name="floor_no" id="roomFloorSelect" required disabled>
-                                    <option value="">Select Building First</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Room Name *</label>
-                            <input type="text" class="form-control" name="room_name" placeholder="e.g., Room 101, Science Lab" required>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Room Type *</label>
-                            <select class="form-control" name="room_type_config_id" id="room_type_select" required onchange="updateRoomPriority()">
-                                <option value="">Select room type</option>
-                                @foreach(($roomTypes ?? collect()) as $rt)
-                                    @php
-                                        $p = ($calculatedPriorities ?? collect())->firstWhere('id', $rt->parent_id);
-                                    @endphp
-                                    <option value="{{ $rt->id }}"
-                                            data-priority-label="{{ $p->name ?? '' }}"
-                                            data-max-rooms="{{ $p->max_rooms_covered ?? '' }}">
-                                        {{ $rt->name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold text-muted">Calculated Priority</label>
-                            <input type="text" class="form-control bg-light" id="room_priority" readonly value="">
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="saveRoom()">
-                        <i class="fas fa-save me-2"></i>Save Room
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Extinguisher Modal -->
-    <div class="modal fade" id="addExtModal" tabindex="-1" style="z-index: 1060;">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
-                    <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Add Extinguisher (Room-Based)</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="addExtForm">
-                        @csrf
-                        <input type="hidden" name="school_id" id="extSchoolId">
-
-                        <div class="row">
-                            <div class="col-md-3 mb-3">
-                                <label class="form-label fw-bold">Code *</label>
-                                <input type="text" class="form-control" name="code" placeholder="e.g., EXT-001" required>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <label class="form-label fw-bold">Type *</label>
-                                <select class="form-control" name="type" id="ext_type_select" required onchange="handleExtTypeChange()">
-                                    <option value="ABC">ABC (Dry Chemical)</option>
-                                    <option value="CO2">CO2</option>
-                                    <option value="Water">Water</option>
-                                    <option value="Foam">Foam</option>
-                                    <option value="Other">Other, Please Specify...</option>
-                                </select>
-                            </div>
-                            <!-- Added Specify Other Type Field -->
-                            <div class="col-md-3 mb-3 d-none" id="otherTypeContainer">
-                                <label class="form-label fw-bold text-danger">Specify Type *</label>
-                                <input type="text" class="form-control border-danger" id="other_type_input" placeholder="Enter type...">
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <label class="form-label fw-bold">Status *</label>
-                                <select class="form-control" name="status" id="addExtStatus" required onchange="handleAddStatusChange()">
-                                    <option value="active">Active</option>
-                                    <option value="maintenance">For Refill</option>
-                                    <option value="expired">Empty</option>
-                                    <option value="missing">Missing</option>
-                                    <option value="purchase">For Purchase</option>
-                                    <option value="decommissioned">Decommissioned</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3 mb-3">
-                                <label class="form-label fw-bold">Pressure (0-100%)</label>
-                                <input type="number" class="form-control" name="pressure_level" id="addExtPressure" min="0" max="100" value="100" required>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Building *</label>
-                                <select class="form-control" name="building_id" id="extBuildingSelect" required onchange="handleExtBuildingChange()">
-                                    <option value="">Select Building</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Floor</label>
-                                <select class="form-control" id="extFloorSelect" disabled onchange="handleExtFloorChange()">
-                                    <option value="">Select Floor</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Center Room *</label>
-                                <select class="form-control" name="room_id" id="centerRoomSelect" required onchange="handleCenterRoomChange()">
-                                    <option value="">Select Center Room</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Covered Rooms (Select up to 3) *</label>
-                            <select class="form-control" id="coveredRoomsSelect" name="covered_room_ids[]" multiple size="5" required>
-                            </select>
-                            <div class="form-text small">Use Ctrl/Cmd + Click to select multiple. Laboratory rule applies.</div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Date Checked *</label>
-                                <input type="date" class="form-control" name="date_checked" required>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Evaluation Result *</label>
-                                <select class="form-control" name="evaluation_result" required>
-                                    <option value="Passed">Passed</option>
-                                    <option value="Failed">Failed</option>
-                                </select>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Remarks</label>
-                                <input type="text" class="form-control" name="remarks" placeholder="Optional remarks...">
-                            </div>
-                        </div>
-
-                        <div class="alert alert-info mb-0 py-2 small">
-                            <i class="fas fa-info-circle me-2"></i><strong>Note:</strong> Laboratories can cover themselves + 1 clinic/auxiliary room max.
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="saveExtinguisher()">
-                        <i class="fas fa-save me-2"></i>Save Extinguisher
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Fire Extinguisher's History Modal -->
-    <div class="modal fade" id="extHistoryModal" tabindex="-1" style="z-index: 1060;">
-        <div class="modal-dialog modal-xl">
-            <div class="modal-content">
-                <div class="modal-header" style="background-color: #6c757d; color: white;">
-                    <h5 class="modal-title"><i class="fas fa-history me-2"></i>Fire Extinguisher's History</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="table-responsive">
-                        <table class="table table-hover table-sm" id="extHistoryTable">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Date Removed</th>
-                                    <th>Code</th>
-                                    <th>Type</th>
-                                    <th>Last Location</th>
-                                    <th>Reason to be removed</th>
-                                    <th>Last Recorded Data</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Data populated via AJAX -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="main-content">
-        @if($schools->isEmpty())
-            <div class="row">
-                <div class="col-12">
-                    <div class="card dashboard-card">
-                        <div class="card-body text-center py-5">
-                            <i class="fas fa-school fa-4x text-muted mb-4"></i>
-                            <h4 class="text-muted mb-3">No Schools Found</h4>
-                            <p class="text-muted mb-4">You need to add a school under inspection first.</p>
-                            <a href="{{ route('fire-safety.dashboard') }}" class="btn btn-primary">
-                                <i class="fas fa-plus me-2"></i> Go to Dashboard to Add School
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        @else
-            <!-- School Tabs -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <div class="card dashboard-card">
-                        <div class="card-body p-0">
-                            <div class="school-tabs">
-                                <nav>
-                                    <div class="nav nav-tabs border-0" id="schoolTab" role="tablist">
-                                        @foreach($schools as $school)
-                                            <button class="nav-link school-tab-btn {{ $loop->first ? 'active' : '' }}"
-                                                    id="school-tab-{{ $school->id }}"
-                                                    data-bs-toggle="tab"
-                                                    data-bs-target="#school-{{ $school->id }}"
-                                                    type="button"
-                                                    role="tab"
-                                                    aria-controls="school-{{ $school->id }}"
-                                                    aria-selected="{{ $loop->first ? 'true' : 'false' }}"
-                                                    data-school-id="{{ $school->id }}">
-                                                {{ $school->school_name }}
-                                            </button>
-                                        @endforeach
-                                    </div>
-                                </nav>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tab Content -->
-            <div class="tab-content" id="schoolTabContent">
-                @foreach($schools as $school)
-                    @php
-                        $actualTotalRooms = $school->buildings->sum('rooms');
-                        $requiredExtinguishers = $school->buildings->sum('required_extinguishers_count');
-                        $allRoomsCollection = $school->buildings->flatMap(fn ($b) => $b->actualRooms);
-                        $allExts = $school->buildings->flatMap(fn ($b) => $b->fireExtinguishers);
-                        $coveredRoomIds = $allExts->flatMap(fn ($e) => $e->coveredRooms->pluck('id'))->unique();
-                        $uncoveredRoomsCount = max(0, $allRoomsCollection->count() - $coveredRoomIds->count()); // Based on created rooms
-                        $labRooms = $allRoomsCollection->where('room_type', 'laboratory');
-                        $labsCovered = $labRooms->filter(fn ($r) => $coveredRoomIds->contains($r->id))->count();
-
-                        // New Metrics
-                        $evaluationCount = $allExts->where('status', 'active')->count();
-                        $evaluationPassed = $requiredExtinguishers > 0 && $evaluationCount >= $requiredExtinguishers;
-                        $compliancePercent = $actualTotalRooms > 0 ? round(($coveredRoomIds->count() / $actualTotalRooms) * 100, 1) : 0;
-                    @endphp
-
-                    <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="school-{{ $school->id }}">
-                        <!-- Summary -->
-                        <div class="row mb-4">
                             <!-- Total Rooms -->
                             <div class="col-xl-3 col-md-6 mb-4">
                                 <div class="card dashboard-card h-100 border-left-primary">
@@ -1019,13 +418,345 @@
                             </div>
                         </div>
                     </div>
-                @endforeach
+        </div>
+    @endif
+
+@endsection
+
+@section('modals')
+    <!-- Update Extinguisher Status Modal -->
+    <div class="modal fade" id="updateExtModal" tabindex="-1" style="z-index: 1060;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
+                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Update Extinguisher</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="updateExtForm">
+                        @csrf
+                        <input type="hidden" id="updateExtId" name="extinguisher_id">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Extinguisher Code</label>
+                            <input type="text" class="form-control bg-light" id="updateExtCode" readonly>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Status *</label>
+                                <select class="form-control" name="status" id="updateExtStatus" required onchange="handleUpdateStatusChange()">
+                                    <option value="active">OK (Active)</option>
+                                    <option value="maintenance">For Refill</option>
+                                    <option value="expired">Empty</option>
+                                    <option value="missing">Missing</option>
+                                    <option value="purchase">For Purchase</option>
+                                    <option value="decommissioned">Decommissioned</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Pressure (0-100%) *</label>
+                                <input type="number" class="form-control" name="pressure_level" id="updateExtPressure" min="0" max="100" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Notes / Remarks *</label>
+                            <textarea class="form-control" name="notes" id="updateExtNotes" rows="3" placeholder="Reason for update..." required></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <!-- Remove button -->
+                    <button type="button" class="btn btn-outline-danger" id="removeExtBtn" style="display: none;" onclick="showExtRemovalReason()">
+                        <i class="fas fa-trash-alt me-2"></i>Remove
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="saveExtinguisherStatus()">
+                        <i class="fas fa-save me-2"></i>Update Status
+                    </button>
+                </div>
+                <!-- Reason for Removal section -->
+                <div class="card-footer bg-light border-top-0 d-none" id="extRemovalReasonSection">
+                    <div class="p-3">
+                        <label class="form-label fw-bold text-danger">Reason for Removal *</label>
+                        <textarea class="form-control border-danger" id="extRemovalReason" rows="2" placeholder="State reason for decommissioning and removal..."></textarea>
+                        <div class="mt-2 text-end">
+                            <button type="button" class="btn btn-danger btn-sm" onclick="confirmRemoveExtinguisher()">
+                                <i class="fas fa-check me-2"></i>Yes, Remove It!
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-        @endif
+        </div>
     </div>
 
-    <!-- Obsolete nested modals section removed -->
+    <!-- Inspect & Update Room Modal -->
+    <div class="modal fade" id="updateRoomModal" tabindex="-1" style="z-index: 1060;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
+                    <h5 class="modal-title"><i class="fas fa-search-plus me-2"></i>Inspect & Update Room</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="updateRoomForm">
+                        @csrf
+                        <input type="hidden" id="updateRoomId" name="room_id">
 
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Room Code</label>
+                                <input type="text" class="form-control" name="room_code" id="updateRoomCode" placeholder="e.g., Rm-101">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold text-muted">Floor Level</label>
+                                <input type="text" class="form-control bg-light" id="updateRoomFloor" readonly>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted small">Update Room Name (Optional)</label>
+                            <input type="text" class="form-control" name="room_name" id="updateRoomName" placeholder="Leave blank to keep current name">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Nearest Extinguisher Room</label>
+                            <select class="form-control" name="nearest_extinguisher_room_id" id="updateRoomNearest">
+                                <option value="">None / Self-Covered</option>
+                            </select>
+                            <div class="form-text small">Select the room that houses the extinguisher covering this room. Only rooms on the same floor with coverage capacity are shown.</div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveRoomUpdate()">
+                        <i class="fas fa-save me-2"></i>Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Room Modal -->
+    <div class="modal fade" id="addRoomModal" tabindex="-1" style="z-index: 1060;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
+                    <h5 class="modal-title"><i class="fas fa-door-open me-2"></i>Add Room</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addRoomForm">
+                        @csrf
+                        <input type="hidden" name="school_id" id="roomSchoolId">
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Building *</label>
+                            <select class="form-control" name="building_id" id="roomBuildingSelect" required>
+                                <option value="">Select Building</option>
+                            </select>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Room Code</label>
+                                <input type="text" class="form-control" name="room_code" placeholder="e.g., Rm-101">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Floor No.</label>
+                                <select class="form-control" name="floor_no" id="roomFloorSelect" required disabled>
+                                    <option value="">Select Building First</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Room Name *</label>
+                            <input type="text" class="form-control" name="room_name" placeholder="e.g., Room 101, Science Lab" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Room Type *</label>
+                            <select class="form-control" name="room_type_config_id" id="room_type_select" required onchange="updateRoomPriority()">
+                                <option value="">Select room type</option>
+                                @foreach(($roomTypes ?? collect()) as $rt)
+                                    @php
+                                        $p = ($calculatedPriorities ?? collect())->firstWhere('id', $rt->parent_id);
+                                    @endphp
+                                    <option value="{{ $rt->id }}"
+                                            data-priority-label="{{ $p->name ?? '' }}"
+                                            data-max-rooms="{{ $p->max_rooms_covered ?? '' }}">
+                                        {{ $rt->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-muted">Calculated Priority</label>
+                            <input type="text" class="form-control bg-light" id="room_priority" readonly value="">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveRoom()">
+                        <i class="fas fa-save me-2"></i>Save Room
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Extinguisher Modal -->
+    <div class="modal fade" id="addExtModal" tabindex="-1" style="z-index: 1060;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
+                    <h5 class="modal-title"><i class="fas fa-plus me-2"></i>Add Extinguisher (Room-Based)</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addExtForm">
+                        @csrf
+                        <input type="hidden" name="school_id" id="extSchoolId">
+
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-bold">Code *</label>
+                                <input type="text" class="form-control" name="code" placeholder="e.g., EXT-001" required>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-bold">Type *</label>
+                                <select class="form-control" name="type" id="ext_type_select" required onchange="handleExtTypeChange()">
+                                    <option value="ABC">ABC (Dry Chemical)</option>
+                                    <option value="CO2">CO2</option>
+                                    <option value="Water">Water</option>
+                                    <option value="Foam">Foam</option>
+                                    <option value="Other">Other, Please Specify...</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3 d-none" id="otherTypeContainer">
+                                <label class="form-label fw-bold text-danger">Specify Type *</label>
+                                <input type="text" class="form-control border-danger" id="other_type_input" placeholder="Enter type...">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-bold">Status *</label>
+                                <select class="form-control" name="status" id="addExtStatus" required onchange="handleAddStatusChange()">
+                                    <option value="active">Active</option>
+                                    <option value="maintenance">For Refill</option>
+                                    <option value="expired">Empty</option>
+                                    <option value="missing">Missing</option>
+                                    <option value="purchase">For Purchase</option>
+                                    <option value="decommissioned">Decommissioned</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-bold">Pressure (0-100%)</label>
+                                <input type="number" class="form-control" name="pressure_level" id="addExtPressure" min="0" max="100" value="100" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Building *</label>
+                                <select class="form-control" name="building_id" id="extBuildingSelect" required onchange="handleExtBuildingChange()">
+                                    <option value="">Select Building</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Floor</label>
+                                <select class="form-control" id="extFloorSelect" disabled onchange="handleExtFloorChange()">
+                                    <option value="">Select Floor</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Center Room *</label>
+                                <select class="form-control" name="room_id" id="centerRoomSelect" required onchange="handleCenterRoomChange()">
+                                    <option value="">Select Center Room</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Covered Rooms (Select up to 3) *</label>
+                            <select class="form-control" id="coveredRoomsSelect" name="covered_room_ids[]" multiple size="5" required>
+                            </select>
+                            <div class="form-text small">Use Ctrl/Cmd + Click to select multiple. Laboratory rule applies.</div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Date Checked *</label>
+                                <input type="date" class="form-control" name="date_checked" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Evaluation Result *</label>
+                                <select class="form-control" name="evaluation_result" required>
+                                    <option value="Passed">Passed</option>
+                                    <option value="Failed">Failed</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Remarks</label>
+                                <input type="text" class="form-control" name="remarks" placeholder="Optional remarks...">
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info mb-0 py-2 small">
+                            <i class="fas fa-info-circle me-2"></i><strong>Note:</strong> Laboratories can cover themselves + 1 clinic/auxiliary room max.
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveExtinguisher()">
+                        <i class="fas fa-save me-2"></i>Save Extinguisher
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fire Extinguisher's History Modal -->
+    <div class="modal fade" id="extHistoryModal" tabindex="-1" style="z-index: 1060;">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #6c757d; color: white;">
+                    <h5 class="modal-title"><i class="fas fa-history me-2"></i>Fire Extinguisher's History</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm" id="extHistoryTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date Removed</th>
+                                    <th>Code</th>
+                                    <th>Type</th>
+                                    <th>Last Location</th>
+                                    <th>Reason to be removed</th>
+                                    <th>Last Recorded Data</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data populated via AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+@endsection
+
+@section('scripts')
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
@@ -1814,5 +1545,4 @@
             openUpdateRoomModal(roomId);
         }
     </script>
-</body>
-</html>
+@endsection

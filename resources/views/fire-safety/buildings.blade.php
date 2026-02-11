@@ -1,89 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buildings - Fire Safety</title>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <style>
-        :root {
-            --fire-red: #A8191F;
-            --fire-dark-red: #8A1217;
-        }
+@extends('layouts.fire-safety')
 
+@section('title', 'Buildings - Fire Safety')
+
+@section('styles')
+    <style>
         /* SweetAlert2 Custom Styling */
         .swal2-popup {
             border-radius: 15px !important;
         }
         .swal2-styled.swal2-confirm {
             background-color: var(--fire-red) !important;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow-x: hidden;
-        }
-
-        .top-nav {
-            background-color: var(--fire-red);
-            height: 60px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1030;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .sidebar {
-            background-color: var(--fire-red);
-            width: 250px;
-            position: fixed;
-            top: 60px;
-            left: 0;
-            bottom: 0;
-            z-index: 1020;
-            overflow-y: auto;
-        }
-
-        .main-content {
-            margin-left: 250px;
-            margin-top: 60px;
-            padding: 20px;
-            min-height: calc(100vh - 60px);
-            background-color: #f8f9fa;
-        }
-
-        .nav-link {
-            color: rgba(255, 255, 255, 0.9);
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-        }
-
-        .nav-link:hover, .nav-link.active {
-            background-color: var(--fire-dark-red);
-            color: white;
-            text-decoration: none;
-        }
-
-        .nav-link.active {
-            border-left: 4px solid white;
-        }
-
-        .nav-icon {
-            width: 24px;
-            margin-right: 10px;
-            text-align: center;
-        }
-
-        .dashboard-card {
-            border-radius: 10px;
-            border: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
         .building-card {
@@ -107,48 +33,6 @@
         .compliance-fill {
             height: 100%;
             transition: width 0.5s;
-        }
-
-        .school-tabs {
-            border-bottom: 2px solid #dee2e6;
-        }
-
-        .school-tab-btn {
-            color: #495057;
-            background-color: transparent;
-            border: 1px solid transparent;
-            border-top-left-radius: 0.25rem;
-            border-top-right-radius: 0.25rem;
-            padding: 0.5rem 1rem;
-            font-weight: 500;
-            transition: all 0.3s;
-            position: relative;
-            margin-bottom: -2px;
-        }
-
-        .school-tab-btn:hover {
-            color: white;
-            background-color: #8A1217;
-            border-color: #8A1217 #8A1217 #dee2e6;
-        }
-
-        .school-tab-btn.active {
-            color: white !important;
-            background-color: #8A1217 !important;
-            border-color: #8A1217 #8A1217 #8A1217 !important;
-            position: relative;
-            z-index: 1;
-        }
-
-        .school-tab-btn:not(.active):not(:hover) {
-            color: #495057;
-            background-color: #f8f9fa;
-            border-color: #dee2e6 #dee2e6 #dee2e6;
-        }
-
-        .school-tab-btn:focus {
-            outline: none;
-            box-shadow: 0 0 0 0.2rem rgba(168, 25, 31, 0.25);
         }
 
         .no-buildings {
@@ -180,171 +64,63 @@
             pointer-events: none;
         }
     </style>
-</head>
-<body>
-    <!-- Top Navigation Bar -->
-    <nav class="top-nav">
-        <div class="container-fluid h-100">
-            <div class="row h-100 align-items-center">
-                <div class="col-auto">
-                    <a href="{{ route('fire-safety.dashboard') }}" class="text-white text-decoration-none">
-                        <i class="fas fa-arrow-left me-2"></i>
-                        <i class="fas fa-fire me-2"></i>
-                        <span class="fw-bold">Fire Safety Checklist System</span>
-                    </a>
+@endsection
+
+@section('content')
+    <!-- Inspection Checklist Modal -->
+    <div class="modal fade" id="inspectionChecklistModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-md">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header bg-dark text-white border-0">
+                    <h5 class="modal-title d-flex align-items-center">
+                        <i class="fas fa-tasks me-2"></i>
+                        Inspection Checklist: <span id="checklistBuildingCode" class="ms-2 fw-bold text-warning"></span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-
-                <div class="col text-center">
-                    <h4 class="text-white mb-0">Building Management</h4>
-                </div>
-
-                <div class="col-auto">
-                    <div class="d-flex align-items-center">
-                        <!-- Notifications -->
-                        <div class="dropdown me-3">
-                            <a href="#" class="text-white position-relative" data-bs-toggle="dropdown">
-                                <i class="fas fa-bell fa-lg"></i>
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                    0
-                                </span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end">
-                                <h6 class="dropdown-header">Notifications</h6>
-                                <div class="dropdown-item text-muted">No new notifications</div>
+                <div class="modal-body p-4">
+                    <div id="checklistContent">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-danger" role="status">
+                                <span class="visually-hidden">Loading...</span>
                             </div>
-                        </div>
-
-                        <div class="dropdown">
-                            <a href="#" class="text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
-                                <i class="fas fa-user-circle fa-lg me-2"></i>
-                                <span>{{ Auth::user()->name ?? 'User' }}</span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end">
-                                <a class="dropdown-item" href="{{ route('fire-safety.dashboard') }}">
-                                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
-                                </a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="{{ route('logout') }}"
-                                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                   <i class="fas fa-sign-out-alt me-2"></i> Logout
-                                </a>
-                                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                                    @csrf
-                                </form>
-                            </div>
+                            <p class="mt-3 text-muted">Analyzing building safety compliance...</p>
                         </div>
                     </div>
                 </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary px-4 shadow-sm" id="btnGoToUpdate" onclick="">
+                        <i class="fas fa-edit me-2"></i> Update Information
+                    </button>
+                </div>
             </div>
-        </div>
-    </nav>
-
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="p-3">
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.dashboard') }}">
-                        <span class="nav-icon"><i class="fas fa-tachometer-alt"></i></span>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="{{ route('fire-safety.buildings') }}">
-                        <span class="nav-icon"><i class="fas fa-building"></i></span>
-                        <span>Buildings</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.alarm-systems') }}">
-                        <span class="nav-icon"><i class="fas fa-bell"></i></span>
-                        <span>Alarm Systems</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.extinguishers') }}">
-                        <span class="nav-icon"><i class="fas fa-fire-extinguisher"></i></span>
-                        <span>Fire Extinguishers & Rooms</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.evacuation-plans') }}">
-                        <span class="nav-icon"><i class="fas fa-map-signs"></i></span>
-                        <span>Evacuation Plans</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.customization') }}">
-                        <span class="nav-icon"><i class="fas fa-cog"></i></span>
-                        <span>Customization</span>
-                    </a>
-                </li>
-            </ul>
-
-            <hr class="bg-white my-4">
         </div>
     </div>
+    @if(!$activeSchool)
+        <!-- Layout handles the "No Schools" alert -->
+    @else
+        @php $school = $activeSchool; @endphp
 
-    <!-- Main Content -->
-    <div class="main-content">
-        @if($schools->isEmpty())
-        <!-- No Schools Found Message -->
-        <div class="row">
-            <div class="col-12">
-                <div class="card dashboard-card">
-                    <div class="card-body text-center py-5">
-                        <i class="fas fa-school fa-4x text-muted mb-4"></i>
-                        <h4 class="text-muted mb-3">No Schools Found</h4>
-                        <p class="text-muted mb-4">You need to add a school that will be under inspection first.</p>
-                        <a href="{{ route('fire-safety.dashboard') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-2"></i> Go to Dashboard to Add School
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        @else
-        <!-- School Tabs -->
+        <!-- Building Summary -->
         <div class="row mb-4">
-            <div class="col-12">
-                <div class="card dashboard-card">
-                    <div class="card-body p-0">
-                        <div class="school-tabs">
-                            <nav>
-                                <div class="nav nav-tabs border-0" id="schoolTab" role="tablist">
-                                    @foreach($schools as $school)
-                                    <button class="nav-link school-tab-btn {{ $loop->first ? 'active' : '' }}"
-                                            id="school-tab-{{ $school->id }}"
-                                            data-bs-toggle="tab"
-                                            data-bs-target="#school-{{ $school->id }}"
-                                            type="button"
-                                            role="tab"
-                                            aria-controls="school-{{ $school->id }}"
-                                            aria-selected="{{ $loop->first ? 'true' : 'false' }}"
-                                            data-school-id="{{ $school->id }}">
-                                        {{ $school->school_name }}
-                                    </button>
-                                    @endforeach
-                                </div>
-                            </nav>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Tab Content -->
-        <div class="tab-content" id="schoolTabContent">
-            @foreach($schools as $school)
-            <div class="tab-pane fade {{ $loop->first ? 'show active' : '' }}" id="school-{{ $school->id }}">
-                <!-- Building Summary -->
-                <div class="row mb-4">
+                    @php
+                        $compliantBuildings = $school->buildings->filter(function($b) {
+                            return \App\Http\Controllers\FireSafetyController::calculateBuildingCompliance($b) >= 80;
+                        })->count();
+                        $nonCompliantBuildings = $school->buildings->filter(function($b) {
+                            return \App\Http\Controllers\FireSafetyController::calculateBuildingCompliance($b) < 80;
+                        })->count();
+                    @endphp
+
+                    <!-- Total Buildings (Black) -->
                     <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card dashboard-card border-left-success h-100">
+                        <div class="card dashboard-card h-100 shadow-sm" style="opacity: 1;">
                             <div class="card-body">
                                 <div class="row align-items-center">
                                     <div class="col mr-2">
-                                        <div class="text-xs fw-bold text-success text-uppercase mb-1">
+                                        <div class="text-xs fw-bold text-dark text-uppercase mb-1">
                                             Total Buildings
                                         </div>
                                         <div class="h2 mb-0 fw-bold text-gray-800">
@@ -352,67 +128,79 @@
                                         </div>
                                     </div>
                                     <div class="col-auto">
-                                        <i class="fas fa-building fa-2x text-success"></i>
+                                        <i class="fas fa-building fa-2x text-dark opacity-50"></i>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
+                    <!-- Compliant Buildings (Green) -->
                     <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card dashboard-card border-left-primary h-100">
+                        <div class="card dashboard-card border-left-success h-100 shadow-sm">
                             <div class="card-body">
                                 <div class="row align-items-center">
                                     <div class="col mr-2">
-                                        <div class="text-xs fw-bold text-primary text-uppercase mb-1">
+                                        <div class="text-xs fw-bold text-success text-uppercase mb-1">
+                                            Compliant Buildings
+                                        </div>
+                                        <div class="h2 mb-0 fw-bold text-gray-800">
+                                            {{ $compliantBuildings }}
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-check-circle fa-2x text-success opacity-50"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Non-Compliant Buildings (Red) -->
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card dashboard-card border-left-danger h-100 shadow-sm">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col mr-2">
+                                        <div class="text-xs fw-bold text-danger text-uppercase mb-1">
+                                            Non Compliant Buildings
+                                        </div>
+                                        <div class="h2 mb-0 fw-bold text-gray-800">
+                                            {{ $nonCompliantBuildings }}
+                                        </div>
+                                    </div>
+                                    <div class="col-auto">
+                                        <i class="fas fa-exclamation-triangle fa-2x text-danger opacity-50"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Floors & Rooms (Split Colors) -->
+                    <div class="col-xl-3 col-md-6 mb-4">
+                        <div class="card dashboard-card h-100 shadow-sm" style="opacity: 1;">
+                            <div class="card-body py-2">
+                                <div class="row h-100">
+                                    <!-- Floors Section -->
+                                    <div class="col-6 border-end d-flex flex-column justify-content-center py-2">
+                                        <div class="text-xs fw-bold text-primary text-uppercase mb-1" style="font-size: 0.7rem;">
                                             Total Floors
                                         </div>
-                                        <div class="h2 mb-0 fw-bold text-gray-800">
-                                            {{ $school->buildings->sum('floors') }}
+                                        <div class="d-flex align-items-center">
+                                            <div class="h4 mb-0 fw-bold text-gray-800 me-2">{{ $school->buildings->sum('floors') }}</div>
+                                            <i class="fas fa-layer-group text-primary small"></i>
                                         </div>
                                     </div>
-                                    <div class="col-auto">
-                                        <i class="fas fa-layer-group fa-2x text-primary"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card dashboard-card border-left-warning h-100">
-                            <div class="card-body">
-                                <div class="row align-items-center">
-                                    <div class="col mr-2">
-                                        <div class="text-xs fw-bold text-warning text-uppercase mb-1">
+                                    <!-- Rooms Section -->
+                                    <div class="col-6 d-flex flex-column justify-content-center ps-3 py-2">
+                                        <div class="text-xs fw-bold text-warning text-uppercase mb-1" style="font-size: 0.7rem;">
                                             Total Rooms
                                         </div>
-                                        <div class="h2 mb-0 fw-bold text-gray-800">
-                                            {{ $school->buildings->sum('rooms') }}
+                                        <div class="d-flex align-items-center">
+                                            <div class="h4 mb-0 fw-bold text-gray-800 me-2">{{ $school->buildings->sum('rooms') }}</div>
+                                            <i class="fas fa-door-closed text-warning small"></i>
                                         </div>
-                                    </div>
-                                    <div class="col-auto">
-                                        <i class="fas fa-door-closed fa-2x text-warning"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card dashboard-card border-left-info h-100">
-                            <div class="card-body">
-                                <div class="row align-items-center">
-                                    <div class="col mr-2">
-                                        <div class="text-xs fw-bold text-info text-uppercase mb-1">
-                                            Minimum Fire Extinguishers
-                                        </div>
-                                        <div class="h2 mb-0 fw-bold text-gray-800">
-                                            {{ $school->buildings->sum('required_extinguishers_count') }}
-                                        </div>
-                                    </div>
-                                    <div class="col-auto">
-                                        <i class="fas fa-fire-extinguisher fa-2x text-info"></i>
                                     </div>
                                 </div>
                             </div>
@@ -429,7 +217,7 @@
                                     <i class="fas fa-building me-2"></i> Buildings - {{ $school->school_name }}
                                 </h6>
                                 <div>
-                                    @if(auth()->user()->role === 'admin')                             
+                                    @if(auth()->user()->role === 'admin')
                                     <button class="btn btn-primary btn-sm me-2 add-building-btn"
                                             data-school-id="{{ $school->id }}"
                                             data-bs-toggle="modal"
@@ -442,13 +230,13 @@
                                             data-bs-target="#scheduleInspectionModal">
                                         <i class="fas fa-calendar-plus me-2"></i> Schedule Inspection
                                     </button>
-                                    <button class="btn btn-sm me-2" 
+                                    <button class="btn btn-sm me-2"
                                             style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;"
                                             onclick="openBuildingHistoryModal({{ $school->id }})">
                                         <i class="fas fa-history me-1"></i> Removed Floor/Room
                                     </button>
                                     <a href="{{ route('fire-safety.report.building-summary', $school->id) }}" target="_blank"
-                                            class="btn btn-sm" 
+                                            class="btn btn-sm"
                                             style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;">
                                         <i class="fas fa-print me-1"></i> Print Building Reports
                                     </a>
@@ -514,8 +302,7 @@
                                                     <button class="btn btn-sm btn-outline-success inspect-building-btn"
                                                             data-building-id="{{ $building->id }}"
                                                             data-building-name="{{ $building->building_no }}"
-                                                            data-bs-toggle="modal"
-                                                            data-bs-target="#scheduleInspectionModal">
+                                                            onclick="openInspectionChecklist({{ $building->id }}, '{{ $building->building_no }}')">
                                                         <i class="fas fa-clipboard-check me-2"></i> Inspect Now
                                                     </button>
                                                     @endif
@@ -586,12 +373,10 @@
                         </div>
                     </div>
                 </div>
-            </div>
-            @endforeach
-        </div>
-        @endif
-    </div>
+    @endif
+@endsection
 
+@section('modals')
     <!-- Add Building Modal -->
     <div class="modal fade" id="addBuildingModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
@@ -859,9 +644,9 @@
             </div>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+@endsection
 
+@section('scripts')
     <script>
         // Global variables
         const USER_ROLE = "{{ auth()->user()->role }}";
@@ -986,6 +771,109 @@
         }
 
         // Store current school ID (already initialized above)
+
+        // Open Inspection Checklist
+        async function openInspectionChecklist(buildingId, buildingNo) {
+            const modalEl = document.getElementById('inspectionChecklistModal');
+            const modal = new bootstrap.Modal(modalEl);
+            const content = document.getElementById('checklistContent');
+            const codeSpan = document.getElementById('checklistBuildingCode');
+            const updateBtn = document.getElementById('btnGoToUpdate');
+
+            codeSpan.textContent = buildingNo;
+            updateBtn.onclick = () => {
+                modal.hide();
+                editBuilding(buildingId);
+            };
+
+            modal.show();
+
+            try {
+                const response = await fetch(`/fire-safety/building/${buildingId}`);
+                if (!response.ok) throw new Error('Failed to fetch building data');
+                const building = await response.json();
+
+                // Calculate missing things
+                const alarmCount = building.alarm_systems_count || 0;
+                const extinguisherCount = building.fire_extinguishers_count || 0;
+                const reqExt = building.required_extinguishers || 0;
+                const exits = building.emergency_exits || 0;
+
+                // Score emulation (simple)
+                let issues = [];
+                if (alarmCount === 0) issues.push({ icon: 'fa-bell', text: 'No alarm systems installed', color: 'danger' });
+                if (extinguisherCount === 0) issues.push({ icon: 'fa-fire-extinguisher', text: 'No fire extinguishers recorded', color: 'danger' });
+                else if (extinguisherCount < reqExt) issues.push({ icon: 'fa-fire-extinguisher', text: `Only ${extinguisherCount}/${reqExt} required extinguishers present`, color: 'warning' });
+                if (exits === 0) issues.push({ icon: 'fa-door-open', text: 'Zero emergency exits recorded', color: 'danger' });
+                if (!building.features) issues.push({ icon: 'fa-shield-alt', text: 'No safety features (Sprinklers, Fire Doors, etc.) specified', color: 'warning' });
+
+                let html = `
+                    <div class="text-center mb-4">
+                        <div class="display-6 fw-bold mb-1">${building.building_no}</div>
+                        <div class="text-muted"><i class="fas fa-school me-1"></i> ${building.school?.school_name || 'School Information'}</div>
+                    </div>
+                `;
+
+                if (issues.length === 0) {
+                    html += `
+                        <div class="alert alert-success d-flex align-items-center shadow-sm">
+                            <i class="fas fa-check-circle fa-2x me-3"></i>
+                            <div>
+                                <h6 class="mb-0 fw-bold">Building fully documented!</h6>
+                                <small>Basic safety requirements are present in the system records.</small>
+                            </div>
+                        </div>
+                        <div class="p-3 bg-light rounded text-center">
+                            <p class="mb-0 text-muted">Would you like to review or refine the building details?</p>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="alert alert-warning mb-4 shadow-sm border-0 d-flex align-items-center">
+                            <i class="fas fa-lightbulb text-warning fa-2x me-3"></i>
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark">Data Gap Detected</h6>
+                                <p class="mb-0 small text-muted">The following items are missing or incomplete in your records:</p>
+                            </div>
+                        </div>
+                        <ul class="list-group list-group-flush mb-0 border rounded overflow-hidden shadow-sm">
+                    `;
+
+                    issues.forEach(issue => {
+                        const softBg = issue.color === 'danger' ? '#fdecea' : '#fff9db';
+                        html += `
+                            <li class="list-group-item d-flex align-items-center py-3 border-bottom">
+                                <span class="rounded-circle p-2 me-3" style="width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background-color: ${softBg}; color: var(--bs-${issue.color});">
+                                    <i class="fas ${issue.icon}"></i>
+                                </span>
+                                <div>
+                                    <div class="fw-bold text-dark">${issue.text}</div>
+                                    <div class="small text-muted">Requires administrative attention</div>
+                                </div>
+                            </li>
+                        `;
+                    });
+
+                    html += `
+                        </ul>
+                        <div class="mt-4 text-center">
+                            <p class="text-muted small">Updating these records improves your <strong>Safety Compliance Score</strong>.</p>
+                        </div>
+                    `;
+                }
+
+                content.innerHTML = html;
+
+            } catch (error) {
+                console.error(error);
+                content.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        Failed to load checklist. Please check your connection.
+                    </div>
+                `;
+            }
+        }
 
         // Initialize with first school
         document.addEventListener('DOMContentLoaded', function() {
@@ -2043,6 +1931,7 @@
             }
         }
 
+
         // Reset form when opening Add Building modal in Add mode
         document.getElementById('addBuildingModal').addEventListener('show.bs.modal', function(event) {
             const button = event.relatedTarget;
@@ -2072,6 +1961,134 @@
                 document.getElementById('building_type_select').disabled = false;
             }
         });
+
+        // Open Inspection Checklist Modal
+        async function openInspectionChecklist(buildingId, buildingCode) {
+            const modal = new bootstrap.Modal(document.getElementById('inspectionChecklistModal'));
+            const contentDiv = document.getElementById('checklistContent');
+            const codeSpan = document.getElementById('checklistBuildingCode');
+            const updateBtn = document.getElementById('btnGoToUpdate');
+            
+            codeSpan.textContent = buildingCode;
+            
+            // Show loading state
+            contentDiv.innerHTML = `
+                <div class="text-center py-5">
+                    <div class="spinner-border text-danger" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Analyzing building safety compliance...</p>
+                </div>
+            `;
+            
+            modal.show();
+            
+            try {
+                const response = await fetch(`/fire-safety/building/${buildingId}`);
+                const building = await response.json();
+                
+                // Calculate compliance metrics
+                const alarmCount = building.alarm_systems_count || 0;
+                const extinguisherCount = building.fire_extinguishers_count || 0;
+                const requiredExtinguishers = building.required_extinguishers_count || 0;
+                const emergencyExits = building.emergency_exits || 0;
+                const hasEvacuationPlan = building.has_evacuation_plan || false;
+                
+                // Build checklist HTML
+                let html = `
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-building me-2 text-primary"></i>
+                                <strong>Building:</strong> ${building.building_name || 'N/A'}
+                            </div>
+                            <span class="badge bg-secondary">${building.building_type || 'N/A'}</span>
+                        </div>
+                        
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-layer-group me-2 text-info"></i>
+                                <strong>Floors:</strong> ${building.floors || 0}
+                            </div>
+                        </div>
+                        
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-door-closed me-2 text-warning"></i>
+                                <strong>Rooms:</strong> ${building.rooms || 0}
+                            </div>
+                        </div>
+                        
+                        <div class="list-group-item d-flex justify-content-between align-items-center ${alarmCount > 0 ? 'bg-success-subtle' : 'bg-danger-subtle'}">
+                            <div>
+                                <i class="fas fa-bell me-2"></i>
+                                <strong>Alarm Systems:</strong> ${alarmCount}
+                            </div>
+                            <span class="badge ${alarmCount > 0 ? 'bg-success' : 'bg-danger'}">
+                                ${alarmCount > 0 ? 'Installed' : 'Missing'}
+                            </span>
+                        </div>
+                        
+                        <div class="list-group-item d-flex justify-content-between align-items-center ${extinguisherCount >= requiredExtinguishers ? 'bg-success-subtle' : 'bg-warning-subtle'}">
+                            <div>
+                                <i class="fas fa-fire-extinguisher me-2"></i>
+                                <strong>Fire Extinguishers:</strong> ${extinguisherCount} / ${requiredExtinguishers} required
+                            </div>
+                            <span class="badge ${extinguisherCount >= requiredExtinguishers ? 'bg-success' : 'bg-warning'}">
+                                ${extinguisherCount >= requiredExtinguishers ? 'Compliant' : 'Needs More'}
+                            </span>
+                        </div>
+                        
+                        <div class="list-group-item d-flex justify-content-between align-items-center ${emergencyExits >= 2 ? 'bg-success-subtle' : 'bg-warning-subtle'}">
+                            <div>
+                                <i class="fas fa-door-open me-2"></i>
+                                <strong>Emergency Exits:</strong> ${emergencyExits}
+                            </div>
+                            <span class="badge ${emergencyExits >= 2 ? 'bg-success' : 'bg-warning'}">
+                                ${emergencyExits >= 2 ? 'Adequate' : 'Needs Review'}
+                            </span>
+                        </div>
+                        
+                        <div class="list-group-item d-flex justify-content-between align-items-center ${hasEvacuationPlan ? 'bg-success-subtle' : 'bg-danger-subtle'}">
+                            <div>
+                                <i class="fas fa-map-signs me-2"></i>
+                                <strong>Evacuation Plan:</strong>
+                            </div>
+                            <span class="badge ${hasEvacuationPlan ? 'bg-success' : 'bg-danger'}">
+                                ${hasEvacuationPlan ? 'Available' : 'Not Available'}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info mt-3 mb-0">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Note:</strong> Click "Update Information" to modify building details or add missing safety equipment.
+                    </div>
+                `;
+                
+                contentDiv.innerHTML = html;
+                
+                // Wire up the Update button
+                updateBtn.onclick = function() {
+                    modal.hide();
+                    // Trigger the view building button click to open update modal
+                    setTimeout(() => {
+                        const viewBtn = document.querySelector(`[data-building-id="${buildingId}"]`);
+                        if (viewBtn) {
+                            viewBtn.click();
+                        }
+                    }, 300);
+                };
+                
+            } catch (error) {
+                console.error('Error loading building data:', error);
+                contentDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        Failed to load building information. Please try again.
+                    </div>
+                `;
+            }
+        }
     </script>
-</body>
-</html>
+@endsection

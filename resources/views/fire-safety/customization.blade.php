@@ -352,9 +352,13 @@
                                                 </td>
                                                 <td>{{ $school->school_id }}</td>
                                                 <td>
-                                                    <span class="badge {{ $school->status === 'passed' ? 'bg-success' : ($school->status === 'unconfigured' ? 'bg-warning' : 'bg-danger') }}">
-                                                        {{ strtoupper($school->status) }}
-                                                    </span>
+                                                    @if($school->status === 'passed')
+                                                        <span class="badge bg-success">PASSED</span>
+                                                    @elseif($school->status === 'unconfigured')
+                                                        <span class="badge bg-secondary">UNCONFIGURED</span>
+                                                    @else
+                                                        <span class="badge bg-warning text-dark">ONGOING IMPROVEMENT</span>
+                                                    @endif
                                                 </td>
                                                 <td>{{ $school->buildings_count ?? 0 }}</td>
                                                 <td>{{ $school->updated_at ? $school->updated_at->format('Y-m-d') : 'N/A' }}</td>
@@ -929,12 +933,10 @@
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Initial Status *</label>
-                            <select class="form-control" name="status" required>
-                                <option value="unconfigured">Unconfigured</option>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
+                            <label class="form-label">Initial Status</label>
+                            <input type="text" class="form-control bg-light" value="Unconfigured" readonly disabled>
+                            <input type="hidden" name="status" value="unconfigured">
+                            <small class="text-muted">Status is automatically determined based on configuration.</small>
                         </div>
                     </form>
                 </div>
@@ -986,14 +988,13 @@
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Status *</label>
-                            <select class="form-control" name="status" id="editSchoolStatus" required>
+                            <label class="form-label">Status (Dynamic)</label>
+                            <select class="form-control bg-light" name="status" id="editSchoolStatus" readonly style="pointer-events: none;">
                                 <option value="unconfigured">Unconfigured</option>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
                                 <option value="passed">Passed</option>
-                                <option value="failed">Failed</option>
+                                <option value="warning">Ongoing Improvement</option>
                             </select>
+                            <small class="text-muted">This status is determined by the system based on safety configurations.</small>
                         </div>
                     </form>
                 </div>

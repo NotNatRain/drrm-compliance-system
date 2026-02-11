@@ -271,28 +271,10 @@
                                 <div class="text-xs fw-bold text-success text-uppercase mb-1">
                                     Passed Inspections
                                 </div>
-                                <div class="h2 mb-0 fw-bold text-gray-800">0</div>
+                                <div class="h2 mb-0 fw-bold text-gray-800">{{ $schools->where('status', 'passed')->count() }}</div>
                             </div>
                             <div class="col-auto">
                                 <i class="fas fa-check-circle fa-2x text-success"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-xl-3 col-md-6 mb-4">
-                <div class="card dashboard-card border-left-danger h-100">
-                    <div class="card-body">
-                        <div class="row align-items-center">
-                            <div class="col mr-2">
-                                <div class="text-xs fw-bold text-danger text-uppercase mb-1">
-                                    Ongoing Improvement
-                                </div>
-                                <div class="h2 mb-0 fw-bold text-gray-800">0</div>
-                            </div>
-                            <div class="col-auto">
-                                <i class="fas fa-times-circle fa-2x text-danger"></i>
                             </div>
                         </div>
                     </div>
@@ -305,12 +287,12 @@
                         <div class="row align-items-center">
                             <div class="col mr-2">
                                 <div class="text-xs fw-bold text-warning text-uppercase mb-1">
-                                    Extinguishers Needing Action
+                                    Ongoing Improvement
                                 </div>
-                                <div class="h2 mb-0 fw-bold text-gray-800">0</div>
+                                <div class="h2 mb-0 fw-bold text-gray-800">{{ $schools->where('status', 'warning')->count() }}</div>
                             </div>
                             <div class="col-auto">
-                                <i class="fas fa-fire-extinguisher fa-2x text-warning"></i>
+                                <i class="fas fa-tools fa-2x text-warning"></i>
                             </div>
                         </div>
                     </div>
@@ -318,17 +300,35 @@
             </div>
 
             <div class="col-xl-3 col-md-6 mb-4">
-                <div class="card dashboard-card border-left-info h-100">
+                <div class="card dashboard-card border-left-secondary h-100">
                     <div class="card-body">
                         <div class="row align-items-center">
                             <div class="col mr-2">
-                                <div class="text-xs fw-bold text-info text-uppercase mb-1">
-                                    Alarm System Status
+                                <div class="text-xs fw-bold text-secondary text-uppercase mb-1">
+                                    Unconfigured Schools
                                 </div>
-                                <div class="h2 mb-0 fw-bold text-gray-800">0 Offline</div>
+                                <div class="h2 mb-0 fw-bold text-gray-800">{{ $schools->where('status', 'unconfigured')->count() }}</div>
                             </div>
                             <div class="col-auto">
-                                <i class="fas fa-bell fa-2x text-info"></i>
+                                <i class="fas fa-cog fa-2x text-secondary"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card dashboard-card border-left-dark h-100" style="border-left: 0.25rem solid #212529 !important;">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs fw-bold text-dark text-uppercase mb-1">
+                                    Total Schools
+                                </div>
+                                <div class="h2 mb-0 fw-bold text-gray-800">{{ $schools->count() }}</div>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-school fa-2x text-dark"></i>
                             </div>
                         </div>
                     </div>
@@ -346,7 +346,7 @@
                             <select id="statusFilter" class="form-select form-select-sm" style="width: auto;">
                                 <option value="all">All Status</option>
                                 <option value="passed">Passed</option>
-                                <option value="failed">Ongoing</option>
+                                <option value="warning">Ongoing Improvement</option>
                                 <option value="unconfigured">Unconfigured</option>
                             </select>
                             <select id="sortFilter" class="form-select form-select-sm" style="width: auto;">
@@ -375,49 +375,58 @@
                                             @forelse($schools as $school)
                                                 <tr data-status="{{ $school->status }}" 
                                                     data-school-name="{{ $school->school_name }}"
-                                                    data-inspection-date="{{ $school->last_inspection_date ?? '1900-01-01' }}">
-                                                    <td>{{ $school->school_name }}</td>
+                                                    data-inspection-date="{{ $school->last_inspection_date ? \Carbon\Carbon::parse($school->last_inspection_date)->format('Y-m-d') : '1900-01-01' }}">
+                                                    <td>
+                                                        <strong>{{ $school->school_name }}</strong>
+                                                        <div class="text-muted small">ID: {{ $school->school_id }}</div>
+                                                    </td>
                                                     <td>
                                                         @if($school->status === 'passed')
-                                                            <span class="status-badge bg-success">PASSED</span>
-                                                        @elseif($school->status === 'failed')
-                                                            <span class="status-badge bg-danger">FAILED</span>
+                                                            <span class="status-badge bg-success" style="font-size: 0.7rem;">PASSED</span>
                                                         @elseif($school->status === 'unconfigured')
-                                                            <span class="status-badge bg-warning">UNCONFIGURED</span>
+                                                            <span class="status-badge bg-secondary" style="font-size: 0.7rem;">UNCONFIGURED</span>
                                                         @else
-                                                            <span class="status-badge bg-warning">WARNING</span>
+                                                            <span class="status-badge bg-warning text-dark" style="font-size: 0.7rem;">ONGOING IMPROVEMENT</span>
                                                         @endif
                                                     </td>
                                                     <td>
-                                                        @if($school->status === 'unconfigured')
-                                                            Setup Needed
-                                                        @elseif ($school->issues_count > 0)
-                                                            {{$school->issues_count}} issues found
-                                                        @else
-                                                            None
-                                                        @endif
+                                                        <div style="font-size: 0.85rem; max-width: 250px;">
+                                                            @if($school->status === 'unconfigured')
+                                                                <span class="text-primary fw-bold">Setup Needed</span>
+                                                            @elseif ($school->status === 'passed')
+                                                                <span class="text-success">None</span>
+                                                            @else
+                                                                <div class="d-flex flex-wrap gap-1">
+                                                                    @php $fontSize = count($school->issues_list) > 3 ? '0.7rem' : '0.8rem'; @endphp
+                                                                    @foreach($school->issues_list as $issue)
+                                                                        <span class="badge bg-light text-danger border" style="font-size: {{ $fontSize }};">{{ $issue }}</span>
+                                                                    @endforeach
+                                                                </div>
+                                                            @endif
+                                                        </div>
                                                     </td>
                                                     <td>
-                                                        @if($school->last_inspection_date && $school->last_inspection_date !== 'Never')
-                                                            {{ \Carbon\Carbon::parse($school->last_inspection_date)->format('Y-m-d') }}
+                                                        @if($school->last_inspection_date)
+                                                            <div class="small">{{ \Carbon\Carbon::parse($school->last_inspection_date)->format('M d, Y') }}</div>
+                                                            <div class="text-muted" style="font-size: 0.7rem;">{{ \Carbon\Carbon::parse($school->last_inspection_date)->diffForHumans() }}</div>
                                                         @else
-                                                            Never
+                                                            <span class="text-muted small">No Activity</span>
                                                         @endif
                                                     </td>
                                                     <td>
                                                         @if($school->status === 'passed')
-                                                            <button class="btn btn-sm btn-outline-primary view-school-btn"
-                                                                    data-school-id="{{ $school->id }}"
+                                                            <button class="btn btn-sm btn-outline-success view-passed-btn"
+                                                                    data-school-json="{{ json_encode($school) }}"
                                                                     data-bs-toggle="modal"
-                                                                    data-bs-target="#viewSchoolModal">
-                                                                <i class="fas fa-eye"></i> View
+                                                                    data-bs-target="#passedDetailsModal">
+                                                                <i class="fas fa-certificate me-1"></i> Success
                                                             </button>
                                                         @else
-                                                            <button class="btn btn-sm btn-outline-warning details-btn"
-                                                                    data-school-id="{{ $school->id }}"
+                                                            <button class="btn btn-sm btn-outline-primary details-btn"
+                                                                    data-school-json="{{ json_encode($school) }}"
                                                                     data-bs-toggle="modal"
                                                                     data-bs-target="#issuesModal">
-                                                                <i class="fas fa-info-circle"></i> Details
+                                                                <i class="fas fa-tasks me-1"></i> Details
                                                             </button>
                                                         @endif
                                                     </td>
@@ -425,7 +434,7 @@
                                             @empty
                                                 <tr>
                                                     <td colspan="5" class="text-center text-muted py-4">
-                                                        No schools found. Click "Add Inspection" to add a school.
+                                                        No schools found.
                                                     </td>
                                                 </tr>
                                             @endforelse
@@ -520,82 +529,63 @@
 
 
 
-        <!-- View School Modal (for PASSED status) -->
-        <div class="modal fade" id="viewSchoolModal" tabindex="-1">
+        <!-- Passed Details Modal (Successful Inspection) -->
+        <div class="modal fade" id="passedDetailsModal" tabindex="-1">
             <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="schoolNameTitle">School Details</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <div class="modal-content border-success" style="border-width: 2px;">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title"><i class="fas fa-check-double me-2"></i> Inspection Successful</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <!-- School Information -->
-                        <div class="school-info mb-4">
-                            <h6 class="border-bottom pb-2">School Information</h6>
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <p><strong>School Name:</strong> <span id="modalSchoolName"></span></p>
-                                    <p><strong>School ID:</strong> <span id="modalSchoolId"></span></p>
-                                    <p><strong>Address:</strong> <span id="modalSchoolAddress"></span></p>
+                        <div class="text-center mb-4">
+                            <div class="rounded-circle bg-success d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                                <i class="fas fa-graduation-cap fa-3x text-white"></i>
+                            </div>
+                            <h4 id="passedSchoolName" class="fw-bold mb-1"></h4>
+                            <p class="text-muted">Has passed all safety requirements</p>
+                            <span class="badge bg-success px-4 py-2">PERFECT 100% COMPLIANCE</span>
+                        </div>
+
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="card bg-light border-0">
+                                    <div class="card-body">
+                                        <h6 class="fw-bold text-primary mb-3"><i class="fas fa-info-circle me-2"></i>School Details</h6>
+                                        <p class="mb-2"><strong>School ID:</strong> <span id="passedSchoolId"></span></p>
+                                        <p class="mb-2"><strong>Address:</strong> <span id="passedAddress"></span></p>
+                                        <p class="mb-2"><strong>School Head:</strong> <span id="passedSchoolHead"></span></p>
+                                        <p class="mb-2"><strong>DRRM Coordinator:</strong> <span id="passedCoordinator"></span></p>
+                                    </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <p><strong>School Head:</strong> <span id="modalSchoolHead"></span></p>
-                                    <p><strong>DRRM Coordinator:</strong> <span id="modalDrrmCoordinator"></span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-light border-0">
+                                    <div class="card-body">
+                                        <h6 class="fw-bold text-primary mb-3"><i class="fas fa-clipboard-check me-2"></i>Verified Status</h6>
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="fas fa-check-circle text-success me-2"></i> <span>All Buildings Compliant</span>
+                                        </div>
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="fas fa-check-circle text-success me-2"></i> <span>Fire Alarms Fully Operational</span>
+                                        </div>
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="fas fa-check-circle text-success me-2"></i> <span>Evacuation Plans Approved</span>
+                                        </div>
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="fas fa-check-circle text-success me-2"></i> <span>Fire Extinguishers Active</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Equipment Summary -->
-                        <div class="equipment-summary">
-                            <h6 class="border-bottom pb-2">Equipment Summary</h6>
-                            <div class="row">
-                                <div class="col-md-3 mb-3">
-                                    <div class="card">
-                                        <div class="card-body text-center">
-                                            <h5 id="fireExtinguishersCount">0</h5>
-                                            <p class="mb-0">Fire Extinguishers</p>
-                                            <button class="btn btn-sm btn-link view-equipment"
-                                                    data-type="extinguishers">
-                                                View Details
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <div class="card">
-                                        <div class="card-body text-center">
-                                            <h5 id="alarmSystemsCount">0</h5>
-                                            <p class="mb-0">Alarm Systems</p>
-                                            <button class="btn btn-sm btn-link view-equipment"
-                                                    data-type="alarm-systems">
-                                                View Details
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <div class="card">
-                                        <div class="card-body text-center">
-                                            <h5 id="evacuationPlansCount">0</h5>
-                                            <p class="mb-0">Evacuation Plans</p>
-                                            <button class="btn btn-sm btn-link view-equipment"
-                                                    data-type="evacuation-plans">
-                                                View Details
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <div class="card">
-                                        <div class="card-body text-center">
-                                            <h5 id="buildingsCount">0</h5>
-                                            <p class="mb-0">Buildings</p>
-                                            <button class="btn btn-sm btn-link view-equipment"
-                                                    data-type="buildings">
-                                                View Details
-                                            </button>
-                                        </div>
-                                    </div>
+                        <div class="mt-4 p-3 bg-success-subtle rounded border border-success">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-shield-alt text-success fa-2x me-3"></i>
+                                <div>
+                                    <h6 class="mb-0 fw-bold">Safe Learning Environment Verified</h6>
+                                    <small class="text-muted">Last full configuration and inspection verified on: <span id="passedLastConfig"></span></small>
                                 </div>
                             </div>
                         </div>
@@ -604,18 +594,81 @@
             </div>
         </div>
 
-        <!-- Issues Modal (for FAILED/WARNING status) -->
+        <!-- Issues/Configuration Modal -->
         <div class="modal fade" id="issuesModal" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header bg-warning">
-                        <h5 class="modal-title">Issues Found</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content border-primary" style="border-width: 2px;">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title"><i class="fas fa-clipboard-list me-2"></i> Configuration & Issues</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body">
-                        <h6 id="issuesSchoolName" class="mb-3"></h6>
-                        <div id="issuesList">
-                            <!-- Issues will be populated here -->
+                        <h5 id="issuesSchoolNameTitle" class="fw-bold mb-4"></h5>
+
+                        <!-- Unconfigured View (Interactive Buttons) -->
+                        <div id="unconfiguredView" style="display: none;">
+                            <h6 class="text-muted text-uppercase small fw-bold mb-3">Required Setup Checklist</h6>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="card h-100 text-center p-3 border-2" id="btnConfigBuilding">
+                                        <i class="fas fa-building fa-2x mb-2"></i>
+                                        <h6>Buildings</h6>
+                                        <div class="mt-2 status-indicator"></div>
+                                        <a href="{{ route('fire-safety.buildings') }}" class="btn btn-sm mt-2">Configure</a>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card h-100 text-center p-3 border-2" id="btnConfigAlarm">
+                                        <i class="fas fa-bell fa-2x mb-2"></i>
+                                        <h6>Alarm Systems</h6>
+                                        <div class="mt-2 status-indicator"></div>
+                                        <a href="{{ route('fire-safety.alarm-systems') }}" class="btn btn-sm mt-2">Configure</a>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card h-100 text-center p-3 border-2" id="btnConfigRoom">
+                                        <i class="fas fa-door-open fa-2x mb-2"></i>
+                                        <h6>Room Setup</h6>
+                                        <div class="mt-2 status-indicator"></div>
+                                        <a href="{{ route('fire-safety.extinguishers') }}" class="btn btn-sm mt-2">Configure</a>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card h-100 text-center p-3 border-2" id="btnConfigExtinguisher">
+                                        <i class="fas fa-fire-extinguisher fa-2x mb-2"></i>
+                                        <h6>Fire Extinguishers</h6>
+                                        <div class="mt-2 status-indicator"></div>
+                                        <a href="{{ route('fire-safety.extinguishers') }}" class="btn btn-sm mt-2">Configure</a>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="card h-100 text-center p-3 border-2" id="btnConfigPlan">
+                                        <i class="fas fa-map-signs fa-2x mb-2"></i>
+                                        <h6>Evacuation Plans</h6>
+                                        <div class="mt-2 status-indicator"></div>
+                                        <a href="{{ route('fire-safety.evacuation-plans') }}" class="btn btn-sm mt-2">Configure</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Ongoing Improvement View (Table) -->
+                        <div id="ongoingView" style="display: none;">
+                            <h6 class="text-muted text-uppercase small fw-bold mb-3">Identified Issues per Module</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Module</th>
+                                            <th>Location/Building</th>
+                                            <th class="text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ongoingIssuesTable">
+                                        <!-- Populated via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -677,6 +730,7 @@
                                 <label class="form-label">School *</label>
                                 <select class="form-select" name="school_id" required>
                                     <option value="">Select School</option>
+                                    <option value="all">All Schools</option>
                                     @foreach($schools as $school)
                                         <option value="{{ $school->id }}">{{ $school->school_name }}</option>
                                     @endforeach
@@ -723,6 +777,7 @@
                                 <label class="form-label">School *</label>
                                 <select class="form-select" name="school_id" required>
                                     <option value="">Select School</option>
+                                    <option value="all">All Schools</option>
                                     @foreach($schools as $school)
                                         <option value="{{ $school->id }}">{{ $school->school_name }}</option>
                                     @endforeach
@@ -782,138 +837,114 @@ document.addEventListener('DOMContentLoaded', function() {
         button.addEventListener('click', function() {
             const target = this.getAttribute('data-bs-target');
             const schoolSlug = target.replace('#', '');
-
-            // Remove active from all
             tabButtons.forEach(btn => btn.classList.remove('active'));
-            // Add active to clicked
             this.classList.add('active');
-
-            // Load school data if needed
-            if (schoolSlug !== 'all') {
-                // You can load specific school data here
-                console.log(`Loading data for ${schoolSlug}`);
-            }
         });
     });
 
-    // View School Modal Handler
-    document.querySelectorAll('.view-school-btn').forEach(btn => {
+    // Success Modal Handler (PASSED)
+    document.querySelectorAll('.view-passed-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-            const schoolId = this.getAttribute('data-school-id');
-            loadSchoolDetails(schoolId);
+            const school = JSON.parse(this.getAttribute('data-school-json'));
+            document.getElementById('passedSchoolName').textContent = school.school_name;
+            document.getElementById('passedSchoolId').textContent = school.school_id;
+            document.getElementById('passedAddress').textContent = school.address || 'N/A';
+            document.getElementById('passedSchoolHead').textContent = school.school_head || 'Not recorded';
+            document.getElementById('passedCoordinator').textContent = school.school_drrm_coordinator || 'Not recorded';
+            
+            const lastConfigStr = school.last_inspection_date ? 
+                new Date(school.last_inspection_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 
+                'Not recorded';
+            document.getElementById('passedLastConfig').textContent = lastConfigStr;
         });
     });
 
-    // Issues Modal Handler
+    // Details Modal Handler (ISSUES/UNCONFIGURED)
     document.querySelectorAll('.details-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-            const schoolId = this.getAttribute('data-school-id');
-            loadSchoolIssues(schoolId);
+            const school = JSON.parse(this.getAttribute('data-school-json'));
+            const status = school.status;
+            
+            document.getElementById('issuesSchoolNameTitle').textContent = school.school_name;
+            
+            const unconfiguredView = document.getElementById('unconfiguredView');
+            const ongoingView = document.getElementById('ongoingView');
+            
+            if (status === 'unconfigured') {
+                unconfiguredView.style.display = 'block';
+                ongoingView.style.display = 'none';
+                renderUnconfiguredChecklist(school.config_status);
+            } else {
+                unconfiguredView.style.display = 'none';
+                ongoingView.style.display = 'block';
+                renderOngoingIssues(school.module_issues);
+            }
         });
     });
 
-    // Equipment View Buttons (in modal)
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('view-equipment')) {
-            const type = e.target.getAttribute('data-type');
-            window.location.href = `/fire-safety/${type}`;
-        }
-    });
+    function renderUnconfiguredChecklist(config) {
+        const modules = [
+            { id: 'Building', key: 'has_buildings', color: 'primary', icon: 'fa-building' },
+            { id: 'Alarm', key: 'has_alarms', color: 'info', icon: 'fa-bell' },
+            { id: 'Room', key: 'has_rooms', color: 'warning', icon: 'fa-door-open' },
+            { id: 'Extinguisher', key: 'has_extinguishers', color: 'danger', icon: 'fa-fire-extinguisher' },
+            { id: 'Plan', key: 'has_plans', color: 'success', icon: 'fa-map-signs' }
+        ];
 
-    function loadSchoolDetails(schoolId) {
-        fetch(`/fire-safety/school/${schoolId}`)
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('modalSchoolName').textContent = data.name;
-                document.getElementById('modalSchoolId').textContent = data.school_id;
-                document.getElementById('modalSchoolAddress').textContent = data.address || 'N/A';
-                document.getElementById('modalSchoolHead').textContent = data.school_head;
-                document.getElementById('modalDrrmCoordinator').textContent = data.drrm_coordinator;
-                document.getElementById('fireExtinguishersCount').textContent = data.fire_extinguishers_count;
-                document.getElementById('alarmSystemsCount').textContent = data.alarm_systems_count;
-                document.getElementById('evacuationPlansCount').textContent = data.evacuation_plans_count;
-                document.getElementById('buildingsCount').textContent = data.buildings_count;
-
-                // Update modal title
-                document.getElementById('schoolNameTitle').textContent = `${data.name} Details`;
-
-                // Render Alerts and Events
-                renderAlerts(data.alerts, data.name);
-                renderEvents(data.events, data.name);
-            })
-            .catch(error => {
-                Swal.fire({
-                    title: 'Error',
-                    text: 'Failed to load school details. Please try again.',
-                    icon: 'error',
-                    confirmButtonColor: '#A8191F'
-                });
-            });
+        modules.forEach(m => {
+            const card = document.getElementById(`btnConfig${m.id}`);
+            const indicator = card.querySelector('.status-indicator');
+            const isDone = config[m.key];
+            
+            card.className = `card h-100 text-center p-3 border-2 ${isDone ? 'border-success bg-success-subtle' : 'border-secondary bg-light'}`;
+            indicator.innerHTML = isDone ? 
+                `<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> Configured</span>` : 
+                `<span class="badge bg-secondary"><i class="fas fa-clock me-1"></i> Pending</span>`;
+            
+            const btn = card.querySelector('a');
+            btn.className = `btn btn-sm mt-2 ${isDone ? 'btn-success' : 'btn-outline-dark'}`;
+            btn.innerHTML = isDone ? '<i class="fas fa-edit me-1"></i> Update' : '<i class="fas fa-plus me-1"></i> Setup Now';
+        });
     }
 
-function loadSchoolIssues(schoolId) {
-    fetch(`/fire-safety/school/${schoolId}/issues`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
-            document.getElementById('issuesSchoolName').textContent = data.school_name;
+    function renderOngoingIssues(issues) {
+        const tbody = document.getElementById('ongoingIssuesTable');
+        tbody.innerHTML = '';
+        
+        const moduleMap = [
+            { key: 'buildings', label: 'Buildings', icon: 'fa-building', color: 'primary', route: 'buildings' },
+            { key: 'alarms', label: 'Alarm System', icon: 'fa-bell', color: 'info', route: 'alarm-systems' },
+            { key: 'rooms', label: 'Room Config', icon: 'fa-door-open', color: 'warning', route: 'extinguishers' },
+            { key: 'extinguishers', label: 'Extinguishers', icon: 'fa-fire-extinguisher', color: 'danger', route: 'extinguishers' },
+            { key: 'plans', label: 'Evac Plans', icon: 'fa-map-signs', color: 'success', route: 'evacuation-plans' }
+        ];
 
-            let issuesHtml = '';
-            if(data.issues.length === 0) {
-                issuesHtml = '<div class="alert alert-success">No issues found!</div>';
-            } else {
-                data.issues.forEach(issue => {
-                    const alertClass = issue.type === 'danger' ? 'alert-danger' : 'alert-warning';
-
-                    if (issue.link) {
-                        // Clickable issue with link
-                        issuesHtml += `
-                            <a href="${issue.link}" class="alert ${alertClass} d-block text-decoration-none" onclick="event.preventDefault(); window.location.href='${issue.link}'">
-                                <i class="fas fa-exclamation-circle me-2"></i>
-                                <strong>${issue.title}</strong><br>
-                                <small>${issue.description}</small>
-                                <div class="text-end mt-2">
-                                    <span class="badge bg-dark"><i class="fas fa-external-link-alt me-1"></i> Configure</span>
-                                </div>
-                            </a>`;
-                    } else {
-                        // Non-clickable issue
-                        issuesHtml += `
-                            <div class="alert ${alertClass}">
-                                <i class="fas fa-exclamation-circle me-2"></i>
-                                <strong>${issue.title}</strong><br>
-                                <small>${issue.description}</small>
-                            </div>`;
-                    }
-                });
+        moduleMap.forEach(m => {
+            if (issues[m.key] && issues[m.key].length > 0) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <i class="fas ${m.icon} text-${m.color} me-2"></i>
+                            <span class="fw-bold">${m.label}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="text-muted small">${issues[m.key].join(', ')}</div>
+                    </td>
+                    <td class="text-center">
+                        <a href="/fire-safety/${m.route}" class="btn btn-xs btn-outline-${m.color}">
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                    </td>
+                `;
+                tbody.appendChild(tr);
             }
-            document.getElementById('issuesList').innerHTML = issuesHtml;
-        })
-        .catch(error => {
-            console.error('Error loading school issues:', error);
-            // Show a more user-friendly message
-            document.getElementById('issuesList').innerHTML = `
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>
-                    School configuration setup needed. Please visit each section to configure:
-                    <div class="mt-2">
-                        <a href="/fire-safety/alarm-systems" class="btn btn-sm btn-warning me-2">Alarm Systems</a>
-                        <a href="/fire-safety/extinguishers" class="btn btn-sm btn-danger me-2">Fire Extinguishers</a>
-                        <a href="/fire-safety/buildings" class="btn btn-sm btn-primary me-2">Buildings</a>
-                        <a href="/fire-safety/evacuation-plans" class="btn btn-sm btn-success">Evacuation Plans</a>
-                    </div>
-                </div>`;
         });
-}
 
-    // Initialize with some data
-    const firstTab = document.querySelector('[data-bs-target="#all"]');
-    if (firstTab) {
-        firstTab.click();
+        if (tbody.innerHTML === '') {
+            tbody.innerHTML = '<tr><td colspan="3" class="text-center py-3 text-success">All modules reported 100% compliant!</td></tr>';
+        }
     }
 
     // Filter and Sort functionality
@@ -926,10 +957,8 @@ function loadSchoolIssues(schoolId) {
         const sortValue = sortFilter.value;
         const rows = Array.from(schoolsTableBody.querySelectorAll('tr'));
 
-        // Filter rows
         rows.forEach(row => {
-            if (row.querySelector('td[colspan]')) return; // Skip empty state row
-            
+            if (row.querySelector('td[colspan]')) return;
             const rowStatus = row.dataset.status;
             if (statusValue === 'all' || rowStatus === statusValue) {
                 row.style.display = '';
@@ -938,31 +967,22 @@ function loadSchoolIssues(schoolId) {
             }
         });
 
-        // Get visible rows
         const visibleRows = rows.filter(row => row.style.display !== 'none' && !row.querySelector('td[colspan]'));
 
-        // Sort visible rows
         visibleRows.sort((a, b) => {
             if (sortValue.startsWith('name_')) {
                 const nameA = a.dataset.schoolName.toLowerCase();
                 const nameB = b.dataset.schoolName.toLowerCase();
-                return sortValue === 'name_asc' 
-                    ? nameA.localeCompare(nameB) 
-                    : nameB.localeCompare(nameA);
+                return sortValue === 'name_asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
             } else if (sortValue.startsWith('inspection_')) {
                 const dateA = new Date(a.dataset.inspectionDate);
                 const dateB = new Date(b.dataset.inspectionDate);
-                return sortValue === 'inspection_asc' 
-                    ? dateA - dateB 
-                    : dateB - dateA;
+                return sortValue === 'inspection_asc' ? dateA - dateB : dateB - dateA;
             }
             return 0;
         });
 
-        // Reorder rows in the table
-        visibleRows.forEach(row => {
-            schoolsTableBody.appendChild(row);
-        });
+        visibleRows.forEach(row => schoolsTableBody.appendChild(row));
     }
 
     if (statusFilter && sortFilter) {
@@ -975,7 +995,6 @@ function loadSchoolIssues(schoolId) {
     if (addSchoolForm) {
         addSchoolForm.addEventListener('submit', function(e) {
             e.preventDefault();
-
             fetch(this.action, {
                 method: 'POST',
                 headers: {
@@ -994,36 +1013,13 @@ function loadSchoolIssues(schoolId) {
             .then(async response => {
                 const data = await response.json();
                 if (response.ok && data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success!',
-                        text: 'School added successfully!',
-                        timer: 2000,
-                        showConfirmButton: false
-                    }).then(() => {
-                        location.reload();
-                    });
+                    Swal.fire({ icon: 'success', title: 'Success!', text: 'School added successfully!', timer: 2000, showConfirmButton: false })
+                    .then(() => location.reload());
                 } else {
-                    // Specific handling for validation errors if data.message is present
-                    let errorMsg = data.message || 'Failed to add school. Check your input.';
-                    if (data.errors) {
-                        const firstError = Object.values(data.errors)[0][0];
-                        errorMsg = firstError;
-                    }
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Notice',
-                        text: errorMsg
-                    });
+                    let errorMsg = data.message || 'Failed to add school.';
+                    if (data.errors) errorMsg = Object.values(data.errors)[0][0];
+                    Swal.fire({ icon: 'error', title: 'Notice', text: errorMsg });
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'System Error',
-                    text: 'An unexpected error occurred. Please try again later.'
-                });
             });
         });
     }
@@ -1034,25 +1030,16 @@ function loadSchoolIssues(schoolId) {
         addAlertForm.addEventListener('submit', function(e) {
             e.preventDefault();
             const formData = new FormData(this);
-            const data = Object.fromEntries(formData.entries());
-
             fetch('{{ route("fire-safety.school.alert.store") }}', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify(data)
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                body: JSON.stringify(Object.fromEntries(formData.entries()))
             })
             .then(response => response.json())
             .then(res => {
                 if (res.success) {
-                    Swal.fire('Success', 'Alert posted successfully!', 'success');
-                    bootstrap.Modal.getInstance(document.getElementById('addAlertModal')).hide();
-                    this.reset();
-                    // If the school being edited is the one currently viewed, refresh display
-                    // For now, simpler to just reload or re-fetch details if we have an active school ID
-                    location.reload(); 
+                    Swal.fire('Success', 'Alert posted successfully!', 'success')
+                    .then(() => location.reload());
                 }
             });
         });
@@ -1064,76 +1051,19 @@ function loadSchoolIssues(schoolId) {
         addEventForm.addEventListener('submit', function(e) {
             e.preventDefault();
             const formData = new FormData(this);
-            const data = Object.fromEntries(formData.entries());
-
             fetch('{{ route("fire-safety.school.event.store") }}', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify(data)
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                body: JSON.stringify(Object.fromEntries(formData.entries()))
             })
             .then(response => response.json())
             .then(res => {
                 if (res.success) {
-                    Swal.fire('Success', 'Event scheduled successfully!', 'success');
-                    bootstrap.Modal.getInstance(document.getElementById('addEventModal')).hide();
-                    this.reset();
-                    location.reload();
+                    Swal.fire('Success', 'Event scheduled successfully!', 'success')
+                    .then(() => location.reload());
                 }
             });
         });
-    }
-
-    function renderAlerts(alerts, schoolName) {
-        const container = document.getElementById('allAlerts');
-        if (!alerts || alerts.length === 0) {
-            container.innerHTML = `<div class="text-center text-muted py-3">No active alerts for ${schoolName}</div>`;
-            return;
-        }
-
-        let html = '';
-        alerts.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).forEach(alert => {
-            const icon = alert.type === 'danger' ? 'fa-exclamation-triangle' : 'fa-info-circle';
-            const border = alert.type === 'danger' ? 'border-danger' : (alert.type === 'warning' ? 'border-warning' : 'border-info');
-            const bg = alert.type === 'danger' ? 'bg-light-danger' : (alert.type === 'warning' ? 'bg-light-warning' : 'bg-light-info');
-
-            html += `
-                <div class="card mb-2 border-start border-4 ${border}">
-                    <div class="card-body p-2">
-                        <div class="d-flex justify-content-between">
-                            <h6 class="mb-1 fw-bold text-${alert.type}">${alert.title}</h6>
-                            <small class="text-muted" style="font-size: 0.7rem;">${alert.created_at}</small>
-                        </div>
-                        <p class="mb-0 small text-dark">${alert.description}</p>
-                    </div>
-                </div>`;
-        });
-        container.innerHTML = html;
-    }
-
-    function renderEvents(events, schoolName) {
-        const container = document.getElementById('allEvents');
-        if (!events || events.length === 0) {
-            container.innerHTML = `<div class="text-center text-muted py-3">No upcoming events for ${schoolName}</div>`;
-            return;
-        }
-
-        let html = '';
-        events.sort((a, b) => new Date(a.date) - new Date(b.date)).forEach(event => {
-            html += `
-                <div class="card mb-2 border-start border-4 border-primary">
-                    <div class="card-body p-2">
-                        <div class="d-flex justify-content-between">
-                            <h6 class="mb-1 fw-bold text-primary">${event.title}</h6>
-                            <small class="text-muted" style="font-size: 0.7rem;">${event.date} ${event.time || ''}</small>
-                        </div>
-                        <p class="mb-0 small text-dark">${event.description}</p>
-                    </div>
-                </div>`;
-        });
-        container.innerHTML = html;
     }
 });
 

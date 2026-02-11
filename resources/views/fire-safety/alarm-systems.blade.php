@@ -153,6 +153,15 @@
             outline: none;
             box-shadow: 0 0 0 0.2rem rgba(168, 25, 31, 0.25);
         }
+        .status-functional, .status-active, .status-online { color: #28a745; font-weight: bold; } /* Green */
+        .status-missing, .status-broken, .status-maintenance, .status-decommissioned, .status-system-error { color: #dc3545; font-weight: bold; } /* Red */
+        .status-offline, .status-not-yet-installed, .status-issues, .status-jammed, .status-under-repair { color: #ffc107; font-weight: bold; } /* Yellow */
+        .status-not-installed { color: #6c757d; font-weight: bold; } /* Gray */
+
+        .test-overdue {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
     </style>
 </head>
 <body>
@@ -521,8 +530,8 @@
                                     <table class="table table-hover">
                                         <thead class="table-light">
                                             <tr>
-                                                <th>Code</th>
                                                 <th>Building</th>
+                                                <th>Code</th>
                                                 <th>Type</th>
                                                 <th>Status</th>
                                                 <th>AS OF</th>
@@ -531,62 +540,122 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach($school->alarmSystems as $alarm)
                                             @php
-                                                $isOverdue = false; // Temporarily disable overdue check
-                                                $building = $alarm->building ?? null;
+                                                // Get all buildings with their alarms
+                                                $buildingAlarms = [];
+                                                foreach($school->buildings as $building) {
+                                                    $alarms = $school->alarmSystems->filter(function($alarm) use ($building) {
+                                                        return $alarm->buildings->contains('id', $building->id);
+                                                    });
+                                                    
+                                                    if ($alarms->count() > 0) {
+                                                        foreach($alarms as $alarm) {
+                                                            $buildingAlarms[] = [
+                                                                'building' => $building,
+                                                                'alarm' => $alarm,
+                                                                'has_alarm' => true
+                                                            ];
+                                                        }
+                                                    } else {
+                                                        $buildingAlarms[] = [
+                                                            'building' => $building,
+                                                            'alarm' => null,
+                                                            'has_alarm' => false
+                                                        ];
+                                                    }
+                                                }
                                             @endphp
-                                            <tr class="{{ $isOverdue ? 'test-overdue' : '' }}">
-                                                <td>{{ $alarm->code }}</td>
-                                                <td>
-                                                    @if($alarm->buildings->count() > 0)
-                                                        @foreach($alarm->buildings as $b)
-                                                            <span class="badge bg-secondary mb-1">{{ $b->building_no }}</span>
-                                                        @endforeach
-                                                    @elseif($alarm->building)
-                                                        <span class="badge bg-secondary">{{ $alarm->building->building_no }}</span>
-                                                    @else
-                                                        <span class="text-muted">N/A</span>
-                                                    @endif
-                                                </td>
-                                                <td>{{ $alarm->alarm_type }}</td>
-                                                <td>
-                                                    @php
-                                                        $statusClass = 'status-' . str_replace([' ', '_'], '-', strtolower($alarm->status));
-                                                        $displayStatus = ucwords(str_replace('_', ' ', $alarm->status));
-                                                    @endphp
-                                                    <span class="alarm-status {{ $statusClass }}">
-                                                        <i class="fas fa-circle"></i> {{ $displayStatus }}
-                                                    </span>
-                                                </td>
-                                                <td>{{ $alarm->last_test ? \Carbon\Carbon::parse($alarm->last_test)->format('Y-m-d') : 'Never' }}</td>
-                                                <td>
-                                                    {{ $alarm->next_test_due ? \Carbon\Carbon::parse($alarm->next_test_due)->format('Y-m-d') : 'Not set' }}
-                                                    @if($isOverdue)
-                                                        <span class="badge bg-danger ms-2">Overdue</span>
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    <div class="btn-group">
-                                                        <button class="btn btn-sm btn-outline-primary test-now-btn"
-                                                                data-alarm-id="{{ $alarm->id }}"
-                                                                data-alarm-code="{{ $alarm->code }}">
-                                                            <i class="fas fa-play"></i> Test Now
-                                                        </button>
-                                                        <button class="btn btn-sm btn-outline-info update-alarm-btn"
-                                                                data-alarm-id="{{ $alarm->id }}">
-                                                            <i class="fas fa-edit"></i> Details
-                                                        </button>
-                                                        @if(Auth::user()->role === 'admin')
-                                                        <button class="btn btn-sm btn-outline-danger remove-alarm-btn-table"
-                                                                onclick="currentAlarmId = '{{ $alarm->id }}'; removeAlarmSystem();">
-                                                            <i class="fas fa-trash"></i> Remove
-                                                        </button>
+                                            
+                                            @forelse($buildingAlarms as $item)
+                                                <tr class="{{ !$item['has_alarm'] ? 'table-warning' : '' }}">
+                                                    <td>
+                                                        <span class="badge bg-secondary">{{ $item['building']->building_no }}</span>
+                                                        <small class="text-muted d-block">{{ $item['building']->building_name }}</small>
+                                                    </td>
+                                                    <td>
+                                                        @if($item['has_alarm'])
+                                                            {{ $item['alarm']->code }}
+                                                        @else
+                                                            <span class="text-muted">-</span>
                                                         @endif
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            @endforeach
+                                                    </td>
+                                                    <td>
+                                                        @if($item['has_alarm'])
+                                                            {{ $item['alarm']->alarm_type }}
+                                                        @else
+                                                            <span class="text-muted">-</span>
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        @if($item['has_alarm'])
+                                                            @php
+                                                                $statusClass = 'status-' . str_replace([' ', '_'], '-', strtolower($item['alarm']->status));
+                                                                $displayStatus = ucwords(str_replace('_', ' ', $item['alarm']->status));
+                                                            @endphp
+                                                            <span class="alarm-status {{ $statusClass }}">
+                                                                <i class="fas fa-circle"></i> {{ $displayStatus }}
+                                                            </span>
+                                                        @else
+                                                            <span class="badge bg-warning text-dark">No Alarm Yet</span>
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        @if($item['has_alarm'])
+                                                            {{ $item['alarm']->last_test ? \Carbon\Carbon::parse($item['alarm']->last_test)->format('Y-m-d') : 'Never' }}
+                                                        @else
+                                                            {{ \Carbon\Carbon::today()->format('Y-m-d') }}
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        @if($item['has_alarm'])
+                                                            {{ \Carbon\Carbon::parse($item['alarm']->next_test_due)->format('Y-m-d') }}
+                                                            @if($item['alarm']->next_test_due < now())
+                                                                <span class="badge bg-danger ms-2">Overdue</span>
+                                                            @endif
+                                                        @else
+                                                            <span class="text-muted">-</span>
+                                                        @endif
+                                                    </td>
+                                                    <td>
+                                                        @if($item['has_alarm'])
+                                                            <div class="btn-group">
+                                                                <button class="btn btn-sm btn-outline-primary test-now-btn"
+                                                                        data-alarm-id="{{ $item['alarm']->id }}"
+                                                                        data-alarm-code="{{ $item['alarm']->code }}">
+                                                                    <i class="fas fa-play"></i> Test Now
+                                                                </button>
+                                                                <button class="btn btn-sm btn-outline-info update-alarm-btn"
+                                                                        data-alarm-id="{{ $item['alarm']->id }}">
+                                                                    <i class="fas fa-edit"></i> Details
+                                                                </button>
+                                                                @if(Auth::user()->role === 'admin')
+                                                                <button class="btn btn-sm btn-outline-danger remove-alarm-btn-table"
+                                                                        onclick="currentAlarmId = '{{ $item['alarm']->id }}'; removeAlarmSystem();">
+                                                                    <i class="fas fa-trash"></i> Remove
+                                                                </button>
+                                                                @endif
+                                                            </div>
+                                                        @else
+                                                            <button class="btn btn-sm btn-primary add-alarm-btn"
+                                                                    data-school-id="{{ $school->id }}"
+                                                                    data-building-id="{{ $item['building']->id }}"
+                                                                    data-bs-toggle="modal"
+                                                                    data-bs-target="#addAlarmModal">
+                                                                <i class="fas fa-plus"></i> Add Alarm
+                                                            </button>
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                            @empty
+                                                <tr>
+                                                    <td colspan="7" class="text-center py-4">
+                                                        <div class="text-muted mb-2">No buildings found for this school.</div>
+                                                        <a href="{{ route('fire-safety.buildings') }}" class="btn btn-sm btn-primary">
+                                                            Manage Buildings
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            @endforelse
                                         </tbody>
                                     </table>
                                 </div>
@@ -658,101 +727,98 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="addAlarmForm" action="{{ route('fire-safety.alarm.store') }}" method="POST">
+                    <form id="addAlarmForm">
                         @csrf
                         <input type="hidden" name="school_id" id="modalSchoolId">
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Alarm Code *</label>
-                        <input type="text" class="form-control" name="code" id="alarmCode" placeholder="e.g., ALM-001" required onblur="checkAlarmCode(this.value)">
-                        <div class="invalid-feedback" id="codeError">Alarm code already exists</div>
-                    </div>
-                <div class="mb-3">
-                    <label class="form-label">Does this alarm cover multiple buildings?</label>
-                    <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" name="is_multi_building" id="multiBuildingToggle" value="1">
-                        <label class="form-check-label" for="multiBuildingToggle">Yes, it covers multiple buildings</label>
-                    </div>
-                </div>
-
-                <div class="row" id="singleBuildingContainer">
-                    <div class="col-md-12 mb-3">
-                        <label class="form-label">Primary Building *</label>
-                        <select class="form-control" name="building_id" id="buildingSelect">
-                            <option value="">Select Building</option>
-                            <!-- Buildings will be populated by JavaScript -->
-                        </select>
-                    </div>
-                </div>
-
-                <div class="row" id="multiBuildingContainer" style="display: none;">
-                    <div class="col-md-12 mb-3">
-                        <label class="form-label">Select All Buildings Covered *</label>
-                        <div id="buildingsCheckboxList" class="border rounded p-3 bg-light" style="max-height: 200px; overflow-y: auto;">
-                            <!-- Building checkboxes will be populated here -->
-                            <p class="text-muted small mb-0">Select buildings...</p>
+                        
+                        <!-- Building Selection Logic -->
+                        <div class="row mb-3">
+                            <div class="col-md-12">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="coversMultiple" name="covers_multiple">
+                                    <label class="form-check-label fw-bold" for="coversMultiple">
+                                        Yes, it covers multiple buildings
+                                    </label>
+                                </div>
+                                <label class="form-label fw-bold">Building(s) *</label>
+                                <select class="form-control" name="building_ids[]" id="addBuildingSelect" required>
+                                    <!-- Populated via JS -->
+                                </select>
+                                <small class="text-muted" id="multiSelectHelp" style="display:none;">Hold Ctrl/Cmd to select multiple buildings</small>
+                            </div>
                         </div>
-                    </div>
-                </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Floor *</label>
-                        <select class="form-control" id="alarmFloorSelect" required disabled>
-                            <option value="">Select Building First</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label">Specific Location *</label>
-                        <input type="text" class="form-control" id="alarmSpecificLocation" placeholder="e.g., Hallway, Near Room 101" required>
-                        <input type="hidden" name="location" id="finalLocation">
-                    </div>
-                </div>
+                        <!-- Floor Selection - Only for Single Building -->
+                        <div id="floorsContainer" style="display:none;" class="mb-3 p-3 bg-light rounded border">
+                            <label class="form-label fw-bold mb-2">Select Floor Location *</label>
+                            <select class="form-control" name="floor_id" id="addFloorSelect">
+                                <option value="">Select Building First</option>
+                            </select>
+                        </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Alarm Type *</label>
-                                <select class="form-control" name="alarm_type" id="alarmTypeSelect" required>
-                                    <option value="">Select Type</option>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Alarm Code *</label>
+                                <input type="text" class="form-control" name="code" id="alarmCode" placeholder="e.g. ALARM-001" required onblur="checkAlarmCode(this.value)">
+                                <div class="invalid-feedback" id="codeError">Alarm code already exists</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Alarm Type *</label>
+                                <select class="form-control" name="alarm_type" id="addAlarmType" required>
+                                    <option value="" disabled selected>Select Type</option>
                                     @foreach($alarmTypes as $type)
-                                        <option value="{{ $type->name }}">{{ $type->name }}</option>
+                                        <option value="{{ $type->name }}" data-type-id="{{ $type->id }}">{{ $type->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Status *</label>
-                                <select class="form-control" name="status" id="statusSelect" required>
-                                    <option value="">Select Status</option>
-                                    <!-- Options will be populated based on alarm type -->
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Status *</label>
+                                <select class="form-control" name="status" id="addStatusSelect" required>
+                                    <option value="functional">Functional (Active)</option>
+                                    @foreach($alarmStatusesByType as $parentId => $statuses)
+                                        <optgroup label="{{ \App\Models\SystemConfiguration::find($parentId)->name }}" data-parent-id="{{ $parentId }}">
+                                            @foreach($statuses as $status)
+                                                <option value="{{ $status->name }}">{{ $status->name }}</option>
+                                            @endforeach
+                                        </optgroup>
+                                    @endforeach
                                 </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Location Details *</label>
+                                <input type="text" class="form-control" name="location" id="alarmSpecificLocation" placeholder="e.g. Main Lobby, Hallway" required>
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Manufacturer (Optional)</label>
-                                <input type="text" class="form-control" name="manufacturer" placeholder="Manufacturer name">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Manufacturer</label>
+                                <input type="text" class="form-control" name="manufacturer">
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Installation Date</label>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Installation Date</label>
                                 <input type="date" class="form-control" name="installation_date" id="installationDate">
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Last Test Date</label>
-                                <input type="date" class="form-control" name="last_test" id="lastTestDate">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Last Test Date</label>
+                                <input type="date" class="form-control" name="last_test" id="lastTestDate" max="{{ date('Y-m-d') }}">
+                                <div class="form-text">Cannot be in the future.</div>
                             </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Next Test Due *</label>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Next Test Due *</label>
                                 <input type="date" class="form-control" name="next_test_due" id="nextTestDue" required>
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Notes/Remarks</label>
-                            <textarea class="form-control" name="notes" rows="3" placeholder="Additional information..."></textarea>
+                            <label class="form-label fw-bold">Notes/Remarks</label>
+                            <textarea class="form-control" name="notes" rows="2" placeholder="Additional information..."></textarea>
                         </div>
                     </form>
                 </div>
@@ -849,6 +915,163 @@
                 run();
             }
         })();
+                // Multi-Building Selection Logic
+        document.addEventListener('DOMContentLoaded', function() {
+            const addModalEl = document.getElementById('addAlarmModal');
+            if (addModalEl) {
+                const coversMultipleCheckbox = document.getElementById('coversMultiple');
+                const buildingSelect = document.getElementById('addBuildingSelect');
+                const multiSelectHelp = document.getElementById('multiSelectHelp');
+                const floorsContainer = document.getElementById('floorsContainer');
+                const floorSelect = document.getElementById('addFloorSelect');
+                const typeSelect = document.getElementById('addAlarmType');
+                const statusSelect = document.getElementById('addStatusSelect');
+                
+                // Map Alarm Type Name -> ID for filtering
+                const alarmTypeIds = {};
+                @foreach($alarmTypes as $type)
+                    alarmTypeIds['{{ $type->name }}'] = {{ $type->id }};
+                @endforeach
+
+                // Filter status options based on alarm type
+                function filterStatusOptions(selectElement, typeName) {
+                    const typeId = alarmTypeIds[typeName];
+                    const optgroups = selectElement.querySelectorAll('optgroup');
+                    
+                    optgroups.forEach(group => {
+                        const parentId = group.getAttribute('data-parent-id');
+                        if (parentId == typeId) {
+                            group.style.display = '';
+                            group.disabled = false;
+                        } else {
+                            group.style.display = 'none';
+                            group.disabled = true;
+                        }
+                    });
+                    
+                    // Reset value if currently selected option is now hidden
+                    const selectedOpt = selectElement.options[selectElement.selectedIndex];
+                    if (selectedOpt && selectedOpt.parentElement.tagName === 'OPTGROUP' && selectedOpt.parentElement.disabled) {
+                        selectElement.value = 'functional';
+                    }
+                }
+
+                // Toggle Multiple/Single Building
+                if (coversMultipleCheckbox) {
+                    coversMultipleCheckbox.addEventListener('change', function() {
+                        if (this.checked) {
+                            buildingSelect.setAttribute('multiple', 'multiple');
+                            buildingSelect.size = 4;
+                            multiSelectHelp.style.display = 'block';
+                            floorsContainer.style.display = 'none';
+                            floorSelect.required = false;
+                            floorSelect.value = "";
+                            document.getElementById('alarmSpecificLocation').value = "Multiple Buildings - Shared System";
+                        } else {
+                            buildingSelect.removeAttribute('multiple');
+                            buildingSelect.removeAttribute('size');
+                            // If multiple selected, keep only first
+                            if (buildingSelect.selectedOptions.length > 1) {
+                                for (let i = 0; i < buildingSelect.options.length; i++) {
+                                    buildingSelect.options[i].selected = (i === buildingSelect.selectedOptions[0].index);
+                                }
+                            }
+                            multiSelectHelp.style.display = 'none';
+                            handleBuildingChange();
+                        }
+                    });
+                }
+
+                // Handle Building Selection Change
+                if (buildingSelect) {
+                    buildingSelect.addEventListener('change', handleBuildingChange);
+                }
+
+                // Handle Alarm Type Change
+                if (typeSelect) {
+                    typeSelect.addEventListener('change', function() {
+                        filterStatusOptions(statusSelect, this.value);
+                    });
+                }
+
+                function handleBuildingChange() {
+                    const isMultiple = coversMultipleCheckbox ? coversMultipleCheckbox.checked : false;
+                    
+                    if (!isMultiple && buildingSelect.value) {
+                        const buildingId = buildingSelect.value;
+                        floorsContainer.style.display = 'block';
+                        floorSelect.required = true;
+                        floorSelect.innerHTML = '<option value="">Loading...</option>';
+
+                        fetch(`/fire-safety/building/${buildingId}`)
+                            .then(r => r.json())
+                            .then(data => {
+                                floorSelect.innerHTML = '<option value="">Select Floor</option><option value="All Floors">All Floors</option>';
+                                if (data.floors) {
+                                    // Helper for ordinal floors
+                                    const getOrdinal = (n) => {
+                                        const s = ["th", "st", "nd", "rd"];
+                                        const v = n % 100;
+                                        return n + (s[(v - 20) % 10] || s[v] || s[0]);
+                                    };
+                                    
+                                    for(let i = 1; i <= data.floors; i++) {
+                                        const opt = document.createElement('option');
+                                        opt.value = getOrdinal(i) + " Floor";
+                                        opt.textContent = getOrdinal(i) + " Floor";
+                                        floorSelect.appendChild(opt);
+                                    }
+                                }
+                            })
+                            .catch(e => {
+                                console.error(e);
+                                floorSelect.innerHTML = '<option value="">Error loading floors</option>';
+                            });
+                    } else {
+                        floorsContainer.style.display = 'none';
+                        floorSelect.required = false;
+                    }
+                }
+
+                // Modal Show Event
+                addModalEl.addEventListener('show.bs.modal', function(event) {
+                    const button = event.relatedTarget;
+                    const schoolId = button.getAttribute('data-school-id');
+                    const buildingId = button.getAttribute('data-building-id');
+                    
+                    document.getElementById('modalSchoolId').value = schoolId;
+                    
+                    // Reset form
+                    document.getElementById('addAlarmForm').reset();
+                    if(coversMultipleCheckbox) {
+                        coversMultipleCheckbox.checked = false;
+                        coversMultipleCheckbox.dispatchEvent(new Event('change'));
+                    }
+                    
+                    // Trigger type change to filter statuses initially
+                    if(typeSelect) typeSelect.dispatchEvent(new Event('change'));
+
+                    // Fetch buildings for this school
+                    fetch(`/fire-safety/buildings/${schoolId}`)
+                        .then(r => r.json())
+                        .then(buildings => {
+                            buildingSelect.innerHTML = '<option value="">Select Building</option>';
+                            buildings.forEach(b => {
+                                const option = document.createElement('option');
+                                option.value = b.id;
+                                option.text = `${b.building_no} - ${b.building_name}`;
+                                option.dataset.floors = b.floors;
+                                if (buildingId && b.id == buildingId) {
+                                    option.selected = true;
+                                }
+                                buildingSelect.appendChild(option);
+                            });
+                            // Trigger change to setup floors
+                            handleBuildingChange();
+                        });
+                });
+            }
+        });
 
         // Status options based on alarm type (Dynamic from DB)
         const statusOptions = {
@@ -1211,11 +1434,39 @@
                 return;
             }
 
-            // Check if building exists for this school
-            const buildingSelect = document.getElementById('buildingSelect');
-            if (buildingSelect.options.length <= 1) { // Only "Select Building" option
-                Swal.fire('Warning', 'No buildings found for this school. Please add buildings first.', 'warning');
-                return;
+            // Check building selection
+            const buildingSelect = document.getElementById('addBuildingSelect');
+            const isMultiple = document.getElementById('coversMultiple').checked;
+            
+            if (isMultiple) {
+                // Check if at least one building is selected for multi-building
+                const selectedBuildings = Array.from(buildingSelect.selectedOptions).map(opt => opt.value);
+                if (selectedBuildings.length === 0 || (selectedBuildings.length === 1 && selectedBuildings[0] === '')) {
+                    Swal.fire('Missing Information', 'Please select at least one building.', 'warning');
+                    return;
+                }
+                // For multi-building, set location as "Multiple Buildings"
+                document.getElementById('alarmSpecificLocation').value = "Multiple Buildings - Shared System";
+            } else {
+                // Single building validation
+                if (!buildingSelect.value) {
+                    Swal.fire('Missing Information', 'Please select a building.', 'warning');
+                    return;
+                }
+                
+                // Check floor selection for single building
+                const floor = document.getElementById('addFloorSelect').value;
+                const specific = document.getElementById('alarmSpecificLocation').value.trim();
+                
+                if (!floor) {
+                    Swal.fire('Missing Information', 'Please select a floor.', 'warning');
+                    return;
+                }
+                
+                if (!specific) {
+                    Swal.fire('Missing Information', 'Please enter a specific location.', 'warning');
+                    return;
+                }
             }
 
             if (!form.checkValidity()) {
@@ -1223,16 +1474,12 @@
                 return;
             }
 
-            // Get CSRF token - multiple ways
+            // Get CSRF token
             let csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
             if (!csrfToken) {
-                // Try from form
                 csrfToken = form.querySelector('input[name="_token"]')?.value;
-
                 if (!csrfToken) {
-                    // Try Laravel's default CSRF field
                     csrfToken = document.querySelector('input[name="csrf_token"]')?.value;
-
                     if (!csrfToken) {
                         console.error('CSRF token not found anywhere');
                         Swal.fire('Error', 'Security token missing. Please refresh the page and try again.', 'error');
@@ -1243,43 +1490,23 @@
 
             console.log('CSRF Token found:', csrfToken ? 'Yes' : 'No');
 
-            // Combine Location
-            const isMulti = document.getElementById('multiBuildingToggle').checked;
-
-            if (isMulti) {
-                // Check if at least one checkbox is checked
-                const checked = document.querySelectorAll('input[name="building_ids[]"]:checked');
-                if (checked.length === 0) {
-                    Swal.fire('Missing Information', 'Please select at least one building.', 'warning');
-                    return;
-                }
-                document.getElementById('finalLocation').value = "Multiple Buildings - Shared System";
-            } else {
-                const floor = document.getElementById('alarmFloorSelect').value;
+            // Combine Location for single building
+            if (!isMultiple) {
+                const floor = document.getElementById('addFloorSelect').value;
                 const specific = document.getElementById('alarmSpecificLocation').value.trim();
-
-                if (!buildingSelect.value) {
-                    Swal.fire('Missing Information', 'Please select a primary building.', 'warning');
-                    return;
-                }
-
-                if (!floor || !specific) {
-                    Swal.fire('Missing Information', 'Please select a floor and enter a specific location.', 'warning');
-                    return;
-                }
-                document.getElementById('finalLocation').value = `${floor} - ${specific}`;
+                document.getElementById('alarmSpecificLocation').value = `${floor} - ${specific}`;
             }
 
             const formData = new FormData(form);
 
             // Log what we're sending for debugging
-            console.log('Form action:', form.action);
+            console.log('Form action:', '{{ route("fire-safety.alarm.store") }}');
             for (let [key, value] of formData.entries()) {
                 console.log(key + ': ' + value);
             }
 
             try {
-                const response = await fetch(form.action, {
+                const response = await fetch('{{ route("fire-safety.alarm.store") }}', {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': csrfToken,

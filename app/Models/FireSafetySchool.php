@@ -122,9 +122,8 @@ class FireSafetySchool extends Model
     {
         return match($this->status) {
             'passed' => 'PASSED',
-            'failed' => 'FAILED',
             'unconfigured' => 'UNCONFIGURED',
-            'warning' => 'WARNING',
+            'warning', 'failed' => 'ONGOING IMPROVEMENT',
             default => 'UNKNOWN'
         };
     }
@@ -133,10 +132,9 @@ class FireSafetySchool extends Model
     {
         return match($this->status) {
             'passed' => 'success',
-            'failed' => 'danger',
-            'unconfigured' => 'warning',
-            'warning' => 'warning',
-            default => 'secondary'
+            'unconfigured' => 'secondary',
+            'warning', 'failed' => 'warning',
+            default => 'info'
         };
     }
     

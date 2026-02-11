@@ -33,7 +33,12 @@ class FireSafetyController extends Controller
 
     public function dashboard()
     {
-        $query = FireSafetySchool::withCount(['extinguishers', 'alarmSystems', 'buildings', 'evacuationPlans']);
+        $query = FireSafetySchool::with([
+            'buildings.actualRooms',
+            'buildings.alarmSystems',
+            'buildings.fireExtinguishers',
+            'buildings.evacuationPlan'
+        ])->withCount(['extinguishers', 'alarmSystems', 'buildings', 'evacuationPlans']);
 
         if (auth()->user()->role !== 'admin') {
             $query->where('id', auth()->user()->school_id);
@@ -41,30 +46,142 @@ class FireSafetyController extends Controller
 
         $schools = $query->get()
             ->map(function($school) {
-                // Set status and issues count
-                if ($school->extinguishers_count === 0 || $school->alarm_systems_count === 0) {
-                    $school->status = 'unconfigured';
-                    $school->issues_count = 1;
+                // Initialize issues
+                $issues = [];
+                $isUnconfigured = false;
+                
+                $buildingIssuesModules = [];
+                $alarmIssuesModules = [];
+                $roomIssuesModules = [];
+                $extinguisherIssuesModules = [];
+                $planIssuesModules = [];
+
+                $schoolConfig = [
+                    'has_buildings' => $school->buildings->count() > 0,
+                    'has_alarms' => false,
+                    'has_rooms' => false,
+                    'has_extinguishers' => false,
+                    'has_plans' => false,
+                    'needs_building' => $school->buildings->count() === 0,
+                    'needs_alarm' => false,
+                    'needs_room' => false,
+                    'needs_extinguisher' => false,
+                    'needs_plan' => false
+                ];
+
+                if ($school->buildings->count() === 0) {
+                    $isUnconfigured = true;
+                    $issues[] = 'Setup Needed';
                 } else {
-                    // Calculate based on actual data
-                    $badExtinguisherStatuses = ['expired', 'broken', 'missing', 'for-purchase', 'empty'];
-                    $expiredExtinguishers = $school->extinguishers()
-                        ->whereIn('status', $badExtinguisherStatuses)
-                        ->count();
+                    if ($schoolConfig['has_buildings']) {
+                        $buildingsWithAlarms = 0;
+                        $buildingsWithAllRooms = 0;
+                        $buildingsWithPlan = 0;
+                        $buildingsWithExtinguishers = 0;
+                        $totalBldgs = $school->buildings->count();
 
-                    $badAlarmStatuses = ['offline', 'broken', 'missing', 'jammed', 'under-repair', 'system-error'];
-                    $offlineAlarms = $school->alarmSystems()
-                        ->whereIn('status', $badAlarmStatuses)
-                        ->count();
+                        foreach ($school->buildings as $b) {
+                            $bldAlarms = $b->alarmSystems->count();
+                            $bldRoomsReady = $b->rooms > 0 && $b->actualRooms->count() >= $b->rooms;
+                            $bldPlan = $b->evacuationPlan !== null;
+                            $reqExt = $b->required_extinguishers_count;
+                            $bldExtReady = $b->fireExtinguishers->count() >= $reqExt;
 
-                    $school->issues_count = $expiredExtinguishers + $offlineAlarms;
-                    $school->status = $this->calculateStatus($school);
+                            if ($bldAlarms > 0) $buildingsWithAlarms++;
+                            if ($bldRoomsReady) $buildingsWithAllRooms++;
+                            if ($bldPlan) $buildingsWithPlan++;
+                            if ($bldExtReady) $buildingsWithExtinguishers++;
+
+                            // Collect issues for Ongoing Improvement
+                            if (!$bldRoomsReady) $roomIssuesModules[] = $b->building_no;
+                            if ($bldAlarms === 0) {
+                                $alarmIssuesModules[] = $b->building_no;
+                            } else {
+                                $badAlarmStatuses = ['offline', 'broken', 'missing', 'jammed', 'under-repair', 'system-error'];
+                                if ($b->alarmSystems->whereIn('status', $badAlarmStatuses)->count() > 0) {
+                                    $alarmIssuesModules[] = $b->building_no;
+                                }
+                            }
+                            if (!$bldPlan) $planIssuesModules[] = $b->building_no;
+                            if (!$bldExtReady) {
+                                $extinguisherIssuesModules[] = $b->building_no;
+                            } else {
+                                $badExtStatuses = ['expired', 'broken', 'missing', 'for-purchase', 'empty'];
+                                if ($b->fireExtinguishers->whereIn('status', $badExtStatuses)->count() > 0) {
+                                    $extinguisherIssuesModules[] = $b->building_no;
+                                }
+                            }
+
+                            if ($this->calculateBuildingCompliance($b) < 80) {
+                                $buildingIssuesModules[] = $b->building_no;
+                            }
+                        }
+
+                        $schoolConfig['has_alarms'] = $buildingsWithAlarms > 0;
+                        $schoolConfig['has_rooms'] = $buildingsWithAllRooms > 0;
+                        $schoolConfig['has_extinguishers'] = $buildingsWithExtinguishers > 0;
+                        $schoolConfig['has_plans'] = $buildingsWithPlan > 0;
+
+                        $schoolConfig['needs_alarm'] = $buildingsWithAlarms < $totalBldgs;
+                        $schoolConfig['needs_room'] = $buildingsWithAllRooms < $totalBldgs;
+                        $schoolConfig['needs_plan'] = $buildingsWithPlan < $totalBldgs;
+                        $schoolConfig['needs_extinguisher'] = $buildingsWithExtinguishers < $totalBldgs;
+                    } else {
+                        $schoolConfig['needs_alarm'] = true;
+                        $schoolConfig['needs_room'] = true;
+                        $schoolConfig['needs_plan'] = true;
+                        $schoolConfig['needs_extinguisher'] = true;
+                        $isUnconfigured = true;
+                    }
                 }
 
-                $school->last_inspection_date = $school->extinguishers()
-                    ->latest('date_checked')
-                    ->first()
-                    ?->date_checked ?? null;
+                // Determine unconfigured status
+                if ($school->buildings->count() === 0 || (!$schoolConfig['has_alarms'] && !$schoolConfig['has_plans'] && !$schoolConfig['has_rooms'])) {
+                    $isUnconfigured = true;
+                    $issues = ['Setup Needed'];
+                } else {
+                    if (count($buildingIssuesModules) > 0) $issues[] = 'Building Issues';
+                    if (count($alarmIssuesModules) > 0) $issues[] = 'Alarm Issues';
+                    if (count($roomIssuesModules) > 0) $issues[] = 'Room Issues';
+                    if (count($extinguisherIssuesModules) > 0) $issues[] = 'Fire Extinguisher Issues';
+                    if (count($planIssuesModules) > 0) $issues[] = 'Evacuation Plan Issues';
+                }
+
+                if ($isUnconfigured) {
+                    $school->status = 'unconfigured';
+                } elseif (count($issues) > 0) {
+                    $school->status = 'warning'; // Ongoing Improvement
+                } else {
+                    $school->status = 'passed';
+                    $issues = ['None'];
+                }
+
+                $school->issues_list = $issues;
+                $school->issues_count = ($school->status === 'passed') ? 0 : count($issues);
+                $school->config_status = $schoolConfig;
+
+                // For the "Ongoing Improvement" details modal, provide specific counts/lists
+                $school->module_issues = [
+                    'buildings' => $buildingIssuesModules,
+                    'alarms' => $alarmIssuesModules,
+                    'rooms' => $roomIssuesModules,
+                    'extinguishers' => $extinguisherIssuesModules,
+                    'plans' => $planIssuesModules,
+                ];
+
+                // Last Inspection / Real-time configuration date
+                // Check all relevant tables for latest update
+                $updates = [];
+                $updates[] = $school->updated_at;
+                foreach ($school->buildings as $b) {
+                    $updates[] = $b->updated_at;
+                    foreach ($b->fireExtinguishers as $e) $updates[] = $e->updated_at;
+                    foreach ($b->alarmSystems as $a) $updates[] = $a->updated_at;
+                    if ($b->evacuationPlan) $updates[] = $b->evacuationPlan->updated_at;
+                }
+                
+                $lastConfig = collect($updates)->filter()->max();
+                $school->last_inspection_date = $lastConfig ? $lastConfig : null;
 
                 return $school;
             });
@@ -107,6 +224,31 @@ class FireSafetyController extends Controller
         return 'warning';
     }
 
+    public function setActiveSchool(Request $request, $id)
+    {
+        $school = FireSafetySchool::findOrFail($id);
+        
+        // If user is not admin and trying to set a school that isn't theirs (though middleware/logic should prevent fetching others)
+        if (auth()->user()->role !== 'admin' && auth()->user()->school_id != $id) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        session(['fire_safety_active_school_id' => $id]);
+
+        return response()->json(['success' => true]);
+    }
+
+    private function getActiveSchool($schools) {
+        if ($schools->isEmpty()) return null;
+
+        $activeId = session('fire_safety_active_school_id');
+        
+        // If specific school is inactive or deleted, fallback
+        $activeSchool = $schools->where('id', $activeId)->first();
+
+        return $activeSchool ?? $schools->first();
+    }
+
     public function alarmSystems()
     {
         $query = FireSafetySchool::with(['alarmSystems.buildings', 'buildings']);
@@ -116,11 +258,14 @@ class FireSafetyController extends Controller
         }
 
         $schools = $query->get();
+        $activeSchool = $this->getActiveSchool($schools);
+
         $alarmTypes = SystemConfiguration::where('config_type', 'alarm_type')->where('is_active', true)->orderBy('sort_order')->get();
         $alarmStatusesByType = SystemConfiguration::where('config_type', 'alarm_status')->where('is_active', true)->whereNotNull('parent_id')->get()->groupBy('parent_id');
 
         return view('fire-safety.alarm-systems', [
             'schools' => $schools,
+            'activeSchool' => $activeSchool,
             'alarmTypes' => $alarmTypes,
             'alarmStatusesByType' => $alarmStatusesByType
         ]);
@@ -353,6 +498,7 @@ class FireSafetyController extends Controller
         }
 
         $schools = $query->get();
+        $activeSchool = $this->getActiveSchool($schools);
 
         $calculatedPriorities = SystemConfiguration::where('config_type', 'calculated_priority')
             ->orderBy('sort_order')
@@ -363,6 +509,7 @@ class FireSafetyController extends Controller
 
         return view('fire-safety.extinguishers', [
             'schools' => $schools,
+            'activeSchool' => $activeSchool,
             'calculatedPriorities' => $calculatedPriorities,
             'roomTypes' => $roomTypes,
         ]);
@@ -865,10 +1012,12 @@ public function getRoom($id)
         }
 
         $schools = $query->get();
+        $activeSchool = $this->getActiveSchool($schools);
         $buildingTypes = SystemConfiguration::where('config_type', 'building_type')->where('is_active', true)->orderBy('sort_order')->get();
 
         return view('fire-safety.buildings',[
             'schools' => $schools,
+            'activeSchool' => $activeSchool,
             'buildingTypes' => $buildingTypes
         ]);
     }
@@ -1388,8 +1537,9 @@ public function getRoom($id)
         }
 
         $schools = $query->get();
+        $activeSchool = $this->getActiveSchool($schools);
 
-        return view('fire-safety.evacuation-plans', compact('schools'));
+        return view('fire-safety.evacuation-plans', compact('schools', 'activeSchool'));
     }
     public function storeEvacuationPlan(Request $request)
     {
@@ -1522,13 +1672,16 @@ public function getRoom($id)
             }, $arr)));
         }
         return response()->json([
-            'building_name' => $building->building_name,
-            'building_no' => $building->building_no,
-            'rooms' => $building->rooms ?? 0,
-            'exits' => $building->emergency_exits ?? 0,
-            'alarms' => $building->functional_alarms_count,
-            'extinguishers' => $building->active_extinguishers_count,
-            'features' => $featuresDisplay,
+            'success' => true,
+            'building' => [
+                'building_name' => $building->building_name,
+                'building_no' => $building->building_no,
+                'rooms' => $building->rooms ?? 0,
+                'emergency_exits' => $building->emergency_exits ?? 0,
+                'alarms' => $building->functional_alarms_count,
+                'extinguishers' => $building->active_extinguishers_count,
+                'features' => $featuresDisplay,
+            ]
         ]);
     }
 
@@ -1989,11 +2142,28 @@ public function getRoom($id)
     public function storeAlert(Request $request)
     {
         $validated = $request->validate([
-            'school_id' => 'required|exists:firesafety_school_information,id',
+            'school_id' => 'required|string',
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'type' => 'required|string|in:danger,warning,info'
         ]);
+
+        if ($validated['school_id'] === 'all') {
+            $schools = FireSafetySchool::all();
+            foreach ($schools as $school) {
+                $alerts = $school->alerts ?? [];
+                $alerts[] = [
+                    'id' => uniqid(),
+                    'title' => $validated['title'],
+                    'description' => $validated['description'],
+                    'type' => $validated['type'],
+                    'created_at' => now()->toDateTimeString()
+                ];
+                $school->alerts = $alerts;
+                $school->save();
+            }
+            return response()->json(['success' => true, 'message' => 'Alert applied to all schools!']);
+        }
 
         $school = FireSafetySchool::findOrFail($validated['school_id']);
 
@@ -2015,12 +2185,30 @@ public function getRoom($id)
     public function storeEvent(Request $request)
     {
         $validated = $request->validate([
-            'school_id' => 'required|exists:firesafety_school_information,id',
+            'school_id' => 'required|string',
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'date' => 'required|date',
             'time' => 'nullable'
         ]);
+
+        if ($validated['school_id'] === 'all') {
+            $schools = FireSafetySchool::all();
+            foreach ($schools as $school) {
+                $events = $school->events ?? [];
+                $events[] = [
+                    'id' => uniqid(),
+                    'title' => $validated['title'],
+                    'description' => $validated['description'],
+                    'date' => $validated['date'],
+                    'time' => $validated['time'],
+                    'created_at' => now()->toDateTimeString()
+                ];
+                $school->events = $events;
+                $school->save();
+            }
+            return response()->json(['success' => true, 'message' => 'Event scheduled for all schools!']);
+        }
 
         $school = FireSafetySchool::findOrFail($validated['school_id']);
 

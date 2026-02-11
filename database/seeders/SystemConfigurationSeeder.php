@@ -21,16 +21,15 @@ class SystemConfigurationSeeder extends Seeder
             ['config_type' => 'building_type', 'name' => 'Canteen', 'sort_order' => 4],
             
             // Alarm Types
-            ['config_type' => 'alarm_type', 'name' => 'Manual Pull Station'],
-            ['config_type' => 'alarm_type', 'name' => 'Smoke Detector'],
-            ['config_type' => 'alarm_type', 'name' => 'Heat Detector'],
-            ['config_type' => 'alarm_type', 'name' => 'Flame Detector'],
+            ['config_type' => 'alarm_type', 'name' => 'Bell'],
+            ['config_type' => 'alarm_type', 'name' => 'Mechanical'],
+            ['config_type' => 'alarm_type', 'name' => 'Digital'],
             
             // Alarm Statuses
             ['config_type' => 'alarm_status', 'name' => 'Functional', 'color_class' => 'success'],
-            ['config_type' => 'alarm_status', 'name' => 'Faulty', 'color_class' => 'warning'],
-            ['config_type' => 'alarm_status', 'name' => 'Offline', 'color_class' => 'danger'],
-            ['config_type' => 'alarm_status', 'name' => 'Repair Needed', 'color_class' => 'info'],
+            ['config_type' => 'alarm_status', 'name' => 'Broken', 'color_class' => 'danger'],
+            ['config_type' => 'alarm_status', 'name' => 'Missing', 'color_class' => 'danger'],
+            ['config_type' => 'alarm_status', 'name' => 'Not Installed', 'color_class' => 'info'],
             
             // Extinguisher Types
             ['config_type' => 'extinguisher_type', 'name' => 'Dry Chemical (ABC)'],
