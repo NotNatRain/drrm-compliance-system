@@ -282,26 +282,6 @@
             </ul>
 
             <hr class="bg-white my-4">
-
-            <!-- Quick Stats -->
-            <div class="mt-4">
-                <h6 class="text-white mb-3">Building Safety Overview</h6>
-                <div id="sidebarStats">
-                    <!-- Stats will be loaded via JavaScript -->
-                    <div class="text-center text-white py-3">
-                        <i class="fas fa-spinner fa-spin"></i> Loading stats...
-                    </div>
-                </div>
-
-                <div class="d-grid gap-2 mt-3">
-                    <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addBuildingModal">
-                        <i class="fas fa-plus me-2"></i> Add Building
-                    </button>
-                    <button class="btn btn-light btn-sm" onclick="generateBuildingReport()">
-                        <i class="fas fa-file-pdf me-2"></i> Safety Report
-                    </button>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -658,12 +638,9 @@
                                 <label class="form-label">Building Type</label>
                                 <select class="form-control" name="building_type" id="building_type_select" required>
                                     <option value="">Select Type</option>
-                                    <option value="classroom">Classroom Building</option>
-                                    <option value="administrative">Administrative Building</option>
-                                    <option value="library">Library</option>
-                                    <option value="laboratory">Laboratory</option>
-                                    <option value="gymnasium">Gymnasium (1 Floor/1 Room)</option>
-                                    <option value="cafeteria">Cafeteria (1 Floor/1 Room)</option>
+                                    @foreach($buildingTypes as $type)
+                                        <option value="{{ $type->name }}">{{ $type->name }} {{ in_array(strtolower($type->name), ['gymnasium', 'cafeteria']) ? '(1 Floor/1 Room)' : '' }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                         </div>
@@ -1247,12 +1224,21 @@
                 removeFloorSelect.innerHTML = '<option value="">-- No Floor to Remove --</option>';
                 removeRoomSelect.innerHTML = '<option value="">-- No Room to Remove --</option>';
 
-                // Add floors
-                for (let i = 1; i <= building.floors; i++) {
+                // Add floors (never allow removing floor 1 - building must have at least 1 floor)
+                for (let i = 2; i <= building.floors; i++) {
                     const opt = document.createElement('option');
                     opt.value = i;
                     opt.textContent = `Floor no. ${i}`;
                     removeFloorSelect.appendChild(opt);
+                }
+                const manageSection = document.getElementById('manageFloorsRoomsSection');
+                const floorRemovalRow = removeFloorSelect.closest('.col-md-6');
+                if (floorRemovalRow) {
+                    if (building.floors <= 1) {
+                        floorRemovalRow.style.display = 'none';
+                    } else {
+                        floorRemovalRow.style.display = '';
+                    }
                 }
 
                 // Add rooms
@@ -1993,13 +1979,11 @@
 
             try {
                 const response = await fetch(`/fire-safety/inspection/${inspectionId}/cancel`, {
-                    method: 'POST',
+                    method: 'DELETE',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ _method: 'DELETE' })
+                        'Accept': 'application/json'
+                    }
                 });
 
                 const data = await response.json();

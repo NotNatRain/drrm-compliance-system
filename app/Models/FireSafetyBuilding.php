@@ -62,6 +62,11 @@ class FireSafetyBuilding extends Model
     {
         return $this->hasMany(FireSafetyRoom::class, 'building_id');
     }
+
+    public function drills(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(FireSafetyEvacuationDrill::class, 'fire_safety_drill_building', 'building_id', 'drill_id');
+    }
     
     // Add this new relationship
     public function evacuationPlan(): HasOne

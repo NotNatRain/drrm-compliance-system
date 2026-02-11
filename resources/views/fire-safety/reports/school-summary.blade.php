@@ -7,7 +7,7 @@
     <style>
         @page {
             size: landscape;
-            margin: 1cm;
+            margin: 0;
         }
         body {
             font-family: Arial, sans-serif;
@@ -58,6 +58,7 @@
             }
             body {
                 -webkit-print-color-adjust: exact;
+                margin: 1cm;
             }
         }
         .btn-print {

@@ -183,13 +183,7 @@
 
                 <div class="col-auto">
                     <div class="d-flex align-items-center">
-                        <!-- User Accounts Link (Admin Only) -->
-                        @if(auth()->user()->role === 'admin')
-                        <a href="#users-tab-pane" class="text-white me-3 text-decoration-none" title="User Accounts" onclick="document.getElementById('users-tab').click()">
-                            <i class="fas fa-users-cog fa-lg"></i>
-                            <span class="d-none d-xl-inline ms-1">User Accounts</span>
-                        </a>
-                        @endif
+                        <!-- User Accounts Link removed per requirements -->
 
                         <div class="dropdown">
                             <a href="#" class="text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
@@ -264,24 +258,6 @@
             </ul>
 
             <hr class="bg-white my-4">
-
-            <!-- User Info -->
-            <div class="text-white small">
-                <div class="mb-2">
-                    <i class="fas fa-user me-2"></i>
-                    <strong>{{ Auth::user()->name }}</strong>
-                </div>
-                <div class="mb-2">
-                    <i class="fas fa-user-tag me-2"></i>
-                    <span>{{ ucfirst(Auth::user()->role) }}</span>
-                </div>
-                @if(Auth::user()->school)
-                <div class="mb-3">
-                    <i class="fas fa-school me-2"></i>
-                    <span>{{ Auth::user()->school->school_name }}</span>
-                </div>
-                @endif
-            </div>
         </div>
     </div>
 
@@ -317,14 +293,14 @@
                                         <i class="fas fa-sliders-h me-2"></i> System Customization
                                     </button>
                                     <button class="nav-link settings-tab-btn"
-                                            id="users-tab"
+                                            id="backup-tab"
                                             data-bs-toggle="tab"
-                                            data-bs-target="#users-tab-pane"
+                                            data-bs-target="#backup-tab-pane"
                                             type="button"
                                             role="tab"
-                                            aria-controls="users-tab-pane"
+                                            aria-controls="backup-tab-pane"
                                             aria-selected="false">
-                                        <i class="fas fa-users me-2"></i> User Management
+                                        <i class="fas fa-database me-2"></i> Backup &amp; Restore
                                     </button>
                                 </div>
                             </nav>
@@ -345,9 +321,14 @@
                                 <h6 class="m-0 fw-bold text-primary">
                                     <i class="fas fa-school me-2"></i> All Schools
                                 </h6>
-                                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addSchoolModal">
-                                    <i class="fas fa-plus me-2"></i> Add School
-                                </button>
+                                <div class="d-flex">
+                                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addSchoolModal">
+                                        <i class="fas fa-plus me-2"></i> Add School
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary ms-2" type="button" onclick="openSchoolHistoryModal()">
+                                        <i class="fas fa-history me-1"></i> Removed School
+                                    </button>
+                                </div>
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
@@ -477,14 +458,10 @@
                                                     data-type="building_type"
                                                     data-name="{{ $type->name }}"
                                                     data-description="{{ $type->description }}"
-                                                    data-is-active="{{ $type->is_active }}">
+                                                    data-is-active="{{ $type->is_active }}"
+                                                    data-min-floors="{{ $type->min_floors ?? '' }}"
+                                                    data-total-rooms="{{ $type->total_rooms ?? '' }}">
                                                 <i class="fas fa-edit"></i> Edit
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-danger delete-config-btn"
-                                                    data-id="{{ $type->id }}"
-                                                    data-type="building_type"
-                                                    data-name="{{ $type->name }}">
-                                                <i class="fas fa-trash"></i> Delete
                                             </button>
                                         </div>
                                     </div>
@@ -501,53 +478,40 @@
                                 <h6 class="m-0 fw-bold text-primary">
                                     <i class="fas fa-bell me-2"></i> Alarm Configuration
                                 </h6>
-                                <div>
-                                    <button class="btn btn-sm btn-primary me-2" data-bs-toggle="modal" data-bs-target="#addAlarmTypeModal">
-                                        <i class="fas fa-plus"></i> Add Type
-                                    </button>
-                                    <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#addAlarmStatusModal">
-                                        <i class="fas fa-plus"></i> Add Status
-                                    </button>
-                                </div>
+                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addAlarmTypeModal">
+                                    <i class="fas fa-plus"></i> Add Type
+                                </button>
                             </div>
                             <div class="card-body">
-                                <div class="mb-4">
-                                    <h6>Alarm Types</h6>
-                                    <div id="alarmTypesList">
-                                        @foreach($alarmTypes as $type)
-                                        <div class="config-item">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <strong>{{ $type->name }}</strong>
-                                                <span class="badge config-badge {{ $type->is_active ? 'bg-success' : 'bg-secondary' }}">
-                                                    {{ $type->is_active ? 'Active' : 'Inactive' }}
-                                                </span>
-                                            </div>
-                                            <div class="mt-2">
-                                                <button class="btn btn-sm btn-outline-primary edit-config-btn"
-                                                        data-id="{{ $type->id }}"
-                                                        data-type="alarm_type"
-                                                        data-name="{{ $type->name }}"
-                                                        data-is-active="{{ $type->is_active }}">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </button>
-                                            </div>
+                                <h6>Alarm Types &amp; Statuses</h6>
+                                <div id="alarmTypesList">
+                                    @foreach($alarmTypes as $type)
+                                    @php $typeStatuses = $alarmStatusesByType->get($type->id, collect()); @endphp
+                                    <div class="config-item mb-3">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <strong>{{ $type->name }}</strong>
+                                            <span class="badge config-badge {{ $type->is_active ? 'bg-success' : 'bg-secondary' }}">
+                                                {{ $type->is_active ? 'Active' : 'Inactive' }}
+                                            </span>
                                         </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <h6>Alarm Status Options</h6>
-                                    <div id="alarmStatusList">
-                                        @foreach($alarmStatuses as $status)
-                                        <div class="config-item">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <strong>{{ $status->name }}</strong>
-                                                <span class="badge config-badge {{ $status->color_class }}">{{ $status->category }}</span>
-                                            </div>
+                                        @if($typeStatuses->isNotEmpty())
+                                        <ul class="list-unstyled small mb-2 ms-3 mt-1">
+                                            @foreach($typeStatuses as $status)
+                                            <li><span class="badge {{ $status->color_class ?? 'bg-secondary' }} me-1">{{ $status->name }}</span></li>
+                                            @endforeach
+                                        </ul>
+                                        @endif
+                                        <div class="mt-2">
+                                            <button class="btn btn-sm btn-outline-primary edit-config-btn"
+                                                    data-id="{{ $type->id }}"
+                                                    data-type="alarm_type"
+                                                    data-name="{{ $type->name }}"
+                                                    data-is-active="{{ $type->is_active }}">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
                                         </div>
-                                        @endforeach
                                     </div>
+                                    @endforeach
                                 </div>
                             </div>
                         </div>
@@ -600,8 +564,26 @@
                                         @foreach($extinguisherStatuses as $status)
                                         <div class="config-item">
                                             <div class="d-flex justify-content-between align-items-center">
-                                                <strong>{{ $status->name }}</strong>
-                                                <span class="badge config-badge {{ $status->color_class }}">{{ $status->category }}</span>
+                                                <div>
+                                                    <strong>{{ $status->name }}</strong>
+                                                    @if($status->pressure_min !== null || $status->pressure_max !== null)
+                                                    <div class="small text-muted">Pressure: {{ $status->pressure_min !== null && $status->pressure_max !== null ? $status->pressure_min . ' - ' . $status->pressure_max : ($status->pressure_min ?? $status->pressure_max) }} (psi)</div>
+                                                    @else
+                                                    <div class="small text-muted">Pressure: —</div>
+                                                    @endif
+                                                </div>
+                                                <span class="badge config-badge {{ $status->color_class ?? 'bg-secondary' }}">{{ $status->category ?? '—' }}</span>
+                                            </div>
+                                            <div class="mt-2">
+                                                <button class="btn btn-sm btn-outline-primary edit-config-btn"
+                                                        data-id="{{ $status->id }}"
+                                                        data-type="extinguisher_status"
+                                                        data-name="{{ $status->name }}"
+                                                        data-description="{{ $status->description }}"
+                                                        data-pressure-min="{{ $status->pressure_min ?? '' }}"
+                                                        data-pressure-max="{{ $status->pressure_max ?? '' }}">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </button>
                                             </div>
                                         </div>
                                         @endforeach
@@ -648,6 +630,123 @@
                                         </div>
                                     </div>
                                     @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Room Types & Calculated Priority -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card dashboard-card h-100">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 fw-bold text-primary">
+                                    <i class="fas fa-door-open me-2"></i> Room Types
+                                </h6>
+                                <div>
+                                    <button class="btn btn-sm btn-info me-2" data-bs-toggle="modal" data-bs-target="#addCalculatedPriorityModal">
+                                        <i class="fas fa-plus"></i> Add Priority
+                                    </button>
+                                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addRoomTypeModal">
+                                        <i class="fas fa-plus"></i> Add Room Type
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-4">
+                                    <h6>Calculated Priority</h6>
+                                    <div id="calculatedPriorityList">
+                                        @foreach(($calculatedPriorities ?? collect()) as $p)
+                                        <div class="config-item">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong>{{ $p->name }}</strong>
+                                                    <div class="small text-muted">Max covered rooms: {{ $p->max_rooms_covered ?? '—' }} (max 5)</div>
+                                                </div>
+                                            </div>
+                                            <div class="mt-2">
+                                                <button class="btn btn-sm btn-outline-primary edit-config-btn"
+                                                        data-id="{{ $p->id }}"
+                                                        data-type="calculated_priority"
+                                                        data-name="{{ $p->name }}"
+                                                        data-description="{{ $p->description }}"
+                                                        data-max-rooms="{{ $p->max_rooms_covered ?? '' }}">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </button>
+                                            </div>
+                                        </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h6>Room Types</h6>
+                                    <div id="roomTypesList">
+                                        @foreach(($roomTypes ?? collect()) as $rt)
+                                        @php $p = ($calculatedPriorities ?? collect())->firstWhere('id', $rt->parent_id); @endphp
+                                        <div class="config-item">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong>{{ $rt->name }}</strong>
+                                                    <div class="small text-muted">
+                                                        Priority: {{ $p->name ?? '—' }}
+                                                        @if($p && $p->max_rooms_covered)
+                                                            (Up to {{ $p->max_rooms_covered }} rooms)
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="mt-2">
+                                                <button class="btn btn-sm btn-outline-primary edit-config-btn"
+                                                        data-id="{{ $rt->id }}"
+                                                        data-type="room_type"
+                                                        data-name="{{ $rt->name }}"
+                                                        data-description="{{ $rt->description }}"
+                                                        data-parent-id="{{ $rt->parent_id ?? '' }}">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </button>
+                                            </div>
+                                        </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Backup & Restore Tab -->
+            <div class="tab-pane fade" id="backup-tab-pane">
+                <div class="row">
+                    <div class="col-lg-10">
+                        <div class="card dashboard-card mb-4">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 fw-bold text-primary">
+                                    <i class="fas fa-database me-2"></i> Backup &amp; Restore (Fire Safety)
+                                </h6>
+                                <button class="btn btn-sm btn-primary" type="button" onclick="createFireSafetyBackup()">
+                                    <i class="fas fa-file-export me-1"></i> Create Backup
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-warning small">
+                                    Restoring a backup will overwrite the current Fire Safety data in the database.
+                                </div>
+
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-hover align-middle">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>Backup file</th>
+                                                <th class="text-end">Size</th>
+                                                <th class="text-end">Last modified</th>
+                                                <th class="text-end">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="fireSafetyBackupsTbody">
+                                            <tr><td colspan="4" class="text-muted text-center">Open this tab to load backups…</td></tr>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
@@ -870,7 +969,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">School ID *</label>
-                            <input type="text" class="form-control" name="school_id" id="editSchoolIdDisplay" required readonly>
+                            <input type="text" class="form-control" id="editSchoolIdDisplay" required readonly>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Address *</label>
@@ -929,6 +1028,16 @@
                             <label class="form-label">Description</label>
                             <textarea class="form-control" name="description" rows="3"></textarea>
                         </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Limit number of floors (Optional)</label>
+                                <input type="number" class="form-control" name="min_floors" id="addBuildingTypeMinFloors" min="0" placeholder="e.g. 0 or leave blank">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Limit number of rooms (Optional)</label>
+                                <input type="number" class="form-control" name="total_rooms" id="addBuildingTypeTotalRooms" min="0" placeholder="e.g. 0 or leave blank">
+                            </div>
+                        </div>
                         <div class="mb-3">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="is_active" id="buildingTypeActive" checked>
@@ -942,6 +1051,252 @@
                     <button type="button" class="btn btn-primary" onclick="saveBuildingType()">
                         <i class="fas fa-save me-2"></i> Save Type
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Safety Feature Modal -->
+    <div class="modal fade" id="addSafetyFeatureModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
+                    <h5 class="modal-title"><i class="fas fa-shield-alt me-2"></i> Add Safety Feature</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addSafetyFeatureForm">
+                        @csrf
+                        <div class="mb-3">
+                            <label class="form-label">Name *</label>
+                            <input type="text" class="form-control" name="name" required placeholder="e.g. Fire Department Break-in Tools">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" name="description" rows="2" placeholder="Optional description"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <input type="text" class="form-control" name="category" placeholder="e.g. Equipment">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveSafetyFeature()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Calculated Priority Modal -->
+    <div class="modal fade" id="addCalculatedPriorityModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
+                    <h5 class="modal-title"><i class="fas fa-calculator me-2"></i> Add Calculated Priority</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addCalculatedPriorityForm">
+                        @csrf
+                        <div class="mb-3">
+                            <label class="form-label">Priority name *</label>
+                            <input type="text" class="form-control" name="name" required placeholder="e.g. Shared Coverage (Up to 3 Classrooms)">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Number of rooms covered *</label>
+                            <input type="number" class="form-control" name="max_rooms_covered" required min="1" max="5" placeholder="1 to 5">
+                            <small class="text-muted">Maximum allowed is 5 rooms.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" name="description" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveCalculatedPriority()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Room Type Modal -->
+    <div class="modal fade" id="addRoomTypeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
+                    <h5 class="modal-title"><i class="fas fa-door-open me-2"></i> Add Room Type</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addRoomTypeForm">
+                        @csrf
+                        <div class="mb-3">
+                            <label class="form-label">Room type name *</label>
+                            <input type="text" class="form-control" name="name" required placeholder="e.g. Computer Lab">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" name="description" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Calculated Priority *</label>
+                            <select class="form-control" name="parent_id" required>
+                                <option value="">Select priority</option>
+                                @foreach(($calculatedPriorities ?? collect()) as $p)
+                                    <option value="{{ $p->id }}">{{ $p->name }} (Up to {{ $p->max_rooms_covered ?? '—' }} rooms)</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveRoomType()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Extinguisher Type Modal -->
+    <div class="modal fade" id="addExtinguisherTypeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
+                    <h5 class="modal-title"><i class="fas fa-fire-extinguisher me-2"></i> Add Extinguisher Type</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addExtinguisherTypeForm">
+                        @csrf
+                        <div class="mb-3">
+                            <label class="form-label">Type name *</label>
+                            <input type="text" class="form-control" name="name" required placeholder="e.g. Dry Chemical (ABC)">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Code</label>
+                            <input type="text" class="form-control" name="code" placeholder="e.g. ABC">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" name="description" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveExtinguisherType()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Extinguisher Status Modal -->
+    <div class="modal fade" id="addExtinguisherStatusModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
+                    <h5 class="modal-title"><i class="fas fa-fire-extinguisher me-2"></i> Add Extinguisher Status</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addExtinguisherStatusForm">
+                        @csrf
+                        <div class="mb-3">
+                            <label class="form-label">Status name *</label>
+                            <input type="text" class="form-control" name="name" required placeholder="e.g. Active">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Pressure level range (psi) *</label>
+                            <div class="row">
+                                <div class="col-6">
+                                    <input type="number" step="0.01" min="0" class="form-control" name="pressure_min" id="extStatusPressureMin" required placeholder="Min">
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" step="0.01" min="0" class="form-control" name="pressure_max" id="extStatusPressureMax" required placeholder="Max">
+                                </div>
+                            </div>
+                            <small class="text-muted">Set the pressure range for this status (e.g. 100–125 psi).</small>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveExtinguisherStatus()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Alarm Type Modal -->
+    <div class="modal fade" id="addAlarmTypeModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
+                    <h5 class="modal-title"><i class="fas fa-bell me-2"></i> Add Alarm Type</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addAlarmTypeForm">
+                        @csrf
+                        <div class="mb-3">
+                            <label class="form-label">Alarm type name *</label>
+                            <input type="text" class="form-control" name="name" id="alarmTypeName" required placeholder="e.g. Smoke Detector">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Statuses for this alarm type * <small class="text-muted">(type a status, then another field will appear)</small></label>
+                            <div id="alarmTypeStatusesContainer">
+                                <div class="input-group mb-2">
+                                    <input type="text" class="form-control alarm-status-input" name="statuses[]" placeholder="e.g. Functional">
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveAlarmType()">
+                        <i class="fas fa-save me-2"></i> Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- School History Modal (Removed Schools) -->
+    <div class="modal fade" id="schoolHistoryModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #6c757d; color: white;">
+                    <h5 class="modal-title">
+                        <i class="fas fa-history me-2"></i> School's History (Removed Schools)
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm" id="schoolHistoryTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date Removed</th>
+                                    <th>School</th>
+                                    <th>DRRM Coordinator</th>
+                                    <th>School Head</th>
+                                    <th>Summary</th>
+                                    <th>Evac. Plan Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -1036,6 +1391,8 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
 
     <script>
+        // Server-provided configuration lists for dynamic edit forms
+        window._calculatedPriorities = @json($calculatedPriorities ?? []);
         // Initialize sortable lists
         document.addEventListener('DOMContentLoaded', function() {
             // Initialize Sortable for building types
@@ -1069,6 +1426,11 @@
                 loadUsers();
             }
 
+            // Load backups list when Backup tab is opened
+            document.getElementById('backup-tab')?.addEventListener('shown.bs.tab', function () {
+                loadFireSafetyBackups();
+            });
+
             // Set up edit school buttons
             document.querySelectorAll('.edit-school-btn').forEach(button => {
                 button.addEventListener('click', async function() {
@@ -1094,9 +1456,27 @@
                     const configName = this.getAttribute('data-name');
                     const configDescription = this.getAttribute('data-description');
                     const configIsActive = this.getAttribute('data-is-active');
-                    
-                    // Show edit modal (you need to create this modal)
-                    editConfigItem(configId, configType, configName, configDescription, configIsActive);
+                    const configMinFloors = this.getAttribute('data-min-floors');
+                    const configTotalRooms = this.getAttribute('data-total-rooms');
+                    const configPressureMin = this.getAttribute('data-pressure-min');
+                    const configPressureMax = this.getAttribute('data-pressure-max');
+                    const configCategory = this.getAttribute('data-category');
+                    const configParentId = this.getAttribute('data-parent-id');
+                    const configMaxRooms = this.getAttribute('data-max-rooms');
+                    editConfigItem(
+                        configId,
+                        configType,
+                        configName,
+                        configDescription,
+                        configIsActive,
+                        configMinFloors,
+                        configTotalRooms,
+                        configPressureMin,
+                        configPressureMax,
+                        configCategory,
+                        configParentId,
+                        configMaxRooms
+                    );
                 });
             });
 
@@ -1271,13 +1651,39 @@
         // Admin: Delete school
         async function deleteSchool(schoolId, schoolName) {
             const result = await Swal.fire({
-                title: 'Are you sure?',
-                text: `You are about to delete "${schoolName}". This will also delete all associated buildings, equipment, and data. This action cannot be undone!`,
+                title: 'Delete School?',
+                html: `
+                    <p class="mb-2">You are about to delete "<strong>${schoolName}</strong>".</p>
+                    <p class="text-danger small mb-3">
+                        This will also delete all associated buildings, alarm systems, fire extinguishers, rooms, and evacuation plans.
+                        This action cannot be undone.
+                    </p>
+                    <div class="mb-2 text-start">
+                        <label class="form-label fw-bold small">Confirm with your account password</label>
+                        <input type="password" id="swal-delete-password" class="form-control form-control-sm" placeholder="Enter your password to enable deletion">
+                    </div>
+                `,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
                 cancelButtonColor: '#3085d6',
-                confirmButtonText: 'Yes, delete it!'
+                confirmButtonText: 'Yes, delete it!',
+                didOpen: () => {
+                    const input = document.getElementById('swal-delete-password');
+                    const confirmBtn = Swal.getConfirmButton();
+                    confirmBtn.disabled = true;
+                    input.addEventListener('input', () => {
+                        confirmBtn.disabled = input.value.trim().length === 0;
+                    });
+                },
+                preConfirm: () => {
+                    const pwd = document.getElementById('swal-delete-password').value.trim();
+                    if (!pwd) {
+                        Swal.showValidationMessage('Password is required');
+                        return false;
+                    }
+                    return pwd;
+                }
             });
 
             if (!result.isConfirmed) return;
@@ -1287,8 +1693,10 @@
                     method: 'DELETE',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json'
-                    }
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ password: result.value })
                 });
 
                 const data = await response.json();
@@ -1296,7 +1704,7 @@
                 if (data.success) {
                     Swal.fire(
                         'Deleted!',
-                        'School has been deleted.',
+                        'School has been deleted and archived.',
                         'success'
                     ).then(() => {
                         location.reload();
@@ -1305,7 +1713,7 @@
                     Swal.fire({
                         icon: 'error',
                         title: 'Denied',
-                        text: 'Error: ' + (data.message || 'Failed to delete school')
+                        text: data.message || 'Failed to delete school'
                     });
                 }
 
@@ -1316,6 +1724,61 @@
                     title: 'System Error',
                     text: 'Failed to delete school'
                 });
+            }
+        }
+
+        // Admin: Open School History (removed schools)
+        async function openSchoolHistoryModal() {
+            const modalEl = document.getElementById('schoolHistoryModal');
+            const tbody = document.querySelector('#schoolHistoryTable tbody');
+            if (!modalEl || !tbody) return;
+
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center">Loading...</td></tr>';
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+
+            try {
+                const resp = await fetch('/fire-safety/school/history');
+                const data = await resp.json();
+
+                if (!resp.ok) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">' + (data.message || 'Failed to load school history.') + '</td></tr>';
+                    return;
+                }
+                if (!Array.isArray(data) || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No removed schools found.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                data.forEach(item => {
+                    const d = item.removed_at ? new Date(item.removed_at).toLocaleString() : 'N/A';
+                    const info = item.item_data || {};
+                    const summary = `Bldgs: ${info.buildings ?? 0}, Alarms: ${info.alarm_systems ?? 0}, Ext.: ${info.extinguishers ?? 0}`;
+                    let evacStatus = info.evacuation_coverage_status || 'unknown';
+                    if (evacStatus === 'good') evacStatus = 'Good';
+                    else if (evacStatus === 'fair') evacStatus = 'Fair';
+                    else if (evacStatus === 'poor') evacStatus = 'Poor';
+                    else evacStatus = 'No plans / Unknown';
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${d}</td>
+                        <td>
+                            <div class="fw-bold">${info.school_name || 'N/A'}</div>
+                            <div class="small text-muted">${info.school_code || '—'}</div>
+                            <div class="small text-muted text-truncate" style="max-width: 220px;">${info.address || ''}</div>
+                        </td>
+                        <td>${info.drrm_coordinator || 'N/A'}</td>
+                        <td>${info.school_head || 'N/A'}</td>
+                        <td>${summary}</td>
+                        <td>${evacStatus}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (e) {
+                console.error(e);
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Failed to load school history.</td></tr>';
             }
         }
 
@@ -1367,6 +1830,314 @@
                     title: 'System Error',
                     text: 'Failed to add building type'
                 });
+            }
+        }
+
+        // Add Alarm Type: dynamic status inputs (when user types, add another field)
+        document.getElementById('addAlarmTypeModal')?.addEventListener('shown.bs.modal', function() {
+            const container = document.getElementById('alarmTypeStatusesContainer');
+            if (!container) return;
+            container.querySelectorAll('.alarm-status-input').forEach(function(inp) {
+                inp.removeEventListener('input', window._alarmStatusInputHandler);
+            });
+            window._alarmStatusInputHandler = function() {
+                const inputs = container.querySelectorAll('.alarm-status-input');
+                const last = inputs[inputs.length - 1];
+                if (last && last.value.trim() !== '') {
+                    const div = document.createElement('div');
+                    div.className = 'input-group mb-2';
+                    div.innerHTML = '<input type="text" class="form-control alarm-status-input" name="statuses[]" placeholder="e.g. Faulty">';
+                    container.appendChild(div);
+                    div.querySelector('input').addEventListener('input', window._alarmStatusInputHandler);
+                }
+            };
+            container.querySelectorAll('.alarm-status-input').forEach(function(inp) {
+                inp.addEventListener('input', window._alarmStatusInputHandler);
+            });
+        });
+
+        async function saveSafetyFeature() {
+            const form = document.getElementById('addSafetyFeatureForm');
+            if (!form || !form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            const formData = new FormData(form);
+            try {
+                const response = await fetch('/fire-safety/config/safety-feature', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    Swal.fire({ icon: 'success', title: 'Saved', text: 'Safety feature added.', timer: 2000, showConfirmButton: false }).then(() => location.reload());
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Notice', text: data.message || 'Failed to add safety feature.' });
+                }
+            } catch (e) {
+                console.error(e);
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to add safety feature.' });
+            }
+        }
+
+        async function saveCalculatedPriority() {
+            const form = document.getElementById('addCalculatedPriorityForm');
+            if (!form || !form.checkValidity()) {
+                form?.reportValidity();
+                return;
+            }
+            const formData = new FormData(form);
+            try {
+                const response = await fetch('/fire-safety/config/calculated-priority', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    Swal.fire({ icon: 'success', title: 'Saved', text: 'Calculated priority added.', timer: 2000, showConfirmButton: false }).then(() => location.reload());
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Notice', text: data.message || 'Failed to add calculated priority.' });
+                }
+            } catch (e) {
+                console.error(e);
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to add calculated priority.' });
+            }
+        }
+
+        async function saveRoomType() {
+            const form = document.getElementById('addRoomTypeForm');
+            if (!form || !form.checkValidity()) {
+                form?.reportValidity();
+                return;
+            }
+            const formData = new FormData(form);
+            try {
+                const response = await fetch('/fire-safety/config/room-type', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    Swal.fire({ icon: 'success', title: 'Saved', text: 'Room type added.', timer: 2000, showConfirmButton: false }).then(() => location.reload());
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Notice', text: data.message || 'Failed to add room type.' });
+                }
+            } catch (e) {
+                console.error(e);
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to add room type.' });
+            }
+        }
+
+        // Backup & Restore (Fire Safety)
+        async function loadFireSafetyBackups() {
+            const tbody = document.getElementById('fireSafetyBackupsTbody');
+            if (!tbody) return;
+            tbody.innerHTML = '<tr><td colspan="4" class="text-muted text-center">Loading…</td></tr>';
+
+            try {
+                const resp = await fetch('/fire-safety/backup/list', { headers: { 'Accept': 'application/json' } });
+                const data = await resp.json();
+                if (!resp.ok || !data.success) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="text-danger text-center">${data.message || 'Failed to load backups.'}</td></tr>`;
+                    return;
+                }
+                const files = data.files || [];
+                if (!files.length) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-muted text-center">No backups found.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = '';
+                files.forEach(f => {
+                    const tr = document.createElement('tr');
+                    const sizeKb = Math.round((f.size || 0) / 1024);
+                    const dt = f.last_modified ? new Date(f.last_modified * 1000).toLocaleString() : '—';
+                    tr.innerHTML = `
+                        <td><code>${f.name}</code></td>
+                        <td class="text-end">${sizeKb} KB</td>
+                        <td class="text-end">${dt}</td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-danger" type="button" onclick="restoreFireSafetyBackup('${f.name.replace(/'/g, "\\'")}')">
+                                <i class="fas fa-file-import me-1"></i> Restore
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (e) {
+                console.error(e);
+                tbody.innerHTML = '<tr><td colspan="4" class="text-danger text-center">Failed to load backups.</td></tr>';
+            }
+        }
+
+        async function createFireSafetyBackup() {
+            try {
+                const resp = await fetch('/fire-safety/backup/create', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await resp.json();
+                if (!resp.ok || !data.success) {
+                    Swal.fire({ icon: 'error', title: 'Backup Failed', text: data.message || 'Failed to create backup.' });
+                    return;
+                }
+                Swal.fire({ icon: 'success', title: 'Backup Created', text: `Saved as ${data.file}` });
+                await loadFireSafetyBackups();
+            } catch (e) {
+                console.error(e);
+                Swal.fire({ icon: 'error', title: 'Backup Failed', text: 'Failed to create backup.' });
+            }
+        }
+
+        async function restoreFireSafetyBackup(fileName) {
+            const first = await Swal.fire({
+                title: 'Restore backup?',
+                text: `This will overwrite current Fire Safety data using: ${fileName}`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Continue'
+            });
+            if (!first.isConfirmed) return;
+
+            const second = await Swal.fire({
+                title: 'Final confirmation',
+                html: `<p class="mb-1"><strong>This is your last warning.</strong></p><p class="mb-0">Proceed restoring <code>${fileName}</code>?</p>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Yes, restore now'
+            });
+            if (!second.isConfirmed) return;
+
+            try {
+                const resp = await fetch('/fire-safety/backup/restore', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ file: fileName })
+                });
+                const data = await resp.json();
+                if (!resp.ok || !data.success) {
+                    Swal.fire({ icon: 'error', title: 'Restore Failed', text: data.message || 'Failed to restore backup.' });
+                    return;
+                }
+                Swal.fire({ icon: 'success', title: 'Restored', text: 'Backup restored successfully.' }).then(() => location.reload());
+            } catch (e) {
+                console.error(e);
+                Swal.fire({ icon: 'error', title: 'Restore Failed', text: 'Failed to restore backup.' });
+            }
+        }
+
+        async function saveExtinguisherType() {
+            const form = document.getElementById('addExtinguisherTypeForm');
+            if (!form || !form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            const formData = new FormData(form);
+            try {
+                const response = await fetch('/fire-safety/config/extinguisher-type', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    Swal.fire({ icon: 'success', title: 'Saved', text: 'Extinguisher type added.', timer: 2000, showConfirmButton: false }).then(() => location.reload());
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Notice', text: data.message || 'Failed to add type.' });
+                }
+            } catch (e) {
+                console.error(e);
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to add extinguisher type.' });
+            }
+        }
+
+        async function saveExtinguisherStatus() {
+            const form = document.getElementById('addExtinguisherStatusForm');
+            if (!form || !form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+            const formData = new FormData(form);
+            try {
+                const response = await fetch('/fire-safety/config/extinguisher-status', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    Swal.fire({ icon: 'success', title: 'Saved', text: 'Extinguisher status added.', timer: 2000, showConfirmButton: false }).then(() => location.reload());
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Notice', text: data.message || 'Failed to add status.' });
+                }
+            } catch (e) {
+                console.error(e);
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to add extinguisher status.' });
+            }
+        }
+
+        async function saveAlarmType() {
+            const form = document.getElementById('addAlarmTypeForm');
+            if (!form || !form.checkValidity()) {
+                form?.reportValidity();
+                return;
+            }
+            const name = document.getElementById('alarmTypeName')?.value?.trim();
+            if (!name) {
+                Swal.fire({ icon: 'error', title: 'Required', text: 'Alarm type name is required.' });
+                return;
+            }
+            const statusInputs = document.querySelectorAll('#alarmTypeStatusesContainer .alarm-status-input');
+            const statuses = Array.from(statusInputs).map(i => i.value.trim()).filter(Boolean);
+            if (statuses.length === 0) {
+                Swal.fire({ icon: 'error', title: 'Required', text: 'At least one status is required for this alarm type.' });
+                return;
+            }
+            const formData = new FormData();
+            formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+            formData.append('name', name);
+            statuses.forEach(s => formData.append('statuses[]', s));
+            try {
+                const response = await fetch('/fire-safety/config/alarm-type', {
+                    method: 'POST',
+                    headers: { 'Accept': 'application/json' },
+                    body: formData
+                });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    Swal.fire({ icon: 'success', title: 'Saved', text: 'Alarm type added successfully!', timer: 2000, showConfirmButton: false }).then(() => location.reload());
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Notice', text: data.message || 'Failed to add alarm type.' });
+                }
+            } catch (e) {
+                console.error(e);
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to add alarm type.' });
             }
         }
 
@@ -1699,8 +2470,63 @@
         }
 
         // Edit config item
-        function editConfigItem(id, type, name, description, isActive) {
-            // Create and show edit modal
+        function editConfigItem(id, type, name, description, isActive, minFloors, totalRooms, pressureMin, pressureMax, category, parentId, maxRoomsCovered) {
+            const isBuildingType = (type === 'building_type');
+            const isExtinguisherStatus = (type === 'extinguisher_status');
+            const isSafetyFeature = (type === 'safety_feature');
+            const isCalculatedPriority = (type === 'calculated_priority');
+            const isRoomType = (type === 'room_type');
+            const pressureRangeHtml = isExtinguisherStatus ? `
+                                    <div class="mb-3">
+                                        <label class="form-label">Pressure level range (psi) *</label>
+                                        <div class="row">
+                                            <div class="col-6">
+                                                <input type="number" step="0.01" min="0" class="form-control" name="pressure_min" placeholder="Min" value="${pressureMin !== null && pressureMin !== undefined && pressureMin !== '' ? pressureMin : ''}">
+                                            </div>
+                                            <div class="col-6">
+                                                <input type="number" step="0.01" min="0" class="form-control" name="pressure_max" placeholder="Max" value="${pressureMax !== null && pressureMax !== undefined && pressureMax !== '' ? pressureMax : ''}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    ` : '';
+            const buildingLimitsHtml = isBuildingType ? `
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Limit number of floors (Optional)</label>
+                                            <input type="number" class="form-control" name="min_floors" min="0" placeholder="e.g. 0 or leave blank" value="${minFloors !== null && minFloors !== undefined && minFloors !== '' ? minFloors : ''}">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label">Limit number of rooms (Optional)</label>
+                                            <input type="number" class="form-control" name="total_rooms" min="0" placeholder="e.g. 0 or leave blank" value="${totalRooms !== null && totalRooms !== undefined && totalRooms !== '' ? totalRooms : ''}">
+                                        </div>
+                                    </div>
+                                    ` : '';
+            const calculatedPriorityHtml = isCalculatedPriority ? `
+                                    <div class="mb-3">
+                                        <label class="form-label">Number of rooms covered *</label>
+                                        <input type="number" class="form-control" name="max_rooms_covered" min="1" max="5" required value="${maxRoomsCovered !== null && maxRoomsCovered !== undefined && maxRoomsCovered !== '' ? maxRoomsCovered : ''}">
+                                        <small class="text-muted">Maximum allowed is 5 rooms.</small>
+                                    </div>
+                                    ` : '';
+            const roomTypePriorityHtml = isRoomType ? (() => {
+                const list = Array.isArray(window._calculatedPriorities) ? window._calculatedPriorities : [];
+                const selected = (parentId !== null && parentId !== undefined) ? String(parentId) : '';
+                const opts = list.map(p => {
+                    const idStr = String(p.id);
+                    const max = p.max_rooms_covered ?? '';
+                    const label = `${p.name}${max ? ' (Up to ' + max + ' rooms)' : ''}`;
+                    return `<option value="${idStr}" ${idStr === selected ? 'selected' : ''}>${label}</option>`;
+                }).join('');
+                return `
+                                    <div class="mb-3">
+                                        <label class="form-label">Calculated Priority *</label>
+                                        <select class="form-control" name="parent_id" required>
+                                            <option value="">Select priority</option>
+                                            ${opts}
+                                        </select>
+                                    </div>
+                `;
+            })() : '';
             const modalHtml = `
                 <div class="modal fade" id="editConfigModal" tabindex="-1">
                     <div class="modal-dialog">
@@ -1723,7 +2549,17 @@
                                         <label class="form-label">Description</label>
                                         <textarea class="form-control" name="description" rows="3">${description || ''}</textarea>
                                     </div>
-                                    ${isActive !== null ? `
+                                    ${calculatedPriorityHtml}
+                                    ${roomTypePriorityHtml}
+                                    ${buildingLimitsHtml}
+                                    ${pressureRangeHtml}
+                                    ${isSafetyFeature && category !== null && category !== undefined ? `
+                                    <div class="mb-3">
+                                        <label class="form-label">Category</label>
+                                        <input type="text" class="form-control" name="category" value="${category || ''}" placeholder="e.g. Equipment">
+                                    </div>
+                                    ` : ''}
+                                    ${isActive !== null && isActive !== undefined ? `
                                     <div class="mb-3">
                                         <div class="form-check">
                                             <input class="form-check-input" type="checkbox" name="is_active" id="editConfigActive" ${isActive === '1' ? 'checked' : ''}>

@@ -53,6 +53,16 @@ class FireSafetySchool extends Model
     {
         return $this->hasMany(FireSafetyRoom::class, 'school_id');
     }
+
+    public function inspections(): HasMany
+    {
+        return $this->hasMany(FireSafetyInspection::class, 'school_id');
+    }
+
+    public function drills(): HasMany
+    {
+        return $this->hasMany(FireSafetyEvacuationDrill::class, 'school_id');
+    }
     
     // Helper methods for evacuation plans page
     public function getBuildingsWithPlansCountAttribute(): int

@@ -7,7 +7,7 @@
     <style>
         @page {
             size: landscape;
-            margin: 1cm;
+            margin: 0;
         }
         body {
             font-family: Arial, sans-serif;
@@ -71,6 +71,7 @@
             }
             body {
                 -webkit-print-color-adjust: exact;
+                margin: 1cm;
             }
         }
         .btn-print {
@@ -89,6 +90,7 @@
     <div class="no-print" style="background: #f8f9fa; border-bottom: 1px solid #ddd; padding: 10px; text-align: center;">
         <button class="btn-print" onclick="window.print()">Print Report</button>
         <button class="btn-print" style="background: #6c757d;" onclick="window.close()">Close</button>
+        <p class="small text-muted mb-0 mt-2">For a clean print without URL, date, or page numbers, turn off &quot;Headers and footers&quot; in the print dialog.</p>
     </div>
 
     <div class="header-container">

@@ -257,28 +257,6 @@
                 </li>
             </ul>
         </div>
-
-        <!-- Quick Actions at Bottom of Sidebar -->
-        <div class="quick-actions">
-            <h6 class="text-white mb-3">Quick Actions</h6>
-            <div class="d-grid gap-2">
-                <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addInspectionModal">
-                    <i class="fas fa-plus me-2"></i> Add Inspection
-                </button>
-                <div class="row g-2">
-                    <div class="col-6">
-                        <button class="btn btn-danger btn-sm w-100" data-bs-toggle="modal" data-bs-target="#addAlertModal">
-                            <i class="fas fa-exclamation-triangle me-1"></i> Add Alert
-                        </button>
-                    </div>
-                    <div class="col-6">
-                        <button class="btn btn-primary btn-sm w-100" data-bs-toggle="modal" data-bs-target="#addEventModal">
-                            <i class="fas fa-calendar-plus me-1"></i> Add Event
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Main Content Area -->
@@ -1005,11 +983,12 @@ function loadSchoolIssues(schoolId) {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 },
                 body: JSON.stringify({
-                    name: this.name.value,
-                    school_id: this.school_id.value,
-                    address: this.address.value,
-                    school_head: this.school_head.value,
-                    drrm_coordinator: this.drrm_coordinator.value
+                    school_name: this.name.value,
+                    school_id: this.school_id.value.trim(),
+                    address: this.address.value.trim(),
+                    school_head: this.school_head.value.trim(),
+                    school_drrm_coordinator: this.drrm_coordinator.value.trim(),
+                    status: 'unconfigured'
                 })
             })
             .then(async response => {

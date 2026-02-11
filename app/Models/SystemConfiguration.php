@@ -8,6 +8,7 @@ class SystemConfiguration extends Model
 {
     protected $fillable = [
         'config_type',
+        'parent_id',
         'name',
         'description',
         'code',
@@ -15,6 +16,11 @@ class SystemConfiguration extends Model
         'color_class',
         'sort_order',
         'is_active',
+        'min_floors',
+        'total_rooms',
+        'pressure_min',
+        'pressure_max',
+        'max_rooms_covered',
     ];
 
     protected $casts = [

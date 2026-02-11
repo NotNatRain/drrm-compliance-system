@@ -105,6 +105,15 @@
             background-color: #fff3cd;
             border-left: 4px solid #ffc107;
         }
+        /* Alarm modals: must sit in body and above backdrop so they are visible and clickable */
+        #addAlarmModal, #updateAlarmModal, #alarmRemovalModal, #alarmHistoryModal {
+            z-index: 1065 !important;
+        }
+        #addAlarmModal .modal-dialog, #updateAlarmModal .modal-dialog,
+        #alarmRemovalModal .modal-dialog, #alarmHistoryModal .modal-dialog {
+            z-index: 1066;
+        }
+        body.modal-open .modal-backdrop { z-index: 1060 !important; }
         /* Update existing nav-tabs styles */
         .nav-tabs {
             border-bottom: 2px solid #dee2e6;
@@ -245,26 +254,12 @@
                     </a>
                 </li>
             </ul>
-
             <hr class="bg-white my-4">
-
-            <!-- Quick Actions -->
-            <div class="mt-4">
-                <h6 class="text-white mb-3">Quick Actions</h6>
-                <div class="d-grid gap-2">
-                    <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addAlarmModal">
-                        <i class="fas fa-plus me-2"></i> Add Alarm System
-                    </button>
-                    <button class="btn btn-light btn-sm" id="simulateAlarmBtn">
-                        <i class="fas fa-bell me-2"></i> Simulate Alarm Test
-                    </button>
-                </div>
-            </div>
         </div>
     </div>
 
     <!-- Alarm Details & Update Modal -->
-    <div class="modal fade" id="updateAlarmModal" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal fade" id="updateAlarmModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header" style="background-color: var(--fire-red); color: white;">
@@ -278,7 +273,7 @@
                         @csrf
                         @method('PUT')
                         <input type="hidden" name="alarm_id" id="updateAlarmId">
-                        
+
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">School</label>
@@ -330,7 +325,7 @@
                             <label class="form-label fw-bold">Notes/Remarks</label>
                             <textarea class="form-control" name="notes" id="updateNotes" rows="3"></textarea>
                         </div>
-                        
+
                         <div class="alert alert-info py-2">
                             <i class="fas fa-info-circle me-1"></i> <strong>Note:</strong> Updating this information will set the "As Of" (Last Test) date to today.
                         </div>
@@ -509,13 +504,13 @@
                                             data-bs-target="#addAlarmModal">
                                         <i class="fas fa-plus me-2"></i> Add New Alarm
                                     </button>
-                                    <button class="btn btn-sm ms-2" 
+                                    <button class="btn btn-sm ms-2"
                                             style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;"
                                             onclick="openAlarmHistoryModal({{ $school->id }})">
                                         <i class="fas fa-history me-1"></i> Removed Alarm System
                                     </button>
                                     <a href="{{ route('fire-safety.report.alarm-details', $school->id) }}" target="_blank"
-                                            class="btn btn-sm ms-2" 
+                                            class="btn btn-sm ms-2"
                                             style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;">
                                         <i class="fas fa-print me-1"></i> Print Alarm Details
                                     </a>
@@ -557,10 +552,11 @@
                                                 <td>{{ $alarm->alarm_type }}</td>
                                                 <td>
                                                     @php
-                                                        $statusClass = 'status-' . str_replace(' ', '-', strtolower($alarm->status));
+                                                        $statusClass = 'status-' . str_replace([' ', '_'], '-', strtolower($alarm->status));
+                                                        $displayStatus = ucwords(str_replace('_', ' ', $alarm->status));
                                                     @endphp
                                                     <span class="alarm-status {{ $statusClass }}">
-                                                        <i class="fas fa-circle"></i> {{ ucfirst($alarm->status) }}
+                                                        <i class="fas fa-circle"></i> {{ $displayStatus }}
                                                     </span>
                                                 </td>
                                                 <td>{{ $alarm->last_test ? \Carbon\Carbon::parse($alarm->last_test)->format('Y-m-d') : 'Never' }}</td>
@@ -621,7 +617,7 @@
                                             <h6 class="card-title">{{ $alarm->code }}</h6>
                                             <p class="card-text mb-1">
                                             <p class="card-text mb-1">
-                                                <small class="text-muted">Building: 
+                                                <small class="text-muted">Building:
                                                     @if($alarm->buildings->count() > 0)
                                                         {{ $alarm->buildings->pluck('building_no')->implode(', ') }}
                                                     @else
@@ -651,7 +647,7 @@
         @endif
     </div>
 
-    <!-- Add Alarm System Modal -->
+    <!-- Add Alarm System Modal (moved to body by JS so it appears above backdrop) -->
     <div class="modal fade" id="addAlarmModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -718,9 +714,9 @@
                                 <label class="form-label">Alarm Type *</label>
                                 <select class="form-control" name="alarm_type" id="alarmTypeSelect" required>
                                     <option value="">Select Type</option>
-                                    <option value="Bell">Bell</option>
-                                    <option value="Mechanical">Mechanical</option>
-                                    <option value="Digital">Digital</option>
+                                    @foreach($alarmTypes as $type)
+                                        <option value="{{ $type->name }}">{{ $type->name }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
@@ -771,8 +767,8 @@
     </div>
 
     <!-- Alarm System Removal Modal -->
-    <div class="modal fade" id="alarmRemovalModal" tabindex="-1">
-        <div class="modal-dialog">
+    <div class="modal fade" id="alarmRemovalModal" tabindex="-1" aria-modal="true">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Remove Alarm System</h5>
@@ -781,7 +777,7 @@
                 <div class="modal-body">
                     <p class="fw-bold">Are you sure you want to remove this alarm system?</p>
                     <p class="text-muted small">This action cannot be undone. All historical data for this alarm will be moved to the archives.</p>
-                    
+
                     <div class="mt-4">
                         <label class="form-label fw-bold">Reason to be removed *</label>
                         <textarea class="form-control" id="alarmRemovalReason" rows="3" placeholder="Enter reason for removal..."></textarea>
@@ -798,8 +794,8 @@
     </div>
 
     <!-- Alarm System History Modal -->
-    <div class="modal fade" id="alarmHistoryModal" tabindex="-1">
-        <div class="modal-dialog modal-xl">
+    <div class="modal fade" id="alarmHistoryModal" tabindex="-1" aria-modal="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
                 <div class="modal-header" style="background-color: #6c757d; color: white;">
                     <h5 class="modal-title"><i class="fas fa-history me-2"></i>Alarm System's History</h5>
@@ -836,11 +832,34 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <script>
-        // Status options based on alarm type
+        // Move alarm modals to body so they render above Bootstrap's backdrop and stay interactive
+        (function moveAlarmModalsToBody() {
+            var ids = ['addAlarmModal', 'updateAlarmModal', 'alarmRemovalModal', 'alarmHistoryModal'];
+            function run() {
+                ids.forEach(function(id) {
+                    var el = document.getElementById(id);
+                    if (el && el.parentNode !== document.body) {
+                        document.body.appendChild(el);
+                    }
+                });
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', run);
+            } else {
+                run();
+            }
+        })();
+
+        // Status options based on alarm type (Dynamic from DB)
         const statusOptions = {
-            'Bell': ['Functional', 'Broken', 'Missing', 'Not Installed'],
-            'Mechanical': ['Functional', 'Missing', 'Jammed', 'Under Repair', 'Not Installed'],
-            'Digital': ['Online', 'Offline', 'Missing', 'Not Installed', 'System Error', 'Under Maintenance', 'Decommissioned']
+            @foreach($alarmTypes as $type)
+                '{{ $type->name }}': [
+                    @php $typeStatuses = $alarmStatusesByType->get($type->id, collect()); @endphp
+                    @foreach($typeStatuses as $s)
+                        '{{ $s->name }}',
+                    @endforeach
+                ],
+            @endforeach
         };
 
         // Store current school and alarm data
@@ -898,7 +917,7 @@
             button.addEventListener('click', function() {
                 const schoolId = this.getAttribute('data-school-id');
                 document.getElementById('modalSchoolId').value = schoolId;
-                
+
                 // Reset toggle
                 document.getElementById('multiBuildingToggle').checked = false;
                 document.getElementById('singleBuildingContainer').style.display = 'flex';
@@ -930,7 +949,7 @@
         document.body.addEventListener('click', async function(e) {
             const button = e.target.closest('.update-alarm-btn');
             if (!button) return;
-            
+
             console.log('Update button clicked for alarm:', button.getAttribute('data-alarm-id'));
 
             const alarmId = button.getAttribute('data-alarm-id');
@@ -948,7 +967,7 @@
                 document.getElementById('originalAlarmCode').value = alarm.code;
                 document.getElementById('updateAlarmTypeDisplay').value = alarm.alarm_type;
                 document.getElementById('updateDisplaySchool').textContent = alarm.school ? alarm.school.school_name : 'N/A';
-                
+
                 // Display Buildings
                 let buildingsStr = 'N/A';
                 if (alarm.buildings && alarm.buildings.length > 0) {
@@ -1037,13 +1056,13 @@
 
                 const select = document.getElementById('buildingSelect');
                 const checkboxList = document.getElementById('buildingsCheckboxList');
-                
+
                 select.innerHTML = '<option value="">Select Building</option>';
                 checkboxList.innerHTML = '';
 
                 buildings.forEach(building => {
                     const buildingDisplayName = `${building.building_no} (${building.building_name || 'No Name'})`;
-                    
+
                     // Dropdown option
                     const option = document.createElement('option');
                     option.value = building.id;
@@ -1087,7 +1106,7 @@
 
             const floors = parseInt(option.dataset.floors) || 1;
             floorSelect.disabled = false;
-            
+
             // Ordinals helper
             const getOrdinal = (n) => {
                 const s = ["th", "st", "nd", "rd"];
@@ -1105,10 +1124,10 @@
 
         // Check if alarm code already exists
         async function checkAlarmCode(code) {
-            if (!code) return;
+            if (!code || !currentSchoolId) return;
 
             try {
-                const response = await fetch(`/fire-safety/check-alarm-code/${encodeURIComponent(code)}`);
+                const response = await fetch(`/fire-safety/check-alarm-code/${currentSchoolId}/${encodeURIComponent(code)}`);
                 const data = await response.json();
 
                 const codeInput = document.getElementById('alarmCode');
@@ -1226,7 +1245,7 @@
 
             // Combine Location
             const isMulti = document.getElementById('multiBuildingToggle').checked;
-            
+
             if (isMulti) {
                 // Check if at least one checkbox is checked
                 const checked = document.querySelectorAll('input[name="building_ids[]"]:checked');
@@ -1238,12 +1257,12 @@
             } else {
                 const floor = document.getElementById('alarmFloorSelect').value;
                 const specific = document.getElementById('alarmSpecificLocation').value.trim();
-                
+
                 if (!buildingSelect.value) {
                     Swal.fire('Missing Information', 'Please select a primary building.', 'warning');
                     return;
                 }
-                
+
                 if (!floor || !specific) {
                     Swal.fire('Missing Information', 'Please select a floor and enter a specific location.', 'warning');
                     return;
@@ -1276,14 +1295,26 @@
                 console.log('Response data:', data);
 
                 if (data.success) {
+                    // Hide modal first so user can focus on message
+                    const modalEl = document.getElementById('addAlarmModal');
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+
                     Swal.fire('Success', 'Alarm system added successfully!', 'success').then(() => {
                         location.reload();
                     });
                 } else {
-                    Swal.fire('Error', data.message || 'Failed to add alarm system', 'error');
+                    // Hide modal on error too so message is visible
+                    const modalEl = document.getElementById('addAlarmModal');
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+
+                    let errorMessage = data.message || 'Failed to add alarm system';
                     if (data.errors) {
-                        console.log('Validation errors:', data.errors);
+                        const errorList = Object.values(data.errors).flat().join('\n');
+                        errorMessage += '\n' + errorList;
                     }
+                    Swal.fire('Error', errorMessage, 'error');
                 }
 
             } catch (error) {
@@ -1363,6 +1394,11 @@
                 const data = await response.json();
 
                 if (data.success) {
+                    // Hide modal first so user can focus on message
+                    const modalEl = document.getElementById('updateAlarmModal');
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+
                     Swal.fire({
                         title: 'Updated',
                         text: 'Alarm system details updated successfully!',
@@ -1372,7 +1408,17 @@
                         location.reload();
                     });
                 } else {
-                    Swal.fire('Error', data.message || 'Failed to update alarm system', 'error');
+                    // Hide modal on error too so message is visible
+                    const modalEl = document.getElementById('updateAlarmModal');
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+
+                    let errorMessage = data.message || 'Failed to update alarm system';
+                    if (data.errors) {
+                        const errorList = Object.values(data.errors).flat().join('\n');
+                        errorMessage += '\n' + errorList;
+                    }
+                    Swal.fire('Error', errorMessage, 'error');
                 }
 
             } catch (error) {
@@ -1446,12 +1492,12 @@
                     body: JSON.stringify({ reason: reason })
                 });
 
-                const data = await response.json();
+                const data = await response.json().catch(() => ({}));
 
                 if (data.success) {
                     const modal = bootstrap.Modal.getInstance(document.getElementById('alarmRemovalModal'));
                     if(modal) modal.hide();
-                    
+
                     Swal.fire('Removed', 'Alarm system has been archived successfully!', 'success').then(() => {
                         location.reload();
                     });
@@ -1461,7 +1507,7 @@
 
             } catch (error) {
                 console.error('Error:', error);
-                Swal.fire('Error', 'Failed to remove alarm system', 'error');
+                Swal.fire('Error', 'Failed to remove alarm system. Check console for details.', 'error');
             }
         }
 

@@ -16,6 +16,9 @@ class FireSafetyRoom extends Model
         'room_code',
         'room_name',
         'room_type',
+        'room_type_config_id',
+        'calculated_priority_label',
+        'coverage_limit',
         'floor_no',
         'nearest_extinguisher_room_id'
     ];

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\FireSafetySchoolSnapshot;
 use Illuminate\Http\Request;
 use App\Models\FireSafetySchool;
 use App\Models\FireSafetyExtinguisher;
@@ -21,6 +22,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
 
 class FireSafetyController extends Controller
 {
@@ -45,12 +47,14 @@ class FireSafetyController extends Controller
                     $school->issues_count = 1;
                 } else {
                     // Calculate based on actual data
+                    $badExtinguisherStatuses = ['expired', 'broken', 'missing', 'for-purchase', 'empty'];
                     $expiredExtinguishers = $school->extinguishers()
-                        ->where('status', 'expired')
+                        ->whereIn('status', $badExtinguisherStatuses)
                         ->count();
 
+                    $badAlarmStatuses = ['offline', 'broken', 'missing', 'jammed', 'under-repair', 'system-error'];
                     $offlineAlarms = $school->alarmSystems()
-                        ->where('status', 'offline')
+                        ->whereIn('status', $badAlarmStatuses)
                         ->count();
 
                     $school->issues_count = $expiredExtinguishers + $offlineAlarms;
@@ -112,9 +116,13 @@ class FireSafetyController extends Controller
         }
 
         $schools = $query->get();
+        $alarmTypes = SystemConfiguration::where('config_type', 'alarm_type')->where('is_active', true)->orderBy('sort_order')->get();
+        $alarmStatusesByType = SystemConfiguration::where('config_type', 'alarm_status')->where('is_active', true)->whereNotNull('parent_id')->get()->groupBy('parent_id');
 
         return view('fire-safety.alarm-systems', [
-            'schools' => $schools
+            'schools' => $schools,
+            'alarmTypes' => $alarmTypes,
+            'alarmStatusesByType' => $alarmStatusesByType
         ]);
     }
 
@@ -346,8 +354,17 @@ class FireSafetyController extends Controller
 
         $schools = $query->get();
 
+        $calculatedPriorities = SystemConfiguration::where('config_type', 'calculated_priority')
+            ->orderBy('sort_order')
+            ->get();
+        $roomTypes = SystemConfiguration::where('config_type', 'room_type')
+            ->orderBy('sort_order')
+            ->get();
+
         return view('fire-safety.extinguishers', [
-            'schools' => $schools
+            'schools' => $schools,
+            'calculatedPriorities' => $calculatedPriorities,
+            'roomTypes' => $roomTypes,
         ]);
     }
 
@@ -424,14 +441,18 @@ class FireSafetyController extends Controller
             $count = $ext->coveredRooms->count();
             $centerRoomType = $ext->centerRoom->room_type;
 
-            // Standardizing limits based on requested categories:
-            // "Shared Coverage" (Classrooms, Departments, Libraries) = 3 total
-            // "Dedicated / Limited Shared" (Laboratories, Clinics, Storage, etc.) = 2 total
-            if (in_array($centerRoomType, ['classroom', 'department', 'library'])) {
-                $limit = 3; 
-            } else {
-                // Default all others to Dedicated rule (max 2 rooms total)
-                $limit = 2; 
+            // Capacity limit is snapshotted per room (coverage_limit) to avoid retroactive changes when config changes.
+            // Fallback to legacy rules when not set.
+            $limit = (int) ($ext->centerRoom->coverage_limit ?? 0);
+            if ($limit <= 0) {
+                // Legacy default:
+                // Shared Coverage (Classrooms, Departments, Libraries) = 3 total
+                // Dedicated / Limited Shared (everything else) = 2 total
+                if (in_array($centerRoomType, ['classroom', 'department', 'library'])) {
+                    $limit = 3;
+                } else {
+                    $limit = 2;
+                }
             }
 
             if ($count < $limit) {
@@ -455,9 +476,33 @@ public function storeRoom(Request $request)
         'building_id' => 'required|exists:firesafety_buildings,id',
         'room_code' => 'nullable|string|max:50',
         'room_name' => 'required|string|max:120',
-        'room_type' => 'required|in:classroom,laboratory,clinic,department,library,storage,auxiliary,office,others',
+        'room_type_config_id' => 'required|exists:system_configurations,id',
         'floor_no' => 'required|integer|min:1|max:50',
     ]);
+
+    $roomTypeConfig = SystemConfiguration::where('id', $validated['room_type_config_id'])
+        ->where('config_type', 'room_type')
+        ->firstOrFail();
+
+    $priorityConfig = null;
+    if ($roomTypeConfig->parent_id) {
+        $priorityConfig = SystemConfiguration::where('id', $roomTypeConfig->parent_id)
+            ->where('config_type', 'calculated_priority')
+            ->first();
+    }
+    $limit = (int) ($priorityConfig->max_rooms_covered ?? 0);
+    if ($limit <= 0) {
+        // safe default if misconfigured
+        $limit = 2;
+    }
+    if ($limit > 5) {
+        $limit = 5;
+    }
+
+    // Snapshot values so later config edits do NOT retroactively alter existing rooms.
+    $validated['room_type'] = $roomTypeConfig->name;
+    $validated['calculated_priority_label'] = $priorityConfig->name ?? null;
+    $validated['coverage_limit'] = $limit;
 
     $building = FireSafetyBuilding::findOrFail($validated['building_id']);
 
@@ -820,9 +865,11 @@ public function getRoom($id)
         }
 
         $schools = $query->get();
+        $buildingTypes = SystemConfiguration::where('config_type', 'building_type')->where('is_active', true)->orderBy('sort_order')->get();
 
         return view('fire-safety.buildings',[
-            'schools' => $schools
+            'schools' => $schools,
+            'buildingTypes' => $buildingTypes
         ]);
     }
 
@@ -984,16 +1031,20 @@ public function getRoom($id)
                 ]);
 
                 // Archive & Remove Alarms on this floor
-                // Location is stored like "1st Floor - Hallway", so match ordinal forms
+                // Match location: "1st Floor", "2nd Floor", "Floor 1", "Floor 2", etc.
                 $alarmsToRemove = FireSafetyAlarmSystem::where('building_id', $id)
                     ->where(function ($q) use ($floorNo) {
                         $q->where('location', 'like', "%{$floorNo}st Floor%")
                           ->orWhere('location', 'like', "%{$floorNo}nd Floor%")
                           ->orWhere('location', 'like', "%{$floorNo}rd Floor%")
-                          ->orWhere('location', 'like', "%{$floorNo}th Floor%");
+                          ->orWhere('location', 'like', "%{$floorNo}th Floor%")
+                          ->orWhere('location', 'like', "%Floor {$floorNo} %")
+                          ->orWhere('location', 'like', "%Floor {$floorNo},%")
+                          ->orWhere('location', 'like', "%Floor {$floorNo}-%")
+                          ->orWhere('location', 'like', "%Floor {$floorNo}%");
                     })
                     ->get();
-                
+
                 foreach ($alarmsToRemove as $alarm) {
                     FireSafetyArchive::create([
                         'school_id' => $alarm->school_id,
@@ -1035,8 +1086,8 @@ public function getRoom($id)
                 if ($res) $cascadingMessages[] = $res;
             }
 
-            // 3. Handle Floor and Room Increments
-            if ($request->filled('floors') && (int)$request->floors > $building->floors) {
+            // 3. Handle Floor and Room Increments (do not overwrite floors when we just removed one)
+            if (!$request->filled('removed_floor') && $request->filled('floors') && (int)$request->floors > $building->floors) {
                 $building->floors = (int)$request->floors;
             }
 
@@ -1273,7 +1324,9 @@ public function getRoom($id)
     {
         try {
             $inspection = FireSafetyInspection::with(['building', 'school'])->findOrFail($id);
-            return response()->json($inspection);
+            $data = $inspection->toArray();
+            $data['building_name'] = $inspection->building->building_no ?? $inspection->building->building_name ?? 'N/A';
+            return response()->json($data);
         } catch (\Exception $e) {
             Log::error('Error getting inspection: ' . $e->getMessage());
             return response()->json([
@@ -1343,13 +1396,13 @@ public function getRoom($id)
         $request->validate([
             'building_id' => 'required|exists:firesafety_buildings,id',
             'plan_no' => 'required|string|max:50',
-            'exits' => 'required|integer|min:1',
-            'routes' => 'required|integer|min:1|max:5',
-            'areas' => 'required|integer|min:1|max:3',
+            'exits' => 'required|integer|min:0',
+            'routes' => 'required|integer|min:1|max:10',
+            'areas' => 'required|integer|min:1|max:10',
             'primary_route' => 'required|string',
             'primary_assembly_area' => 'required|string',
-            'assembly_capacity' => 'required|integer|min:1',
-            'status' => 'required|in:active,draft,review,inactive',
+            'assembly_capacity' => 'nullable|integer|min:1',
+            'status' => 'nullable|in:active,draft,review,inactive',
         ]);
 
         $plan = FireSafetyEvacuationPlan::create([
@@ -1363,10 +1416,10 @@ public function getRoom($id)
             'secondary_route' => $request->secondary_route,
             'primary_assembly_area' => $request->primary_assembly_area,
             'secondary_assembly_area' => $request->secondary_assembly_area,
-            'assembly_capacity' => $request->assembly_capacity,
+            'assembly_capacity' => $request->assembly_capacity ?? 0,
             'emergency_contacts' => $request->emergency_contacts,
             'special_instructions' => $request->special_instructions,
-            'status' => $request->status,
+            'status' => $request->status ?? 'active',
             'approved_at' => $request->status === 'active' ? now() : null,
             'map_data' => $request->map_data,
         ]);
@@ -1443,14 +1496,39 @@ public function getRoom($id)
     public function getBuildingEvacuationData($buildingId)
     {
         $building = FireSafetyBuilding::findOrFail($buildingId);
+        $featuresRaw = $building->features;
+        $featuresDisplay = 'No safety features recorded';
+        if (!empty($featuresRaw)) {
+            $arr = is_array($featuresRaw) ? $featuresRaw : explode(',', (string) $featuresRaw);
+            $labels = [
+                'sprinklers' => 'Sprinkler System',
+                'emergency_lights' => 'Emergency Lighting',
+                'exit_signs' => 'Exit Signs',
+                'fire_doors' => 'Fire Doors',
+                'two_stairways' => 'Two Stairways',
+                'smoke_detectors' => 'Smoke Detectors',
+                'alarm_systems' => 'Alarm Systems',
+            ];
+            $featuresDisplay = implode(', ', array_filter(array_map(function ($v) use ($labels) {
+                $v = trim(strtolower($v));
+                if (empty($v)) return null;
+                // Try direct mapping first
+                if (isset($labels[$v])) return $labels[$v];
+                // Try cleaning up keys with spaces or underscores
+                $cleanKey = str_replace([' ', '-'], '_', $v);
+                if (isset($labels[$cleanKey])) return $labels[$cleanKey];
+                
+                return ucwords(str_replace(['_', '-'], ' ', $v));
+            }, $arr)));
+        }
         return response()->json([
             'building_name' => $building->building_name,
             'building_no' => $building->building_no,
-            'rooms' => $building->rooms_count,
-            'exits' => $building->emergency_exits,
+            'rooms' => $building->rooms ?? 0,
+            'exits' => $building->emergency_exits ?? 0,
             'alarms' => $building->functional_alarms_count,
             'extinguishers' => $building->active_extinguishers_count,
-            'features' => $building->features
+            'features' => $featuresDisplay,
         ]);
     }
 
@@ -1540,7 +1618,7 @@ public function getRoom($id)
             $alarmCount = $building->alarmSystems->whereIn('status', ['functional', 'online'])->count();
             $extinguisherCount = $building->fireExtinguishers->where('status', 'active')->count();
             $emergencyExits = $building->emergency_exits ?? 0;
-            
+
             $score = 0;
             if($alarmCount > 0) $score += 30;
             if($extinguisherCount >= max(1, ceil(($building->rooms ?? 0) / 3))) $score += 40;
@@ -1576,15 +1654,18 @@ public function getRoom($id)
             // Load all data for admin
             $schools = FireSafetySchool::withCount(['buildings', 'rooms', 'alarmSystems', 'extinguishers as fire_extinguishers_count'])->get();
             $buildingTypes = SystemConfiguration::where('config_type', 'building_type')->orderBy('sort_order')->get();
-            $alarmTypes = SystemConfiguration::where('config_type', 'alarm_type')->get();
-            $alarmStatuses = SystemConfiguration::where('config_type', 'alarm_status')->get();
+            $alarmTypes = SystemConfiguration::where('config_type', 'alarm_type')->orderBy('id')->get();
+            $alarmStatusesByType = SystemConfiguration::where('config_type', 'alarm_status')->whereNotNull('parent_id')->get()->groupBy('parent_id');
             $extinguisherTypes = SystemConfiguration::where('config_type', 'extinguisher_type')->get();
             $extinguisherStatuses = SystemConfiguration::where('config_type', 'extinguisher_status')->get();
             $safetyFeatures = SystemConfiguration::where('config_type', 'safety_feature')->orderBy('sort_order')->get();
+            $calculatedPriorities = SystemConfiguration::where('config_type', 'calculated_priority')->orderBy('sort_order')->get();
+            $roomTypes = SystemConfiguration::where('config_type', 'room_type')->orderBy('sort_order')->get();
 
             return view('fire-safety.customization', compact(
-                'schools', 'buildingTypes', 'alarmTypes', 'alarmStatuses',
-                'extinguisherTypes', 'extinguisherStatuses', 'safetyFeatures'
+                'schools', 'buildingTypes', 'alarmTypes', 'alarmStatusesByType',
+                'extinguisherTypes', 'extinguisherStatuses', 'safetyFeatures',
+                'calculatedPriorities', 'roomTypes'
             ));
         } else {
             // For contributors, just load their school
@@ -1595,17 +1676,18 @@ public function getRoom($id)
         }
     }
 
-    public function updateSchool(Request $request)
+    public function updateSchool(Request $request, $id)
     {
         $user = auth()->user();
 
-        if ($user->role === 'admin') {
-            // Admin can update any school
-            $schoolId = $request->school_id;
-        } else {
-            // Contributors can only update their own school
-            $schoolId = $user->school_id;
-            if ($request->school_id != $schoolId) {
+        // Use route parameter (numeric id) so we never look up by school_id string (e.g. SCH-0451)
+        $schoolId = (int) $id;
+        if ($schoolId <= 0) {
+            return response()->json(['success' => false, 'message' => 'Invalid school.'], 422);
+        }
+
+        if ($user->role !== 'admin') {
+            if ((int) $user->school_id !== $schoolId) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
         }
@@ -1633,16 +1715,17 @@ public function getRoom($id)
             ->findOrFail($id);
 
         return response()->json([
-            'name' => $school->school_name,
+            'id' => $school->id,
+            'school_name' => $school->school_name,
             'school_id' => $school->school_id,
+            'address' => $school->address,
             'school_head' => $school->school_head,
-            'drrm_coordinator' => $school->school_drrm_coordinator,
+            'school_drrm_coordinator' => $school->school_drrm_coordinator,
+            'status' => $school->status,
             'fire_extinguishers_count' => $school->extinguishers_count,
             'alarm_systems_count' => $school->alarm_systems_count,
             'evacuation_plans_count' => $school->evacuation_plans_count,
             'buildings_count' => $school->buildings_count,
-            'alerts' => $school->alerts ?? [],
-            'events' => $school->events ?? []
         ]);
     }
 
@@ -1732,20 +1815,21 @@ public function getRoom($id)
         }
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'school_name' => 'required|string|max:255',
             'school_id' => 'required|string|max:50|unique:firesafety_school_information,school_id',
             'address' => 'required|string|max:500',
             'school_head' => 'required|string|max:255',
-            'drrm_coordinator' => 'required|string|max:255'
+            'school_drrm_coordinator' => 'required|string|max:255',
+            'status' => 'required|string',
         ]);
 
         $school = FireSafetySchool::create([
-            'school_name' => $validated['name'],
+            'school_name' => $validated['school_name'],
             'school_id' => $validated['school_id'],
             'address' => $validated['address'],
             'school_head' => $validated['school_head'],
-            'school_drrm_coordinator' => $validated['drrm_coordinator'],
-            'status' => 'unconfigured'
+            'school_drrm_coordinator' => $validated['school_drrm_coordinator'],
+            'status' => $validated['status'] ?? 'unconfigured',
         ]);
 
         // If contributor creates the school, assign them to it automatically
@@ -1761,6 +1845,147 @@ public function getRoom($id)
         ]);
     }
 
+    /**
+     * Permanently delete a school (admin only) with password confirmation and archiving.
+     */
+    public function destroySchool(Request $request, $id)
+    {
+        $user = auth()->user();
+        if ($user->role !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'password' => 'required|string|max:255',
+        ]);
+
+        if (!Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Password is incorrect.'
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $school = FireSafetySchool::withCount(['buildings', 'alarmSystems', 'extinguishers as fire_extinguishers_count', 'evacuationPlans'])
+                ->findOrFail($id);
+
+            // Capture FULL snapshot of school data before deletion
+            $fullSchoolData = FireSafetySchool::with([
+                'buildings.actualRooms',
+                'buildings.fireExtinguishers',
+                'buildings.alarmSystemsMany',
+                'buildings.evacuationPlan',
+                'alarmSystems',
+                'extinguishers',
+                'evacuationPlans',
+                'rooms', // Direct rooms if any
+                'inspections',
+                'drills.buildings'
+            ])->findOrFail($id);
+
+            $reason = $request->input('reason') ?: ('School deleted by ' . $user->name);
+
+            $archiveData = [
+                'school_name' => $school->school_name,
+                'school_code' => $school->school_id,
+                'school_head' => $school->school_head,
+                'drrm_coordinator' => $school->school_drrm_coordinator,
+                'address' => $school->address,
+                'buildings' => $school->buildings_count ?? 0,
+                'alarm_systems' => $school->alarm_systems_count ?? 0,
+                'extinguishers' => $school->fire_extinguishers_count ?? 0,
+                'evacuation_plans' => $school->evacuation_plans_count ?? 0,
+                'evacuation_coverage_status' => $school->coverageStatus,
+            ];
+
+            // Save to dedicated snapshots table for full data retention
+            FireSafetySchoolSnapshot::create([
+                'school_id_code' => $school->school_id,
+                'school_name' => $school->school_name,
+                'full_data' => $fullSchoolData->toArray(),
+                'deleted_by' => $user->name,
+                'reason' => $reason,
+                'deleted_at' => now(),
+            ]);
+
+            // Also keep a record in general archives for the history log
+            FireSafetyArchive::create([
+                'school_id' => null, // School will be gone
+                'type' => 'school_deletion',
+                'item_id' => $school->id,
+                'item_code' => $school->school_id,
+                'item_data' => $archiveData,
+                'reason' => $reason,
+                'removed_at' => now(),
+            ]);
+
+            // Database level cascade ($table->onDelete('cascade')) is now active via migration,
+            // but we still do manual cleanup to trigger any model-level events or handle pivots.
+            $school->buildings()->each(function($b) {
+                // Clear pivot relationships for drills and alarms
+                $b->drills()->detach();
+                $b->alarmSystemsMany()->detach();
+                
+                // Sub-items (handled by cascade too, but safe for events)
+                $b->actualRooms()->delete();
+                $b->fireExtinguishers()->delete();
+                $b->alarmSystems()->delete();
+                $b->evacuationPlan()->delete();
+                
+                $b->delete();
+            });
+
+            // Clean up remaining school relationships
+            $school->alarmSystems()->delete();
+            $school->extinguishers()->delete();
+            $school->evacuationPlans()->delete();
+            $school->rooms()->delete();
+            $school->inspections()->delete();
+            
+            // Clean up drills (already detached from buildings above)
+            $school->drills()->each(function($d) {
+                $d->buildings()->detach();
+                $d->delete();
+            });
+            
+            $school->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'School deleted successfully.'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error deleting school: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete school.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get archived schools history (admin only).
+     */
+    public function getSchoolHistory()
+    {
+        $user = auth()->user();
+        if ($user->role !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $archives = FireSafetyArchive::where('type', 'school')
+            ->orderBy('removed_at', 'desc')
+            ->get();
+
+        return response()->json($archives);
+    }
+
     public function storeAlert(Request $request)
     {
         $validated = $request->validate([
@@ -1771,7 +1996,7 @@ public function getRoom($id)
         ]);
 
         $school = FireSafetySchool::findOrFail($validated['school_id']);
-        
+
         $alerts = $school->alerts ?? [];
         $alerts[] = [
             'id' => uniqid(),
@@ -1798,7 +2023,7 @@ public function getRoom($id)
         ]);
 
         $school = FireSafetySchool::findOrFail($validated['school_id']);
-        
+
         $events = $school->events ?? [];
         $events[] = [
             'id' => uniqid(),
@@ -1815,9 +2040,11 @@ public function getRoom($id)
         return response()->json(['success' => true, 'message' => 'Event added successfully!', 'events' => $events]);
     }
 
-    public function checkAlarmCode($code)
+    public function checkAlarmCode($schoolId, $code)
     {
-        $exists = FireSafetyAlarmSystem::where('code', $code)->exists();
+        $exists = FireSafetyAlarmSystem::where('school_id', $schoolId)
+            ->where('code', $code)
+            ->exists();
         return response()->json(['exists' => $exists]);
     }
 
@@ -1849,25 +2076,81 @@ public function getRoom($id)
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $validated = $request->validate([
+        $rules = [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'code' => 'nullable|string|max:50',
             'category' => 'nullable|string|max:100',
             'color_class' => 'nullable|string|max:50',
             'is_active' => 'nullable|boolean'
-        ]);
+        ];
+        $configType = str_replace('-', '_', $type);
+        if ($configType === 'alarm_type') {
+            $rules['statuses'] = 'required|array';
+            $rules['statuses.*'] = 'nullable|string|max:255';
+        }
+        if ($configType === 'building_type') {
+            $rules['min_floors'] = 'nullable|integer|min:0';
+            $rules['total_rooms'] = 'nullable|integer|min:0';
+        }
+        if ($configType === 'extinguisher_status') {
+            $rules['pressure_min'] = 'required|numeric|min:0';
+            $rules['pressure_max'] = 'required|numeric|min:0';
+        }
+        if ($configType === 'calculated_priority') {
+            $rules['max_rooms_covered'] = 'required|integer|min:1|max:5';
+        }
+        if ($configType === 'room_type') {
+            $rules['parent_id'] = 'required|exists:system_configurations,id';
+        }
+        $validated = $request->validate($rules);
 
-        $config = SystemConfiguration::create([
-            'config_type' => str_replace('-', '_', $type),
+        $data = [
+            'config_type' => $configType,
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'code' => $validated['code'] ?? null,
             'category' => $validated['category'] ?? null,
             'color_class' => $validated['color_class'] ?? null,
             'is_active' => $request->has('is_active') ? $request->is_active : true,
-            'sort_order' => SystemConfiguration::where('config_type', str_replace('-', '_', $type))->count()
-        ]);
+            'sort_order' => SystemConfiguration::where('config_type', $configType)->count()
+        ];
+        if ($configType === 'building_type') {
+            $v = $request->input('min_floors');
+            $data['min_floors'] = ($v !== '' && $v !== null) ? (int) $v : null;
+            $v = $request->input('total_rooms');
+            $data['total_rooms'] = ($v !== '' && $v !== null) ? (int) $v : null;
+        }
+        if ($configType === 'extinguisher_status') {
+            $data['pressure_min'] = $request->input('pressure_min') !== null && $request->input('pressure_min') !== '' ? (float) $request->input('pressure_min') : null;
+            $data['pressure_max'] = $request->input('pressure_max') !== null && $request->input('pressure_max') !== '' ? (float) $request->input('pressure_max') : null;
+        }
+        if ($configType === 'calculated_priority') {
+            $data['max_rooms_covered'] = (int) $validated['max_rooms_covered'];
+        }
+        if ($configType === 'room_type') {
+            $parent = SystemConfiguration::where('id', $validated['parent_id'])
+                ->where('config_type', 'calculated_priority')
+                ->firstOrFail();
+            $data['parent_id'] = $parent->id;
+        }
+        $config = SystemConfiguration::create($data);
+
+        if ($configType === 'alarm_type') {
+            $statuses = array_values(array_filter(array_map('trim', $validated['statuses'] ?? [])));
+            if (count($statuses) === 0) {
+                return response()->json(['success' => false, 'message' => 'At least one alarm status is required.'], 422);
+            }
+            foreach ($statuses as $i => $statusName) {
+                SystemConfiguration::create([
+                    'config_type' => 'alarm_status',
+                    'parent_id' => $config->id,
+                    'name' => $statusName,
+                    'sort_order' => $i,
+                    'is_active' => true,
+                ]);
+            }
+        }
 
         return response()->json(['success' => true, 'message' => 'Configuration saved successfully', 'config' => $config]);
     }
@@ -1878,21 +2161,65 @@ public function getRoom($id)
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $validated = $request->validate([
+        $rules = [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'is_active' => 'nullable'
-        ]);
+        ];
+        $configType = str_replace('-', '_', $type);
+        if ($configType === 'building_type') {
+            $rules['min_floors'] = 'nullable|integer|min:0';
+            $rules['total_rooms'] = 'nullable|integer|min:0';
+        }
+        if ($configType === 'extinguisher_status') {
+            $rules['pressure_min'] = 'required|numeric|min:0';
+            $rules['pressure_max'] = 'required|numeric|min:0';
+        }
+        if ($configType === 'safety_feature') {
+            $rules['category'] = 'nullable|string|max:100';
+        }
+        if ($configType === 'calculated_priority') {
+            $rules['max_rooms_covered'] = 'required|integer|min:1|max:5';
+        }
+        if ($configType === 'room_type') {
+            $rules['parent_id'] = 'required|exists:system_configurations,id';
+        }
+        $validated = $request->validate($rules);
 
         $config = SystemConfiguration::where('id', $id)
-            ->where('config_type', str_replace('-', '_', $type))
+            ->where('config_type', $configType)
             ->firstOrFail();
 
-        $config->update([
+        $update = [
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
-            'is_active' => $request->has('is_active') ? ($request->is_active == 'on' || $request->is_active == '1') : false
-        ]);
+        ];
+        if (in_array($configType, ['building_type', 'alarm_type'], true)) {
+            $update['is_active'] = $request->has('is_active') ? ($request->is_active == 'on' || $request->is_active == '1') : false;
+        }
+        if ($configType === 'building_type') {
+            $v = $request->input('min_floors');
+            $update['min_floors'] = ($v !== '' && $v !== null) ? (int) $v : null;
+            $v = $request->input('total_rooms');
+            $update['total_rooms'] = ($v !== '' && $v !== null) ? (int) $v : null;
+        }
+        if ($configType === 'extinguisher_status') {
+            $update['pressure_min'] = $request->input('pressure_min') !== null && $request->input('pressure_min') !== '' ? (float) $request->input('pressure_min') : null;
+            $update['pressure_max'] = $request->input('pressure_max') !== null && $request->input('pressure_max') !== '' ? (float) $request->input('pressure_max') : null;
+        }
+        if ($configType === 'safety_feature') {
+            $update['category'] = $request->input('category') ?: null;
+        }
+        if ($configType === 'calculated_priority') {
+            $update['max_rooms_covered'] = (int) $validated['max_rooms_covered'];
+        }
+        if ($configType === 'room_type') {
+            $parent = SystemConfiguration::where('id', $validated['parent_id'])
+                ->where('config_type', 'calculated_priority')
+                ->firstOrFail();
+            $update['parent_id'] = $parent->id;
+        }
+        $config->update($update);
 
         return response()->json(['success' => true, 'message' => 'Configuration updated successfully']);
     }
@@ -1908,6 +2235,141 @@ public function getRoom($id)
             ->delete();
 
         return response()->json(['success' => true, 'message' => 'Configuration deleted successfully']);
+    }
+
+    private function fireSafetyBackupTables(): array
+    {
+        return [
+            // Core data
+            'firesafety_school_information',
+            'firesafety_buildings',
+            'fire_safety_rooms',
+            'firesafety_alarm_systems',
+            'firesafety_fire_extinguishers',
+            'firesafety_evacuationplans',
+            // Related
+            'fire_safety_inspections',
+            'fire_safety_evacuation_drills',
+            'fire_safety_drill_building',
+            'fire_safety_alarm_building',
+            'fire_safety_extinguisher_room_coverage',
+            // Config + archives
+            'system_configurations',
+            'fire_safety_archives',
+        ];
+    }
+
+    public function listFireSafetyBackups(Request $request)
+    {
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $dir = 'fire-safety-backups';
+        if (!Storage::disk('local')->exists($dir)) {
+            Storage::disk('local')->makeDirectory($dir);
+        }
+
+        $files = collect(Storage::disk('local')->files($dir))
+            ->filter(fn($p) => str_ends_with($p, '.json'))
+            ->map(function ($p) {
+                return [
+                    'name' => basename($p),
+                    'path' => $p,
+                    'size' => Storage::disk('local')->size($p),
+                    'last_modified' => Storage::disk('local')->lastModified($p),
+                ];
+            })
+            ->sortByDesc('last_modified')
+            ->values();
+
+        return response()->json(['success' => true, 'files' => $files]);
+    }
+
+    public function createFireSafetyBackup(Request $request)
+    {
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $tables = $this->fireSafetyBackupTables();
+        $payload = [
+            'module' => 'fire_safety',
+            'generated_at' => now()->toIso8601String(),
+            'generated_by' => $request->user()->email ?? null,
+            'tables' => [],
+        ];
+
+        foreach ($tables as $t) {
+            try {
+                $rows = DB::table($t)->get()->map(fn($r) => (array) $r)->all();
+                $payload['tables'][$t] = $rows;
+            } catch (\Throwable $e) {
+                // If a table doesn't exist yet (older schema), skip it.
+                $payload['tables'][$t] = [];
+            }
+        }
+
+        $dir = 'fire-safety-backups';
+        if (!Storage::disk('local')->exists($dir)) {
+            Storage::disk('local')->makeDirectory($dir);
+        }
+        $fileName = 'fire-safety-backup-' . now()->format('Ymd_His') . '.json';
+        $path = $dir . '/' . $fileName;
+        Storage::disk('local')->put($path, json_encode($payload, JSON_PRETTY_PRINT));
+
+        return response()->json(['success' => true, 'file' => $fileName]);
+    }
+
+    public function restoreFireSafetyBackup(Request $request)
+    {
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'file' => 'required|string',
+        ]);
+
+        $fileName = basename($validated['file']);
+        $path = 'fire-safety-backups/' . $fileName;
+        if (!Storage::disk('local')->exists($path)) {
+            return response()->json(['success' => false, 'message' => 'Backup file not found.'], 404);
+        }
+
+        $contents = Storage::disk('local')->get($path);
+        $data = json_decode($contents, true);
+        if (!is_array($data) || !isset($data['tables']) || !is_array($data['tables'])) {
+            return response()->json(['success' => false, 'message' => 'Invalid backup file format.'], 422);
+        }
+
+        $tables = $this->fireSafetyBackupTables();
+        DB::transaction(function () use ($data, $tables) {
+            // MySQL: safe truncate/restore
+            try { DB::statement('SET FOREIGN_KEY_CHECKS=0'); } catch (\Throwable $e) {}
+
+            foreach ($tables as $t) {
+                try {
+                    // Use DELETE instead of TRUNCATE to avoid implicit commits that break active transactions
+                    DB::table($t)->delete();
+                } catch (\Throwable $e) {
+                    // ignore missing tables
+                }
+            }
+
+            foreach ($tables as $t) {
+                $rows = $data['tables'][$t] ?? [];
+                if (!is_array($rows) || count($rows) === 0) continue;
+                // Insert in chunks
+                foreach (array_chunk($rows, 500) as $chunk) {
+                    DB::table($t)->insert($chunk);
+                }
+            }
+
+            try { DB::statement('SET FOREIGN_KEY_CHECKS=1'); } catch (\Throwable $e) {}
+        });
+
+        return response()->json(['success' => true]);
     }
 
     public function exportSchools()
@@ -1956,7 +2418,7 @@ public function getRoom($id)
     public function getSchoolMapData($schoolId)
     {
         $school = FireSafetySchool::with([
-            'buildings.rooms',
+            'buildings.actualRooms',
             'buildings.alarmSystems',
             'buildings.fireExtinguishers',
             'buildings.evacuationPlan'

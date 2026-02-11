@@ -266,23 +266,7 @@
                     </a>
                 </li>
             </ul>
-
             <hr class="bg-white my-4">
-
-            <div class="mt-4 text-white small">
-                <div class="mb-2">
-                    <i class="fas fa-info-circle me-2"></i>
-                    Rule: 1 extinguisher can cover 1–3 rooms.
-                </div>
-                <div class="mb-2">
-                    <i class="fas fa-info-circle me-2"></i>
-                    If covering 2–3 rooms, the selected “Center Room” must be included.
-                </div>
-                <div class="mb-2">
-                    <i class="fas fa-info-circle me-2"></i>
-                    Some rooms can only share with 1 room.
-                </div>
-            </div>
         </div>
     </div>
 
@@ -444,20 +428,24 @@
 
                         <div class="mb-3">
                             <label class="form-label fw-bold">Room Type *</label>
-                            <select class="form-control" name="room_type" id="room_type_select" required onchange="updateRoomPriority()">
-                                <option value="classroom">Classroom</option>
-                                <option value="laboratory">Laboratory</option>
-                                <option value="clinic">Clinic</option>
-                                <option value="department">Department</option>
-                                <option value="library">Library</option>
-                                <option value="storage">Storage</option>
-                                <option value="others">Others</option>
+                            <select class="form-control" name="room_type_config_id" id="room_type_select" required onchange="updateRoomPriority()">
+                                <option value="">Select room type</option>
+                                @foreach(($roomTypes ?? collect()) as $rt)
+                                    @php
+                                        $p = ($calculatedPriorities ?? collect())->firstWhere('id', $rt->parent_id);
+                                    @endphp
+                                    <option value="{{ $rt->id }}"
+                                            data-priority-label="{{ $p->name ?? '' }}"
+                                            data-max-rooms="{{ $p->max_rooms_covered ?? '' }}">
+                                        {{ $rt->name }}
+                                    </option>
+                                @endforeach
                             </select>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label fw-bold text-muted">Calculated Priority</label>
-                            <input type="text" class="form-control bg-light" id="room_priority" readonly value="Shared Coverage (Up to 3 Classrooms)">
+                            <input type="text" class="form-control bg-light" id="room_priority" readonly value="">
                         </div>
                     </form>
                 </div>
@@ -1263,14 +1251,13 @@
         function updateRoomPriority() {
             const typeSelect = document.getElementById('room_type_select');
             const priorityInput = document.getElementById('room_priority');
-            const type = typeSelect.value;
-
-            if (['laboratory', 'clinic', 'storage'].includes(type)) {
-                priorityInput.value = 'Dedicated / Limited Shared';
-            } else if (['classroom', 'department', 'library'].includes(type)) {
-                priorityInput.value = 'Shared Coverage (Up to 3 Classrooms)';
+            const opt = typeSelect?.selectedOptions?.[0];
+            const label = opt?.dataset?.priorityLabel || '';
+            const maxRooms = opt?.dataset?.maxRooms || '';
+            if (label) {
+                priorityInput.value = maxRooms ? `${label} (Up to ${maxRooms} rooms)` : label;
             } else {
-                priorityInput.value = 'General Use';
+                priorityInput.value = '';
             }
         }
 
