@@ -120,19 +120,11 @@
 
 @section('content')
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        @if($announcements->count() > 0)
-            {{-- Announcement carousel will replace welcome text --}}
-        @else
+    @if($announcements->count() == 0)
+        <div class="d-flex justify-content-between align-items-center mb-4">
             <p class="text-muted mb-0">Welcome back, <strong>{{ Auth::user()->name }}</strong>! Select a compliance system to manage.</p>
-        @endif
-
-        @if(Auth::user()->role === 'admin')
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#announceModal">
-                <i class="fas fa-bullhorn me-2"></i> Announce
-            </button>
-        @endif
-    </div>
+        </div>
+    @endif
 
     @if($announcements->count() > 0)
         <div id="announcementCarousel" class="carousel slide announcement-banner mb-5" data-bs-ride="carousel" data-bs-interval="5000">

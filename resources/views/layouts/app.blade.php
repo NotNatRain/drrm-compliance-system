@@ -60,6 +60,13 @@
                                 </li>
                             @endif
                         @else
+                            @if(Auth::user()->role === 'admin')
+                                <li class="nav-item">
+                                    <button type="button" class="btn btn-primary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#announceModal">
+                                        <i class="fas fa-bullhorn me-1"></i> Announce
+                                    </button>
+                                </li>
+                            @endif
                             <li class="nav-item dropdown">
                                 <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
                                     <span class="me-1 fw-bold">{{ Auth::user()->name }}</span>
