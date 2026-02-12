@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\FireSafetySchool;
+use App\Models\Announcement;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
@@ -24,28 +25,44 @@ class DashboardController extends Controller
     public function index()
     {
         $schools = FireSafetySchool::all();
-        return view('dashboard', compact('schools'));
+        // If user is contributor, only pass their assigned school
+        if (auth()->user()->role === 'Contributor' && auth()->user()->school_id) {
+            $schools = FireSafetySchool::where('id', auth()->user()->school_id)->get();
+        }
+        $announcements = Announcement::where('is_active', true)->latest()->get();
+        return view('dashboard', compact('schools', 'announcements'));
     }
 
-    public function getUsers()
+    public function getUsers(Request $request)
     {
         if (auth()->user()->role !== 'admin') {
-            return response()->json(['error' => 'Unauthorized'], 403);
+            return redirect()->route('dashboard')->with('error', 'Unauthorized access.');
         }
 
-        $users = User::with('school')->get()->map(function($user) {
-            return [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role,
-                'school' => $user->school,
-                'status' => 'active', 
-                'last_login_at' => null 
-            ];
-        });
+        $query = User::with('school');
 
-        return response()->json($users);
+        // Filters
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        $sort = $request->get('sort', 'name');
+        $order = $request->get('order', 'asc');
+        
+        if ($sort === 'created_at') {
+            $query->orderBy('created_at', $order);
+        } else {
+            $query->orderBy('name', $order);
+        }
+
+        $users = $query->get();
+        $schools = FireSafetySchool::all();
+
+        if ($request->expectsJson()) {
+            return response()->json($users);
+        }
+
+        return view('users.index', compact('users', 'schools'));
     }
 
     public function storeUser(Request $request)
@@ -57,10 +74,8 @@ class DashboardController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
+            'password' => 'required|string|min:8|confirmed',
             'role' => 'required|string',
-            'school_id' => 'nullable|exists:firesafety_school_information,id',
-            'modules' => 'required|array',
             'admin_confirmation' => 'required_if:role,admin'
         ]);
 
@@ -68,7 +83,6 @@ class DashboardController extends Controller
             return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
         }
 
-        // Check admin confirmation if creating an admin
         if ($request->role === 'admin') {
             if (!Hash::check($request->admin_confirmation, auth()->user()->password)) {
                 return response()->json(['success' => false, 'message' => 'Invalid admin confirmation password'], 403);
@@ -80,8 +94,7 @@ class DashboardController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $request->role,
-            'school_id' => $request->school_id,
-            'module_access' => $request->modules,
+            'module_access' => [], // Start empty
         ]);
 
         return response()->json(['success' => true, 'message' => 'User created successfully', 'user' => $user]);
@@ -95,6 +108,53 @@ class DashboardController extends Controller
 
         $user = User::with('school')->findOrFail($id);
         return response()->json($user);
+    }
+
+    public function updateUser(Request $request, $id)
+    {
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $user = User::findOrFail($id);
+        
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $id,
+            'role' => 'required|string',
+            'password' => 'nullable|string|min:8'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->role = $request->role;
+        
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+
+        $user->save();
+
+        return response()->json(['success' => true, 'message' => 'User updated successfully']);
+    }
+
+    public function assignAccess(Request $request, $id)
+    {
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $user = User::findOrFail($id);
+        
+        $user->module_access = $request->modules ?? [];
+        $user->school_id = $request->school_id;
+        $user->save();
+
+        return response()->json(['success' => true, 'message' => 'Permissions updated successfully']);
     }
 
     public function deleteUser($id)
@@ -111,5 +171,55 @@ class DashboardController extends Controller
         $user->delete();
 
         return response()->json(['success' => true, 'message' => 'User deleted successfully']);
+    }
+
+    public function storeAnnouncement(Request $request)
+    {
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'what' => 'required|string|max:255',
+            'when' => 'required|date',
+            'where' => 'required|string|max:255',
+            'why' => 'required|string',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        try {
+            // Check if there's an existing active announcement and deactivate it
+
+            $imagePath = $request->file('image')->store('announcements', 'public');
+
+            $announcement = Announcement::create([
+                'what' => $request->what,
+                'when' => $request->when,
+                'where' => $request->where,
+                'why' => $request->why,
+                'image_path' => $imagePath,
+                'is_active' => true,
+            ]);
+
+            return response()->json(['success' => true, 'message' => 'Announcement posted successfully!', 'announcement' => $announcement]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to save announcement: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function deleteAnnouncement($id)
+    {
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $announcement = Announcement::findOrFail($id);
+        $announcement->delete();
+
+        return response()->json(['success' => true, 'message' => 'Announcement deleted successfully']);
     }
 }

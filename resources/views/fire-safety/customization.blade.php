@@ -250,6 +250,8 @@
                         <span class="nav-icon"><i class="fas fa-cog"></i></span>
                         @if(auth()->user()->role === 'admin')
                             <span>Customization</span>
+                        @elseif(auth()->user()->role === 'viewer')
+                            <span>View School Info</span>
                         @else
                             <span>Update School Info</span>
                         @endif
@@ -719,6 +721,96 @@
                 </div>
             </div>
 
+                    <!-- School Inspection Checklist -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card dashboard-card h-100">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 fw-bold text-primary">
+                                    <i class="fas fa-tasks me-2"></i> Inspection Checklist
+                                </h6>
+                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addInspectionChecklistModal">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div id="inspectionChecklistList" class="sortable-list">
+                                    @foreach($inspectionChecklists as $item)
+                                    <div class="config-item" data-id="{{ $item->id }}">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <strong>{{ $item->name }}</strong>
+                                                <div class="text-muted small">{{ $item->description }}</div>
+                                            </div>
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-grip-vertical sortable-handle me-3"></i>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2 text-end">
+                                            <button class="btn btn-sm btn-outline-primary edit-config-btn"
+                                                    data-id="{{ $item->id }}"
+                                                    data-type="inspection_checklist"
+                                                    data-name="{{ $item->name }}"
+                                                    data-description="{{ $item->description }}">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger delete-config-btn"
+                                                    data-id="{{ $item->id }}"
+                                                    data-type="inspection_checklist">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Other Observers -->
+                    <div class="col-lg-6 mb-4">
+                        <div class="card dashboard-card h-100">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 fw-bold text-primary">
+                                    <i class="fas fa-users-viewfinder me-2"></i> Other Observers
+                                </h6>
+                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addInspectionObserverModal">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div id="inspectionObserverList" class="sortable-list">
+                                    @foreach($inspectionObservers as $item)
+                                    <div class="config-item" data-id="{{ $item->id }}">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <strong>{{ $item->name }}</strong>
+                                                <div class="text-muted small">{{ $item->description }}</div>
+                                            </div>
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-grip-vertical sortable-handle me-3"></i>
+                                            </div>
+                                        </div>
+                                        <div class="mt-2 text-end">
+                                            <button class="btn btn-sm btn-outline-primary edit-config-btn"
+                                                    data-id="{{ $item->id }}"
+                                                    data-type="inspection_observer"
+                                                    data-name="{{ $item->name }}"
+                                                    data-description="{{ $item->description }}">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger delete-config-btn"
+                                                    data-id="{{ $item->id }}"
+                                                    data-type="inspection_observer">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
             <!-- Backup & Restore Tab -->
             <div class="tab-pane fade" id="backup-tab-pane">
                 <div class="row">
@@ -781,7 +873,8 @@
                                 <div class="col-md-6">
                                     <label class="form-label">School Name *</label>
                                     <input type="text" class="form-control" name="school_name" 
-                                           value="{{ auth()->user()->school->school_name ?? '' }}" required>
+                                           value="{{ auth()->user()->school->school_name ?? '' }}" required
+                                           {{ auth()->user()->role === 'viewer' ? 'readonly' : '' }}>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">School ID *</label>
@@ -793,19 +886,22 @@
 
                             <div class="mb-3">
                                 <label class="form-label">School Address *</label>
-                                <textarea class="form-control" name="address" rows="3" required>{{ auth()->user()->school->address ?? '' }}</textarea>
+                                <textarea class="form-control" name="address" rows="3" required
+                                          {{ auth()->user()->role === 'viewer' ? 'readonly' : '' }}>{{ auth()->user()->school->address ?? '' }}</textarea>
                             </div>
 
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label">School Head *</label>
                                     <input type="text" class="form-control" name="school_head" 
-                                           value="{{ auth()->user()->school->school_head ?? '' }}" required>
+                                           value="{{ auth()->user()->school->school_head ?? '' }}" required
+                                           {{ auth()->user()->role === 'viewer' ? 'readonly' : '' }}>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">DRRM Coordinator *</label>
                                     <input type="text" class="form-control" name="school_drrm_coordinator" 
-                                           value="{{ auth()->user()->school->school_drrm_coordinator ?? '' }}" required>
+                                           value="{{ auth()->user()->school->school_drrm_coordinator ?? '' }}" required
+                                           {{ auth()->user()->role === 'viewer' ? 'readonly' : '' }}>
                                 </div>
                             </div>
 
@@ -813,19 +909,22 @@
                                 <div class="col-md-6">
                                     <label class="form-label">School Head Contact Number</label>
                                     <input type="text" class="form-control" name="school_head_contact" 
-                                           value="{{ auth()->user()->school->school_head_contact ?? '' }}">
+                                           value="{{ auth()->user()->school->school_head_contact ?? '' }}"
+                                           {{ auth()->user()->role === 'viewer' ? 'readonly' : '' }}>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">DRRM Coordinator Contact Number</label>
                                     <input type="text" class="form-control" name="drrm_coordinator_contact" 
-                                           value="{{ auth()->user()->school->drrm_coordinator_contact ?? '' }}">
+                                           value="{{ auth()->user()->school->drrm_coordinator_contact ?? '' }}"
+                                           {{ auth()->user()->role === 'viewer' ? 'readonly' : '' }}>
                                 </div>
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label">Email Address</label>
                                 <input type="email" class="form-control" name="email" 
-                                       value="{{ auth()->user()->school->email ?? '' }}">
+                                       value="{{ auth()->user()->school->email ?? '' }}"
+                                       {{ auth()->user()->role === 'viewer' ? 'readonly' : '' }}>
                             </div>
 
                             <div class="alert alert-info">
@@ -834,9 +933,11 @@
                             </div>
 
                             <div class="d-flex justify-content-end">
+                                @if(auth()->user()->role !== 'viewer')
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-save me-2"></i> Update School Information
                                 </button>
+                                @endif
                             </div>
                         </form>
                     </div>
@@ -1298,6 +1399,64 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Inspection Checklist Modal -->
+    <div class="modal fade" id="addInspectionChecklistModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-plus me-2"></i> Add Checklist Item</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addInspectionChecklistForm">
+                        @csrf
+                        <div class="mb-3">
+                            <label class="form-label">Item / Task Name *</label>
+                            <input type="text" class="form-control" name="name" required placeholder="e.g. Fire Hydrants Checked">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description (Optional)</label>
+                            <textarea class="form-control" name="description" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveInspectionConfig('inspection_checklist')">Save Item</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Inspection Observer Modal -->
+    <div class="modal fade" id="addInspectionObserverModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-plus me-2"></i> Add Observer Type</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addInspectionObserverForm">
+                        @csrf
+                        <div class="mb-3">
+                            <label class="form-label">Observer Type Name *</label>
+                            <input type="text" class="form-control" name="name" required placeholder="e.g. BFP Representative">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description (Optional)</label>
+                            <textarea class="form-control" name="description" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveInspectionConfig('inspection_observer')">Save Type</button>
                 </div>
             </div>
         </div>
@@ -2004,6 +2163,35 @@
             }
         }
 
+        async function saveInspectionConfig(type) {
+            const formId = type === 'inspection_checklist' ? 'addInspectionChecklistForm' : 'addInspectionObserverForm';
+            const form = document.getElementById(formId);
+            if (!form || !form.checkValidity()) {
+                form?.reportValidity();
+                return;
+            }
+            const formData = new FormData(form);
+            try {
+                const response = await fetch(`/fire-safety/config/${type}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    Swal.fire({ icon: 'success', title: 'Saved', text: 'Configuration saved.', timer: 2000, showConfirmButton: false }).then(() => location.reload());
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Notice', text: data.message || 'Failed to save configuration.' });
+                }
+            } catch (e) {
+                console.error(e);
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to save configuration.' });
+            }
+        }
+
         async function restoreFireSafetyBackup(fileName) {
             const first = await Swal.fire({
                 title: 'Restore backup?',
@@ -2477,6 +2665,8 @@
             const isSafetyFeature = (type === 'safety_feature');
             const isCalculatedPriority = (type === 'calculated_priority');
             const isRoomType = (type === 'room_type');
+            const isInspectionChecklist = (type === 'inspection_checklist');
+            const isInspectionObserver = (type === 'inspection_observer');
             const pressureRangeHtml = isExtinguisherStatus ? `
                                     <div class="mb-3">
                                         <label class="form-label">Pressure level range (psi) *</label>

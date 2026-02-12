@@ -146,6 +146,7 @@
                                                 {{ $school->school_name }} - Plans Overview
                                             </h6>
                                             <div>
+                                                @if(auth()->user()->role !== 'viewer')
                                                 <button class="btn btn-primary btn-sm me-2"
                                                         data-bs-toggle="modal"
                                                         data-bs-target="#addPlanModal"
@@ -156,6 +157,7 @@
                                                         onclick="openScheduleDrillModal({{ $school->id }})">
                                                     <i class="fas fa-bullhorn me-2"></i> Schedule Drill
                                                 </button>
+                                                @endif
                                             </div>
                                         </div>
                                 @if($school->buildings->count() > 0)
@@ -269,13 +271,16 @@
                                                             data-bs-target="#viewPlanModal">
                                                         <i class="fas fa-eye me-2"></i> View Plan
                                                     </button>
+                                                    @if(auth()->user()->role !== 'viewer')
                                                     <button class="btn btn-sm btn-outline-warning edit-plan-btn"
                                                             data-plan-id="{{ $plan->id }}"
                                                             data-bs-toggle="modal"
                                                             data-bs-target="#editPlanModal">
                                                         <i class="fas fa-edit me-2"></i> Edit Plan
                                                     </button>
+                                                    @endif
                                                     @else
+                                                    @if(auth()->user()->role !== 'viewer')
                                                     <button class="btn btn-sm btn-outline-danger create-plan-btn"
                                                             data-building-id="{{ $building->id }}"
                                                             data-building-name="{{ $building->building_name ?? $building->building_no }}"
@@ -285,6 +290,7 @@
                                                             data-bs-target="#addPlanModal">
                                                         <i class="fas fa-plus-circle me-2"></i> Create Plan
                                                     </button>
+                                                    @endif
                                                     @endif
                                                 </div>
                                             </div>
@@ -312,12 +318,14 @@
                                             <small class="text-muted"><i class="fas fa-info-circle me-1"></i>Drag buildings to arrange layout. Click 'Edit Placement' to unlock.</small>
                                         </div>
                                         <div>
+                                            @if(auth()->user()->role !== 'viewer')
                                             <button class="btn btn-outline-primary btn-sm me-2" id="edit-placement-btn-{{ $school->id }}" onclick="toggleMapEdit({{ $school->id }})">
                                                 <i class="fas fa-arrows-alt me-2"></i> Edit Placement
                                             </button>
                                             <button class="btn btn-primary btn-sm" id="save-placement-btn-{{ $school->id }}" onclick="saveMapLayout({{ $school->id }})" disabled>
                                                 <i class="fas fa-save me-2"></i> Save Layout
                                             </button>
+                                            @endif
                                         </div>
                                     </div>
 
@@ -495,9 +503,11 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    @if(auth()->user()->role !== 'viewer')
                     <button type="button" class="btn btn-primary" id="savePlanButton">
                         <i class="fas fa-save me-2"></i> Save Plan
                     </button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -604,9 +614,11 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    @if(auth()->user()->role !== 'viewer')
                     <button type="button" class="btn btn-primary" onclick="updatePlan()">
                         <i class="fas fa-save me-2"></i> Update Plan
                     </button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -629,9 +641,11 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    @if(auth()->user()->role !== 'viewer')
                     <button type="button" class="btn btn-danger" id="deletePlanBtn" style="display: none;">
                         <i class="fas fa-trash me-2"></i> Delete Plan
                     </button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -741,9 +755,11 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    @if(auth()->user()->role !== 'viewer')
                     <button type="button" class="btn btn-primary" onclick="saveDrillSchedule()">
                         <i class="fas fa-calendar-check me-2"></i> Confirm Schedule
                     </button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -760,6 +776,23 @@
         // Store current school ID
         let currentSchoolId = null;
         let currentPlanId = null;
+        const userRole = "{{ auth()->user()->role }}";
+
+        function checkViewerAccess(formId, buttonsId = null) {
+            if (userRole === 'viewer') {
+                if (formId) {
+                    const form = document.getElementById(formId);
+                    if (form) {
+                        const elements = form.querySelectorAll('input, select, textarea, button:not([data-bs-dismiss="modal"])');
+                        elements.forEach(el => el.disabled = true);
+                    }
+                }
+                if (buttonsId) {
+                    const buttons = document.getElementById(buttonsId);
+                    if (buttons) buttons.style.display = 'none';
+                }
+            }
+        }
         let drillsData = {}; // Store drill data by school ID
 
         // Initialize with first school
@@ -810,6 +843,9 @@
                     document.getElementById('displayEmergencyExits').value = 0;
                     document.getElementById('displaySafetyFeatures').value = 'Please select a building by clicking "Create Plan" on a building card.';
                 }
+
+                // Enforce viewer role restrictions
+                checkViewerAccess('addPlanForm');
             });
 
             // Save Plan button click handler - FIXED
@@ -864,6 +900,9 @@
                     document.getElementById('editStatus').value = plan.status;
                     document.getElementById('editContacts').value = plan.emergency_contacts || '';
                     document.getElementById('editInstructions').value = plan.special_instructions || '';
+
+                    // Enforce viewer role restrictions
+                    checkViewerAccess('editPlanForm');
 
                 } catch (error) {
                     console.error('Error loading plan data:', error);
@@ -992,8 +1031,10 @@
 
                     // Show delete button for admins or creators
                     const deleteBtn = document.getElementById('deletePlanBtn');
-                    deleteBtn.style.display = 'block';
-                    deleteBtn.onclick = function() { deletePlan(plan.id); };
+                    if (deleteBtn) {
+                        deleteBtn.style.display = userRole === 'viewer' ? 'none' : 'block';
+                        deleteBtn.onclick = function() { deletePlan(plan.id); };
+                    }
 
                 } catch (error) {
                     console.error('Error loading plan details:', error);
@@ -1564,6 +1605,9 @@
             }
             
             modal.show();
+
+            // Enforce viewer role restrictions
+            checkViewerAccess('scheduleDrillForm');
         }
 
         // Save Drill Schedule - FIXED
@@ -1947,3 +1991,6 @@
         }
     </script>
 @endsection
+</html>
+</html>
+</html>

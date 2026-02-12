@@ -249,12 +249,14 @@
                         <span>Evacuation Plans</span>
                     </a>
                 </li>
+                @if(auth()->user()->role !== 'viewer')
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('fire-safety.customization') }}">
                         <span class="nav-icon"><i class="fas fa-cog"></i></span>
                         <span>Customization</span>
                     </a>
                 </li>
+                @endif
             </ul>
         </div>
     </div>
@@ -441,7 +443,7 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                <!-- Bottom Action Bar -->
+                                @if(auth()->user()->role !== 'viewer')
                                 <div class="row mt-4">
                                     <div class="col-12">
                                         <div class="card dashboard-card">
@@ -467,6 +469,7 @@
                                         </div>
                                     </div>
                                 </div>
+                                @endif
                             </div>
                             <div class="col-lg-4">
                                 <!-- Alerts for All Schools -->
@@ -614,7 +617,7 @@
                                         <i class="fas fa-building fa-2x mb-2"></i>
                                         <h6>Buildings</h6>
                                         <div class="mt-2 status-indicator"></div>
-                                        <a href="{{ route('fire-safety.buildings') }}" class="btn btn-sm mt-2">Configure</a>
+                                        <a href="{{ route('fire-safety.buildings') }}" class="btn btn-sm mt-2">{{ auth()->user()->role === 'viewer' ? 'View' : 'Configure' }}</a>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -622,7 +625,7 @@
                                         <i class="fas fa-bell fa-2x mb-2"></i>
                                         <h6>Alarm Systems</h6>
                                         <div class="mt-2 status-indicator"></div>
-                                        <a href="{{ route('fire-safety.alarm-systems') }}" class="btn btn-sm mt-2">Configure</a>
+                                        <a href="{{ route('fire-safety.alarm-systems') }}" class="btn btn-sm mt-2">{{ auth()->user()->role === 'viewer' ? 'View' : 'Configure' }}</a>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -630,7 +633,7 @@
                                         <i class="fas fa-door-open fa-2x mb-2"></i>
                                         <h6>Room Setup</h6>
                                         <div class="mt-2 status-indicator"></div>
-                                        <a href="{{ route('fire-safety.extinguishers') }}" class="btn btn-sm mt-2">Configure</a>
+                                        <a href="{{ route('fire-safety.extinguishers') }}" class="btn btn-sm mt-2">{{ auth()->user()->role === 'viewer' ? 'View' : 'Configure' }}</a>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -638,7 +641,7 @@
                                         <i class="fas fa-fire-extinguisher fa-2x mb-2"></i>
                                         <h6>Fire Extinguishers</h6>
                                         <div class="mt-2 status-indicator"></div>
-                                        <a href="{{ route('fire-safety.extinguishers') }}" class="btn btn-sm mt-2">Configure</a>
+                                        <a href="{{ route('fire-safety.extinguishers') }}" class="btn btn-sm mt-2">{{ auth()->user()->role === 'viewer' ? 'View' : 'Configure' }}</a>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
@@ -646,7 +649,7 @@
                                         <i class="fas fa-map-signs fa-2x mb-2"></i>
                                         <h6>Evacuation Plans</h6>
                                         <div class="mt-2 status-indicator"></div>
-                                        <a href="{{ route('fire-safety.evacuation-plans') }}" class="btn btn-sm mt-2">Configure</a>
+                                        <a href="{{ route('fire-safety.evacuation-plans') }}" class="btn btn-sm mt-2">{{ auth()->user()->role === 'viewer' ? 'View' : 'Configure' }}</a>
                                     </div>
                                 </div>
                             </div>
@@ -830,6 +833,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
+const userRole = "{{ auth()->user()->role }}";
+
 document.addEventListener('DOMContentLoaded', function() {
     // Tab switching - load school-specific alerts/events
     const tabButtons = document.querySelectorAll('[data-bs-toggle="tab"]');
@@ -903,7 +908,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const btn = card.querySelector('a');
             btn.className = `btn btn-sm mt-2 ${isDone ? 'btn-success' : 'btn-outline-dark'}`;
-            btn.innerHTML = isDone ? '<i class="fas fa-edit me-1"></i> Update' : '<i class="fas fa-plus me-1"></i> Setup Now';
+            if (userRole === 'viewer') {
+                btn.innerHTML = '<i class="fas fa-search me-1"></i> View';
+            } else {
+                btn.innerHTML = isDone ? '<i class="fas fa-edit me-1"></i> Update' : '<i class="fas fa-plus me-1"></i> Setup Now';
+            }
         });
     }
 

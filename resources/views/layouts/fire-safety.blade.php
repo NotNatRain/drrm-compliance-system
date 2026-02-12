@@ -229,7 +229,7 @@
                 <li class="nav-item">
                     <a class="nav-link {{ Route::is('fire-safety.customization') ? 'active' : '' }}" href="{{ route('fire-safety.customization') }}">
                         <span class="nav-icon"><i class="fas fa-cog"></i></span>
-                        <span>Customization</span>
+                        <span>{{ auth()->user()->role === 'viewer' ? 'School Info' : 'Customization' }}</span>
                     </a>
                 </li>
             </ul>
@@ -346,13 +346,39 @@
                 console.error('Error:', error);
                 Swal.fire('Error', 'An error occurred', 'error');
             });
+
         }
-        
-        // Ensure Modals work properly
+
+        // Move modals to body to escape stacking contexts and ensure they are clickable
+        function moveModalsToBody() {
+            document.querySelectorAll('.modal').forEach(function(modal) {
+                if (modal.parentNode !== document.body) {
+                    document.body.appendChild(modal);
+                }
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
-           // Any global init
+            moveModalsToBody();
+            
+            // Also watch for dynamically added modals if any
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === 1 && node.classList.contains('modal')) {
+                            if (node.parentNode !== document.body) {
+                                document.body.appendChild(node);
+                            }
+                        }
+                    });
+                });
+            });
+            
+            observer.observe(document.body, { childList: true, subtree: true });
         });
     </script>
+
+
     @yield('modals')
 
     @yield('scripts')

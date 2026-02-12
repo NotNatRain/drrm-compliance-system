@@ -90,9 +90,11 @@
                 </div>
                 <div class="modal-footer bg-light border-0">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                    @if(auth()->user()->role !== 'viewer')
                     <button type="button" class="btn btn-primary px-4 shadow-sm" id="btnGoToUpdate" onclick="">
                         <i class="fas fa-edit me-2"></i> Update Information
                     </button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -217,18 +219,18 @@
                                     <i class="fas fa-building me-2"></i> Buildings - {{ $school->school_name }}
                                 </h6>
                                 <div>
-                                    @if(auth()->user()->role === 'admin')
+                                    @if(auth()->user()->role !== 'viewer')
                                     <button class="btn btn-primary btn-sm me-2 add-building-btn"
                                             data-school-id="{{ $school->id }}"
                                             data-bs-toggle="modal"
                                             data-bs-target="#addBuildingModal">
                                         <i class="fas fa-plus me-2"></i> Add Building
                                     </button>
-                                    <button class="btn btn-success btn-sm schedule-inspection-btn"
+                                    <button class="btn btn-success btn-sm inspect-now-btn"
                                             data-school-id="{{ $school->id }}"
                                             data-bs-toggle="modal"
-                                            data-bs-target="#scheduleInspectionModal">
-                                        <i class="fas fa-calendar-plus me-2"></i> Schedule Inspection
+                                            data-bs-target="#inspectNowModal">
+                                        <i class="fas fa-clipboard-check me-2"></i> Inspect Now
                                     </button>
                                     <button class="btn btn-sm me-2"
                                             style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;"
@@ -298,14 +300,6 @@
                                                             data-bs-target="#viewBuildingModal">
                                                         <i class="fas fa-eye me-2"></i> View Details / Update
                                                     </button>
-                                                    @if(auth()->user()->role === 'admin')
-                                                    <button class="btn btn-sm btn-outline-success inspect-building-btn"
-                                                            data-building-id="{{ $building->id }}"
-                                                            data-building-name="{{ $building->building_no }}"
-                                                            onclick="openInspectionChecklist({{ $building->id }}, '{{ $building->building_no }}')">
-                                                        <i class="fas fa-clipboard-check me-2"></i> Inspect Now
-                                                    </button>
-                                                    @endif
                                                 </div>
                                             </div>
                                         </div>
@@ -317,7 +311,7 @@
                                     <i class="fas fa-building"></i>
                                     <h4>No Buildings Found</h4>
                                     <p class="text-muted">This school doesn't have any buildings yet. Add your first building to get started.</p>
-                                    @if(auth()->user()->role === 'admin')
+                                    @if(auth()->user()->role !== 'viewer')
                                     <button class="btn btn-primary add-building-btn"
                                             data-school-id="{{ $school->id }}"
                                             data-bs-toggle="modal"
@@ -332,16 +326,16 @@
                     </div>
                 </div>
 
-                <!-- Building Inspection Schedule -->
+                <!-- Inspected Checklist History -->
                 <div class="row mt-4">
-                    <div class="col-lg-8">
+                    <div class="col-lg-12">
                         <div class="card dashboard-card">
                             <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                 <h6 class="m-0 fw-bold text-primary">
-                                    <i class="fas fa-calendar-alt me-2"></i> Upcoming Inspections - {{ $school->school_name }}
+                                    <i class="fas fa-history me-2"></i> Inspected Checklist History - {{ $school->school_name }}
                                 </h6>
                                 <button class="btn btn-sm btn-outline-primary"
-                                        onclick="loadAllInspections({{ $school->id }})">
+                                        onclick="loadInspections({{ $school->id }})">
                                     <i class="fas fa-sync-alt me-1"></i> Refresh
                                 </button>
                             </div>
@@ -349,24 +343,7 @@
                                 <div id="inspectionsList-{{ $school->id }}">
                                     <div class="text-center text-muted py-4">
                                         <i class="fas fa-spinner fa-spin me-2"></i>
-                                        Loading inspections...
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-4">
-                        <div class="card dashboard-card">
-                            <div class="card-header py-3 bg-primary text-white">
-                                <h6 class="m-0 fw-bold">
-                                    <i class="fas fa-chart-pie me-2"></i> Compliance Statistics - {{ $school->school_name }}
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <div id="complianceStats-{{ $school->id }}">
-                                    <div class="text-center py-4">
-                                        <i class="fas fa-spinner fa-spin"></i> Loading statistics...
+                                        Loading history...
                                     </div>
                                 </div>
                             </div>
@@ -520,70 +497,156 @@
                     </form>
                 </div>
                 <div class="modal-footer">
+                    @if(auth()->user()->role !== 'viewer')
                     <button type="button" class="btn btn-primary" onclick="saveBuilding()">
                         <i class="fas fa-save me-2"></i> Save Building
                     </button>
+                    @endif
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Schedule Inspection Modal -->
-    <div class="modal fade" id="scheduleInspectionModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
+    <!-- Inspect Now Modal (Drill Management) -->
+    <div class="modal fade" id="inspectNowModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header bg-success text-white">
                     <h5 class="modal-title">
-                        <i class="fas fa-calendar-plus me-2"></i> Schedule Inspection
+                        <i class="fas fa-clipboard-check me-2"></i> Drill & Inspection Monitoring
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <form id="scheduleInspectionForm" action="{{ route('fire-safety.inspection.schedule') }}" method="POST">
+                <div class="modal-body p-4">
+                    <form id="inspectNowForm">
                         @csrf
-                        <input type="hidden" name="school_id" id="inspectionSchoolId">
-
-                        <div class="mb-3">
-                            <label class="form-label">Inspection Date *</label>
-                            <input type="date" class="form-control" name="inspection_date" required>
+                        <input type="hidden" name="school_id" value="{{ $activeSchool->id ?? '' }}">
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Drill Type *</label>
+                                <select class="form-select border-primary" name="drill_type" required>
+                                    <option value="">Select Type</option>
+                                    <option value="Earthquake">Earthquake</option>
+                                    <option value="Fire">Fire</option>
+                                    <option value="Both">Both Earthquake & Fire</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Date *</label>
+                                <input type="date" class="form-control border-primary" name="inspection_date" value="{{ date('Y-m-d') }}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Time *</label>
+                                <input type="time" class="form-control border-primary" name="inspection_time" value="{{ date('H:i') }}" required>
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Building *</label>
-                            <select class="form-control" name="building_id" id="buildingSelect" required>
-                                <option value="">Select Building</option>
-                                <!-- Buildings will be populated by JavaScript -->
-                            </select>
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold">Time Started</label>
+                                <input type="time" class="form-control" name="time_started">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold">Time Finished</label>
+                                <input type="time" class="form-control" name="time_finished">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label small fw-bold">Elapsed Time (mm:ss)</label>
+                                <input type="text" class="form-control" name="elapsed_time" placeholder="e.g. 05:30">
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Inspection Type *</label>
-                            <select class="form-control" name="inspection_type" required>
-                                <option value="">Select Type</option>
-                                <option value="routine">Routine Safety Audit</option>
-                                <option value="quarterly">Quarterly Inspection</option>
-                                <option value="annual">Annual Comprehensive</option>
-                                <option value="fire_drill">Fire Drill</option>
-                                <option value="emergency">Emergency Inspection</option>
-                                <option value="preventive">Preventive Maintenance</option>
-                            </select>
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">No. of Exits</label>
+                                <input type="number" class="form-control" name="no_of_exits" value="0">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">No. of Buildings</label>
+                                <input type="number" class="form-control" name="no_of_buildings" value="{{ $activeSchool->buildings->count() }}">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">No. of Students</label>
+                                <input type="number" class="form-control" name="no_of_students" value="0">
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label small fw-bold">No. of Personnel</label>
+                                <input type="number" class="form-control" name="no_of_personnel" value="0">
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Inspector *</label>
-                            <input type="text" class="form-control" name="inspector" value="{{ Auth::user()->name }}" required>
+                        <hr>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <h6 class="fw-bold text-success border-bottom pb-2 mb-3">
+                                    <i class="fas fa-list-check me-2"></i> Safety Checklist
+                                </h6>
+                                <div class="checklist-items scroll-y" style="max-height: 250px; overflow-y: auto;">
+                                    @if(isset($checklists) && count($checklists) > 0)
+                                        @foreach($checklists as $item)
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" name="checklist_data[]" value="{{ $item->name }}" id="check_{{ $item->id }}">
+                                                <label class="form-check-label small" for="check_{{ $item->id }}">
+                                                    {{ $item->name }}
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                    @else
+                                        <p class="text-muted small">No checklist items configured in customization.</p>
+                                    @endif
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-4">
+                                <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">
+                                    <i class="fas fa-users-viewfinder me-2"></i> Other Observers
+                                </h6>
+                                <div class="observer-items scroll-y" style="max-height: 250px; overflow-y: auto;">
+                                    @if(isset($observers) && count($observers) > 0)
+                                        @foreach($observers as $obs)
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input" type="checkbox" name="observers_data[]" value="{{ $obs->name }}" id="obs_{{ $obs->id }}">
+                                                <label class="form-check-label small" for="obs_{{ $obs->id }}">
+                                                    {{ $obs->name }}
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                    @else
+                                        <p class="text-muted small">No observer types configured in customization.</p>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label">Notes/Remarks</label>
-                            <textarea class="form-control" name="notes" rows="3" placeholder="Additional instructions or notes..."></textarea>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Remarks / Findings</label>
+                            <textarea class="form-control border-primary" name="remarks" rows="3" placeholder="Enter any observations or findings during the drill..."></textarea>
+                        </div>
+
+                        <div class="row border-top pt-3 bg-light rounded p-3">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label small fw-bold">Monitored By / Representative Name</label>
+                                <input type="text" class="form-control" name="monitored_by" value="{{ auth()->user()->name }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label small fw-bold">School DRRM Coordinator</label>
+                                <input type="text" class="form-control" name="coordinator_name" value="{{ $activeSchool->school_drrm_coordinator ?? '' }}">
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label small fw-bold">School Head / Principal</label>
+                                <input type="text" class="form-control" name="school_head_name" value="{{ $activeSchool->school_head ?? '' }}">
+                            </div>
                         </div>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary" onclick="saveInspection()">
-                        <i class="fas fa-calendar-check me-2"></i> Schedule
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    @if(auth()->user()->role !== 'viewer')
+                    <button type="button" class="btn btn-success px-4" onclick="saveDrillInspection()">
+                        <i class="fas fa-save me-2"></i> Save & Record Inspection
                     </button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -651,6 +714,20 @@
         // Global variables
         const USER_ROLE = "{{ auth()->user()->role }}";
         let currentSchoolId = null;
+
+        function checkViewerAccess(formId, buttonsId = null) {
+            if (USER_ROLE === 'viewer') {
+                const form = document.getElementById(formId);
+                if (form) {
+                    const elements = form.querySelectorAll('input, select, textarea, button:not([data-bs-dismiss="modal"])');
+                    elements.forEach(el => el.disabled = true);
+                }
+                if (buttonsId) {
+                    const buttons = document.getElementById(buttonsId);
+                    if (buttons) buttons.style.display = 'none';
+                }
+            }
+        }
 
         function toggleFloorRemovalReason() {
             const select = document.getElementById('removeFloorSelect');
@@ -1006,7 +1083,7 @@
                     `;
 
                     let footerHtml = '';
-                    if (USER_ROLE === 'admin') {
+                    if (USER_ROLE !== 'viewer') {
                         html += `
                             <div class="alert alert-primary mt-3">
                                 <i class="fas fa-question-circle me-2"></i>
@@ -1015,6 +1092,9 @@
                         `;
                         footerHtml = `
                             <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Close</button>
+                            <a href="{{ route('fire-safety.alarm-systems') }}" class="btn btn-info me-2 text-white">
+                                <i class="fas fa-bell me-2"></i> Configure Alarm
+                            </a>
                             <button type="button" class="btn btn-primary" onclick="editBuilding(${building.id})">
                                 <i class="fas fa-edit me-2"></i> Update
                             </button>
@@ -1023,7 +1103,7 @@
                         html += `
                             <div class="alert alert-info mt-3">
                                 <i class="fas fa-info-circle me-2"></i>
-                                To update building information or remove this building, please contact the system administrator.
+                                View-only mode enabled. Modifications are restricted.
                             </div>
                         `;
                         footerHtml = `
@@ -1181,7 +1261,7 @@
                 const saveBtn = editModalEl.querySelector('.btn-primary');
                 const originalOnClick = saveBtn.getAttribute('onclick');
                 saveBtn.innerHTML = '<i class="fas fa-save me-2"></i> Update Information';
-                saveBtn.setAttribute('onclick', `updateBuilding(${buildingId}, '${building.building_no}')`);
+                saveBtn.setAttribute('onclick', `updateBuilding(${building.id}, '${building.building_no}')`);
 
                 // Reset modal on hide
                 editModalEl.addEventListener('hidden.bs.modal', function() {
@@ -1202,6 +1282,9 @@
                 }, { once: true });
 
                 editModal.show();
+
+                // Enforce viewer role restrictions
+                checkViewerAccess('addBuildingForm');
 
             } catch (error) {
                 console.error('Error loading building for edit:', error);
@@ -1379,35 +1462,81 @@
             }
         }
 
-        // Load inspections for a school
-        async function loadInspections(schoolId) {
-            console.log('Loading inspections for school:', schoolId);
-
-            const container = document.getElementById(`inspectionsList-${schoolId}`);
-            if (!container) {
-                console.error('Container not found for school:', schoolId);
+        // Store inspection (Inspect Now)
+        async function saveDrillInspection() {
+            const form = document.getElementById('inspectNowForm');
+            const formData = new FormData(form);
+            
+            // Validate required
+            if (!formData.get('drill_type') || !formData.get('inspection_date') || !formData.get('inspection_time')) {
+                Swal.fire('Required Fields', 'Please fill in Drill Type, Date, and Time.', 'warning');
                 return;
             }
 
             try {
-                const response = await fetch(`/fire-safety/inspections/${schoolId}`);
-                console.log('Response status:', response.status);
+                Swal.fire({
+                    title: 'Saving...',
+                    text: 'Recording inspection data',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                const response = await fetch('{{ route('fire-safety.inspection.store') }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire({
+                        title: 'Success!',
+                        text: 'Inspection record saved successfully.',
+                        icon: 'success',
+                        confirmButtonColor: '#198754'
+                    }).then(() => {
+                        const modalEl = document.getElementById('inspectNowModal');
+                        const modal = bootstrap.Modal.getInstance(modalEl);
+                        if (modal) modal.hide();
+                        form.reset();
+                        if (data.inspection && data.inspection.school_id) {
+                            loadInspections(data.inspection.school_id);
+                        }
+                    });
+                } else {
+                    Swal.fire('Error', data.message || 'Failed to save inspection.', 'error');
                 }
+            } catch (error) {
+                console.error('Error saving inspection:', error);
+                Swal.fire('Error', 'An unexpected error occurred.', 'error');
+            }
+        }
 
-                const inspections = await response.json();
-                console.log('Inspections loaded:', inspections);
+        // Load inspections for a school
+        async function loadInspections(schoolId) {
+            const container = document.getElementById(`inspectionsList-${schoolId}`);
+            if (!container) return;
 
-                if (!inspections || inspections.length === 0) {
+            try {
+                const response = await fetch(`/fire-safety/inspections/${schoolId}`);
+                if (!response.ok) throw new Error('Failed to fetch');
+                
+                const data = await response.json();
+                
+                if (data.length === 0) {
                     container.innerHTML = `
-                        <div class="text-center text-muted py-4">
-                            <i class="fas fa-calendar-times fa-2x mb-3"></i>
-                            <p>No upcoming inspections scheduled.</p>
-                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#scheduleInspectionModal">
-                                <i class="fas fa-calendar-plus me-1"></i> Schedule One Now
+                        <div class="text-center text-muted py-5 border rounded bg-light">
+                            <i class="fas fa-clipboard-list fa-3x mb-3 text-secondary opacity-25"></i>
+                            <p>No inspection history found for this school.</p>
+                            @if(auth()->user()->role !== 'viewer')
+                            <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#inspectNowModal">
+                                <i class="fas fa-plus me-1"></i> Start First Inspection
                             </button>
+                            @endif
                         </div>
                     `;
                     return;
@@ -1415,73 +1544,66 @@
 
                 let html = `
                     <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
+                        <table class="table table-hover table-bordered align-middle mb-0">
+                            <thead class="bg-dark text-white">
                                 <tr>
-                                    <th>Date</th>
-                                    <th>Building</th>
-                                    <th>Type</th>
-                                    <th>Inspector</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
+                                    <th>Date Inspected</th>
+                                    <th>Drill Type</th>
+                                    <th>Monitored By</th>
+                                    <th>Remarks</th>
+                                    <th class="text-center">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                 `;
 
-                inspections.forEach(inspection => {
-                    const date = formatDate(inspection.inspection_date);
-                    const statusClass = getStatusClass(inspection.status);
-                    const statusText = getInspectionTypeText(inspection.status);
-                    const typeText = getInspectionTypeText(inspection.inspection_type);
-
+                data.forEach(item => {
+                    const date = new Date(item.inspection_date).toLocaleDateString('en-US', {
+                        year: 'numeric', month: 'long', day: 'numeric'
+                    });
                     html += `
-                        <tr>
-                            <td>${date}</td>
-                            <td>${inspection.building_name || 'N/A'}</td>
-                            <td>${typeText}</td>
-                            <td>${inspection.inspector || 'N/A'}</td>
-                            <td>
-                                <span class="badge bg-${statusClass}">${statusText}</span>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary me-1" onclick="viewInspection(${inspection.id})">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                                ${inspection.status === 'scheduled' ? `
-                                <button class="btn btn-sm btn-outline-danger" onclick="cancelInspection(${inspection.id})">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                                ` : `
-                                <button class="btn btn-sm btn-outline-secondary" disabled>
-                                    <i class="fas fa-times"></i>
-                                </button>
-                                `}
+                        <tr class="inspection-row" data-id="${item.id}">
+                            <td class="fw-bold">${date}<div class="small text-muted">${item.inspection_time || ''}</div></td>
+                            <td><span class="badge ${getDrillBadgeClass(item.drill_type)}">${item.drill_type}</span></td>
+                            <td>${item.monitored_by || 'N/A'}</td>
+                            <td><div class="text-truncate" style="max-width: 250px;" title="${item.remarks || ''}">${item.remarks || '<span class="text-muted small">No remarks</span>'}</div></td>
+                            <td class="text-center" style="width: 180px;">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewInspectionDetail(${item.id})">
+                                        <i class="fas fa-eye me-1"></i> View
+                                    </button>
+                                    <a href="/fire-safety/inspection/${item.id}/print" target="_blank" class="btn btn-sm btn-outline-dark">
+                                        <i class="fas fa-print me-1"></i> Print
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     `;
                 });
 
-                html += `
-                            </tbody>
-                        </table>
-                    </div>
-                `;
-
+                html += `</tbody></table></div>`;
                 container.innerHTML = html;
 
             } catch (error) {
-                console.error('Error loading inspections:', error);
+                console.error('Error loading history:', error);
                 container.innerHTML = `
-                    <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-circle me-2"></i>
-                        Failed to load inspections. Please try again.
-                        <button class="btn btn-sm btn-light ms-3" onclick="loadInspections(${schoolId})">
-                            <i class="fas fa-redo"></i> Retry
-                        </button>
+                    <div class="alert alert-danger mb-0">
+                        <i class="fas fa-exclamation-circle me-2"></i> Failed to load inspection history.
                     </div>
                 `;
             }
+        }
+
+        function getDrillBadgeClass(type) {
+            if (type === 'Earthquake') return 'bg-warning text-dark';
+            if (type === 'Fire') return 'bg-danger';
+            if (type === 'Both') return 'bg-primary';
+            return 'bg-secondary';
+        }
+
+        function viewInspectionDetail(id) {
+            // Simplified view for now - can be expanded
+            window.location.href = `/fire-safety/inspection/${id}/checklist`;
         }
 
         // Load compliance statistics
@@ -1827,7 +1949,7 @@
                                     </div>
                                 </div>
                                 <div class="modal-footer">
-                                    ${inspection.status === 'scheduled' ? `
+                                    ${inspection.status === 'scheduled' && USER_ROLE !== 'viewer' ? `
                                     <button type="button" class="btn btn-primary" onclick="startInspection(${inspection.id})">
                                         <i class="fas fa-play me-2"></i> Start Inspection
                                     </button>

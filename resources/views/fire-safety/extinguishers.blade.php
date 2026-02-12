@@ -155,7 +155,7 @@
                                             <i class="fas fa-list me-2"></i> Room-Based Extinguishers - {{ $school->school_name }}
                                         </h6>
                                         <div>
-                                            @if(auth()->user()->role === 'admin')
+                                            @if(auth()->user()->role !== 'viewer')
                                             <button class="btn btn-outline-primary btn-sm me-2"
                                                     data-bs-toggle="modal"
                                                     data-bs-target="#addRoomModal"
@@ -168,17 +168,17 @@
                                                     data-school-id="{{ $school->id }}">
                                                 <i class="fas fa-plus me-2"></i> Add Extinguisher
                                             </button>
-                                            <button class="btn btn-sm ms-2" 
+                                            <button class="btn btn-sm ms-2"
                                                     style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;"
                                                     onclick="openExtHistoryModal({{ $school->id }})">
                                                 <i class="fas fa-history me-1"></i> Removed Fire Extinguisher
                                             </button>
+                                            @endif
                                             <a href="{{ route('fire-safety.report.extinguisher-details', $school->id) }}" target="_blank"
-                                                    class="btn btn-sm ms-2" 
+                                                    class="btn btn-sm ms-2"
                                                     style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;">
                                                 <i class="fas fa-print me-1"></i> Print Fire Extinguisher Details
                                             </a>
-                                            @endif
                                         </div>
                                     </div>
                                     <div class="card-body">
@@ -267,7 +267,7 @@
                                                                                                 </td>
                                                                                                 <td class="text-end">
                                                                                                     <button class="btn btn-sm btn-outline-primary" onclick="openUpdateRoomModal({{ $room->id }})">
-                                                                                                        <i class="fas fa-search-plus me-1"></i> Inspect & Update
+                                                                                                        <i class="fas fa-search-plus me-1"></i> {{ auth()->user()->role === 'viewer' ? 'View Details' : 'Inspect & Update' }}
                                                                                                     </button>
                                                                                                 </td>
                                                                                             </tr>
@@ -360,7 +360,7 @@
                                                                 <td class="p-2">
                                                                     <button class="btn btn-sm btn-primary w-100"
                                                                             onclick="openUpdateModal({{ $ext->id }}, '{{ $ext->code }}', '{{ $ext->status }}', {{ $pressure }})">
-                                                                        <i class="fas fa-edit me-1"></i> Update
+                                                                        <i class="fas fa-edit me-1"></i> {{ auth()->user()->role === 'viewer' ? 'View Details' : 'Update' }}
                                                                     </button>
                                                                 </td>
                                                             </tr>
@@ -467,7 +467,8 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    @if(auth()->user()->role !== 'viewer')
                     <!-- Remove button -->
                     <button type="button" class="btn btn-outline-danger" id="removeExtBtn" style="display: none;" onclick="showExtRemovalReason()">
                         <i class="fas fa-trash-alt me-2"></i>Remove
@@ -475,6 +476,7 @@
                     <button type="button" class="btn btn-primary" onclick="saveExtinguisherStatus()">
                         <i class="fas fa-save me-2"></i>Update Status
                     </button>
+                    @endif
                 </div>
                 <!-- Reason for Removal section -->
                 <div class="card-footer bg-light border-top-0 d-none" id="extRemovalReasonSection">
@@ -531,10 +533,12 @@
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    @if(auth()->user()->role !== 'viewer')
                     <button type="button" class="btn btn-primary" onclick="saveRoomUpdate()">
                         <i class="fas fa-save me-2"></i>Save Changes
                     </button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -603,9 +607,11 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    @if(auth()->user()->role !== 'viewer')
                     <button type="button" class="btn btn-primary" onclick="saveRoom()">
                         <i class="fas fa-save me-2"></i>Save Room
                     </button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -713,9 +719,11 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    @if(auth()->user()->role !== 'viewer')
                     <button type="button" class="btn btn-primary" onclick="saveExtinguisher()">
                         <i class="fas fa-save me-2"></i>Save Extinguisher
                     </button>
+                    @endif
                 </div>
             </div>
         </div>
@@ -762,7 +770,22 @@
 
     <script>
         const schools = @json($schools);
+        const userRole = "{{ auth()->user()->role }}";
         let currentBuildingRooms = [];
+
+        function checkViewerAccess(formId, buttonsId = null) {
+            if (userRole === 'viewer') {
+                const form = document.getElementById(formId);
+                if (form) {
+                    const elements = form.querySelectorAll('input, select, textarea');
+                    elements.forEach(el => el.disabled = true);
+                }
+                if (buttonsId) {
+                    const buttons = document.getElementById(buttonsId);
+                    if (buttons) buttons.style.display = 'none';
+                }
+            }
+        }
 
         function csrfToken() {
             return document.querySelector('meta[name="csrf-token"]').content;
@@ -925,6 +948,9 @@
             const schoolId = btn?.getAttribute('data-school-id');
             document.getElementById('roomSchoolId').value = schoolId || '';
             populateBuildingsForSchool(schoolId);
+
+            // Enforce viewer role restrictions
+            checkViewerAccess('addRoomForm');
         });
 
         document.getElementById('addExtModal').addEventListener('show.bs.modal', function (event) {
@@ -938,6 +964,9 @@
             document.getElementById('coveredRoomsSelect').innerHTML = '';
 
             setTodayIfEmpty(document.querySelector('#addExtForm input[name="date_checked"]'));
+
+            // Enforce viewer role restrictions
+            checkViewerAccess('addExtForm');
         });
 
         async function saveRoom() {
@@ -1219,6 +1248,9 @@
 
             // Check initial status for remove button
             handleUpdateStatusChange();
+
+            // Enforce viewer role restrictions
+            checkViewerAccess('updateExtForm');
         }
 
         function handleUpdateStatusChange() {
@@ -1498,6 +1530,9 @@
                 const modalEl = document.getElementById('updateRoomModal');
                 const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
                 modal.show();
+
+                // Enforce viewer role restrictions
+                checkViewerAccess('updateRoomForm');
 
             } catch (e) {
                 console.error(e);

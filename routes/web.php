@@ -23,7 +23,15 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/users', [DashboardController::class, 'getUsers'])->name('users.index');
     Route::post('/users', [DashboardController::class, 'storeUser'])->name('users.store');
     Route::get('/users/{id}', [DashboardController::class, 'getUser'])->name('users.show');
+    Route::put('/users/{id}', [DashboardController::class, 'updateUser'])->name('users.update');
+    Route::post('/users/{id}/assign', [DashboardController::class, 'assignAccess'])->name('users.assign');
     Route::delete('/users/{id}', [DashboardController::class, 'deleteUser'])->name('users.destroy');
+});
+
+// Announcement Routes (Admin Only)
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::post('/announcements', [DashboardController::class, 'storeAnnouncement'])->name('announcements.store');
+    Route::delete('/announcements/{id}', [DashboardController::class, 'deleteAnnouncement'])->name('announcements.destroy');
 });
 
 // Subsystem dashboards
@@ -124,12 +132,11 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     Route::get('/sidebar-stats/{schoolId}', [FireSafetyController::class, 'getSidebarStats']);
     Route::get('/buildings-list/{schoolId}', [FireSafetyController::class, 'getBuildingsList']);
     Route::get('/building/history/{schoolId}', [FireSafetyController::class, 'getBuildingHistory'])->name('fire-safety.building.history');
-    Route::post('/inspection/schedule', [FireSafetyController::class, 'scheduleInspection'])->name('fire-safety.inspection.schedule');
-
-    // Inspection Routes (used by Buildings page JS)
+    // Inspection Routes (School-wide Drills)
     Route::get('/inspection/{id}', [FireSafetyController::class, 'getInspection'])->name('fire-safety.inspection.show');
-    Route::delete('/inspection/{id}/cancel', [FireSafetyController::class, 'cancelInspection'])->name('fire-safety.inspection.cancel');
+    Route::post('/inspection/store', [FireSafetyController::class, 'storeInspection'])->name('fire-safety.inspection.store');
     Route::get('/inspection/{id}/checklist', [FireSafetyController::class, 'inspectionChecklist'])->name('fire-safety.inspection.checklist');
+    Route::get('/inspection/{id}/print', [FireSafetyController::class, 'printInspection'])->name('fire-safety.inspection.print');
 
     // Room-based Fire Extinguisher Routes (AJAX)
     Route::get('/rooms/{buildingId}', [FireSafetyController::class, 'getRooms'])->name('fire-safety.rooms.list');
