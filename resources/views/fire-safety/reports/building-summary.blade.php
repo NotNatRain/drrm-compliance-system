@@ -61,6 +61,12 @@
             writing-mode: vertical-rl;
             transform: rotate(180deg);
             display: inline-block;
+            word-break: break-word;
+            white-space: pre-line;
+            max-width: 60px;
+            line-height: 1.2;
+            text-align: center;
+            padding: 5px 0;
         }
         .center-text {
             text-align: center;
@@ -112,12 +118,12 @@
                 <th style="width: 8%;">BUILDING NUMBER</th>
                 <th style="width: 20%;">BUILDING NAME</th>
                 <th class="vertical-th"><div>NUMBER OF FLOOR</div></th>
-                <th class="vertical-th"><div>IS THE BUILDING WITH SECONDARY EXIT FOR (2-4 STOREY BUILDING)</div></th>
+                <th class="vertical-th"><div>IS THE BUILDING<br> WITH SECONDARY<br> EXIT FOR (2-4 STOREY<br> BUILDING)</div></th>
                 <th class="vertical-th"><div>NUMBER OF CLASSROOMS</div></th>
-                <th class="vertical-th"><div>NUMBER OF ROOMS WITHOUT SECONDARY EXIT</div></th>
+                <th class="vertical-th"><div>NUMBER OF <br>ROOMS WITHOUT <br>SECONDARY EXIT</div></th>
                 <th class="vertical-th"><div>NUMBER OF LABORATORIES</div></th>
-                <th class="vertical-th"><div>NUMBER OF ADMINISTRATIVE OFFICE</div></th>
-                <th class="vertical-th"><div>NUMBER OF REQUIRED FIRE EXTINGUISHER</div></th>
+                <th class="vertical-th"><div>NUMBER OF ADMINISTRATIVE<br> OFFICE</div></th>
+                <th class="vertical-th"><div>NUMBER OF REQUIRED<br> FIRE EXTINGUISHER</div></th>
                 <th class="vertical-th"><div>NUMBER OF ACTIVE FIRE EXTINGUISHER</div></th>
                 <th class="vertical-th"><div>ALARMS</div></th>
                 <th style="width: 15%;">REMARKS</th>

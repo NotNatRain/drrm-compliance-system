@@ -337,7 +337,7 @@
                                                             <!-- Row 2 -->
                                                             <tr>
                                                                 <td colspan="5" class="p-3">
-                                                                    <div class="health-bar" style="height: 30px; background-color: #e9ecef; border-radius: 4px;" title="Pressure: {{ $pressure }}%">
+                                                                    <div class="health-bar" style="height: 30px; background-color: #e9ecef; border-radius: 4px; position: relative;" title="Pressure: {{ $pressure }}%">
                                                                         <div class="health-bar-fill {{ $healthClass }}" style="width: {{ $pressure }}%; border-radius: 4px;"></div>
                                                                         <div class="health-bar-text" style="line-height: 30px; font-size: 14px; font-weight: bold; color: #333;">{{ $pressure }}%</div>
                                                                     </div>
