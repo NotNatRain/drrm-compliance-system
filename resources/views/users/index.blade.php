@@ -27,8 +27,8 @@
                     <select class="form-select form-select-sm" name="role" id="filterRole">
                         <option value="">All Roles</option>
                         <option value="admin">Admin</option>
-                        <option value="Contributor">Contributor</option>
-                        <option value="Viewer">Viewer</option>
+                        <option value="contributor">Contributor</option>
+                        <option value="viewer">Viewer</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -74,8 +74,11 @@
                             <td class="ps-4 fw-bold">{{ $user->name }}</td>
                             <td>{{ $user->email }}</td>
                             <td>
-                                <span class="badge {{ $user->role === 'admin' ? 'bg-danger' : ($user->role === 'Contributor' ? 'bg-success' : 'bg-info text-dark') }}">
-                                    {{ $user->role }}
+                                @php
+                                    $roleLabel = ucfirst($user->role ?? 'user');
+                                @endphp
+                                <span class="badge {{ $user->role === 'admin' ? 'bg-danger' : ($user->role === 'contributor' ? 'bg-success' : 'bg-info text-dark') }}">
+                                    {{ $roleLabel }}
                                 </span>
                             </td>
                             <td>
@@ -153,8 +156,8 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold">Role</label>
                         <select name="role" class="form-select" required>
-                            <option value="Contributor">Contributor</option>
-                            <option value="Viewer">Viewer</option>
+                            <option value="contributor">Contributor</option>
+                            <option value="viewer">Viewer</option>
                             <option value="admin">Admin</option>
                         </select>
                     </div>
@@ -200,8 +203,8 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold">Role</label>
                         <select name="role" id="editUserRole" class="form-select" required>
-                            <option value="Contributor">Contributor</option>
-                            <option value="Viewer">Viewer</option>
+                            <option value="contributor">Contributor</option>
+                            <option value="viewer">Viewer</option>
                             <option value="admin">Admin</option>
                         </select>
                     </div>
@@ -329,7 +332,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" id="cancelIC">Actually, no</button>
-                <button type="button" class="btn btn-warning fw-bold" id="confirmIC text-dark">Yes, Grant Access</button>
+                <button type="button" class="btn btn-warning fw-bold text-dark" id="confirmIC">Yes, Grant Access</button>
             </div>
         </div>
     </div>
@@ -337,11 +340,11 @@
 
 @endsection
 
-@section('scripts')
+@push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Role monitoring for Admin password
-    const roleSelect = document.querySelector('select[name="role"]');
+    const roleSelect = document.querySelector('#addUserForm select[name="role"]');
     const adminConfirm = document.getElementById('adminConfirmation');
     roleSelect.addEventListener('change', function() {
         if (this.value === 'admin') {
@@ -369,26 +372,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Incident Checklist Confirmation
     const icCheck = document.querySelector('.incident-check');
-    const confirmModal = new bootstrap.Modal(document.getElementById('incidentConfirmModal'));
-    let pendingICState = false;
+    const confirmModalEl = document.getElementById('incidentConfirmModal');
+    if (icCheck && confirmModalEl) {
+        const confirmModal = new bootstrap.Modal(confirmModalEl);
 
-    icCheck.addEventListener('click', function(e) {
-        if (this.checked) {
+        icCheck.addEventListener('click', function(e) {
+            if (!this.checked) {
+                return;
+            }
             e.preventDefault();
-            pendingICState = true;
             confirmModal.show();
+        });
+
+        const confirmBtn = document.getElementById('confirmIC');
+        const cancelBtn = document.getElementById('cancelIC');
+
+        if (confirmBtn) {
+            confirmBtn.addEventListener('click', function() {
+                icCheck.checked = true;
+                confirmModal.hide();
+            });
         }
-    });
 
-    document.getElementById('confirmIC').addEventListener('click', function() {
-        icCheck.checked = true;
-        confirmModal.hide();
-    });
-
-    document.getElementById('cancelIC').addEventListener('click', function() {
-        icCheck.checked = false;
-        confirmModal.hide();
-    });
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', function() {
+                icCheck.checked = false;
+                confirmModal.hide();
+            });
+        }
+    }
 
     // Form Submissions
     document.getElementById('addUserForm').addEventListener('submit', function(e) {
@@ -396,7 +408,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const formData = new FormData(this);
         const data = Object.fromEntries(formData.entries());
         data.modules = []; // Initial empty modules
-        
+
         fetch("{{ route('users.store') }}", {
             method: 'POST',
             headers: {

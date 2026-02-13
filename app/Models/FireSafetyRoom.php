@@ -42,6 +42,11 @@ class FireSafetyRoom extends Model
         return $this->belongsTo(FireSafetyRoom::class, 'nearest_extinguisher_room_id');
     }
 
+    public function roomTypeConfig(): BelongsTo
+    {
+        return $this->belongsTo(SystemConfiguration::class, 'room_type_config_id');
+    }
+
     public function extinguishersCoveringThisRoom(): BelongsToMany
     {
         return $this->belongsToMany(

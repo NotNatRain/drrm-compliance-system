@@ -6,6 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FireSafetyController;
 use App\Http\Controllers\TyphoonController;
 use App\Http\Controllers\IncidentController;
+use App\Http\Controllers\PiePraController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -156,26 +157,51 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
 //Typhoon/Flood Routes
 Route::prefix('typhoon')->middleware(['auth', 'module.access:typhoon_flood'])->group(function () {
     Route::get('/dashboard', [TyphoonController::class, 'dashboard'])->name('typhoon.dashboard');
+    Route::get('/choose-school', [TyphoonController::class, 'chooseSchool'])->name('typhoon.choose-school');
+    Route::post('/set-school/{id}', [TyphoonController::class, 'setActiveSchool'])->name('typhoon.set-school');
+    Route::post('/families', [TyphoonController::class, 'storeFamily'])->name('typhoon.families.store');
+    Route::get('/evacuation-center/{id}', [TyphoonController::class, 'showEvacuationCenter'])->name('typhoon.evacuation-center.show');
+    Route::post('/evacuation-center', [TyphoonController::class, 'storeEvacuationCenter'])->name('typhoon.evacuation-center.store');
+    Route::put('/evacuation-center/{id}', [TyphoonController::class, 'updateEvacuationCenter'])->name('typhoon.evacuation-center.update');
+    Route::get('/realtime', [TyphoonController::class, 'realtime'])->name('typhoon.realtime');
     // Add other typhoon routes here
+});
+
+// PIE-PRA (Pre-Disaster Intelligent Evacuation Predictor & Resource Allocator)
+Route::prefix('pie-pra')->middleware(['auth', 'module.access:pie_pra'])->group(function () {
+    Route::get('/dashboard', [PiePraController::class, 'dashboard'])->name('pie-pra.dashboard');
+    Route::post('/run', [PiePraController::class, 'runPredictor'])->name('pie-pra.run');
+    Route::get('/scenario/{id}', [PiePraController::class, 'showScenario'])->name('pie-pra.scenario.show');
+
+    // Volunteers & matching
+    Route::get('/volunteers', [PiePraController::class, 'volunteers'])->name('pie-pra.volunteers');
+    Route::post('/volunteers', [PiePraController::class, 'storeVolunteer'])->name('pie-pra.volunteers.store');
+    Route::post('/match-volunteers', [PiePraController::class, 'matchVolunteers'])->name('pie-pra.volunteers.match');
+
+    // QR-based check-in/out (publicly scannable but safe via token)
+    Route::get('/qr/check-in/{token}', [PiePraController::class, 'qrCheckIn'])->name('pie-pra.qr.checkin');
+    Route::get('/qr/check-out/{token}', [PiePraController::class, 'qrCheckOut'])->name('pie-pra.qr.checkout');
+
+    // Certificates
+    Route::get('/certificate/{id}', [PiePraController::class, 'assignmentCertificate'])->name('pie-pra.certificate');
 });
 
 
 
 
-
 //Incident Routes
-Route::middleware(['auth', 'role:admin'])->group(function () {
+Route::middleware(['auth', 'module.access:incident_checklist'])->group(function () {
     Route::get('/incidents/dashboard', [IncidentController::class, 'dashboard'])->name('incidents.dashboard');
-    Route::get('/incidents/print', [IncidentController::class, 'printMonth'])->name('incidents.print');
-    Route::post('/incidents/store', [IncidentController::class, 'store'])->name('incidents.store');
+    Route::get('/incidents/print', [IncidentController::class, 'printMonth'])->name('incidents.print')->middleware('role:admin');
+    Route::post('/incidents/store', [IncidentController::class, 'store'])->name('incidents.store')->middleware('role:admin');
     Route::get('/incidents/date/{date}', [IncidentController::class, 'getDateIncidents'])->name('incidents.date');
-    Route::delete('/incidents/{id}', [IncidentController::class, 'destroy'])->name('incidents.destroy');
+    Route::delete('/incidents/{id}', [IncidentController::class, 'destroy'])->name('incidents.destroy')->middleware('role:admin');
     Route::get('/incidents/search-schools', [IncidentController::class, 'searchSchools'])->name('incidents.search-schools');
-    Route::get('/incidents/export', [IncidentController::class, 'export'])->name('incidents.export');
-    Route::post('/incidents/import', [IncidentController::class, 'import'])->name('incidents.import');
-    Route::post('/incidents/types', [IncidentController::class, 'storeIncidentType'])->name('incidents.types.store');
-    Route::post('/incidents/statuses', [IncidentController::class, 'storeIncidentStatus'])->name('incidents.statuses.store');
-    // Checklist APIs
+    Route::get('/incidents/export', [IncidentController::class, 'export'])->name('incidents.export')->middleware('role:admin');
+    Route::post('/incidents/import', [IncidentController::class, 'import'])->name('incidents.import')->middleware('role:admin');
+    Route::post('/incidents/types', [IncidentController::class, 'storeIncidentType'])->name('incidents.types.store')->middleware('role:admin');
+    Route::post('/incidents/statuses', [IncidentController::class, 'storeIncidentStatus'])->name('incidents.statuses.store')->middleware('role:admin');
+    // Checklist APIs (view/update only for assigned users)
     Route::get('/incidents/checklist', [IncidentController::class, 'getChecklist'])->name('incidents.checklist.index');
     Route::post('/incidents/checklist', [IncidentController::class, 'storeChecklistItem'])->name('incidents.checklist.store');
     Route::put('/incidents/checklist/{id}', [IncidentController::class, 'updateChecklistItem'])->name('incidents.checklist.update');

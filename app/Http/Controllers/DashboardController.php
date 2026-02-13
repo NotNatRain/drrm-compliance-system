@@ -26,7 +26,7 @@ class DashboardController extends Controller
     {
         $schools = FireSafetySchool::all();
         // If user is contributor, only pass their assigned school
-        if (auth()->user()->role === 'Contributor' && auth()->user()->school_id) {
+        if (auth()->user()->role === 'contributor' && auth()->user()->school_id) {
             $schools = FireSafetySchool::where('id', auth()->user()->school_id)->get();
         }
         $announcements = Announcement::where('is_active', true)->latest()->get();
@@ -75,7 +75,7 @@ class DashboardController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|string',
+            'role' => 'required|string|in:admin,contributor,viewer',
             'admin_confirmation' => 'required_if:role,admin'
         ]);
 
@@ -121,7 +121,7 @@ class DashboardController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $id,
-            'role' => 'required|string',
+            'role' => 'required|string|in:admin,contributor,viewer',
             'password' => 'nullable|string|min:8'
         ]);
 

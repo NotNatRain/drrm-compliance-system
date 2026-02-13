@@ -109,42 +109,80 @@
     <table>
         <thead>
             <tr>
-                <th style="width: 10%;">Building Number</th>
-                <th style="width: 25%;">Building Name</th>
-                <th class="vertical-th"><div>Secondary Exit (2–4 storey building)</div></th>
-                <th class="vertical-th"><div>Number of Fire Extinguishers</div></th>
-                <th class="vertical-th"><div>Number of Floors</div></th>
-                <th class="vertical-th"><div>Number of Classrooms</div></th>
-                <th class="vertical-th"><div>Number of Laboratories</div></th>
-                <th class="vertical-th"><div>Number of Administrative Office</div></th>
-                <th class="vertical-th"><div>Alarm Coverage</div></th>
-                <th>Remarks</th>
+                <th style="width: 8%;">BUILDING NUMBER</th>
+                <th style="width: 20%;">BUILDING NAME</th>
+                <th class="vertical-th"><div>NUMBER OF FLOOR</div></th>
+                <th class="vertical-th"><div>IS THE BUILDING WITH SECONDARY EXIT FOR (2-4 STOREY BUILDING)</div></th>
+                <th class="vertical-th"><div>NUMBER OF CLASSROOMS</div></th>
+                <th class="vertical-th"><div>NUMBER OF ROOMS WITHOUT SECONDARY EXIT</div></th>
+                <th class="vertical-th"><div>NUMBER OF LABORATORIES</div></th>
+                <th class="vertical-th"><div>NUMBER OF ADMINISTRATIVE OFFICE</div></th>
+                <th class="vertical-th"><div>NUMBER OF REQUIRED FIRE EXTINGUISHER</div></th>
+                <th class="vertical-th"><div>NUMBER OF ACTIVE FIRE EXTINGUISHER</div></th>
+                <th class="vertical-th"><div>ALARMS</div></th>
+                <th style="width: 15%;">REMARKS</th>
             </tr>
         </thead>
         <tbody>
             @foreach($school->buildings as $building)
                 @php
                     $rooms = $building->actualRooms;
-                    $classrooms = $rooms->where('room_type', 'classroom')->count();
-                    $laboratories = $rooms->where('room_type', 'laboratory')->count();
-                    $offices = $rooms->whereIn('room_type', ['office', 'department'])->count();
-                    $extinguishers = $building->fireExtinguishers->count();
-                    $alarms = $building->alarmSystems->count();
                     
-                    // Secondary Exit check: Floors >= 2 and emergency_exits >= 2 (as specified in logic previously)
-                    $secondaryExit = ($building->floors >= 2 && $building->emergency_exits >= 2) ? 'Yes' : 'No';
+                    // Count classrooms - looking for room_type = 'classroom' or room types with 'classroom' in name
+                    $classrooms = $rooms->filter(function($room) {
+                        return strtolower($room->room_type) === 'classroom' || 
+                               (isset($room->roomTypeConfig->name) && stripos($room->roomTypeConfig->name, 'classroom') !== false);
+                    })->count();
+                    
+                    // Count laboratories - looking for room_type = 'laboratory' or room types with 'lab' in name
+                    $laboratories = $rooms->filter(function($room) {
+                        return strtolower($room->room_type) === 'laboratory' || 
+                               (isset($room->roomTypeConfig->name) && stripos($room->roomTypeConfig->name, 'lab') !== false);
+                    })->count();
+                    
+                    // Count administrative offices - looking for room_type = 'office' or 'department' or room types with 'office' in name
+                    $offices = $rooms->filter(function($room) {
+                        return in_array(strtolower($room->room_type), ['office', 'department', 'administrative']) || 
+                               (isset($room->roomTypeConfig->name) && (stripos($room->roomTypeConfig->name, 'office') !== false || stripos($room->roomTypeConfig->name, 'admin') !== false));
+                    })->count();
+                    
+                    // Count rooms without secondary exit (rooms on floors >= 2 in buildings without adequate emergency exits)
+                    $roomsWithoutSecondaryExit = 0;
+                    if ($building->floors >= 2 && $building->emergency_exits < 2) {
+                        // Count rooms on floor 2 and above
+                        $roomsWithoutSecondaryExit = $rooms->filter(function($room) {
+                            return ($room->floor_no ?? 1) >= 2;
+                        })->count();
+                    }
+                    
+                    // Get required fire extinguishers from building's required_extinguishers field or calculate
+                    $requiredExtinguishers = $building->required_extinguishers ?? $building->requiredExtinguishersCount;
+                    
+                    // Count active fire extinguishers (status = 'active' or 'OK' or 'operational')
+                    $activeExtinguishers = $building->fireExtinguishers->filter(function($ext) {
+                        $status = strtolower($ext->status ?? '');
+                        return in_array($status, ['active', 'ok', 'operational', 'okay']);
+                    })->count();
+                    
+                    // Count total alarms for this building (using alarmSystemsMany relationship for many-to-many)
+                    $totalAlarms = $building->alarmSystemsMany->count();
+                    
+                    // Secondary Exit check: Building has 2-4 floors AND has at least 2 emergency exits
+                    $hasSecondaryExit = ($building->floors >= 2 && $building->floors <= 4 && $building->emergency_exits >= 2) ? 'Yes' : 'No';
                 @endphp
                 <tr>
                     <td class="center-text">{{ $building->building_no }}</td>
-                    <td>{{ $building->building_name }}</td>
-                    <td class="center-text">{{ $secondaryExit }}</td>
-                    <td class="center-text">{{ $extinguishers }}</td>
+                    <td class="center-text">{{ $building->building_name }}</td>
                     <td class="center-text">{{ $building->floors }}</td>
+                    <td class="center-text">{{ $hasSecondaryExit }}</td>
                     <td class="center-text">{{ $classrooms }}</td>
+                    <td class="center-text">{{ $roomsWithoutSecondaryExit }}</td>
                     <td class="center-text">{{ $laboratories }}</td>
                     <td class="center-text">{{ $offices }}</td>
-                    <td class="center-text">{{ $alarms > 0 ? 'Covered' : 'Not Covered' }}</td>
-                    <td>{{ $building->description }}</td>
+                    <td class="center-text">{{ $requiredExtinguishers }}</td>
+                    <td class="center-text">{{ $activeExtinguishers }}</td>
+                    <td class="center-text">{{ $totalAlarms }}</td>
+                    <td class="center-text">{{ $building->description }}</td>
                 </tr>
             @endforeach
         </tbody>

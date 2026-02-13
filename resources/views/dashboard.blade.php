@@ -222,7 +222,9 @@
         <!-- Incidents Compliance -->
         <div class="col-md-4 mb-4">
             @php
-                $canAccessIncidents = auth()->check() && (auth()->user()->role === 'admin');
+                $user = auth()->user();
+                $modules = $user->module_access ?? [];
+                $canAccessIncidents = $user && ($user->role === 'admin' || in_array('incident_checklist', $modules));
             @endphp
             <a href="{{ $canAccessIncidents ? route('incidents.dashboard') : '#' }}" class="text-decoration-none {{ $canAccessIncidents ? '' : 'disabled' }}">
                 <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #F2C94C;">

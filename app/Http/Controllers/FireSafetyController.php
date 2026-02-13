@@ -2254,7 +2254,7 @@ public function getRoom($id)
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        $archives = FireSafetyArchive::where('type', 'school')
+        $archives = FireSafetyArchive::where('type', 'school_deletion')
             ->orderBy('removed_at', 'desc')
             ->get();
 
@@ -2801,9 +2801,10 @@ public function getRoom($id)
     public function printBuildingSummary($schoolId)
     {
         $school = FireSafetySchool::with([
-            'buildings.actualRooms',
+            'buildings.actualRooms.roomTypeConfig',
             'buildings.fireExtinguishers',
-            'buildings.alarmSystems'
+            'buildings.alarmSystems',
+            'buildings.alarmSystemsMany'
         ])->findOrFail($schoolId);
 
         return view('fire-safety.reports.building-summary', compact('school'));
