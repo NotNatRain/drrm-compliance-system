@@ -18,6 +18,19 @@
             background-color: #fff3cd;
             border-left: 4px solid #ffc107;
         }
+     :root {
+            --fire-red: #A8191F;
+            --fire-dark-red: #8A1217;
+            --fire-light-red: #F8D7DA;
+            --charcoal: #36454F;       /* ← ADD THIS */
+            --dark-charcoal: #2C3E50;  /* ← ADD THIS */
+        }
+    .top-nav {
+        background: linear-gradient(135deg, var(--fire-red) 0%, var(--charcoal) 100%);
+    }
+    .sidebar {
+        background: linear-gradient(180deg, var(--fire-red) 0%, var(--dark-charcoal) 100%);
+    }
     </style>
 @endsection
 

@@ -41,6 +41,36 @@
         .swal2-styled.swal2-confirm {
             background-color: var(--fire-red) !important;
         }
+        :root {
+            --fire-red: #A8191F;
+            --fire-dark-red: #8A1217;
+            --fire-light-red: #F8D7DA;
+            --charcoal: #36454F;       /* ← ADD THIS */
+            --dark-charcoal: #2C3E50;  /* ← ADD THIS */
+        }
+        .top-nav {
+            background: linear-gradient(135deg, var(--fire-red) 0%, var(--charcoal) 100%);
+            height: 60px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1030;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: linear-gradient(180deg, var(--fire-red) 0%, var(--dark-charcoal) 100%);
+            width: 250px;
+            position: fixed;
+            top: 60px; /* Below top nav */
+            left: 0;
+            bottom: 0;
+            z-index: 1020;
+            overflow-y: auto;
+            transition: all 0.3s;
+        }
     </style>
 @endsection
 
@@ -1153,7 +1183,7 @@
 
             const typeSelect = document.getElementById('ext_type_select');
             const otherInput = document.getElementById('other_type_input');
-            
+
             // Create a temporary cloned FormData to manipulate values if needed
             // Actually, we can just append or change values in the original FormData object before sending
             const formData = new FormData(form);
@@ -1236,7 +1266,7 @@
             document.getElementById('updateExtStatus').value = status;
             document.getElementById('updateExtPressure').value = pressure;
             document.getElementById('updateExtNotes').value = '';
-            
+
             // Reset removal logic
             if (document.getElementById('removeExtBtn')) document.getElementById('removeExtBtn').style.display = 'none';
             if (document.getElementById('extRemovalReasonSection')) document.getElementById('extRemovalReasonSection').classList.add('d-none');
@@ -1258,7 +1288,7 @@
             if(!statusSelect) return;
             const status = statusSelect.value;
             const pressureInput = document.getElementById('updateExtPressure');
-            
+
             // Show/Hide Remove button if status is Decommissioned
             const removeBtn = document.getElementById('removeExtBtn');
             if (removeBtn) {

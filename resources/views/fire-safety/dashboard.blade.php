@@ -17,6 +17,8 @@
             --fire-red: #A8191F;
             --fire-dark-red: #8A1217;
             --fire-light-red: #F8D7DA;
+            --charcoal: #36454F;       /* ← ADD THIS */
+            --dark-charcoal: #2C3E50;  /* ← ADD THIS */
         }
 
         body {
@@ -26,7 +28,7 @@
 
         /* Top Navigation */
         .top-nav {
-            background-color: var(--fire-red);
+            background: linear-gradient(135deg, var(--fire-red) 0%, var(--charcoal) 100%);
             height: 60px;
             position: fixed;
             top: 0;
@@ -38,7 +40,7 @@
 
         /* Sidebar */
         .sidebar {
-            background-color: var(--fire-red);
+            background: linear-gradient(180deg, var(--fire-red) 0%, var(--dark-charcoal) 100%);
             width: 250px;
             position: fixed;
             top: 60px; /* Below top nav */
@@ -375,7 +377,7 @@
                                         </thead>
                                         <tbody id="schoolsTableBody">
                                             @forelse($schools as $school)
-                                                <tr data-status="{{ $school->status }}" 
+                                                <tr data-status="{{ $school->status }}"
                                                     data-school-name="{{ $school->school_name }}"
                                                     data-inspection-date="{{ $school->last_inspection_date ? \Carbon\Carbon::parse($school->last_inspection_date)->format('Y-m-d') : '1900-01-01' }}">
                                                     <td>
@@ -856,9 +858,9 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('passedAddress').textContent = school.address || 'N/A';
             document.getElementById('passedSchoolHead').textContent = school.school_head || 'Not recorded';
             document.getElementById('passedCoordinator').textContent = school.school_drrm_coordinator || 'Not recorded';
-            
-            const lastConfigStr = school.last_inspection_date ? 
-                new Date(school.last_inspection_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 
+
+            const lastConfigStr = school.last_inspection_date ?
+                new Date(school.last_inspection_date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) :
                 'Not recorded';
             document.getElementById('passedLastConfig').textContent = lastConfigStr;
         });
@@ -869,12 +871,12 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.addEventListener('click', function() {
             const school = JSON.parse(this.getAttribute('data-school-json'));
             const status = school.status;
-            
+
             document.getElementById('issuesSchoolNameTitle').textContent = school.school_name;
-            
+
             const unconfiguredView = document.getElementById('unconfiguredView');
             const ongoingView = document.getElementById('ongoingView');
-            
+
             if (status === 'unconfigured') {
                 unconfiguredView.style.display = 'block';
                 ongoingView.style.display = 'none';
@@ -900,12 +902,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const card = document.getElementById(`btnConfig${m.id}`);
             const indicator = card.querySelector('.status-indicator');
             const isDone = config[m.key];
-            
+
             card.className = `card h-100 text-center p-3 border-2 ${isDone ? 'border-success bg-success-subtle' : 'border-secondary bg-light'}`;
-            indicator.innerHTML = isDone ? 
-                `<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> Configured</span>` : 
+            indicator.innerHTML = isDone ?
+                `<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> Configured</span>` :
                 `<span class="badge bg-secondary"><i class="fas fa-clock me-1"></i> Pending</span>`;
-            
+
             const btn = card.querySelector('a');
             btn.className = `btn btn-sm mt-2 ${isDone ? 'btn-success' : 'btn-outline-dark'}`;
             if (userRole === 'viewer') {
@@ -919,7 +921,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderOngoingIssues(issues) {
         const tbody = document.getElementById('ongoingIssuesTable');
         tbody.innerHTML = '';
-        
+
         const moduleMap = [
             { key: 'buildings', label: 'Buildings', icon: 'fa-building', color: 'primary', route: 'buildings' },
             { key: 'alarms', label: 'Alarm System', icon: 'fa-bell', color: 'info', route: 'alarm-systems' },

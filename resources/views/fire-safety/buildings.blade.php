@@ -63,6 +63,19 @@
             opacity: 0.7;
             pointer-events: none;
         }
+        :root {
+            --fire-red: #A8191F;
+            --fire-dark-red: #8A1217;
+            --fire-light-red: #F8D7DA;
+            --charcoal: #36454F;       /* ← ADD THIS */
+            --dark-charcoal: #2C3E50;  /* ← ADD THIS */
+        }
+        .top-nav {
+            background: linear-gradient(135deg, var(--fire-red) 0%, var(--charcoal) 100%);
+        }
+        .sidebar {
+            background: linear-gradient(180deg, var(--fire-red) 0%, var(--dark-charcoal) 100%);
+        }
     </style>
 @endsection
 
@@ -521,7 +534,7 @@
                     <form id="inspectNowForm">
                         @csrf
                         <input type="hidden" name="school_id" value="{{ $activeSchool->id ?? '' }}">
-                        
+
                         <div class="row mb-4">
                             <div class="col-md-4">
                                 <label class="form-label fw-bold">Drill Type *</label>
@@ -1466,7 +1479,7 @@
         async function saveDrillInspection() {
             const form = document.getElementById('inspectNowForm');
             const formData = new FormData(form);
-            
+
             // Validate required
             if (!formData.get('drill_type') || !formData.get('inspection_date') || !formData.get('inspection_time')) {
                 Swal.fire('Required Fields', 'Please fill in Drill Type, Date, and Time.', 'warning');
@@ -1524,9 +1537,9 @@
             try {
                 const response = await fetch(`/fire-safety/inspections/${schoolId}`);
                 if (!response.ok) throw new Error('Failed to fetch');
-                
+
                 const data = await response.json();
-                
+
                 if (data.length === 0) {
                     container.innerHTML = `
                         <div class="text-center text-muted py-5 border rounded bg-light">
@@ -2090,9 +2103,9 @@
             const contentDiv = document.getElementById('checklistContent');
             const codeSpan = document.getElementById('checklistBuildingCode');
             const updateBtn = document.getElementById('btnGoToUpdate');
-            
+
             codeSpan.textContent = buildingCode;
-            
+
             // Show loading state
             contentDiv.innerHTML = `
                 <div class="text-center py-5">
@@ -2102,20 +2115,20 @@
                     <p class="mt-3 text-muted">Analyzing building safety compliance...</p>
                 </div>
             `;
-            
+
             modal.show();
-            
+
             try {
                 const response = await fetch(`/fire-safety/building/${buildingId}`);
                 const building = await response.json();
-                
+
                 // Calculate compliance metrics
                 const alarmCount = building.alarm_systems_count || 0;
                 const extinguisherCount = building.fire_extinguishers_count || 0;
                 const requiredExtinguishers = building.required_extinguishers_count || 0;
                 const emergencyExits = building.emergency_exits || 0;
                 const hasEvacuationPlan = building.has_evacuation_plan || false;
-                
+
                 // Build checklist HTML
                 let html = `
                     <div class="list-group list-group-flush">
@@ -2126,21 +2139,21 @@
                             </div>
                             <span class="badge bg-secondary">${building.building_type || 'N/A'}</span>
                         </div>
-                        
+
                         <div class="list-group-item d-flex justify-content-between align-items-center">
                             <div>
                                 <i class="fas fa-layer-group me-2 text-info"></i>
                                 <strong>Floors:</strong> ${building.floors || 0}
                             </div>
                         </div>
-                        
+
                         <div class="list-group-item d-flex justify-content-between align-items-center">
                             <div>
                                 <i class="fas fa-door-closed me-2 text-warning"></i>
                                 <strong>Rooms:</strong> ${building.rooms || 0}
                             </div>
                         </div>
-                        
+
                         <div class="list-group-item d-flex justify-content-between align-items-center ${alarmCount > 0 ? 'bg-success-subtle' : 'bg-danger-subtle'}">
                             <div>
                                 <i class="fas fa-bell me-2"></i>
@@ -2150,7 +2163,7 @@
                                 ${alarmCount > 0 ? 'Installed' : 'Missing'}
                             </span>
                         </div>
-                        
+
                         <div class="list-group-item d-flex justify-content-between align-items-center ${extinguisherCount >= requiredExtinguishers ? 'bg-success-subtle' : 'bg-warning-subtle'}">
                             <div>
                                 <i class="fas fa-fire-extinguisher me-2"></i>
@@ -2160,7 +2173,7 @@
                                 ${extinguisherCount >= requiredExtinguishers ? 'Compliant' : 'Needs More'}
                             </span>
                         </div>
-                        
+
                         <div class="list-group-item d-flex justify-content-between align-items-center ${emergencyExits >= 2 ? 'bg-success-subtle' : 'bg-warning-subtle'}">
                             <div>
                                 <i class="fas fa-door-open me-2"></i>
@@ -2170,7 +2183,7 @@
                                 ${emergencyExits >= 2 ? 'Adequate' : 'Needs Review'}
                             </span>
                         </div>
-                        
+
                         <div class="list-group-item d-flex justify-content-between align-items-center ${hasEvacuationPlan ? 'bg-success-subtle' : 'bg-danger-subtle'}">
                             <div>
                                 <i class="fas fa-map-signs me-2"></i>
@@ -2181,15 +2194,15 @@
                             </span>
                         </div>
                     </div>
-                    
+
                     <div class="alert alert-info mt-3 mb-0">
                         <i class="fas fa-info-circle me-2"></i>
                         <strong>Note:</strong> Click "Update Information" to modify building details or add missing safety equipment.
                     </div>
                 `;
-                
+
                 contentDiv.innerHTML = html;
-                
+
                 // Wire up the Update button
                 updateBtn.onclick = function() {
                     modal.hide();
@@ -2201,7 +2214,7 @@
                         }
                     }, 300);
                 };
-                
+
             } catch (error) {
                 console.error('Error loading building data:', error);
                 contentDiv.innerHTML = `

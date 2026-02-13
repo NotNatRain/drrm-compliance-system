@@ -12,15 +12,17 @@
         :root {
             --fire-red: #A8191F;
             --fire-dark-red: #8A1217;
+            --fire-light-red: #F8D7DA;
+            --charcoal: #36454F;       /* ← ADD THIS */
+            --dark-charcoal: #2C3E50;  /* ← ADD THIS */
         }
-
-        body {
+         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             overflow-x: hidden;
         }
 
         .top-nav {
-            background-color: var(--fire-red);
+            background: linear-gradient(135deg, var(--fire-red) 0%, var(--charcoal) 100%);
             height: 60px;
             position: fixed;
             top: 0;
@@ -31,7 +33,7 @@
         }
 
         .sidebar {
-            background-color: var(--fire-red);
+            background: linear-gradient(180deg, var(--fire-red) 0%, var(--dark-charcoal) 100%);
             width: 250px;
             position: fixed;
             top: 60px;
@@ -872,13 +874,13 @@
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label">School Name *</label>
-                                    <input type="text" class="form-control" name="school_name" 
+                                    <input type="text" class="form-control" name="school_name"
                                            value="{{ auth()->user()->school->school_name ?? '' }}" required
                                            {{ auth()->user()->role === 'viewer' ? 'readonly' : '' }}>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">School ID *</label>
-                                    <input type="text" class="form-control" name="school_id_display" 
+                                    <input type="text" class="form-control" name="school_id_display"
                                            value="{{ auth()->user()->school->school_id ?? '' }}" required readonly>
                                     <small class="text-muted">School ID cannot be changed</small>
                                 </div>
@@ -893,13 +895,13 @@
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label">School Head *</label>
-                                    <input type="text" class="form-control" name="school_head" 
+                                    <input type="text" class="form-control" name="school_head"
                                            value="{{ auth()->user()->school->school_head ?? '' }}" required
                                            {{ auth()->user()->role === 'viewer' ? 'readonly' : '' }}>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">DRRM Coordinator *</label>
-                                    <input type="text" class="form-control" name="school_drrm_coordinator" 
+                                    <input type="text" class="form-control" name="school_drrm_coordinator"
                                            value="{{ auth()->user()->school->school_drrm_coordinator ?? '' }}" required
                                            {{ auth()->user()->role === 'viewer' ? 'readonly' : '' }}>
                                 </div>
@@ -908,13 +910,13 @@
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label">School Head Contact Number</label>
-                                    <input type="text" class="form-control" name="school_head_contact" 
+                                    <input type="text" class="form-control" name="school_head_contact"
                                            value="{{ auth()->user()->school->school_head_contact ?? '' }}"
                                            {{ auth()->user()->role === 'viewer' ? 'readonly' : '' }}>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">DRRM Coordinator Contact Number</label>
-                                    <input type="text" class="form-control" name="drrm_coordinator_contact" 
+                                    <input type="text" class="form-control" name="drrm_coordinator_contact"
                                            value="{{ auth()->user()->school->drrm_coordinator_contact ?? '' }}"
                                            {{ auth()->user()->role === 'viewer' ? 'readonly' : '' }}>
                                 </div>
@@ -922,7 +924,7 @@
 
                             <div class="mb-3">
                                 <label class="form-label">Email Address</label>
-                                <input type="email" class="form-control" name="email" 
+                                <input type="email" class="form-control" name="email"
                                        value="{{ auth()->user()->school->email ?? '' }}"
                                        {{ auth()->user()->role === 'viewer' ? 'readonly' : '' }}>
                             </div>
@@ -1646,7 +1648,7 @@
                     const configId = this.getAttribute('data-id');
                     const configType = this.getAttribute('data-type');
                     const configName = this.getAttribute('data-name');
-                    
+
                     const result = await Swal.fire({
                         title: 'Are you sure?',
                         text: `You are about to delete "${configName}". This action cannot be undone.`,
@@ -1699,7 +1701,7 @@
         // Admin: Save new school
         async function saveNewSchool() {
             const form = document.getElementById('addSchoolForm');
-            
+
             if (!form.checkValidity()) {
                 form.reportValidity();
                 return;
@@ -1945,7 +1947,7 @@
         // Admin: Save building type
         async function saveBuildingType() {
             const form = document.getElementById('addBuildingTypeForm');
-            
+
             if (!form.checkValidity()) {
                 form.reportValidity();
                 return;
@@ -2353,7 +2355,7 @@
 
                 users.forEach(user => {
                     const lastLogin = user.last_login_at ? new Date(user.last_login_at).toLocaleDateString() : 'Never';
-                    
+
                     const row = `
                         <tr>
                             <td>
@@ -2396,7 +2398,7 @@
         // Admin: Save new user
         async function saveNewUser() {
             const form = document.getElementById('addUserForm');
-            
+
             if (!form.checkValidity()) {
                 form.reportValidity();
                 return;
@@ -2454,14 +2456,14 @@
             try {
                 const response = await fetch(`/fire-safety/users/${userId}`);
                 const user = await response.json();
-                
+
                 // You need to create an edit user modal
                 Swal.fire({
                     title: 'Edit User',
                     text: `Edit user functionality for "${user.name}" is coming soon.`,
                     icon: 'info'
                 });
-                
+
             } catch (error) {
                 console.error('Error:', error);
                 Swal.fire({
@@ -2525,7 +2527,7 @@
         async function updateBuildingTypesOrder() {
             const items = document.querySelectorAll('#buildingTypesList .config-item');
             const order = Array.from(items).map(item => item.getAttribute('data-id'));
-            
+
             try {
                 const response = await fetch('/fire-safety/config/building-type/order', {
                     method: 'POST',
@@ -2550,7 +2552,7 @@
         async function updateSafetyFeaturesOrder() {
             const items = document.querySelectorAll('#safetyFeaturesList .config-item');
             const order = Array.from(items).map(item => item.getAttribute('data-id'));
-            
+
             try {
                 const response = await fetch('/fire-safety/config/safety-feature/order', {
                     method: 'POST',
@@ -2574,7 +2576,7 @@
         // Contributor: Update school information
         async function updateContributorSchool() {
             const form = document.getElementById('updateSchoolForm');
-            
+
             if (!form.checkValidity()) {
                 form.reportValidity();
                 return;
@@ -2637,7 +2639,7 @@
                 try {
                     const response = await fetch('/fire-safety/schools/export');
                     const blob = await response.blob();
-                    
+
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
@@ -2646,7 +2648,7 @@
                     a.click();
                     document.body.removeChild(a);
                     window.URL.revokeObjectURL(url);
-                    
+
                 } catch (error) {
                     console.error('Error:', error);
                     Swal.fire({
@@ -2782,7 +2784,7 @@
         // Save config update
         async function saveConfigUpdate() {
             const form = document.getElementById('editConfigForm');
-            
+
             if (!form.checkValidity()) {
                 form.reportValidity();
                 return;

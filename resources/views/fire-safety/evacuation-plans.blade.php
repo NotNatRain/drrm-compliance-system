@@ -1,7 +1,21 @@
 @extends('layouts.fire-safety')
 
 @section('title', 'Evacuation Plans - Fire Safety')
-
+<style>
+    :root {
+        --fire-red: #A8191F;
+        --fire-dark-red: #8A1217;
+        --fire-light-red: #F8D7DA;
+        --charcoal: #36454F;       /* ← ADD THIS */
+        --dark-charcoal: #2C3E50;  /* ← ADD THIS */
+    }
+    .top-nav {
+        background: linear-gradient(135deg, var(--fire-red) 0%, var(--charcoal) 100%);
+    }
+    .sidebar {
+        background: linear-gradient(180deg, var(--fire-red) 0%, var(--dark-charcoal) 100%);
+    }
+</style>
 @section('content')
     <div class="container-fluid">
         <!-- Page Heading -->
@@ -715,7 +729,7 @@
                                     <label class="form-check-label" for="scopeSpecific">Specific Building/s</label>
                                 </div>
                             </div>
-                            
+
                             <div id="specificBuildingsContainer" style="display: none;" class="border rounded p-3 bg-light">
                                 <p class="small text-muted mb-2">Select the buildings participating in this drill:</p>
                                 <div id="drillBuildingsList" class="row g-2">
@@ -871,7 +885,7 @@
 
                     // Display from building record (read-only in modal)
                     document.getElementById('editExits').value = plan.building?.emergency_exits ?? '';
-                    
+
                     // Display safety features
                     let featuresText = 'No safety features recorded';
                     if (plan.building?.features) {
@@ -1058,9 +1072,9 @@
                  form.reportValidity();
                  return;
              }
- 
+
              const formData = new FormData(form);
-             
+
              try {
                  // Show loading
                  Swal.fire({
@@ -1071,7 +1085,7 @@
                          Swal.showLoading();
                      }
                  });
- 
+
                  const response = await fetch(form.action, {
                      method: 'POST',
                      body: formData,
@@ -1080,9 +1094,9 @@
                          'Accept': 'application/json'
                      }
                  });
- 
+
                  const data = await response.json();
- 
+
                  if (data.success) {
                      Swal.fire({
                          title: 'Success!',
@@ -1115,17 +1129,17 @@
                 if (!response.ok) throw new Error('Failed to load building data');
 
                 const data = await response.json();
-                
+
                 if (data.success) {
                     const building = data.building;
-                    
+
                     // Display emergency exits
                     document.getElementById('displayEmergencyExits').value = building.emergency_exits || 0;
                     document.getElementById('hiddenEmergencyExits').value = building.emergency_exits || 0;
-                    
+
                     // Format and display safety features
                     document.getElementById('displaySafetyFeatures').value = building.features || 'No safety features recorded';
-                    
+
                 } else {
                     throw new Error(data.message || 'Failed to load building data');
                 }
@@ -1171,7 +1185,7 @@
 
                 const response = await fetch(`/fire-safety/drill-history/${schoolId}`);
                 if (!response.ok) throw new Error('Failed to load drill history');
-                
+
                 const drills = await response.json();
                 drillsData[schoolId] = drills;
 
@@ -1215,7 +1229,7 @@
                         'postponed': 'warning'
                     };
                     const statusColor = statusColors[drill.status] || 'secondary';
-                    
+
                     html += `
                         <tr>
                             <td>${drillDate}</td>
@@ -1561,14 +1575,14 @@
         async function openScheduleDrillModal(schoolId) {
             const modalElement = document.getElementById('scheduleDrillModal');
             const modal = new bootstrap.Modal(modalElement);
-            
+
             // Set school ID
             document.getElementById('drillSchoolId').value = schoolId;
-            
+
             // Set default times
             document.getElementById('startTime').value = '09:00';
             document.getElementById('endTime').value = '10:00';
-            
+
             // Reset scope to All
             document.getElementById('scopeAll').checked = true;
             toggleBuildingSelection();
@@ -1580,7 +1594,7 @@
             try {
                 const response = await fetch(`/fire-safety/drill-buildings/${schoolId}`);
                 const buildings = await response.json();
-                
+
                 if (buildings && buildings.length > 0) {
                     let html = '';
                     buildings.forEach(b => {
@@ -1603,7 +1617,7 @@
                 console.error('Error loading buildings for drill:', error);
                 buildingsList.innerHTML = '<div class="col-12 text-center py-2 text-danger">Error loading buildings.</div>';
             }
-            
+
             modal.show();
 
             // Enforce viewer role restrictions
@@ -1613,7 +1627,7 @@
         // Save Drill Schedule - FIXED
         async function saveDrillSchedule() {
             const form = document.getElementById('scheduleDrillForm');
-            
+
             if (!form.checkValidity()) {
                 form.reportValidity();
                 return;
@@ -1621,11 +1635,11 @@
 
             const formData = new FormData(form);
             const schoolId = document.getElementById('drillSchoolId').value;
-            
+
             // Handle Buildings Selection
             const scope = document.querySelector('input[name="building_scope"]:checked').value;
             let buildingIds = [];
-            
+
             if (scope === 'all') {
                 // Get all buildings in the list
                 document.querySelectorAll('.building-checkbox').forEach(cb => {
