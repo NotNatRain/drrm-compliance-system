@@ -29,16 +29,16 @@ class IncidentController extends Controller
     {
         $year = (int) $request->input('year', date('Y'));
         $month = (int) $request->input('month', date('n'));
-        
+
         // Get calendar data
         $calendarData = $this->getCalendarData($year, $month);
-        
+
         // Get incidents for the month
         $incidents = IncidentCalendar::forMonth($year, $month)
             ->with(['incidentType', 'incidentStatus'])
             ->orderBy('incident_date', 'desc')
             ->get();
-            
+
         // Get statistics (including chart-ready data)
         $stats = $this->getMonthlyStats($year, $month);
 
@@ -69,14 +69,14 @@ class IncidentController extends Controller
                 );
             }
         }
-        
+
         // Get all types and statuses for dropdowns
         $incidentTypes = IncidentType::orderBy('priority')->get();
         $incidentStatuses = IncidentStatus::orderBy('name')->get();
-        
+
         // Get unique schools for autocomplete
         $schools = IncidentSchool::orderBy('name')->pluck('name')->toArray();
-        
+
         return view('incidents.dashboard', compact(
             'calendarData',
             'incidents',
@@ -241,7 +241,7 @@ class IncidentController extends Controller
             'success' => true,
         ]);
     }
-    
+
     /**
      * Store a new incident.
      */
@@ -252,7 +252,7 @@ class IncidentController extends Controller
             'affected_personnel' => $request->filled('affected_personnel') ? (int) $request->input('affected_personnel') : 0,
             'affected_students' => $request->filled('affected_students') ? (int) $request->input('affected_students') : 0,
         ]);
-        
+
         $validated = $request->validate([
             'incident_date' => 'required|date',
             'school_name' => 'required|string|max:255',
@@ -263,24 +263,40 @@ class IncidentController extends Controller
             'reported_by' => 'nullable|string|max:255',
             'affected_personnel' => 'nullable|integer|min:0',
             'affected_students' => 'nullable|integer|min:0',
+            'attachment' => [
+                $request->input('entry_type') === 'incident' ? 'required' : 'nullable',
+                'file',
+                'mimes:pdf,jpg,jpeg,png',
+                'max:10240', // 10MB in KB
+            ],
         ]);
-        
+
         // Add reported by (current user)
         $validated['reported_by'] = auth()->user()->name;
-        
+
+        // Handle file upload
+        if ($request->hasFile('attachment')) {
+            $file = $request->file('attachment');
+            $path = $file->store('incident-attachments/' . date('Y/m'), 'public');
+            $validated['attachment_path'] = $path;
+            $validated['attachment_name'] = $file->getClientOriginalName();
+            $validated['attachment_size'] = $file->getSize();
+            $validated['attachment_mime'] = $file->getMimeType();
+        }
+
         // Store the incident
         $incident = IncidentCalendar::create($validated);
-        
+
         // Update or create school record
         $this->updateSchoolRecord($validated['school_name']);
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Incident logged successfully!',
             'data' => $incident->load(['incidentType', 'incidentStatus'])
         ]);
     }
-    
+
     /**
      * Get incidents for a specific date.
      */
@@ -290,15 +306,15 @@ class IncidentController extends Controller
             ->with(['incidentType', 'incidentStatus'])
             ->orderBy('created_at', 'desc')
             ->get();
-            
+
         $grouped = [
             'incidents' => $incidents->where('entry_type', 'incident')->values(),
             'compliance' => $incidents->where('entry_type', 'compliance')->values()
         ];
-        
+
         return response()->json($grouped);
     }
-    
+
     /**
      * Delete an incident.
      */
@@ -306,10 +322,10 @@ class IncidentController extends Controller
     {
         $incident = IncidentCalendar::findOrFail($id);
         $incident->delete();
-        
+
         return response()->json(['success' => true, 'message' => 'Incident deleted successfully!']);
     }
-    
+
     /**
      * Get calendar data for a specific month.
      */
@@ -320,7 +336,7 @@ class IncidentController extends Controller
         $date = Carbon::createFromDate($year, $month, 1);
         $startOfMonth = $date->copy()->startOfMonth();
         $endOfMonth = $date->copy()->endOfMonth();
-        
+
         // Get all incidents for the month
         $incidents = IncidentCalendar::whereBetween('incident_date', [$startOfMonth, $endOfMonth])
             ->with(['incidentType', 'incidentStatus'])
@@ -328,19 +344,19 @@ class IncidentController extends Controller
             ->groupBy(function($item) {
                 return $item->incident_date->format('Y-m-d');
             });
-        
+
         // Create calendar grid (week starts Sunday to match view headers)
         $calendar = [];
         $currentDay = $startOfMonth->copy()->startOfWeek(Carbon::SUNDAY);
-        
+
         for ($week = 0; $week < 6; $week++) {
             $weekDays = [];
             for ($day = 0; $day < 7; $day++) {
                 $dateString = $currentDay->format('Y-m-d');
                 $isCurrentMonth = $currentDay->month == $month;
-                
+
                 $dayIncidents = $incidents->get($dateString, collect());
-                
+
                 $weekDays[] = [
                     'date' => $dateString,
                     'day' => $currentDay->day,
@@ -349,20 +365,20 @@ class IncidentController extends Controller
                     'compliance' => $dayIncidents->where('entry_type', 'compliance')->take(2),
                     'has_more' => $dayIncidents->count() > 5
                 ];
-                
+
                 $currentDay->addDay();
             }
             $calendar[] = $weekDays;
-            
+
             // Stop if we've moved past the end of month
             if ($currentDay->month != $month && $currentDay->day > 7) {
                 break;
             }
         }
-        
+
         return $calendar;
     }
-    
+
     /**
      * Get monthly statistics.
      */
@@ -418,7 +434,7 @@ class IncidentController extends Controller
             ],
         ];
     }
-    
+
     /**
      * Update or create school record.
      */
@@ -428,12 +444,12 @@ class IncidentController extends Controller
             ['name' => $schoolName],
             ['district' => 'Unknown']
         );
-        
+
         $school->increment('incident_count');
         $school->last_incident_date = now();
         $school->save();
     }
-    
+
     /**
      * Search schools for autocomplete.
      */
@@ -443,7 +459,7 @@ class IncidentController extends Controller
         $schools = IncidentSchool::where('name', 'like', "%{$query}%")
             ->limit(10)
             ->get(['name', 'district']);
-            
+
         return response()->json($schools);
     }
 

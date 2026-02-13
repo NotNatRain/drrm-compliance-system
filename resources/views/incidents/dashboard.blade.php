@@ -73,7 +73,7 @@
             padding: 0.25rem 0.5rem;
             font-size: 0.8rem;
         }
-        
+
 
         .calendar-header {
             display: flex;
@@ -242,7 +242,7 @@
         .incident-modal .tab-content {
             padding: 20px 0;
         }
-        
+
         .incident-list-item {
             border-left: 4px solid;
             padding-left: 15px;
@@ -251,15 +251,15 @@
             border-radius: 8px;
             padding: 12px;
         }
-        
+
         .incident-actions {
             opacity: 0;
         }
-        
+
         .incident-list-item:hover .incident-actions {
             opacity: 1;
         }
-        
+
         .autocomplete-items {
             position: absolute;
             border: 1px solid #ddd;
@@ -272,23 +272,23 @@
             max-height: 200px;
             overflow-y: auto;
         }
-        
+
         .autocomplete-items div {
             padding: 10px;
             cursor: pointer;
             background-color: #fff;
             border-bottom: 1px solid #ddd;
         }
-        
+
         .autocomplete-items div:hover {
             background-color: #e9e9e9;
         }
-        
+
         .date-highlight {
             background-color: var(--incident-light) !important;
             border: 2px solid var(--incident-yellow) !important;
         }
-        
+
         .calendar-day.has-events {
             background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
         }
@@ -490,7 +490,7 @@
                         <i class="fas fa-info-circle me-2 text-warning"></i>
                         Monthly Incident Specifics
                     </h5>
-                    
+
                     <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
                         <table class="custom-table">
                             <tbody>
@@ -550,7 +550,7 @@
                                     </h6>
                                     <canvas id="incidentTypeChart" height="100"></canvas>
                                 </div>
-                                
+
                                 <!-- Right Chart: Incident Trend (Daily) -->
                                 <div class="col-md-6 mb-3">
                                     <h6 class="text-muted text-uppercase small mb-2">
@@ -662,7 +662,7 @@
                             </button>
                         </li>
                     </ul>
-                    
+
                     <div class="tab-content mt-4">
                         <!-- Incident Form -->
                         <div class="tab-pane fade show active" id="incident-form" role="tabpanel">
@@ -670,7 +670,7 @@
                                 @csrf
                                 <input type="hidden" name="entry_type" value="incident">
                                 <input type="hidden" name="incident_date" id="incident_date" value="{{ date('Y-m-d') }}">
-                                
+
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label for="incident_type_id" class="form-label">Incident Type *</label>
@@ -681,36 +681,42 @@
                                             @endforeach
                                         </select>
                                     </div>
-                                    
+
                                     <div class="col-md-6 mb-3">
                                         <label for="incident_date_input" class="form-label">Date *</label>
-                                        <input type="date" class="form-control" id="incident_date_input" name="incident_date_input" required 
+                                        <input type="date" class="form-control" id="incident_date_input" name="incident_date_input" required
                                                value="{{ date('Y-m-d') }}">
                                     </div>
-                                    
+
                                     <div class="col-md-12 mb-3">
                                         <label for="school_name" class="form-label">School Name *</label>
-                                        <input type="text" class="form-control" id="school_name" name="school_name" 
+                                        <input type="text" class="form-control" id="school_name" name="school_name"
                                                placeholder="Start typing school name..." required>
                                     </div>
-                                    
+
                                     <div class="col-md-6 mb-3">
                                         <label for="affected_personnel" class="form-label">Affected Personnel <small class="text-muted">(optional, leave empty or 0)</small></label>
                                         <input type="number" class="form-control" id="affected_personnel" name="affected_personnel" min="0" placeholder="0" value="">
                                     </div>
-                                    
+
                                     <div class="col-md-6 mb-3">
                                         <label for="affected_students" class="form-label">Affected Students <small class="text-muted">(optional, leave empty or 0)</small></label>
                                         <input type="number" class="form-control" id="affected_students" name="affected_students" min="0" placeholder="0" value="">
                                     </div>
-                                    
+
                                     <div class="col-12 mb-3">
                                         <label for="remarks" class="form-label">Remarks/Description *</label>
-                                        <textarea class="form-control" id="remarks" name="remarks" rows="3" 
+                                        <textarea class="form-control" id="remarks" name="remarks" rows="3"
                                                   placeholder="Provide detailed description of the incident..." required></textarea>
                                     </div>
                                 </div>
-                                
+                                <div class="col-12 mb-3">
+                                    <label for="incident_attachment" class="form-label">
+                                        Attachment/Evidence <span class="text-danger">*</span>
+                                        <small class="text-muted">(PDF, JPG, PNG - Max 10MB)</small>
+                                    </label>
+                                    <input type="file" class="form-control" id="incident_attachment" name="attachment" accept=".pdf,.jpg,.jpeg,.png" required>
+                                </div>
                                 <div class="d-flex justify-content-end gap-2">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                                     <button type="submit" class="btn btn-warning">
@@ -719,14 +725,14 @@
                                 </div>
                             </form>
                         </div>
-                        
+
                         <!-- Compliance Form -->
                         <div class="tab-pane fade" id="compliance-form" role="tabpanel">
                             <form id="complianceForm">
                                 @csrf
                                 <input type="hidden" name="entry_type" value="compliance">
                                 <input type="hidden" name="incident_date" id="compliance_incident_date" value="{{ date('Y-m-d') }}">
-                                
+
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label for="incident_status_id" class="form-label">Compliance Status/Event *</label>
@@ -737,26 +743,32 @@
                                             @endforeach
                                         </select>
                                     </div>
-                                    
+
                                     <div class="col-md-6 mb-3">
                                         <label for="compliance_date_input" class="form-label">Date *</label>
-                                        <input type="date" class="form-control" id="compliance_date_input" name="incident_date_input" required 
+                                        <input type="date" class="form-control" id="compliance_date_input" name="incident_date_input" required
                                                value="{{ date('Y-m-d') }}">
                                     </div>
-                                    
+
                                     <div class="col-md-12 mb-3">
                                         <label for="compliance_school_name" class="form-label">School Name *</label>
-                                        <input type="text" class="form-control" id="compliance_school_name" name="school_name" 
+                                        <input type="text" class="form-control" id="compliance_school_name" name="school_name"
                                                placeholder="Start typing school name..." required>
                                     </div>
-                                    
+
                                     <div class="col-12 mb-3">
                                         <label for="compliance_remarks" class="form-label">Remarks/Description *</label>
-                                        <textarea class="form-control" id="compliance_remarks" name="remarks" rows="3" 
+                                        <textarea class="form-control" id="compliance_remarks" name="remarks" rows="3"
                                                   placeholder="Provide details about the compliance status/event..." required></textarea>
                                     </div>
                                 </div>
-                                
+                                <div class="col-12 mb-3">
+                                    <label for="compliance_attachment" class="form-label">
+                                        Attachment/Evidence
+                                        <small class="text-muted">(Optional - PDF, JPG, PNG, Max 10MB)</small>
+                                    </label>
+                                    <input type="file" class="form-control" id="compliance_attachment" name="attachment" accept=".pdf,.jpg,.jpeg,.png">
+                                </div>
                                 <div class="d-flex justify-content-end gap-2">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                                     <button type="submit" class="btn btn-warning">
@@ -797,7 +809,7 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         <!-- Compliance Events Section -->
                         <div class="col-md-6">
                             <div class="card h-100">
@@ -944,17 +956,28 @@
         }
 
         function submitIncidentForm(form, isCompliance) {
-            const data = buildFormData(form);
-            if (!data.incident_date) data.incident_date = (form.querySelector('input[type="date"]') || {}).value || new Date().toISOString().slice(0, 10);
-            data._token = csrfToken;
+            const formData = new FormData(form);
+            formData.append('_token', csrfToken);
+
+            // Add attachment file
+            const fileInput = form.querySelector('input[type="file"]');
+            if (fileInput && fileInput.files.length > 0) {
+                formData.append('attachment', fileInput.files[0]);
+            }
+
             const btn = form.querySelector('button[type="submit"]');
             const origText = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+
             fetch(incidentsStoreUrl, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-                body: JSON.stringify(data)
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData  // Use FormData instead of JSON
             })
             .then(r => r.json())
             .then(resp => {
@@ -1069,7 +1092,7 @@
                 },
                 options: {
                     plugins: {
-                        legend: { 
+                        legend: {
                             position: 'bottom',
                             labels: {
                                 font: { size: 10 }, // Smaller font for compact size
@@ -1104,22 +1127,22 @@
                 },
                 options: {
                     scales: {
-                        x: { 
-                            ticks: { 
-                                autoSkip: true, 
+                        x: {
+                            ticks: {
+                                autoSkip: true,
                                 maxTicksLimit: 8,
                                 font: { size: 9 }
                             }
                         },
-                        y: { 
-                            beginAtZero: true, 
+                        y: {
+                            beginAtZero: true,
                             precision: 0,
                             ticks: { font: { size: 9 } }
                         }
                     },
                     plugins: {
-                        legend: { 
-                            display: false 
+                        legend: {
+                            display: false
                         }
                     },
                     responsive: true,

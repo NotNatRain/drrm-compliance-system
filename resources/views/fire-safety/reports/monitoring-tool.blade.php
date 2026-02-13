@@ -3,85 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitoring Tool - {{ $inspection->drill_type }} Drill</title>
+    <title>Drill Monitoring Report</title>
     <style>
         body { font-family: 'Arial', sans-serif; line-height: 1.4; color: #333; margin: 0; padding: 20px; font-size: 12px; }
         .header { text-align: center; margin-bottom: 20px; }
         .header h3 { margin: 5px 0; text-transform: uppercase; }
         .header p { margin: 2px 0; }
-        
-        .annex { text-align: right; font-style: italic; margin-bottom: 5px; }
-        
-        .info-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-        .info-table td { padding: 5px; vertical-align: top; }
-        .underline { border-bottom: 1px solid #000; display: inline-block; min-width: 150px; padding: 0 10px; }
-        
+
         .monitoring-tool-title { text-align: center; font-weight: bold; font-size: 14px; margin: 20px 0; border: 2px solid #000; padding: 10px; }
-        
+
         .data-grid { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
         .data-grid td { border: 1px solid #000; padding: 8px; }
-        .label { font-weight: bold; background-color: #f2f2f2; width: 30%; }
-        
+        .label { font-weight: bold; background-color: #f2f2f2; width: 20%; }
+
         .results-section { margin-top: 20px; }
         .results-section h4 { border-bottom: 1px solid #000; padding-bottom: 5px; margin-bottom: 10px; }
-        
+
         .checklist-table { width: 100%; border-collapse: collapse; }
-        .checklist-table td { border: 1px solid #000; padding: 5px; }
-        .check-box { width: 20px; height: 20px; border: 1px solid #000; display: inline-block; vertical-align: middle; text-align: center; font-weight: bold; line-height: 20px; }
-        
-        .signatures { width: 100%; margin-top: 50px; }
+        .checklist-table td { border: 1px solid #000; padding: 6px; vertical-align: middle; }
+        .check-box { width: 18px; height: 18px; border: 1px solid #000; display: inline-block; text-align: center; font-weight: bold; line-height: 18px; margin-right: 5px; }
+
+        .signatures { width: 100%; margin-top: 50px; border-collapse: collapse; }
         .signatures td { text-align: center; width: 33%; padding-top: 50px; }
         .sig-line { border-top: 1px solid #000; margin: 0 10px; padding-top: 5px; }
 
         @media print {
-            .no-print { display: none; }
+            @page { margin: 1cm; }
             body { padding: 0; }
+            .no-print { display: none; }
         }
+
+        .no-print { margin-bottom: 20px; text-align: center; }
+        .print-btn { padding: 10px 20px; background: #2c3e50; color: white; border: none; cursor: pointer; border-radius: 4px; }
     </style>
 </head>
 <body>
-    <div class="no-print" style="margin-bottom: 20px; text-align: center;">
-        <button onclick="window.print()" style="padding: 10px 20px; background: #2c3e50; color: white; border: none; cursor: pointer; border-radius: 4px;">Print Document</button>
+    <div class="no-print">
+        <button onclick="window.print()" class="print-btn">Print Document</button>
     </div>
 
-    <div class="annex">Annex B of DepEd Order No. 48, s. 2012</div>
-    
     <div class="header">
         <p>Republic of the Philippines</p>
         <p>Department of Education</p>
         <h3>MONITORING TOOL FOR EARTHQUAKE AND FIRE DRILLS IN SCHOOLS</h3>
     </div>
 
-    <table class="info-table">
-        <tr>
-            <td>Region: <span class="underline">{{ $inspection->school->region ?? 'N/A' }}</span></td>
-            <td>School ID: <span class="underline">{{ $inspection->school->school_id }}</span></td>
-        </tr>
-        <tr>
-            <td>District: <span class="underline">{{ $inspection->school->district ?? 'N/A' }}</span></td>
-            <td>Division: <span class="underline">{{ $inspection->school->division ?? 'N/A' }}</span></td>
-        </tr>
-        <tr>
-            <td colspan="2">School Name: <span class="underline" style="width: 80%;">{{ $inspection->school->school_name }}</span></td>
-        </tr>
-    </table>
-
+    <!-- 5-Column Table: School Info + Drill Data -->
     <table class="data-grid">
+        <tr>
+            <td class="label">School Name</td>
+            <td colspan="2"><strong>{{ $inspection->school->school_name ?? 'N/A' }}</strong></td>
+            <td class="label">School ID</td>
+            <td>{{ $inspection->school->school_id ?? 'N/A' }}</td>
+        </tr>
         <tr>
             <td class="label">Drill Type</td>
             <td>{{ $inspection->drill_type }}</td>
             <td class="label">Date</td>
             <td>{{ date('F d, Y', strtotime($inspection->inspection_date)) }}</td>
+            <td class="label">Elapsed Time</td>
+            <td>{{ $inspection->elapsed_time ?? 'N/A' }}</td>
         </tr>
         <tr>
             <td class="label">Time Started</td>
             <td>{{ $inspection->time_started ?? 'N/A' }}</td>
             <td class="label">Time Finished</td>
             <td>{{ $inspection->time_finished ?? 'N/A' }}</td>
-        </tr>
-        <tr>
-            <td class="label">Elapsed Time</td>
-            <td>{{ $inspection->elapsed_time ?? 'N/A' }}</td>
             <td class="label">No. of Exits</td>
             <td>{{ $inspection->no_of_exits ?? 0 }}</td>
         </tr>
@@ -90,34 +77,80 @@
             <td>{{ $inspection->no_of_buildings ?? 0 }}</td>
             <td class="label">No. of Students</td>
             <td>{{ number_format($inspection->no_of_students ?? 0) }}</td>
-        </tr>
-        <tr>
             <td class="label">No. of Personnel</td>
-            <td colspan="3">{{ number_format($inspection->no_of_personnel ?? 0) }}</td>
+            <td>{{ number_format($inspection->no_of_personnel ?? 0) }}</td>
         </tr>
     </table>
 
+    <!-- CHECKLIST ITEMS - 3 COLUMNS -->
     <div class="results-section">
         <h4>CHECKLIST ITEMS</h4>
         <table class="checklist-table">
-            @php 
-                $checklistData = $inspection->checklist_data ?? []; 
-                // We show all configured checklists if possible, or just the ones checked
+            @php
+                $checklistData = $inspection->checklist_data ?? [];
+                $chunks = array_chunk($checklistData, 3); // 3 columns
             @endphp
-            @foreach($checklistData as $item)
+
+            @forelse($chunks as $chunk)
             <tr>
-                <td style="width: 30px; text-align: center;"><span class="check-box">/</span></td>
-                <td>{{ $item }}</td>
+                @foreach($chunk as $item)
+                <td style="width: 33%;">
+                    <span class="check-box">
+                        @if(is_bool($item) ? $item : (isset($item->checked) ? $item->checked : false))
+                            ✓
+                        @endif
+                    </span>
+                    {{ is_string($item) ? $item : ($item->label ?? $item) }}
+                </td>
+                @endforeach
+
+                @if(count($chunk) < 3)
+                    @for($i = count($chunk); $i < 3; $i++)
+                        <td style="width: 33%;">&nbsp;</td>
+                    @endfor
+                @endif
             </tr>
-            @endforeach
-            @if(empty($checklistData))
+            @empty
             <tr>
-                <td colspan="2" style="text-align: center; color: #888;">No checklist items recorded.</td>
+                <td colspan="3" style="text-align: center; color: #888; padding: 15px;">
+                    No checklist items recorded.
+                </td>
             </tr>
-            @endif
+            @endforelse
         </table>
     </div>
 
+    <!-- OTHER OBSERVERS PRESENT - 3 COLUMNS -->
+    @if(!empty($inspection->observers_data))
+    <div class="results-section">
+        <h4>OTHER OBSERVERS PRESENT</h4>
+        <table class="checklist-table">
+            @php
+                $observers = $inspection->observers_data ?? [];
+                $obsChunks = array_chunk($observers, 3);
+            @endphp
+
+            @foreach($obsChunks as $chunk)
+            <tr>
+                @foreach($chunk as $observer)
+                <td style="width: 33%;">
+                    <span class="check-box">✓</span>
+                    {{ $observer }}
+                </td>
+                @endforeach
+
+                @if(count($chunk) < 3)
+                    @for($i = count($chunk); $i < 3; $i++)
+                        <td style="width: 33%;">&nbsp;</td>
+                    @endfor
+                @endif
+            </tr>
+            @endforeach
+        </table>
+    </div>
+    @endif
+
+    <!-- REMARKS / OBSERVATIONS - MOVED BELOW OBSERVERS -->
     @if($inspection->remarks)
     <div class="results-section">
         <h4>REMARKS / OBSERVATIONS</h4>
@@ -127,39 +160,22 @@
     </div>
     @endif
 
-    @if(!empty($inspection->observers_data))
-    <div class="results-section">
-        <h4>OTHER OBSERVERS PRESENT</h4>
-        <table class="checklist-table">
-            @foreach($inspection->observers_data as $obs)
-            <tr>
-                <td style="width: 30px; text-align: center;"><span class="check-box">/</span></td>
-                <td>{{ $obs }}</td>
-            </tr>
-            @endforeach
-        </table>
-    </div>
-    @endif
-
+    <!-- SIGNATURES -->
     <table class="signatures">
         <tr>
             <td>
-                <div class="sig-line"><strong>{{ $inspection->monitored_by }}</strong></div>
-                <div>Monitored By / Representative Name</div>
+                <div class="sig-line"><strong>{{ $inspection->monitored_by ?? '_____________________' }}</strong></div>
+                <div style="margin-top: 5px;">Monitored By / Representative Name</div>
             </td>
             <td>
-                <div class="sig-line"><strong>{{ $inspection->coordinator_name }}</strong></div>
-                <div>School DRRM Coordinator</div>
+                <div class="sig-line"><strong>{{ $inspection->coordinator_name ?? '_____________________' }}</strong></div>
+                <div style="margin-top: 5px;">School DRRM Coordinator</div>
             </td>
             <td>
-                <div class="sig-line"><strong>{{ $inspection->school_head_name }}</strong></div>
-                <div>School Head / Principal</div>
+                <div class="sig-line"><strong>{{ $inspection->school_head_name ?? '_____________________' }}</strong></div>
+                <div style="margin-top: 5px;">School Head / Principal</div>
             </td>
         </tr>
     </table>
-
-    <div style="margin-top: 30px; font-size: 10px; color: #666; text-align: center;">
-        Generated by DRRM Compliance System on {{ date('Y-m-d H:i:s') }}
-    </div>
 </body>
 </html>

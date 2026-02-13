@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 class IncidentCalendar extends Model
 {
     protected $table = 'incident_calendars';
-    
+
     protected $fillable = [
         'incident_date',
         'school_name',
@@ -22,41 +22,49 @@ class IncidentCalendar extends Model
         'verified_by',
         'affected_personnel',
         'affected_students',
-        'additional_data'
+        'additional_data',
+        'attachment_path',
+        'attachment_name',
+        'attachment_size',
+        'attachment_mime'
     ];
-    
+
     protected $casts = [
         'incident_date' => 'date',
         'verified_at' => 'datetime',
         'additional_data' => 'array',
         'is_verified' => 'boolean'
     ];
-    
+
     public function incidentType()
     {
         return $this->belongsTo(IncidentType::class);
     }
-    
+
     public function incidentStatus()
     {
         return $this->belongsTo(IncidentStatus::class);
     }
-    
+
     protected function dayName(): Attribute
     {
         return Attribute::make(
             get: fn () => $this->incident_date->format('l')
         );
     }
-    
+
     public function scopeForMonth($query, $year, $month)
     {
         return $query->whereYear('incident_date', $year)
                     ->whereMonth('incident_date', $month);
     }
-    
+
     public function scopeForDate($query, $date)
     {
         return $query->whereDate('incident_date', $date);
+    }
+    public function getAttachmentUrlAttribute()
+    {
+        return $this->attachment_path ? asset('storage/' . $this->attachment_path) : null;
     }
 }
