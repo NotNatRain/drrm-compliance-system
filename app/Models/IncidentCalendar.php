@@ -63,6 +63,7 @@ class IncidentCalendar extends Model
     {
         return $query->whereDate('incident_date', $date);
     }
+    protected $appends = ['attachment_url'];
     public function getAttachmentUrlAttribute()
     {
         return $this->attachment_path ? asset('storage/' . $this->attachment_path) : null;

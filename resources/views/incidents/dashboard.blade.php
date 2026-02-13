@@ -917,24 +917,94 @@
                         const toArray = (x) => Array.isArray(x) ? x : (x && typeof x === 'object' ? Object.values(x) : []);
                         const incidents = toArray(data.incidents);
                         const compliance = toArray(data.compliance);
+                        // In your fetch callback, replace the incident list HTML with:
                         if (incidents.length) {
-                            incList.innerHTML = incidents.map(i => {
-                                const typeName = (i.incident_type && i.incident_type.name) ? i.incident_type.name : 'Incident';
-                                const school = i.school_name || '';
-                                const remarks = (i.remarks || '').substring(0, 200);
-                                return '<div class="incident-list-item border-left mb-2 p-2" style="border-color:#667eea"><strong>' + escapeHtml(typeName) + '</strong><br><small>' + escapeHtml(school) + '</small><br><span class="text-muted small">' + escapeHtml(remarks) + '</span></div>';
-                            }).join('');
+                            incList.innerHTML = incidents.map(i => `
+                                <div class="incident-list-item border-left mb-3 p-3" style="border-color:#667eea; border-width:4px;">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <span class="badge bg-danger mb-2">INCIDENT</span>
+                                            <h6 class="fw-bold mb-2">${escapeHtml(i.incident_type?.name || 'Incident')}</h6>
+                                        </div>
+                                        <small class="text-muted">Reported: ${escapeHtml(i.reported_by || 'Unknown')}</small>
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <i class="fas fa-school text-muted me-2"></i> ${escapeHtml(i.school_name || 'N/A')}
+                                    </div>
+
+                                    <div class="row mb-2">
+                                        <div class="col-6">
+                                            <small class="text-muted d-block">
+                                                <i class="fas fa-users me-1"></i> Personnel: ${i.affected_personnel || 0}
+                                            </small>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted d-block">
+                                                <i class="fas fa-child me-1"></i> Students: ${i.affected_students || 0}
+                                            </small>
+                                        </div>
+                                    </div>
+
+                                    <div class="bg-light p-2 rounded mb-2">
+                                        <i class="fas fa-comment-alt text-muted me-2"></i> ${escapeHtml(i.remarks || 'No remarks')}
+                                    </div>
+
+                                    ${i.attachment_path ? `
+                                        <div class="mt-2">
+                                            <a href="${i.attachment_url}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-paperclip me-1"></i> ${escapeHtml(i.attachment_name || 'Attachment')}
+                                                <span class="badge bg-secondary ms-1">${formatFileSize(i.attachment_size)}</span>
+                                            </a>
+                                        </div>
+                                    ` : ''}
+
+                                    <div class="mt-2 text-end">
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i> ${new Date(i.created_at).toLocaleString()}
+                                        </small>
+                                    </div>
+                                </div>
+                            `).join('');
                         } else {
                             incList.innerHTML = '<div class="text-center text-muted py-5"><i class="fas fa-folder-open fa-3x mb-3"></i><p>No incidents for this day</p></div>';
                         }
                         if (compliance.length) {
-                            compList.innerHTML = compliance.map(c => {
-                                const statusName = (c.incident_status && c.incident_status.name) ? c.incident_status.name : 'Event';
-                                const school = c.school_name || '';
-                                const remarks = (c.remarks || '').substring(0, 200);
-                                return '<div class="incident-list-item border-left mb-2 p-2" style="border-color:#1ed760"><strong>' + escapeHtml(statusName) + '</strong><br><small>' + escapeHtml(school) + '</small><br><span class="text-muted small">' + escapeHtml(remarks) + '</span></div>';
-                            }).join('');
-                        } else {
+                            compList.innerHTML = compliance.map(c => `
+                                <div class="incident-list-item border-left mb-3 p-3" style="border-color:#1ed760; border-width:4px;">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <span class="badge bg-success mb-2">COMPLIANCE EVENT</span>
+                                            <h6 class="fw-bold mb-2">${escapeHtml(c.incident_status?.name || 'Event')}</h6>
+                                        </div>
+                                        <small class="text-muted">Reported: ${escapeHtml(c.reported_by || 'Unknown')}</small>
+                                    </div>
+
+                                    <div class="mb-2">
+                                        <i class="fas fa-school text-muted me-2"></i> ${escapeHtml(c.school_name || 'N/A')}
+                                    </div>
+
+                                    <div class="bg-light p-2 rounded mb-2">
+                                        <i class="fas fa-comment-alt text-muted me-2"></i> ${escapeHtml(c.remarks || 'No remarks')}
+                                    </div>
+
+                                    ${c.attachment_path ? `
+                                        <div class="mt-2">
+                                            <a href="${c.attachment_url}" target="_blank" class="btn btn-sm btn-outline-success">
+                                                <i class="fas fa-paperclip me-1"></i> ${escapeHtml(c.attachment_name || 'Attachment')}
+                                                <span class="badge bg-secondary ms-1">${formatFileSize(c.attachment_size)}</span>
+                                            </a>
+                                        </div>
+                                    ` : ''}
+
+                                    <div class="mt-2 text-end">
+                                        <small class="text-muted">
+                                            <i class="fas fa-clock me-1"></i> ${new Date(c.created_at).toLocaleString()}
+                                        </small>
+                                    </div>
+                                </div>
+                            `).join('');
+                        }else {
                             compList.innerHTML = '<div class="text-center text-muted py-5"><i class="fas fa-calendar fa-3x mb-3"></i><p>No compliance events for this day</p></div>';
                         }
                     })
@@ -1384,6 +1454,14 @@
                 alert('Failed to add checklist item.');
             });
         });
+
+        function formatFileSize(bytes) {
+            if (!bytes) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
     </script>
 </body>
 </html>
