@@ -51,16 +51,35 @@
                         @csrf
                         @method('PUT')
                         <input type="hidden" name="alarm_id" id="updateAlarmId">
+                        <input type="hidden" id="updateSchoolId">
 
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">School</label>
                                 <p class="form-control-plaintext border-bottom" id="updateDisplaySchool">Loading...</p>
                             </div>
+                            <!-- Building Selection Logic -->
                             <div class="col-md-6">
-                                <label class="form-label fw-bold">Building(s)</label>
-                                <p class="form-control-plaintext border-bottom" id="updateDisplayBuildings">Loading...</p>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="updateCoversMultiple" name="covers_multiple">
+                                    <label class="form-check-label fw-bold" for="updateCoversMultiple">
+                                        Yes, it covers multiple buildings
+                                    </label>
+                                </div>
+                                <label class="form-label fw-bold">Building(s) *</label>
+                                <select class="form-control" name="building_ids[]" id="updateBuildingSelect" required>
+                                    <!-- Populated via JS -->
+                                </select>
+                                <small class="text-muted" id="updateMultiSelectHelp" style="display:none;">Hold Ctrl/Cmd to select multiple buildings</small>
                             </div>
+                        </div>
+
+                        <!-- Floor Selection - Only for Single Building -->
+                        <div id="updateFloorsContainer" style="display:none;" class="mb-3 p-3 bg-light rounded border">
+                            <label class="form-label fw-bold mb-2">Select Floor Location *</label>
+                            <select class="form-control" name="floor_id" id="updateFloorSelect">
+                                <option value="">Select Building First</option>
+                            </select>
                         </div>
 
                         <div class="row mb-3">
@@ -83,8 +102,19 @@
                                 </select>
                             </div>
                             <div class="col-md-6">
+                                <label class="form-label fw-bold">Location Details *</label>
+                                <input type="text" class="form-control" name="location" id="updateAlarmSpecificLocation" placeholder="e.g. Main Lobby, Hallway" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
                                 <label class="form-label fw-bold">Next Test Due *</label>
                                 <input type="date" class="form-control" name="next_test_due" id="updateNextTestDue" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Last Test Date</label>
+                                <input type="date" class="form-control" name="last_test" id="updateLastTestDate" disabled>
                             </div>
                         </div>
 
@@ -672,6 +702,82 @@
                 if (buildingSelect) {
                     buildingSelect.addEventListener('change', handleBuildingChange);
                 }
+                
+                // --- UPDATE MODAL LOGIC ---
+                const updateCoversMultiple = document.getElementById('updateCoversMultiple');
+                const updateBuildingSelect = document.getElementById('updateBuildingSelect');
+                
+                if (updateCoversMultiple) {
+                    updateCoversMultiple.addEventListener('change', function() {
+                         const help = document.getElementById('updateMultiSelectHelp');
+                         const floorsCont = document.getElementById('updateFloorsContainer');
+                         const floorSel = document.getElementById('updateFloorSelect');
+                         const locInput = document.getElementById('updateAlarmSpecificLocation');
+                         
+                         if (this.checked) {
+                            updateBuildingSelect.setAttribute('multiple', 'multiple');
+                            updateBuildingSelect.size = 4;
+                            help.style.display = 'block';
+                            floorsCont.style.display = 'none';
+                            floorSel.required = false;
+                            floorSel.value = "";
+                            locInput.value = "Multiple Buildings - Shared System";
+                         } else {
+                            updateBuildingSelect.removeAttribute('multiple');
+                            updateBuildingSelect.removeAttribute('size');
+                            if (updateBuildingSelect.selectedOptions.length > 1) {
+                                for (let i = 0; i < updateBuildingSelect.options.length; i++) {
+                                    updateBuildingSelect.options[i].selected = (i === updateBuildingSelect.selectedOptions[0].index);
+                                }
+                            }
+                            help.style.display = 'none';
+                            handleUpdateBuildingChange();
+                            // Clear location if it was the generic one
+                            if (locInput.value === "Multiple Buildings - Shared System") {
+                                locInput.value = "";
+                            }
+                         }
+                    });
+                }
+                
+                if (updateBuildingSelect) {
+                    updateBuildingSelect.addEventListener('change', handleUpdateBuildingChange);
+                }
+
+                function handleUpdateBuildingChange() {
+                    const isMultiple = document.getElementById('updateCoversMultiple').checked;
+                    const bSelect = document.getElementById('updateBuildingSelect');
+                    const floorsCont = document.getElementById('updateFloorsContainer');
+                    const floorSel = document.getElementById('updateFloorSelect');
+                    
+                    if (!isMultiple && bSelect.value) {
+                        const buildingId = bSelect.value;
+                        floorsCont.style.display = 'block';
+                        floorSel.required = true;
+                        
+                        // We need the floors count. We can store it in dataset when populating options.
+                        const selectedOpt = bSelect.options[bSelect.selectedIndex];
+                        const floors = selectedOpt ? parseInt(selectedOpt.dataset.floors || 1) : 1;
+                        
+                        floorSel.innerHTML = '<option value="">Select Floor</option><option value="All Floors">All Floors</option>';
+                        
+                        const getOrdinal = (n) => {
+                            const s = ["th", "st", "nd", "rd"];
+                            const v = n % 100;
+                            return n + (s[(v - 20) % 10] || s[v] || s[0]);
+                        };
+
+                        for(let i = 1; i <= floors; i++) {
+                            const opt = document.createElement('option');
+                            opt.value = getOrdinal(i) + " Floor";
+                            opt.textContent = getOrdinal(i) + " Floor";
+                            floorSel.appendChild(opt);
+                        }
+                    } else {
+                        floorsCont.style.display = 'none';
+                        floorSel.required = false;
+                    }
+                }
 
                 // Handle Alarm Type Change
                 if (typeSelect) {
@@ -802,31 +908,121 @@
             currentAlarmId = alarmId;
 
             try {
+                // Fetch alarm details first
                 const response = await fetch(`/fire-safety/alarm/${alarmId}`);
                 const alarm = await response.json();
 
                 currentAlarmType = alarm.alarm_type;
 
-                // Populate form
+                // Populate form basics
                 document.getElementById('updateAlarmId').value = alarmId;
                 document.getElementById('updateAlarmCode').value = alarm.code;
                 document.getElementById('originalAlarmCode').value = alarm.code;
                 document.getElementById('updateAlarmTypeDisplay').value = alarm.alarm_type;
                 document.getElementById('updateDisplaySchool').textContent = alarm.school ? alarm.school.school_name : 'N/A';
+                document.getElementById('updateSchoolId').value = alarm.school_id;
 
-                // Display Buildings
-                let buildingsStr = 'N/A';
-                if (alarm.buildings && alarm.buildings.length > 0) {
-                    buildingsStr = alarm.buildings.map(b => b.building_no).join(', ');
-                } else if (alarm.building) {
-                    buildingsStr = alarm.building.building_no;
+                // Fetch Buildings List for this school
+                const buildingsResp = await fetch(`/fire-safety/buildings/${alarm.school_id}`);
+                const buildings = await buildingsResp.json();
+                
+                const bSelect = document.getElementById('updateBuildingSelect');
+                bSelect.innerHTML = '<option value="">Select Building</option>';
+                buildings.forEach(b => {
+                    const option = document.createElement('option');
+                    option.value = b.id;
+                    option.text = `${b.building_no} - ${b.building_name}`;
+                    option.dataset.floors = b.floors;
+                    bSelect.appendChild(option);
+                });
+
+                // Handle Coverage Logic
+                const isMulti = (alarm.buildings && alarm.buildings.length > 1);
+                const updateCoversMultiple = document.getElementById('updateCoversMultiple');
+                updateCoversMultiple.checked = isMulti;
+                
+                // Trigger UI update manually based on state
+                const help = document.getElementById('updateMultiSelectHelp');
+                const floorsCont = document.getElementById('updateFloorsContainer');
+                const floorSel = document.getElementById('updateFloorSelect');
+                const locInput = document.getElementById('updateAlarmSpecificLocation');
+
+                if (isMulti) {
+                    bSelect.setAttribute('multiple', 'multiple');
+                    bSelect.size = 4;
+                    help.style.display = 'block';
+                    floorsCont.style.display = 'none';
+                    floorSel.required = false;
+                    locInput.value = "Multiple Buildings - Shared System";
+                    
+                    // Select buildings
+                    const assignedIds = alarm.buildings.map(b => b.id);
+                    Array.from(bSelect.options).forEach(opt => {
+                        if (assignedIds.includes(parseInt(opt.value))) opt.selected = true;
+                    });
+                } else {
+                    bSelect.removeAttribute('multiple');
+                    bSelect.removeAttribute('size');
+                    help.style.display = 'none';
+                    floorsCont.style.display = 'block';
+                    floorSel.required = true;
+                    
+                    // Select single building (either from list or direct ID)
+                    const bId = (alarm.buildings && alarm.buildings.length > 0) ? alarm.buildings[0].id : (alarm.building_id || '');
+                    bSelect.value = bId;
+                    
+                    // Populate Floors for selected building
+                    if (bId) {
+                        const selectedOpt = bSelect.options[bSelect.selectedIndex];
+                        const floors = selectedOpt ? parseInt(selectedOpt.dataset.floors || 1) : 1;
+                        
+                        floorSel.innerHTML = '<option value="">Select Floor</option><option value="All Floors">All Floors</option>';
+                        
+                        const getOrdinal = (n) => {
+                            const s = ["th", "st", "nd", "rd"];
+                            const v = n % 100;
+                            return n + (s[(v - 20) % 10] || s[v] || s[0]);
+                        };
+
+                        for(let i = 1; i <= floors; i++) {
+                            const opt = document.createElement('option');
+                            opt.value = getOrdinal(i) + " Floor";
+                            opt.textContent = getOrdinal(i) + " Floor";
+                            floorSel.appendChild(opt);
+                        }
+                        
+                        // Parse Location
+                        let location = alarm.location || '';
+                        let specificLoc = location;
+                        let matchedFloor = '';
+                        
+                        // Try to match start of string with floor options
+                        // Location format usually: "1st Floor - Lobby"
+                        for (let opt of floorSel.options) {
+                            if (opt.value && location.startsWith(opt.value + " - ")) {
+                                matchedFloor = opt.value;
+                                specificLoc = location.substring(opt.value.length + 3); // Remove "Floor - "
+                                break;
+                            } else if (opt.value && location === opt.value) {
+                                matchedFloor = opt.value;
+                                specificLoc = "";
+                                break;
+                            }
+                        }
+                        
+                        floorSel.value = matchedFloor;
+                        locInput.value = specificLoc;
+                    } else {
+                        // No building selected ??
+                         floorsCont.style.display = 'none';
+                    }
                 }
-                document.getElementById('updateDisplayBuildings').textContent = buildingsStr;
 
                 document.getElementById('updateManufacturer').value = alarm.manufacturer || '';
                 document.getElementById('updateInstallationDateInput').value = alarm.installation_date || '';
                 document.getElementById('updateNextTestDue').value = alarm.next_test_due || '';
                 document.getElementById('updateNotes').value = alarm.notes || '';
+                document.getElementById('updateLastTestDate').value = alarm.last_test || '';
 
                 // Store installation date for validation
                 document.getElementById('updateAlarmId').dataset.installationDate = alarm.installation_date || '';
@@ -1097,6 +1293,45 @@
             const alarmId = document.getElementById('updateAlarmId').value;
             const newCode = document.getElementById('updateAlarmCode').value;
             const oldCode = document.getElementById('originalAlarmCode').value;
+            
+            // Handle Location Combination Logic
+            const isMultiple = document.getElementById('updateCoversMultiple').checked;
+            const bSelect = document.getElementById('updateBuildingSelect');
+            
+            if (isMultiple) {
+                // Check if at least one building selected
+                if (bSelect.selectedOptions.length === 0) {
+                     Swal.fire('Missing Information', 'Please select at least one building.', 'warning');
+                     return;
+                }
+                document.getElementById('updateAlarmSpecificLocation').value = "Multiple Buildings - Shared System";
+            } else {
+                // Single Building Valdation
+                if (!bSelect.value) {
+                     Swal.fire('Missing Information', 'Please select a building.', 'warning');
+                     return;
+                }
+                
+                const floor = document.getElementById('updateFloorSelect').value;
+                const specific = document.getElementById('updateAlarmSpecificLocation').value.trim();
+                
+                if (!floor) {
+                     Swal.fire('Missing Information', 'Please select a floor.', 'warning');
+                     return;
+                }
+                
+                if (!specific) {
+                     Swal.fire('Missing Information', 'Please enter a specific location.', 'warning');
+                     return;
+                }
+                
+                // Combine value for submission
+                // We modify the input value just before FormData creation
+                // Note: We might want to revert this if submission fails, but for now it's fine as page reloads on success
+                // Actually, let's keep the specific value clean in the input and append to FormData manually if needed, 
+                // BUT FormData reads from the input value.
+                // To avoid visual glitch if we cancel/fail, we can just handle the string in FormData.
+            }
 
             if (!form.checkValidity()) {
                 form.reportValidity();
@@ -1138,6 +1373,19 @@
             formData.append('_method', 'PUT');
             // Auto-update Last Test to Today
             formData.append('last_test', today);
+            
+            // Handle Location Override in FormData for Single Building
+            if (!isMultiple) {
+                const floor = document.getElementById('updateFloorSelect').value;
+                const specific = document.getElementById('updateAlarmSpecificLocation').value.trim();
+                let combinedLocation = specific;
+                if (floor && floor !== 'All Floors') {
+                    combinedLocation = `${floor} - ${specific}`;
+                }
+                formData.set('location', combinedLocation);
+            } else {
+                 formData.set('location', "Multiple Buildings - Shared System");
+            }
 
             // Show loading
             Swal.fire({

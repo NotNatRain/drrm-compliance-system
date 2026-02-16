@@ -406,7 +406,7 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Number of Emergency Exits</label>
+                                <label class="form-label">No. of Emergency Exits(It has secondary exits)</label>
                                 <input type="number" class="form-control" name="emergency_exits" min="0" value="0">
                             </div>
                             <div class="col-md-6 mb-3">

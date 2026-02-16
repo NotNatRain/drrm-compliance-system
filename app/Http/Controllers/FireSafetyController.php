@@ -1229,6 +1229,9 @@ public function getRoom($id)
         // Convert features array to comma-separated string
         if (isset($validated['features'])) {
             $validated['features'] = implode(',', $validated['features']);
+        } else {
+            // If no features selected (unchecked all), clear the column
+            $validated['features'] = null;
         }
 
         // Handle Cascading Removals

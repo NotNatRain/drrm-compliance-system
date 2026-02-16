@@ -99,34 +99,43 @@
         <p class="small text-muted mb-0 mt-2">For a clean print without URL, date, or page numbers, turn off &quot;Headers and footers&quot; in the print dialog.</p>
     </div>
 
-    <div class="header-container">
-        <div class="header-title">
-            <h1>School's Summarization of Fire Safety – Buildings</h1>
+    <div class="header-container" style="position: relative; height: 80px; display: flex; align-items: center; margin-bottom: 10px;">
+        <!-- Logo and Agency Name (absolute left) -->
+        <div style="position: absolute; left: 0; top: 0; display: flex; align-items: center;">
+            <img src="{{ asset('images/Seal_of_the_Department_of_Education_of_the_Philippines.png') }}" alt="DepEd Logo" style="height: 60px; margin-right: 10px;">
+            <div style="text-align: left;">
+                <h2 style="margin: 0; font-size: 16px; font-weight: bold; text-transform: uppercase;">DepEd DRRM</h2>
+            </div>
         </div>
         
-        <div class="info-grid">
-            <div class="info-item"><strong>Name of School:</strong> {{ $school->school_name }}</div>
-            <div class="info-item"><strong>Name of School Head:</strong> {{ $school->school_head }}</div>
-            <div class="info-item"><strong>School ID:</strong> {{ $school->school_id }}</div>
-            <div class="info-item"><strong>Name of School DRRM Coordinator:</strong> {{ $school->school_drrm_coordinator }}</div>
+        <!-- Main Title (centered) -->
+        <div style="width: 100%; text-align: center;">
+            <h1 style="margin: 0; font-size: 14px; font-weight: normal; text-transform: uppercase;">School's Summarization of Fire Safety – Buildings</h1>
         </div>
+    </div>
+    
+    <div class="info-grid">
+        <div class="info-item"><strong>Name of School:</strong> {{ $school->school_name }}</div>
+        <div class="info-item"><strong>Name of School Head:</strong> {{ $school->school_head }}</div>
+        <div class="info-item"><strong>School ID:</strong> {{ $school->school_id }}</div>
+        <div class="info-item"><strong>Name of School DRRM Coordinator:</strong> {{ $school->school_drrm_coordinator }}</div>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th style="width: 8%;">BUILDING NUMBER</th>
-                <th style="width: 20%;">BUILDING NAME</th>
+                <th style="width: 5%; text-align: center;">BUILDING NUMBER</th>
+                <th style="width: 10%; text-align: center;">BUILDING NAME</th>
                 <th class="vertical-th"><div>NUMBER OF FLOOR</div></th>
-                <th class="vertical-th"><div>IS THE BUILDING<br> WITH SECONDARY<br> EXIT FOR (2-4 STOREY<br> BUILDING)</div></th>
+                <th class="vertical-th"><div>IS THE BUILDING<br>WITH SECONDARY<br>EXIT FOR<br>(2-4 STOREY<br>BUILDING)</div></th>
                 <th class="vertical-th"><div>NUMBER OF CLASSROOMS</div></th>
                 <th class="vertical-th"><div>NUMBER OF <br>ROOMS WITHOUT <br>SECONDARY EXIT</div></th>
                 <th class="vertical-th"><div>NUMBER OF LABORATORIES</div></th>
                 <th class="vertical-th"><div>NUMBER OF ADMINISTRATIVE<br> OFFICE</div></th>
-                <th class="vertical-th"><div>NUMBER OF REQUIRED<br> FIRE EXTINGUISHER</div></th>
-                <th class="vertical-th"><div>NUMBER OF ACTIVE FIRE EXTINGUISHER</div></th>
-                <th class="vertical-th"><div>ALARMS</div></th>
-                <th style="width: 15%;">REMARKS</th>
+                <th class="vertical-th" style="min-width: 60px;"><div>NUMBER OF REQUIRED<br> FIRE EXTINGUISHER</div></th>
+                <th class="vertical-th" style="min-width: 80px;"><div>NUMBER OF ACTIVE<br> FIRE EXTINGUISHER</div></th>
+                <th class="vertical-th" style="min-width: 80px;"><div>ALARMS</div></th>
+                <th style="width: 10%; text-align: center;">REMARKS</th>
             </tr>
         </thead>
         <tbody>
@@ -161,40 +170,123 @@
                         })->count();
                     }
                     
-                    // Get required fire extinguishers from building's required_extinguishers field or calculate
+                    // Logic for Rooms Without Secondary Exit Background
+                    $roomsWithoutExitColor = $roomsWithoutSecondaryExit === 0 ? '#90EE90' : '#e20707ff';
+
+                    // Get required fire extinguishers
                     $requiredExtinguishers = $building->required_extinguishers ?? $building->requiredExtinguishersCount;
                     
-                    // Count active fire extinguishers (status = 'active' or 'OK' or 'operational')
-                    $activeExtinguishers = $building->fireExtinguishers->filter(function($ext) {
+                    // Processing Extinguishers
+                    $allExtinguishers = $building->fireExtinguishers;
+                    $activeCount = 0;
+                    $extinguisherIssues = [];
+                    
+                    foreach($allExtinguishers as $ext) {
                         $status = strtolower($ext->status ?? '');
-                        return in_array($status, ['active', 'ok', 'operational', 'okay']);
-                    })->count();
+                        if (in_array($status, ['active', 'ok', 'operational', 'okay'])) {
+                            $activeCount++;
+                        } else {
+                            // Map status to code
+                            $code = match($status) {
+                                'purchase', 'for_purchase' => 'FP',
+                                'maintenance', 'refill' => 'FR',
+                                'decommissioned', 'broken' => 'DC',
+                                'missing' => 'MS',
+                                'expired' => 'FR', 
+                                default => 'FR'
+                            };
+                            $extinguisherIssues[] = $ext->code . ' ' . $code;
+                        }
+                    }
                     
-                    // Count total alarms for this building (using alarmSystemsMany relationship for many-to-many)
-                    $totalAlarms = $building->alarmSystemsMany->count();
+                    // Extinguisher Column Logic
+                    $extinguisherBg = ($activeCount >= $requiredExtinguishers) ? '#90EE90' : '#e20707'; 
+                    $extinguisherContent = empty($extinguisherIssues) ? $activeCount : implode(', ', $extinguisherIssues);
+
+                    // Secondary Exit Logic for 2-4 Storey
+                    $secExitBg = '';
+                    $secExitContent = 'N/A';
                     
-                    // Secondary Exit check: Building has 2-4 floors AND has at least 2 emergency exits
-                    $hasSecondaryExit = ($building->floors >= 2 && $building->floors <= 4 && $building->emergency_exits >= 2) ? 'Yes' : 'No';
+                    if ($building->floors >= 2 && $building->floors <= 4) {
+                        if ($building->emergency_exits >= 2) {
+                            $secExitContent = 'Compliant';
+                            $secExitBg = '#90EE90'; 
+                        } else {
+                            $secExitContent = 'Non Compliant';
+                            $secExitBg = '#e20707'; 
+                        }
+                    }
+                    
+                    // Alarms Logic
+                    $alarms = $building->alarmSystemsMany;
+                    if ($alarms->isEmpty()) {
+                         $alarms = $building->alarmSystems;
+                    }
+                    
+                    $alarmBg = '#e20707';
+                    $alarmContentParts = [];
+                    $hasBroken = false;
+                    $hasMulti = false;
+                    $hasAlarm = false;
+                    
+                    if ($alarms->count() > 0) {
+                        $hasAlarm = true;
+                        foreach($alarms as $alarm) {
+                            $status = strtolower($alarm->status ?? '');
+                            $isFunctional = in_array($status, ['active', 'functional', 'ok', 'online']);
+                            
+                            if (!$isFunctional) {
+                                $hasBroken = true;
+                            }
+                            
+                            if ($alarm->buildings->count() > 1) {
+                                $hasMulti = true;
+                            }
+                            
+                            $typeChar = 'O';
+                            if (stripos($alarm->alarm_type, 'Bell') !== false) $typeChar = 'B';
+                            elseif (stripos($alarm->alarm_type, 'Mechanical') !== false) $typeChar = 'M';
+                            elseif (stripos($alarm->alarm_type, 'Digital') !== false) $typeChar = 'D';
+                            else {
+                                $typeChar = strtoupper(substr($alarm->alarm_type, 0, 2));
+                            }
+                            
+                            $alarmContentParts[] = $alarm->code . ' ' . $typeChar;
+                        }
+                        
+                        if ($hasBroken) {
+                            $alarmBg = '#e20707'; 
+                        } elseif ($hasMulti) {
+                            $alarmBg = '#FFFF99'; 
+                        } else {
+                            $alarmBg = '#90EE90'; 
+                        }
+                    } else {
+                         $alarmBg = '#e20707';
+                    }
+                    
+                    $alarmContent = $hasAlarm ? implode(', ', $alarmContentParts) : '';
+
                 @endphp
                 <tr>
-                    <td class="center-text">{{ $building->building_no }}</td>
-                    <td class="center-text">{{ $building->building_name }}</td>
-                    <td class="center-text">{{ $building->floors }}</td>
-                    <td class="center-text">{{ $hasSecondaryExit }}</td>
-                    <td class="center-text">{{ $classrooms }}</td>
-                    <td class="center-text">{{ $roomsWithoutSecondaryExit }}</td>
-                    <td class="center-text">{{ $laboratories }}</td>
-                    <td class="center-text">{{ $offices }}</td>
-                    <td class="center-text">{{ $requiredExtinguishers }}</td>
-                    <td class="center-text">{{ $activeExtinguishers }}</td>
-                    <td class="center-text">{{ $totalAlarms }}</td>
-                    <td class="center-text">{{ $building->description }}</td>
+                    <td class="center-text" style="padding: 4px;">{{ $building->building_no }}</td>
+                    <td class="center-text" style="padding: 4px;">{{ $building->building_name }}</td>
+                    <td class="center-text" style="padding: 4px;">{{ $building->floors }}</td>
+                    <td class="center-text" style="padding: 4px; background-color: {{ $secExitBg }};">{{ $secExitContent }}</td>
+                    <td class="center-text" style="padding: 4px;">{{ $classrooms }}</td>
+                    <td class="center-text" style="padding: 4px; background-color: {{ $roomsWithoutExitColor }};">{{ $roomsWithoutSecondaryExit }}</td>
+                    <td class="center-text" style="padding: 4px;">{{ $laboratories }}</td>
+                    <td class="center-text" style="padding: 4px;">{{ $offices }}</td>
+                    <td class="center-text" style="padding: 4px;">{{ $requiredExtinguishers }}</td>
+                    <td class="center-text" style="padding: 4px; background-color: {{ $extinguisherBg }};">{{ $extinguisherContent }}</td>
+                    <td class="center-text" style="padding: 4px; background-color: {{ $alarmBg }};">{{ $alarmContent }}</td>
+                    <td class="center-text" style="padding: 4px;">{{ $building->description }}</td>
                 </tr>
             @endforeach
         </tbody>
     </table>
 
-    <div style="margin-top: 40px; display: flex; justify-content: space-between; padding: 0 50px;">
+    <div style="margin-top: 20px; display: flex; justify-content: space-between; padding: 0 50px;">
         <div style="text-align: center;">
             <p>Prepared by:</p>
             <br><br>
