@@ -54,9 +54,20 @@
                                 @endif
                             @else
                                 <li class="nav-item dropdown">
-                                    <a id="navbarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
-                                        <span class="me-1 fw-bold">{{ Auth::user()->name }}</span>
-                                        <span class="badge bg-info text-dark" style="font-size: 0.75rem;">
+                                    <a id="navbarDropdown" class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
+                                        <div class="text-end me-2 d-none d-sm-block">
+                                            <div class="fw-bold lh-1" style="font-size: 0.9rem;">{{ Auth::user()->name }}</div>
+                                            @if(Auth::user()->school)
+                                                <div class="text-muted small" style="font-size: 0.7rem;">
+                                                    <i class="fas fa-school me-1"></i>{{ Auth::user()->school->school_name }}
+                                                </div>
+                                            @else
+                                                <div class="text-muted small" style="font-size: 0.7rem;">
+                                                    Global Access
+                                                </div>
+                                            @endif
+                                        </div>
+                                        <span class="badge {{ Auth::user()->role === 'admin' ? 'bg-danger' : 'bg-info text-dark' }}" style="font-size: 0.7rem;">
                                             {{ ucfirst(Auth::user()->role ?? 'User') }}
                                         </span>
                                     </a>

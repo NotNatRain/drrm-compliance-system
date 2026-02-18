@@ -65,6 +65,7 @@
                             <th>Role</th>
                             <th>Module Access</th>
                             <th>Assigned School</th>
+                            <th>Status</th>
                             <th class="text-center">Actions</th>
                         </tr>
                     </thead>
@@ -96,21 +97,36 @@
                             </td>
                             <td>
                                 @if($user->school)
-                                    <span class="small">{{ $user->school->name }}</span>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-school text-primary me-2 shadow-sm p-1 rounded bg-light" style="font-size: 0.8rem;"></i>
+                                        <div>
+                                            <div class="fw-bold small">{{ $user->school->school_name }}</div>
+                                            <div class="text-muted" style="font-size: 0.7rem;">ID: {{ $user->school->school_id }}</div>
+                                        </div>
+                                    </div>
+                                @elseif($user->role === 'admin')
+                                    <span class="badge bg-light text-dark border"><i class="fas fa-globe me-1"></i> Full Access</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($user->is_active)
+                                    <span class="badge bg-success shadow-sm"><i class="fas fa-check-circle me-1"></i> Active</span>
                                 @else
-                                    <span class="text-muted small">None</span>
+                                    <span class="badge bg-secondary shadow-sm"><i class="fas fa-times-circle me-1"></i> Deactivated</span>
                                 @endif
                             </td>
                             <td class="text-center">
                                 <button class="btn btn-sm btn-outline-primary me-1" onclick="editUser({{ $user->id }})">
                                     <i class="fas fa-edit"></i> Edit
                                 </button>
-                                <button class="btn btn-sm btn-outline-success me-1" onclick="assignAccess({{ $user->id }})">
-                                    <i class="fas fa-tasks"></i> Assign
+                                <button class="btn btn-sm btn-outline-success me-1" onclick="assignAccess({{ $user->id }})" title="Assign Access">
+                                    <i class="fas fa-tasks"></i>
                                 </button>
                                 @if($user->id !== auth()->id())
-                                <button class="btn btn-sm btn-outline-danger" onclick="deleteUser({{ $user->id }})">
-                                    <i class="fas fa-trash"></i>
+                                <button class="btn btn-sm {{ $user->is_active ? 'btn-outline-warning' : 'btn-outline-info' }}" 
+                                        onclick="toggleUserStatus({{ $user->id }}, {{ $user->is_active ? 'true' : 'false' }})" 
+                                        title="{{ $user->is_active ? 'Deactivate' : 'Activate' }}">
+                                    <i class="fas {{ $user->is_active ? 'fa-user-slash' : 'fa-user-check' }}"></i>
                                 </button>
                                 @endif
                             </td>
@@ -136,21 +152,21 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label fw-bold">Username</label>
-                        <input type="text" name="name" class="form-control" required placeholder="Enter username">
+                        <input type="text" name="name" class="form-control" required placeholder="Enter username" autocomplete="off" value="">
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold">Email Address</label>
-                        <input type="email" name="email" class="form-control" required placeholder="example@email.com">
-                        <div class="form-text">Needs to be legit and true for future use.</div>
+                        <input type="email" name="email" class="form-control" required placeholder="example@email.com" autocomplete="off" value="">
+                        <div class="form-text text-primary"><i class="fas fa-info-circle me-1"></i> This must be a working Google account for password recovery/verification.</div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label class="form-label fw-bold">Password</label>
-                            <input type="password" name="password" class="form-control" required>
+                            <input type="password" name="password" class="form-control" required autocomplete="new-password">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label fw-bold">Confirm Password</label>
-                            <input type="password" name="password_confirmation" class="form-control" required>
+                            <input type="password" name="password_confirmation" class="form-control" required autocomplete="new-password">
                         </div>
                     </div>
                     <div class="mb-3">
@@ -158,8 +174,13 @@
                         <select name="role" class="form-select" required>
                             <option value="contributor">Contributor</option>
                             <option value="viewer">Viewer</option>
-                            <option value="admin">Admin</option>
+                            @if($adminCount < 2)
+                                <option value="admin">Admin</option>
+                            @endif
                         </select>
+                        @if($adminCount >= 2)
+                            <div class="form-text text-danger">Maximum of 2 Administrators reached (~ Admin role disabled).</div>
+                        @endif
                     </div>
                     <div id="adminConfirmation" class="mb-3 d-none">
                         <label class="form-label text-danger fw-bold">Admin Password Confirmation</label>
@@ -245,10 +266,14 @@
                             <div id="schoolFS" class="ms-4 mt-2 d-none">
                                 <label class="small fw-bold">Assign School:</label>
                                 <select name="school_id" class="form-select form-select-sm school-select">
-                                    <option value="">-- Select School --</option>
-                                    @foreach($schools as $school)
-                                        <option value="{{ $school->id }}">{{ $school->name }}</option>
-                                    @endforeach
+                                    @if($schools->isEmpty())
+                                        <option value="">Haven't created yet</option>
+                                    @else
+                                        <option value="">-- Select School --</option>
+                                        @foreach($schools as $school)
+                                            <option value="{{ $school->id }}">{{ $school->school_name }}</option>
+                                        @endforeach
+                                    @endif
                                 </select>
                             </div>
                         </div>
@@ -356,6 +381,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Reset Add User Form when modal is shown
+    const addUserModalEl = document.getElementById('addUserModal');
+    if (addUserModalEl) {
+        addUserModalEl.addEventListener('show.bs.modal', function() {
+            document.getElementById('addUserForm').reset();
+            const adminConfirm = document.getElementById('adminConfirmation');
+            if (adminConfirm) {
+                adminConfirm.classList.add('d-none');
+                adminConfirm.querySelector('input').removeAttribute('required');
+            }
+        });
+    }
+
     // Module checkbox monitoring
     document.querySelectorAll('.module-check').forEach(check => {
         check.addEventListener('change', function() {
@@ -426,6 +464,29 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    document.getElementById('editUserForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const userId = document.getElementById('editUserId').value;
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData.entries());
+
+        fetch(`/users/${userId}`, {
+            method: 'PUT',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(data)
+        }).then(res => res.json()).then(res => {
+            if (res.success) {
+                location.reload();
+            } else {
+                alert(res.message || 'Error occurred');
+            }
+        });
+    });
+
     document.getElementById('assignForm').addEventListener('submit', function(e) {
         e.preventDefault();
         const formData = new FormData(this);
@@ -438,7 +499,7 @@ document.addEventListener('DOMContentLoaded', function() {
             school_id: formData.get('school_id')
         };
 
-        fetch(`/users/${userId}/assign`, {
+        fetch("{{ route('users.index') }}/" + userId + "/assign", {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -457,60 +518,139 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function editUser(userId) {
-    fetch(`/users/${userId}`)
-        .then(res => res.json())
+    const modalEl = document.getElementById('editUserModal');
+    if (!modalEl) return;
+
+    fetch("{{ route('users.show', ':id') }}".replace(':id', userId), {
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+        .then(res => {
+            if (!res.ok) throw new Error('Response code: ' + res.status);
+            return res.json();
+        })
         .then(user => {
-            document.getElementById('editUserId').value = user.id;
-            document.getElementById('editUserName').value = user.name;
-            document.getElementById('editUserEmail').value = user.email;
-            document.getElementById('editUserRole').value = user.role;
-            new bootstrap.Modal(document.getElementById('editUserModal')).show();
+            const idInput = document.getElementById('editUserId');
+            const nameInput = document.getElementById('editUserName');
+            const emailInput = document.getElementById('editUserEmail');
+            const roleSelect = document.getElementById('editUserRole');
+
+            if (idInput) idInput.value = user.id;
+            if (nameInput) nameInput.value = user.name;
+            if (emailInput) emailInput.value = user.email;
+            if (roleSelect) roleSelect.value = user.role;
+            
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        })
+        .catch(err => {
+            console.error('Error:', err);
+            alert('Error fetching user data: ' + err.message);
         });
 }
 
 function assignAccess(userId) {
-    fetch(`/users/${userId}`)
-        .then(res => res.json())
-        .then(user => {
-            document.getElementById('assignUserId').value = user.id;
-            document.getElementById('assignUserName').textContent = user.name;
-            
-            // Clear checks
-            document.querySelectorAll('.module-check').forEach(c => {
-                c.checked = false;
-                const div = document.getElementById('school' + c.id.replace('check', ''));
-                if(div) div.classList.add('d-none');
-            });
+    const modalEl = document.getElementById('assignModal');
+    if (!modalEl) {
+        console.error('Assign modal not found');
+        return;
+    }
 
-            // Set checks
-            const access = user.module_access || [];
-            access.forEach(mod => {
-                const check = document.querySelector(`.module-check[value="${mod}"]`);
-                if (check) {
-                    check.checked = true;
-                    const div = document.getElementById('school' + check.id.replace('check', ''));
-                    if(div) div.classList.remove('d-none');
+    fetch("{{ route('users.show', ':id') }}".replace(':id', userId), {
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+        .then(res => {
+            if (!res.ok) throw new Error('Response code: ' + res.status);
+            return res.json();
+        })
+        .then(user => {
+            const userIdInput = document.getElementById('assignUserId');
+            const userNameSpan = document.getElementById('assignUserName');
+            const assignForm = document.getElementById('assignForm');
+
+            if (userIdInput) userIdInput.value = user.id;
+            if (userNameSpan) userNameSpan.textContent = user.name;
+            
+            const isAdmin = user.role === 'admin';
+            const saveBtn = modalEl.querySelector('button[type="submit"]');
+
+            // Clear checks and hide all school divs first
+            modalEl.querySelectorAll('.module-check').forEach(c => {
+                if (isAdmin) {
+                    c.checked = true;
+                    c.disabled = true;
+                } else {
+                    c.checked = false;
+                    c.disabled = false;
+                }
+                
+                const schoolDivId = 'school' + c.id.replace('check', '');
+                const schoolDiv = document.getElementById(schoolDivId);
+                if (schoolDiv) {
+                    if (isAdmin || c.checked) {
+                        schoolDiv.classList.remove('d-none');
+                    } else {
+                        schoolDiv.classList.add('d-none');
+                    }
                 }
             });
 
-            // Set school
-            if (user.school_id) {
-                document.querySelector('select[name="school_id"]').value = user.school_id;
-            } else {
-                document.querySelector('select[name="school_id"]').value = "";
+            // For Admin, also disable selection if they have full access
+            const schoolSelect = assignForm.querySelector('select[name="school_id"]');
+            if (schoolSelect) {
+                if (isAdmin) {
+                    schoolSelect.value = "";
+                    schoolSelect.disabled = true;
+                } else {
+                    schoolSelect.disabled = false;
+                    schoolSelect.value = user.school_id || "";
+                }
             }
 
-            new bootstrap.Modal(document.getElementById('assignModal')).show();
+            // Set checks and show relevant school divs (for non-admins)
+            if (!isAdmin) {
+                const access = user.module_access || [];
+                access.forEach(mod => {
+                    const check = modalEl.querySelector(`.module-check[value="${mod}"]`);
+                    if (check) {
+                        check.checked = true;
+                        const schoolDivId = 'school' + check.id.replace('check', '');
+                        const schoolDiv = document.getElementById(schoolDivId);
+                        if (schoolDiv) schoolDiv.classList.remove('d-none');
+                    }
+                });
+            }
+
+            // If admin, hide save button or show "Admin has full access" message
+            if (isAdmin) {
+                if (saveBtn) saveBtn.classList.add('d-none');
+            } else {
+                if (saveBtn) saveBtn.classList.remove('d-none');
+            }
+
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        })
+        .catch(err => {
+            console.error('Error fetching user data:', err);
+            alert('Error fetching user details: ' + err.message);
         });
 }
 
-function deleteUser(userId) {
-    if (confirm('Are you sure you want to delete this user?')) {
-        fetch(`/users/${userId}`, {
-            method: 'DELETE',
+function toggleUserStatus(userId, currentState) {
+    const action = currentState ? 'deactivate' : 'activate';
+    if (confirm(`Are you sure you want to ${action} this user account?`)) {
+        fetch("{{ route('users.index') }}/" + userId + "/toggle-status", {
+            method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
             }
         }).then(res => res.json()).then(res => {
             if (res.success) {
@@ -518,8 +658,11 @@ function deleteUser(userId) {
             } else {
                 alert(res.message);
             }
+        }).catch(err => {
+            console.error('Error:', err);
+            alert('Error toggling user status: ' + err.message);
         });
     }
 }
 </script>
-@endsection
+@endpush

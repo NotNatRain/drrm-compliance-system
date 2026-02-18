@@ -1,85 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customization & Settings - Fire Safety</title>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@extends('layouts.fire-safety')
+
+@section('title', 'Customization - Fire Safety')
+
+@section('styles')
     <style>
-        :root {
-            --fire-red: #A8191F;
-            --fire-dark-red: #8A1217;
-            --fire-light-red: #F8D7DA;
-            --charcoal: #36454F;       /* ← ADD THIS */
-            --dark-charcoal: #2C3E50;  /* ← ADD THIS */
-        }
-         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow-x: hidden;
-        }
-
-        .top-nav {
-            background: linear-gradient(135deg, var(--fire-red) 0%, var(--charcoal) 100%);
-            height: 60px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1030;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .sidebar {
-            background: linear-gradient(180deg, var(--fire-red) 0%, var(--dark-charcoal) 100%);
-            width: 250px;
-            position: fixed;
-            top: 60px;
-            left: 0;
-            bottom: 0;
-            z-index: 1020;
-            overflow-y: auto;
-        }
-
-        .main-content {
-            margin-left: 250px;
-            margin-top: 60px;
-            padding: 20px;
-            min-height: calc(100vh - 60px);
-            background-color: #f8f9fa;
-        }
-
-        .nav-link {
-            color: rgba(255, 255, 255, 0.9);
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-        }
-
-        .nav-link:hover, .nav-link.active {
-            background-color: var(--fire-dark-red);
-            color: white;
-            text-decoration: none;
-        }
-
-        .nav-link.active {
-            border-left: 4px solid white;
-        }
-
-        .nav-icon {
-            width: 24px;
-            margin-right: 10px;
-            text-align: center;
-        }
-
-        .dashboard-card {
-            border-radius: 10px;
-            border: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
         .config-item {
             border: 1px solid #dee2e6;
             border-radius: 8px;
@@ -137,136 +61,24 @@
             border-color: #dee2e6 #dee2e6 #dee2e6;
         }
 
-        .status-dot {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-right: 5px;
-        }
-
-        .status-active { background-color: #28a745; }
-        .status-inactive { background-color: #dc3545; }
-        .status-draft { background-color: #ffc107; }
-
         .sortable-handle {
             cursor: move;
             color: #6c757d;
         }
-
-        .sortable-ghost {
-            opacity: 0.4;
-            background-color: #f8f9fa;
-        }
     </style>
-</head>
-<body>
-    <!-- Top Navigation Bar -->
-    <nav class="top-nav">
-        <div class="container-fluid h-100">
-            <div class="row h-100 align-items-center">
-                <div class="col-auto">
-                    <a href="{{ route('fire-safety.dashboard') }}" class="text-white text-decoration-none">
-                        <i class="fas fa-arrow-left me-2"></i>
-                        <i class="fas fa-fire me-2"></i>
-                        <span class="fw-bold">Fire Safety Checklist System</span>
-                    </a>
-                </div>
+@endsection
 
-                <div class="col text-center">
-                    <h4 class="text-white mb-0">
-                        @if(auth()->user()->role === 'admin')
-                            System Customization
-                        @else
-                            School Settings
-                        @endif
-                    </h4>
-                </div>
+@section('page_title')
+    @if(auth()->user()->role === 'admin')
+        System Customization
+    @elseif(auth()->user()->role === 'viewer')
+        School Info
+    @else
+        Update School Info
+    @endif
+@endsection
 
-                <div class="col-auto">
-                    <div class="d-flex align-items-center">
-                        <!-- User Accounts Link removed per requirements -->
-
-                        <div class="dropdown">
-                            <a href="#" class="text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
-                                <i class="fas fa-user-circle fa-lg me-2"></i>
-                                <span>{{ Auth::user()->name }}</span>
-                                <small class="ms-2 badge bg-light text-dark">{{ ucfirst(Auth::user()->role) }}</small>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end">
-                                <a class="dropdown-item" href="{{ route('fire-safety.dashboard') }}">
-                                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
-                                </a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="{{ route('logout') }}"
-                                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                   <i class="fas fa-sign-out-alt me-2"></i> Logout
-                                </a>
-                                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                                    @csrf
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="p-3">
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.dashboard') }}">
-                        <span class="nav-icon"><i class="fas fa-tachometer-alt"></i></span>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.buildings') }}">
-                        <span class="nav-icon"><i class="fas fa-building"></i></span>
-                        <span>Buildings</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.alarm-systems') }}">
-                        <span class="nav-icon"><i class="fas fa-bell"></i></span>
-                        <span>Alarm Systems</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.extinguishers') }}">
-                        <span class="nav-icon"><i class="fas fa-fire-extinguisher"></i></span>
-                        <span>Fire Extinguishers & Rooms</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.evacuation-plans') }}">
-                        <span class="nav-icon"><i class="fas fa-map-signs"></i></span>
-                        <span>Evacuation Plans</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="{{ route('fire-safety.customization') }}">
-                        <span class="nav-icon"><i class="fas fa-cog"></i></span>
-                        @if(auth()->user()->role === 'admin')
-                            <span>Customization</span>
-                        @elseif(auth()->user()->role === 'viewer')
-                            <span>View School Info</span>
-                        @else
-                            <span>Update School Info</span>
-                        @endif
-                    </a>
-                </li>
-            </ul>
-
-            <hr class="bg-white my-4">
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content">
+@section('content')
         @if(auth()->user()->role === 'admin')
         <!-- Admin View: Both System Customization and School Management -->
         <div class="row mb-4">
@@ -325,12 +137,12 @@
                                 <h6 class="m-0 fw-bold text-primary">
                                     <i class="fas fa-school me-2"></i> All Schools
                                 </h6>
-                                <div class="d-flex">
-                                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addSchoolModal">
-                                        <i class="fas fa-plus me-2"></i> Add School
+                                <div class="d-flex flex-wrap gap-1">
+                                    <button class="btn btn-primary btn-sm flex-grow-1" data-bs-toggle="modal" data-bs-target="#addSchoolModal">
+                                        <i class="fas fa-plus me-1"></i> Add
                                     </button>
-                                    <button class="btn btn-sm btn-outline-secondary ms-2" type="button" onclick="openSchoolHistoryModal()">
-                                        <i class="fas fa-history me-1"></i> Removed School
+                                    <button class="btn btn-sm btn-outline-secondary flex-grow-1" type="button" onclick="openSchoolHistoryModal()">
+                                        <i class="fas fa-history me-1"></i> History
                                     </button>
                                 </div>
                             </div>
@@ -1546,8 +1358,71 @@
             </div>
         </div>
     </div>
+    @else
+        <!-- Contributor View: Only School Management Tab for their assigned school -->
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card dashboard-card mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 fw-bold text-primary">
+                            <i class="fas fa-school me-2"></i> My School Information
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        @if($schools->isEmpty())
+                            <div class="text-center py-5">
+                                <i class="fas fa-school fa-3x text-muted mb-3"></i>
+                                <p>You have not created or been assigned to a school yet.</p>
+                                <a href="{{ route('fire-safety.dashboard') }}" class="btn btn-primary">Go to Dashboard to Setup</a>
+                            </div>
+                        @else
+                            @php $mySchool = $schools->first(); @endphp
+                            <div class="table-responsive">
+                                <table class="table align-middle compact-mobile-table">
+                                    <thead>
+                                        <tr>
+                                            <th>School Name</th>
+                                            <th>Status</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>
+                                                <strong>{{ $mySchool->school_name }}</strong>
+                                                <div class="text-muted small">{{ $mySchool->address }}</div>
+                                            </td>
+                                            <td>
+                                                @if($mySchool->status === 'passed')
+                                                    <span class="badge bg-success">PASSED</span>
+                                                @elseif($mySchool->status === 'unconfigured')
+                                                    <span class="badge bg-secondary">UNCONFIGURED</span>
+                                                @else
+                                                    <span class="badge bg-warning text-dark">ONGOING IMPROVEMENT</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-primary btn-sm edit-school-btn" 
+                                                        data-school-id="{{ $mySchool->id }}"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#editSchoolModal">
+                                                    <i class="fas fa-edit me-1"></i> Update Info
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
     @endif
 
+@endsection
+
+@section('scripts')
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
@@ -2876,5 +2751,4 @@
             }
         }
     </script>
-</body>
-</html>
+@endsection

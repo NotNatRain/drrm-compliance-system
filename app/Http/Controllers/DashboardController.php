@@ -57,12 +57,13 @@ class DashboardController extends Controller
 
         $users = $query->get();
         $schools = FireSafetySchool::all();
+        $adminCount = User::where('role', 'admin')->count();
 
         if ($request->expectsJson()) {
             return response()->json($users);
         }
 
-        return view('users.index', compact('users', 'schools'));
+        return view('users.index', compact('users', 'schools', 'adminCount'));
     }
 
     public function storeUser(Request $request)
@@ -84,6 +85,10 @@ class DashboardController extends Controller
         }
 
         if ($request->role === 'admin') {
+            $adminCount = User::where('role', 'admin')->count();
+            if ($adminCount >= 2) {
+                return response()->json(['success' => false, 'message' => 'The system is limited to a maximum of 2 administrators.'], 403);
+            }
             if (!Hash::check($request->admin_confirmation, auth()->user()->password)) {
                 return response()->json(['success' => false, 'message' => 'Invalid admin confirmation password'], 403);
             }
@@ -142,6 +147,24 @@ class DashboardController extends Controller
         return response()->json(['success' => true, 'message' => 'User updated successfully']);
     }
 
+    public function toggleUserStatus($id)
+    {
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        if ($id == auth()->id()) {
+            return response()->json(['success' => false, 'message' => 'Cannot deactivate yourself'], 400);
+        }
+
+        $user = User::findOrFail($id);
+        $user->is_active = !$user->is_active;
+        $user->save();
+
+        $status = $user->is_active ? 'activated' : 'deactivated';
+        return response()->json(['success' => true, 'message' => "User account has been $status successfully."]);
+    }
+
     public function assignAccess(Request $request, $id)
     {
         if (auth()->user()->role !== 'admin') {
@@ -159,18 +182,7 @@ class DashboardController extends Controller
 
     public function deleteUser($id)
     {
-        if (auth()->user()->role !== 'admin') {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
-
-        if ($id == auth()->id()) {
-            return response()->json(['success' => false, 'message' => 'Cannot delete yourself'], 400);
-        }
-
-        $user = User::findOrFail($id);
-        $user->delete();
-
-        return response()->json(['success' => true, 'message' => 'User deleted successfully']);
+        return response()->json(['success' => false, 'message' => 'User deletion is disabled. Please deactivate the account instead.'], 400);
     }
 
     public function storeAnnouncement(Request $request)

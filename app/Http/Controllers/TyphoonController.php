@@ -40,7 +40,8 @@ class TyphoonController extends Controller
 
         if ($user->role !== 'admin' && $activeSchoolId) {
             $evacuationCentersQuery->where('school_id', $activeSchoolId);
-        } elseif ($activeSchoolId) {
+        } elseif ($activeSchoolId && $user->role !== 'admin') {
+            // For admins, show ALL even if activeSchoolId is set
             $evacuationCentersQuery->where('school_id', $activeSchoolId);
         }
 
@@ -111,6 +112,15 @@ class TyphoonController extends Controller
             'evacuationCenters' => $evacuationCenters,
             'totalFamilies' => $totalFamilies,
             'totalEvacuees' => $totalEvacuees,
+            'openEvacuationCentersCount' => $evacuationCenters->where('usage_status', '!=', 'cleared')->count(),
+            'incidentMonitoring' => [
+                'major' => 0, // Placeholder
+                'minor' => 0, // Placeholder
+            ],
+            'rainfall' => [
+                'bangal' => '0.0', // Placeholder
+                'kalaklan' => '0.0', // Placeholder
+            ],
             'missingCount' => $missingCount,
             'injuredCount' => $injuredCount,
             'deceasedCount' => $deceasedCount,
@@ -204,6 +214,22 @@ class TyphoonController extends Controller
 
         $ec = TypFldEvacuationCenter::with('school')->findOrFail($request->evacuation_center_id);
 
+        // Capacity check logic:
+        // "Capacity is 500 and Occupancy are currently in 498 if there were a new family ... forced it to register ... but if another new family ... do not allow it anymore"
+        // This means if CURRENT occupancy < CAPACITY, allow registration (even if result > capacity).
+        // If CURRENT occupancy >= CAPACITY, block.
+        
+        $currentOccupancyCount = TypFldFamilyMember::query()
+            ->join('typ_fld_families', 'typ_fld_families.id', '=', 'typ_fld_family_members.family_id')
+            ->where('typ_fld_families.evacuation_center_id', $ec->id)
+            ->whereNull('typ_fld_families.checked_out_at')
+            ->count();
+
+        // Check if full
+        if ($ec->capacity > 0 && $currentOccupancyCount >= $ec->capacity) {
+            return redirect()->back()->with('error', "Evacuation Center is full (Capacity: {$ec->capacity}, Current: {$currentOccupancyCount}). Cannot register more families.")->withInput();
+        }
+
         // permission: contributor can only create under their school
         $user = auth()->user();
         if ($user->role !== 'admin' && $user->school_id != $ec->school_id) {
@@ -236,13 +262,6 @@ class TyphoonController extends Controller
                 ]);
             }
 
-            // Update capacity based on peak occupancy seen so far
-            $totalIndividuals = TypFldFamilyMember::query()
-                ->join('typ_fld_families', 'typ_fld_families.id', '=', 'typ_fld_family_members.family_id')
-                ->where('typ_fld_families.evacuation_center_id', $ec->id)
-                ->count();
-
-            $ec->capacity = max($ec->capacity ?? 0, $totalIndividuals);
             $ec->save();
         });
 
@@ -292,8 +311,9 @@ class TyphoonController extends Controller
             'identification' => 'nullable|string|max:255',
             'school_name' => 'nullable|string|max:255',
             'location' => 'nullable|string|max:2000',
-            'usage_status' => 'required|string|in:cleared,occupied,full',
+            'usage_status' => 'required|string|in:cleared,occupied,full,decamp',
             'emergency_resources' => 'nullable|string|max:2000',
+            'capacity' => 'nullable|integer|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -323,7 +343,7 @@ class TyphoonController extends Controller
             [
                 'identification' => $request->identification,
                 'location' => $request->location,
-                'capacity' => 0,
+                'capacity' => $request->capacity ?? 0,
                 'operational_status' => 'operational',
                 'needs_summary' => null,
                 'occupancy_safety' => 'safe',
@@ -348,7 +368,7 @@ class TyphoonController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'usage_status' => 'required|string|in:cleared,occupied,full',
+            'usage_status' => 'required|string|in:cleared,occupied,full,decamp',
             'emergency_resources' => 'nullable|string|max:2000',
             'reports_status' => 'nullable|string|max:2000',
         ]);

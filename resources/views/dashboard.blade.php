@@ -113,13 +113,22 @@
         border-radius: 50%;
         background-size: 50% 50%;
     }
+    
+    /* Remove gap between header and announcement */
+    .dashboard-container {
+        margin-top: -24px; /* Offsets the main py-4 padding-top */
+    }
+    .announcement-banner {
+        border-top-left-radius: 0;
+        border-top-right-radius: 0;
+    }
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @endpush
 
 @section('content')
-<div class="container-fluid">
+<div class="container-fluid dashboard-container">
     @if($announcements->count() == 0)
         <div class="d-flex justify-content-between align-items-center mb-4">
             <p class="text-muted mb-0">Welcome back, <strong>{{ Auth::user()->name }}</strong>! Select a compliance system to manage.</p>

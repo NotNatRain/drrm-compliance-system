@@ -1,21 +1,6 @@
 @extends('layouts.fire-safety')
 
 @section('title', 'Evacuation Plans - Fire Safety')
-<style>
-    :root {
-        --fire-red: #A8191F;
-        --fire-dark-red: #8A1217;
-        --fire-light-red: #F8D7DA;
-        --charcoal: #36454F;       /* ← ADD THIS */
-        --dark-charcoal: #2C3E50;  /* ← ADD THIS */
-    }
-    .top-nav {
-        background: linear-gradient(135deg, var(--fire-red) 0%, var(--charcoal) 100%);
-    }
-    .sidebar {
-        background: linear-gradient(180deg, var(--fire-red) 0%, var(--dark-charcoal) 100%);
-    }
-</style>
 @section('content')
     <div class="container-fluid">
         <!-- Page Heading -->
@@ -175,7 +160,7 @@
                                             </div>
                                         </div>
                                 @if($school->buildings->count() > 0)
-                                <div class="row">
+                                <div class="row px-1 px-md-3">
                                     @foreach($school->buildings as $building)
                                     @php
                                         $plan = $building->evacuationPlan;
@@ -196,39 +181,35 @@
                                         $safetyClass = $safetyScore >= 80 ? 'safety-good' : ($safetyScore >= 60 ? 'safety-warning' : 'safety-danger');
                                         $safetyText = $safetyScore >= 80 ? 'Good' : ($safetyScore >= 60 ? 'Fair' : 'Poor');
                                     @endphp
-                                    <div class="col-xl-4 col-lg-6 mb-4">
-                                        <div class="card evacuation-card {{ $statusClass }}">
-                                            <div class="card-body">
-                                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                                    <div>
-                                                        <h5 class="card-title mb-1">{{ $building->building_no }}</h5>
-                                                        <p class="text-muted mb-0">
-                                                            <i class="fas fa-building me-1"></i> {{ $building->building_name }}
-                                                        </p>
+                                    <div class="col-xl-3 col-lg-4 col-md-6 col-6 mb-4">
+                                        <div class="card evacuation-card {{ $statusClass }} h-100 shadow-sm">
+                                            <div class="card-body mobile-card-body">
+                                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                                    <div class="text-truncate" style="max-width: 65%;">
+                                                        <h6 class="card-title mb-0 fw-bold text-truncate">{{ $building->building_no }}</h6>
+                                                        <div class="text-muted small text-truncate mobile-tiny-text">{{ $building->building_name }}</div>
                                                     </div>
-                                                    <span class="badge {{ $statusBadge }}">{{ $statusText }}</span>
+                                                    <span class="badge {{ $statusBadge }} py-1 px-2 mobile-badge">{{ $statusText }}</span>
                                                 </div>
 
                                                 <!-- Map Preview -->
-                                                <div class="map-container mb-3"
+                                                <div class="map-container mb-3 mobile-mb-2"
                                                      onclick="viewPlan({{ $plan ? $plan->id : 'null' }}, {{ $building->id }}, '{{ $building->building_no }}')"
-                                                     style="background: {{ ($plan && $plan->map_data) ? 'white' : 'linear-gradient(135deg, ' . ($plan ? '#6a11cb' : '#868f96') . ' 0%, ' . ($plan ? '#2575fc' : '#596164') . ' 100%)' }}; overflow: hidden; height: 120px; display: flex; align-items: center; justify-content: center; position: relative; border: 1px solid #ddd;">
+                                                     style="background: {{ ($plan && $plan->map_data) ? 'white' : 'linear-gradient(135deg, ' . ($plan ? '#6a11cb' : '#868f96') . ' 0%, ' . ($plan ? '#2575fc' : '#596164') . ' 100%)' }}; overflow: hidden; height: 120px; display: flex; align-items: center; justify-content: center; position: relative; border: 1px solid #ddd; border-radius: 4px;">
                                                      @if($plan && $plan->map_data)
                                                          <img src="{{ $plan->map_data }}" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.9;">
                                                          <div style="position: absolute; bottom: 0; left: 0; right: 0; background: rgba(168, 25, 31, 0.8); color: white; padding: 2px; font-size: 0.7rem;">
                                                              <span>{{ $plan->plan_no }}</span>
                                                          </div>
                                                      @elseif($plan)
-                                                         <div class="text-white">
-                                                             <i class="fas fa-map fa-2x mb-2"></i>
-                                                             <h6>Plan: {{ $plan->plan_no }}</h6>
-                                                             <small>Click to view details</small>
+                                                         <div class="text-white text-center">
+                                                             <i class="fas fa-map fa-2x mb-1"></i>
+                                                             <div class="small">{{ $plan->plan_no }}</div>
                                                          </div>
                                                      @else
-                                                         <div class="text-white">
-                                                             <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
-                                                             <h6>No Plan</h6>
-                                                             <small>Click to create</small>
+                                                         <div class="text-white text-center">
+                                                             <i class="fas fa-exclamation-triangle fa-2x mb-1"></i>
+                                                             <div class="small">No Plan</div>
                                                          </div>
                                                      @endif
                                                  </div>

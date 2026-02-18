@@ -35,42 +35,6 @@
         .health-danger { background-color: #dc3545; } /* Empty/Missing */
 
         /* SweetAlert2 Custom Styling */
-        .swal2-popup {
-            border-radius: 15px !important;
-        }
-        .swal2-styled.swal2-confirm {
-            background-color: var(--fire-red) !important;
-        }
-        :root {
-            --fire-red: #A8191F;
-            --fire-dark-red: #8A1217;
-            --fire-light-red: #F8D7DA;
-            --charcoal: #36454F;       /* ← ADD THIS */
-            --dark-charcoal: #2C3E50;  /* ← ADD THIS */
-        }
-        .top-nav {
-            background: linear-gradient(135deg, var(--fire-red) 0%, var(--charcoal) 100%);
-            height: 60px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1030;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        /* Sidebar */
-        .sidebar {
-            background: linear-gradient(180deg, var(--fire-red) 0%, var(--dark-charcoal) 100%);
-            width: 250px;
-            position: fixed;
-            top: 60px; /* Below top nav */
-            left: 0;
-            bottom: 0;
-            z-index: 1020;
-            overflow-y: auto;
-            transition: all 0.3s;
-        }
     </style>
 @endsection
 
@@ -261,7 +225,7 @@
                                                                             </div>
                                                                         @else
                                                                             <div class="table-responsive">
-                                                                                <table class="table table-sm table-hover align-middle">
+                                                                                <table class="table table-sm table-hover align-middle compact-mobile-table">
                                                                                     <thead class="table-light">
                                                                                         <tr>
                                                                                             <th>Room</th>
@@ -352,7 +316,7 @@
                                                             }
                                                     @endphp
                                                     <div class="mb-4 border rounded shadow-sm overflow-hidden bg-white">
-                                                        <table class="table table-bordered table-sm mb-0">
+                                                        <table class="table table-bordered table-sm mb-0 compact-mobile-table">
                                                             <!-- Row 1 -->
                                                             <tr>
                                                                 <td colspan="3" class="align-middle ps-3 py-2">
@@ -663,7 +627,7 @@
                         <div class="row">
                             <div class="col-md-3 mb-3">
                                 <label class="form-label fw-bold">Code *</label>
-                                <input type="text" class="form-control" name="code" placeholder="e.g., EXT-001" required>
+                                <input type="text" class="form-control" name="code" placeholder="e.g., FRXT-001" required>
                             </div>
                             <div class="col-md-3 mb-3">
                                 <label class="form-label fw-bold">Type *</label>

@@ -1,109 +1,9 @@
-{{-- resources/views/fire-safety/dashboard.blade.php --}}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fire Safety Dashboard - DRRM Compliance</title>
-    <meta name="csrf-token" content="{{ csrf_token() }}">
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@extends('layouts.fire-safety')
+
+@section('title', 'Fire Safety Dashboard')
+
+@section('styles')
     <style>
-        :root {
-            --fire-red: #A8191F;
-            --fire-dark-red: #8A1217;
-            --fire-light-red: #F8D7DA;
-            --charcoal: #36454F;       /* ← ADD THIS */
-            --dark-charcoal: #2C3E50;  /* ← ADD THIS */
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow-x: hidden;
-        }
-
-        /* Top Navigation */
-        .top-nav {
-            background: linear-gradient(135deg, var(--fire-red) 0%, var(--charcoal) 100%);
-            height: 60px;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1030;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        /* Sidebar */
-        .sidebar {
-            background: linear-gradient(180deg, var(--fire-red) 0%, var(--dark-charcoal) 100%);
-            width: 250px;
-            position: fixed;
-            top: 60px; /* Below top nav */
-            left: 0;
-            bottom: 0;
-            z-index: 1020;
-            overflow-y: auto;
-            transition: all 0.3s;
-        }
-
-        /* Main Content Area */
-        .main-content {
-            margin-left: 250px;
-            margin-top: 60px;
-            padding: 20px;
-            min-height: calc(100vh - 60px);
-            background-color: #f8f9fa;
-        }
-
-        /* Sidebar Navigation Items */
-        .sidebar-nav {
-            padding: 20px 0;
-        }
-
-        .nav-item {
-            margin-bottom: 2px;
-        }
-
-        .nav-link {
-            color: rgba(255, 255, 255, 0.9);
-            padding: 12px 20px;
-            display: flex;
-            align-items: center;
-            transition: all 0.3s;
-        }
-
-        .nav-link:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: white;
-            text-decoration: none;
-        }
-
-        .nav-link.active {
-            background-color: var(--fire-dark-red);
-            color: white;
-            border-left: 4px solid white;
-        }
-
-        .nav-icon {
-            width: 24px;
-            margin-right: 10px;
-            text-align: center;
-        }
-
-        /* Quick Actions in Sidebar */
-        .quick-actions {
-            position: absolute;
-            bottom: 20px;
-            left: 0;
-            right: 0;
-            padding: 0 20px;
-        }
-
         /* Cards */
         .dashboard-card {
             border-radius: 10px;
@@ -123,158 +23,20 @@
             font-size: 0.8rem;
             font-weight: 500;
         }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .sidebar {
-                margin-left: -250px;
-            }
-
-            .main-content {
-                margin-left: 0;
-            }
-
-            .sidebar.active {
-                margin-left: 0;
-            }
-        }
-
-        /* Custom Scrollbar for Sidebar */
-        .sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .sidebar::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.1);
-        }
-
-        .sidebar::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.3);
-            border-radius: 3px;
-        }
     </style>
-</head>
-<body>
-    <!-- Top Navigation Bar -->
-    <nav class="top-nav">
-        <div class="container-fluid h-100">
-            <div class="row h-100 align-items-center">
-                <!-- Left: Logo and Back Button -->
-                <div class="col-auto">
-                    <a href="{{ route('dashboard') }}" class="text-white text-decoration-none">
-                        <i class="fas fa-arrow-left me-2"></i>
-                        <i class="fas fa-fire me-2"></i>
-                        <span class="fw-bold">Fire Safety Checklist System</span>
-                    </a>
-                </div>
+@endsection
 
-                <!-- Center: Title -->
-                <div class="col text-center">
-                    <h4 class="text-white mb-0">Dashboard</h4>
-                </div>
+@section('page_title', 'Dashboard')
 
-                <!-- Right: User Menu and Notifications -->
-                <div class="col-auto">
-                    <div class="d-flex align-items-center">
-                        <!-- Notifications -->
-                        <div class="dropdown me-3">
-                            <a href="#" class="text-white position-relative" data-bs-toggle="dropdown">
-                                <i class="fas fa-bell fa-lg"></i>
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                    0
-                                </span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end">
-                                <h6 class="dropdown-header">Notifications</h6>
-                                <div class="dropdown-item text-muted">No new notifications</div>
-                            </div>
-                        </div>
-
-                        <!-- User Profile -->
-                        <div class="dropdown">
-                            <a href="#" class="text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
-                                <i class="fas fa-user-circle fa-lg me-2"></i>
-                                <span>{{ Auth::user()->name }}</span>
-                            </a>
-                            <div class="dropdown-menu dropdown-menu-end">
-                                <a class="dropdown-item" href="{{ route('fire-safety.customization') }}">
-                                    <i class="fas fa-cogs me-2"></i> Customization
-                                </a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="{{ route('logout') }}"
-                                   onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                   <i class="fas fa-sign-out-alt me-2"></i> Logout
-                                </a>
-                                <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                                    @csrf
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <!-- Sidebar Navigation -->
-        <div class="sidebar-nav">
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link active" href="{{ route('fire-safety.dashboard') }}">
-                        <span class="nav-icon"><i class="fas fa-tachometer-alt"></i></span>
-                        <span>Dashboard</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.buildings') }}">
-                        <span class="nav-icon"><i class="fas fa-building"></i></span>
-                        <span>Buildings</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.alarm-systems') }}">
-                        <span class="nav-icon"><i class="fas fa-bell"></i></span>
-                        <span>Alarm Systems</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.extinguishers') }}">
-                        <span class="nav-icon"><i class="fas fa-fire-extinguisher"></i></span>
-                        <span>Fire Extinguishers & Rooms</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.evacuation-plans') }}">
-                        <span class="nav-icon"><i class="fas fa-map-signs"></i></span>
-                        <span>Evacuation Plans</span>
-                    </a>
-                </li>
-                @if(auth()->user()->role !== 'viewer')
-                <li class="nav-item">
-                    <a class="nav-link" href="{{ route('fire-safety.customization') }}">
-                        <span class="nav-icon"><i class="fas fa-cog"></i></span>
-                        <span>Customization</span>
-                    </a>
-                </li>
-                @endif
-            </ul>
-        </div>
-    </div>
-
-    <!-- Main Content Area -->
-    <div class="main-content">
+@section('content')
         <!-- Summary Cards -->
         <div class="row mb-4">
             <div class="col-xl-3 col-md-6 mb-4">
-                <div class="card dashboard-card border-left-success h-100">
+                <div class="card dashboard-card stat-card border-left-success h-100">
                     <div class="card-body">
                         <div class="row align-items-center">
                             <div class="col mr-2">
-                                <div class="text-xs fw-bold text-success text-uppercase mb-1">
-                                    Passed Inspections
-                                </div>
+                                <div class="text-xs fw-bold text-success text-uppercase mb-1">Passed Inspections</div>
                                 <div class="h2 mb-0 fw-bold text-gray-800">{{ $schools->where('status', 'passed')->count() }}</div>
                             </div>
                             <div class="col-auto">
@@ -286,13 +48,11 @@
             </div>
 
             <div class="col-xl-3 col-md-6 mb-4">
-                <div class="card dashboard-card border-left-warning h-100">
+                <div class="card dashboard-card stat-card border-left-warning h-100">
                     <div class="card-body">
                         <div class="row align-items-center">
                             <div class="col mr-2">
-                                <div class="text-xs fw-bold text-warning text-uppercase mb-1">
-                                    Ongoing Improvement
-                                </div>
+                                <div class="text-xs fw-bold text-warning text-uppercase mb-1">Ongoing Improvement</div>
                                 <div class="h2 mb-0 fw-bold text-gray-800">{{ $schools->where('status', 'warning')->count() }}</div>
                             </div>
                             <div class="col-auto">
@@ -304,13 +64,11 @@
             </div>
 
             <div class="col-xl-3 col-md-6 mb-4">
-                <div class="card dashboard-card border-left-secondary h-100">
+                <div class="card dashboard-card stat-card border-left-secondary h-100">
                     <div class="card-body">
                         <div class="row align-items-center">
                             <div class="col mr-2">
-                                <div class="text-xs fw-bold text-secondary text-uppercase mb-1">
-                                    Unconfigured Schools
-                                </div>
+                                <div class="text-xs fw-bold text-secondary text-uppercase mb-1">Unconfigured Schools</div>
                                 <div class="h2 mb-0 fw-bold text-gray-800">{{ $schools->where('status', 'unconfigured')->count() }}</div>
                             </div>
                             <div class="col-auto">
@@ -322,13 +80,11 @@
             </div>
 
             <div class="col-xl-3 col-md-6 mb-4">
-                <div class="card dashboard-card border-left-dark h-100" style="border-left: 0.25rem solid #212529 !important;">
+                <div class="card dashboard-card stat-card border-left-dark h-100" style="border-left: 0.25rem solid #212529 !important;">
                     <div class="card-body">
                         <div class="row align-items-center">
                             <div class="col mr-2">
-                                <div class="text-xs fw-bold text-dark text-uppercase mb-1">
-                                    Total Schools
-                                </div>
+                                <div class="text-xs fw-bold text-dark text-uppercase mb-1">Total Schools</div>
                                 <div class="h2 mb-0 fw-bold text-gray-800">{{ $schools->count() }}</div>
                             </div>
                             <div class="col-auto">
@@ -450,20 +206,22 @@
                                     <div class="col-12">
                                         <div class="card dashboard-card">
                                             <div class="card-body">
-                                                <div class="d-flex justify-content-center gap-3">
-                                                    <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addInspectionModal">
-                                                        <i class="fas fa-plus-circle me-2"></i> Add Inspection
-                                                    </button>
-                                                    <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#addAlertModal">
+                                                <div class="d-flex flex-wrap justify-content-center gap-2">
+                                                    @if(auth()->user()->role === 'admin' || (auth()->user()->role === 'contributor' && !auth()->user()->school_id))
+                                                        <button class="btn btn-outline-primary flex-grow-1 flex-md-grow-0" data-bs-toggle="modal" data-bs-target="#addInspectionModal">
+                                                            <i class="fas fa-plus-circle me-2"></i> Add Inspection
+                                                        </button>
+                                                    @endif
+                                                    <button class="btn btn-danger flex-grow-1 flex-md-grow-0" data-bs-toggle="modal" data-bs-target="#addAlertModal">
                                                         <i class="fas fa-exclamation-triangle me-2"></i> Add Alert
                                                     </button>
-                                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addEventModal">
+                                                    <button class="btn btn-primary flex-grow-1 flex-md-grow-0" data-bs-toggle="modal" data-bs-target="#addEventModal">
                                                         <i class="fas fa-calendar-plus me-2"></i> Add Event
                                                     </button>
-                                                    <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#evacInfoModal">
+                                                    <button class="btn btn-info flex-grow-1 flex-md-grow-0" data-bs-toggle="modal" data-bs-target="#evacInfoModal">
                                                         <i class="fas fa-map-signs me-2"></i> View Evacuation Plans
                                                     </button>
-                                                    <a href="{{ route('fire-safety.report.school-summary') }}" target="_blank" class="btn btn-success">
+                                                    <a href="{{ route('fire-safety.report.school-summary') }}" target="_blank" class="btn btn-success flex-grow-1 flex-md-grow-0">
                                                         <i class="fas fa-file-pdf me-2"></i> Generate Report
                                                     </a>
                                                 </div>
@@ -610,25 +368,39 @@
                     <div class="modal-body">
                         <h5 id="issuesSchoolNameTitle" class="fw-bold mb-4"></h5>
 
+                        <!-- School Details -->
+                        <div class="card bg-light border-0 mb-4">
+                            <div class="card-body">
+                                <h6 class="fw-bold text-primary mb-3"><i class="fas fa-info-circle me-2"></i>School Details</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p class="mb-2"><strong>Address:</strong> <span id="issuesAddress"></span></p>
+                                        <p class="mb-2"><strong>School Head:</strong> <span id="issuesSchoolHead"></span></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p class="mb-2"><strong>DRRM Coordinator:</strong> <span id="issuesCoordinator"></span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Unconfigured View (Interactive Buttons) -->
                         <div id="unconfiguredView" style="display: none;">
                             <h6 class="text-muted text-uppercase small fw-bold mb-3">Required Setup Checklist</h6>
                             <div class="row g-3">
-                                <div class="col-md-4">
+                                <div class="col-md-6">
                                     <div class="card h-100 text-center p-3 border-2" id="btnConfigBuilding">
-                                        <i class="fas fa-building fa-2x mb-2"></i>
-                                        <h6>Buildings</h6>
+                                        <div class="d-flex justify-content-center gap-2 mb-2">
+                                            <i class="fas fa-building fa-2x"></i>
+                                            <i class="fas fa-bell fa-2x"></i>
+                                        </div>
+                                        <h6>Buildings & Alarm System</h6>
                                         <div class="mt-2 status-indicator"></div>
                                         <a href="{{ route('fire-safety.buildings') }}" class="btn btn-sm mt-2">{{ auth()->user()->role === 'viewer' ? 'View' : 'Configure' }}</a>
                                     </div>
                                 </div>
-                                <div class="col-md-4">
-                                    <div class="card h-100 text-center p-3 border-2" id="btnConfigAlarm">
-                                        <i class="fas fa-bell fa-2x mb-2"></i>
-                                        <h6>Alarm Systems</h6>
-                                        <div class="mt-2 status-indicator"></div>
-                                        <a href="{{ route('fire-safety.alarm-systems') }}" class="btn btn-sm mt-2">{{ auth()->user()->role === 'viewer' ? 'View' : 'Configure' }}</a>
-                                    </div>
+                                <div class="col-md-6" style="display:none;" id="btnConfigAlarm">
+                                     <!-- Hidden but kept for JS compatibility -->
                                 </div>
                                 <div class="col-md-4">
                                     <div class="card h-100 text-center p-3 border-2" id="btnConfigRoom">
@@ -831,8 +603,9 @@
         </div>
     </div>
 
-    <!-- Bootstrap JS Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+@endsection
+
+@section('scripts')
 
 <script>
 const userRole = "{{ auth()->user()->role }}";
@@ -873,6 +646,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const status = school.status;
 
             document.getElementById('issuesSchoolNameTitle').textContent = school.school_name;
+            document.getElementById('issuesAddress').textContent = school.address || 'N/A';
+            document.getElementById('issuesSchoolHead').textContent = school.school_head || 'Not recorded';
+            document.getElementById('issuesCoordinator').textContent = school.school_drrm_coordinator || 'Not recorded';
 
             const unconfiguredView = document.getElementById('unconfiguredView');
             const ongoingView = document.getElementById('ongoingView');
@@ -1079,5 +855,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 </script>
-</body>
-</html>
+@endsection

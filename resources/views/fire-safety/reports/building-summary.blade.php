@@ -102,7 +102,9 @@
     <div class="header-container" style="position: relative; height: 80px; display: flex; align-items: center; margin-bottom: 10px;">
         <!-- Logo and Agency Name (absolute left) -->
         <div style="position: absolute; left: 0; top: 0; display: flex; align-items: center;">
-            <img src="{{ asset('images/Seal_of_the_Department_of_Education_of_the_Philippines.png') }}" alt="DepEd Logo" style="height: 60px; margin-right: 10px;">
+            <img src="{{ asset('images/Layer-0-1.png') }}" alt="Logo 1" style="height: 60px; margin-right: 10px;">
+            <img src="{{ asset('images/What-Is-the-Difference-Between-DepEd-Seal-and-DepEd-Logo.png') }}" alt="Logo 2" style="height: 60px; margin-right: 10px;">
+            <img src="{{ asset('images/drrmis-logo-2.png') }}" alt="Logo 3" style="height: 60px; margin-right: 15px;">
             <div style="text-align: left;">
                 <h2 style="margin: 0; font-size: 16px; font-weight: bold; text-transform: uppercase;">DepEd DRRM</h2>
             </div>
@@ -223,7 +225,7 @@
                          $alarms = $building->alarmSystems;
                     }
                     
-                    $alarmBg = '#e20707';
+                    $alarmBg = '#e20707'; // Default Red (Missing)
                     $alarmContentParts = [];
                     $hasBroken = false;
                     $hasMulti = false;
@@ -255,14 +257,14 @@
                         }
                         
                         if ($hasBroken) {
-                            $alarmBg = '#e20707'; 
+                            $alarmBg = '#add8e6'; // Blue (Existing but bad status)
                         } elseif ($hasMulti) {
-                            $alarmBg = '#FFFF99'; 
+                            $alarmBg = '#FFFF00'; // Yellow (Active + Multi)
                         } else {
-                            $alarmBg = '#90EE90'; 
+                            $alarmBg = '#90EE90'; // Green (Active + Single)
                         }
                     } else {
-                         $alarmBg = '#e20707';
+                         $alarmBg = '#e20707'; // Red (Missing)
                     }
                     
                     $alarmContent = $hasAlarm ? implode(', ', $alarmContentParts) : '';

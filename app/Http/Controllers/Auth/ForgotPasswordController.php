@@ -19,4 +19,17 @@ class ForgotPasswordController extends Controller
     */
 
     use SendsPasswordResetEmails;
+
+    /**
+     * Get the response for a successful password reset link.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  string  $response
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    protected function sendResetLinkResponse(\Illuminate\Http\Request $request, $response)
+    {
+        return redirect()->route('password.verify-form', ['email' => $request->email])
+                         ->with('status', trans($response));
+    }
 }

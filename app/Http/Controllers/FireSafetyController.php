@@ -309,6 +309,7 @@ class FireSafetyController extends Controller
                 'building_id' => 'nullable|exists:firesafety_buildings,id',
                 'building_ids' => 'nullable|array',
                 'building_ids.*' => 'exists:firesafety_buildings,id',
+                'floor_id' => 'nullable|string',
                 'code' => 'required|string|max:50',
                 'alarm_type' => 'required|in:Bell,Mechanical,Digital',
                 'status' => 'required|string',
@@ -1073,12 +1074,17 @@ public function getRoom($id)
         $checklists = SystemConfiguration::where('config_type', 'inspection_checklist')->where('is_active', true)->orderBy('sort_order')->get();
         $observers = SystemConfiguration::where('config_type', 'inspection_observer')->where('is_active', true)->orderBy('sort_order')->get();
 
+        $alarmTypes = SystemConfiguration::where('config_type', 'alarm_type')->where('is_active', true)->orderBy('sort_order')->get();
+        $alarmStatusesByType = SystemConfiguration::where('config_type', 'alarm_status')->where('is_active', true)->whereNotNull('parent_id')->get()->groupBy('parent_id');
+
         return view('fire-safety.buildings',[
             'schools' => $schools,
             'activeSchool' => $activeSchool,
             'buildingTypes' => $buildingTypes,
             'checklists' => $checklists,
             'observers' => $observers,
+            'alarmTypes' => $alarmTypes,
+            'alarmStatusesByType' => $alarmStatusesByType,
             'isViewer' => auth()->user()->role === 'viewer'
         ]);
     }
@@ -1413,6 +1419,11 @@ public function getRoom($id)
         Log::info('getBuilding called with id: ' . $id);
         try {
             $building = FireSafetyBuilding::with(['school', 'actualRooms'])->findOrFail($id);
+            $building->load(['alarmSystems', 'alarmSystemsMany']);
+            
+            // Merge direct alarms and covered alarms
+            $allAlarms = $building->alarmSystems->merge($building->alarmSystemsMany)->unique('id')->values();
+            $building->setRelation('alarmSystems', $allAlarms);
             Log::info('Building found: ' . $building->id);
 
             // Check if user has access to this building's school
@@ -1948,7 +1959,8 @@ public function getRoom($id)
             $school = FireSafetySchool::withCount(['buildings', 'rooms', 'alarmSystems', 'extinguishers as fire_extinguishers_count'])
                 ->find($user->school_id);
 
-            return view('fire-safety.customization', compact('school'));
+            $schools = $school ? collect([$school]) : collect([]);
+            return view('fire-safety.customization', compact('schools'));
         }
     }
 
@@ -2831,5 +2843,88 @@ public function getRoom($id)
             ->get();
 
         return view('fire-safety.reports.extinguisher-details', compact('school', 'extinguishers'));
+    }
+    public function getNotifications()
+    {
+        $user = auth()->user();
+        $query = FireSafetySchool::query();
+
+        if ($user->role !== 'admin') {
+            $query->where('id', $user->school_id);
+        }
+
+        $schools = $query->get();
+        $allAlerts = [];
+        $allEvents = [];
+
+        foreach ($schools as $school) {
+            if ($school->alerts) {
+                foreach ($school->alerts as $alert) {
+                    $alert['school_name'] = $school->school_name;
+                    $alert['school_id'] = $school->id;
+                    $alert['item_type'] = 'alert';
+                    // Attach replies
+                    $alert['replies'] = collect($school->replies ?? [])
+                        ->where('item_id', $alert['id'])
+                        ->values()
+                        ->all();
+                    $allAlerts[] = $alert;
+                }
+            }
+            if ($school->events) {
+                foreach ($school->events as $event) {
+                    $event['school_name'] = $school->school_name;
+                    $event['school_id'] = $school->id;
+                    $event['item_type'] = 'event';
+                    // Attach replies
+                    $event['replies'] = collect($school->replies ?? [])
+                        ->where('item_id', $event['id'])
+                        ->values()
+                        ->all();
+                    $allEvents[] = $event;
+                }
+            }
+        }
+
+        // Sort by date/created_at
+        usort($allAlerts, fn($a, $b) => strtotime($b['created_at']) - strtotime($a['created_at']));
+        usort($allEvents, fn($a, $b) => strtotime($a['date'] . ' ' . ($a['time'] ?? '00:00')) - strtotime($b['date'] . ' ' . ($b['time'] ?? '00:00')));
+
+        return response()->json([
+            'alerts' => array_slice($allAlerts, 0, 10),
+            'events' => array_slice($allEvents, 0, 10),
+            'unread_count' => count(array_filter($allAlerts, fn($a) => strtotime($a['created_at']) > (strtotime('yesterday'))))
+        ]);
+    }
+
+    public function replyToNotification(Request $request)
+    {
+        $validated = $request->validate([
+            'item_id' => 'required|string',
+            'school_id' => 'required|exists:firesafety_school_information,id',
+            'message' => 'required|string|max:1000'
+        ]);
+
+        $school = FireSafetySchool::findOrFail($validated['school_id']);
+        
+        $user = auth()->user();
+        if ($user->role !== 'admin' && (int)$user->school_id !== (int)$school->id) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $replies = $school->replies ?? [];
+        $replies[] = [
+            'id' => uniqid(),
+            'item_id' => $validated['item_id'],
+            'user_name' => $user->name,
+            'user_role' => $user->role,
+            'message' => $validated['message'],
+            'created_at' => now()->toDateTimeString()
+        ];
+
+        $school->replies = $replies;
+        $school->save();
+
+        return response()->json(['success' => true, 'message' => 'Reply sent successfully!']);
     }
 }

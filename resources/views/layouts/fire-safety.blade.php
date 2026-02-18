@@ -12,6 +12,8 @@
         :root {
             --fire-red: #A8191F;
             --fire-dark-red: #8A1217;
+            --charcoal: #36454F;
+            --dark-charcoal: #2C3E50;
         }
 
         body {
@@ -20,7 +22,7 @@
         }
 
         .top-nav {
-            background-color: var(--fire-red);
+            background: linear-gradient(135deg, var(--fire-red) 0%, var(--charcoal) 100%);
             height: 60px;
             position: fixed;
             top: 0;
@@ -30,15 +32,25 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
+        .sidebar-toggle {
+            display: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            margin-right: 15px;
+            padding: 5px;
+        }
+
         .sidebar {
-            background-color: var(--fire-red);
+            background: linear-gradient(180deg, var(--fire-red) 0%, var(--dark-charcoal) 100%);
             width: 250px;
             position: fixed;
             top: 60px;
             left: 0;
             bottom: 0;
-            z-index: 1020;
+            z-index: 1025;
             overflow-y: auto;
+            transition: all 0.3s ease;
         }
 
         .main-content {
@@ -47,6 +59,43 @@
             padding: 20px;
             min-height: calc(100vh - 60px);
             background-color: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1020;
+            backdrop-filter: blur(2px);
+        }
+
+        @media (max-width: 991.98px) {
+            .sidebar-toggle {
+                display: block;
+            }
+            .sidebar {
+                left: -250px;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            body.show-sidebar .sidebar {
+                left: 0;
+            }
+            body.show-sidebar .sidebar-overlay {
+                display: block;
+            }
+            .top-nav .col text-center h4 {
+                font-size: 1.1rem;
+            }
+            .top-nav .fw-bold {
+                display: none;
+            }
         }
 
         .nav-link {
@@ -134,6 +183,115 @@
             background-color: rgba(168, 25, 31, 0.05);
         }
 
+
+        /* Global Responsive Utilities */
+        @media (max-width: 767.98px) {
+            body { font-size: 0.85rem; }
+            
+            /* Force stat cards to 2 columns on mobile (col-md-6 override) */
+            .stat-card .col-auto { display: none; } /* hide large icon on mobile */
+            .stat-card .card-body .row { display: block; }
+            .stat-card .card-body { padding: 8px !important; text-align: center; }
+            .stat-card .text-xs { font-size: 0.6rem !important; line-height: 1; margin-bottom: 2px !important; }
+            .stat-card .h2 { font-size: 1.1rem !important; margin-bottom: 0 !important; }
+            
+            .main-content { padding: 10px; }
+            
+            .card-header.d-flex, .card-header .d-flex {
+                flex-direction: column;
+                align-items: stretch !important;
+                gap: 8px;
+                padding: 10px !important;
+            }
+            .card-header h6 { font-size: 0.9rem !important; }
+
+            .card-header .btn-group, .card-header .d-flex {
+                width: 100%;
+                display: flex;
+                flex-direction: row !important;
+                flex-wrap: wrap;
+                gap: 5px;
+            }
+            .card-header .btn {
+                flex-grow: 1;
+                font-size: 0.75rem !important;
+                padding: 4px 8px !important;
+                margin-right: 0 !important;
+            }
+            
+            /* Table Scaling */
+            .table { font-size: 0.75rem !important; }
+            .table th, .table td { padding: 6px 4px !important; }
+            .badge { font-size: 0.65rem !important; padding: 3px 6px !important; }
+
+            .h2 { font-size: 1.25rem !important; }
+            .h3 { font-size: 1.15rem !important; }
+            .h4 { font-size: 1rem !important; }
+            .h5 { font-size: 0.9rem !important; }
+            .h6 { font-size: 0.85rem !important; }
+            
+            /* Compact Cards for Mobile */
+            .dashboard-card { 
+                margin-bottom: 10px !important; 
+            }
+            .dashboard-card .card-body { padding: 8px !important; }
+            
+
+            .mobile-text-truncate {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%;
+            }
+            
+            .mobile-stack {
+                flex-direction: column !important;
+                gap: 5px !important;
+            }
+            
+            /* High Density Utilities - Mobile Only */
+            .mobile-card-body { padding: 8px !important; }
+            .mobile-compact-text { font-size: 0.75rem !important; }
+            .mobile-tiny-text { font-size: 0.65rem !important; }
+            .mobile-badge { font-size: 0.6rem !important; padding: 2px 4px !important; }
+            .mobile-h-80 { height: 80px !important; }
+            .mobile-mb-2 { margin-bottom: 0.5rem !important; }
+            
+            /* Responsive Tabs */
+            .nav-tabs {
+                flex-wrap: nowrap !important;
+                overflow-x: auto !important;
+                overflow-y: hidden !important;
+                -webkit-overflow-scrolling: touch !important;
+                font-size: 0.75rem !important;
+            }
+            .nav-tabs .nav-link {
+                white-space: nowrap !important;
+                padding: 6px 10px !important;
+            }
+            
+            /* Table Fitting Force */
+            .compact-mobile-table {
+                font-size: 0.65rem !important;
+                table-layout: fixed;
+                width: 100% !important;
+            }
+            .compact-mobile-table th, .compact-mobile-table td {
+                padding: 3px 2px !important;
+                word-wrap: break-word;
+                overflow-wrap: break-word;
+            }
+            .compact-mobile-table .badge {
+                font-size: 0.55rem !important;
+                padding: 1px 3px !important;
+            }
+            
+            /* Admin Header Fix */
+            .settings-tabs .nav-link {
+                padding: 10px !important;
+            }
+        }
+
         @yield('styles')
     </style>
 </head>
@@ -142,8 +300,11 @@
     <nav class="top-nav">
         <div class="container-fluid h-100">
             <div class="row h-100 align-items-center">
-                <div class="col-auto">
-                    <a href="{{ route('fire-safety.dashboard') }}" class="text-white text-decoration-none">
+                <div class="col-auto d-flex align-items-center">
+                    <div class="sidebar-toggle" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </div>
+                    <a href="{{ route('dashboard') }}" class="text-white text-decoration-none d-flex align-items-center">
                         <i class="fas fa-arrow-left me-2"></i>
                         <i class="fas fa-fire me-2"></i>
                         <span class="fw-bold">Fire Safety Checklist System</span>
@@ -151,26 +312,43 @@
                 </div>
 
                 <div class="col text-center">
-                    <h4 class="text-white mb-0">@yield('page_title', 'Fire Safety Module')</h4>
+                    <h4 class="text-white mb-0">
+                        @yield('page_title', 'Fire Safety Module')
+                        @if(auth()->user()->role !== 'admin' && isset($activeSchool))
+                            <small class="d-inline-block ms-2 opacity-75" style="font-size: 0.6em; font-weight: 400;">— {{ $activeSchool->school_name }}</small>
+                        @endif
+                    </h4>
                 </div>
 
                 <div class="col-auto">
                     <div class="d-flex align-items-center">
                         <div class="dropdown me-3">
-                            <a href="#" class="text-white position-relative" data-bs-toggle="dropdown">
+                            <a href="#" class="text-white position-relative" data-bs-toggle="dropdown" id="notificationDropdown">
                                 <i class="fas fa-bell fa-lg"></i>
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">0</span>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" id="notifBadge">
+                                    0
+                                </span>
                             </a>
-                            <div class="dropdown-menu dropdown-menu-end">
-                                <h6 class="dropdown-header">Notifications</h6>
-                                <div class="dropdown-item text-muted">No new notifications</div>
+                            <div class="dropdown-menu dropdown-menu-end shadow" style="width: 320px; max-width: 90vw; max-height: 480px; overflow-y: auto;">
+                                <h6 class="dropdown-header d-flex justify-content-between align-items-center">
+                                    Notifications
+                                    <span class="badge bg-primary unread-label d-none">New</span>
+                                </h6>
+                                <div id="notificationList">
+                                    <div class="dropdown-item text-center py-3">
+                                        <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                                        <div class="text-muted small mt-1">Loading...</div>
+                                    </div>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item text-center small text-primary" href="{{ route('fire-safety.dashboard') }}">View All Dashboard</a>
                             </div>
                         </div>
 
                         <div class="dropdown">
                             <a href="#" class="text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
                                 <i class="fas fa-user-circle fa-lg me-2"></i>
-                                <span>{{ Auth::user()->name ?? 'User' }}</span>
+                                <span class="d-none d-md-inline">{{ Auth::user()->name ?? 'User' }}</span>
                             </a>
                             <div class="dropdown-menu dropdown-menu-end">
                                 <a class="dropdown-item" href="{{ route('fire-safety.dashboard') }}">
@@ -192,6 +370,9 @@
         </div>
     </nav>
 
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="p-3">
@@ -204,14 +385,11 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link {{ Route::is('fire-safety.buildings') ? 'active' : '' }}" href="{{ route('fire-safety.buildings') }}">
-                        <span class="nav-icon"><i class="fas fa-building"></i></span>
-                        <span>Buildings</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link {{ Route::is('fire-safety.alarm-systems') ? 'active' : '' }}" href="{{ route('fire-safety.alarm-systems') }}">
-                        <span class="nav-icon"><i class="fas fa-bell"></i></span>
-                        <span>Alarm Systems</span>
+                        <span class="nav-icon">
+                            <i class="fas fa-building"></i>
+                            <i class="fas fa-bell ms-1" style="font-size: 0.7em;"></i>
+                        </span>
+                        <span>Buildings & Alarm System</span>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -226,12 +404,15 @@
                         <span>Evacuation Plans</span>
                     </a>
                 </li>
+                
+                @if(auth()->user()->role !== 'viewer')
                 <li class="nav-item">
                     <a class="nav-link {{ Route::is('fire-safety.customization') ? 'active' : '' }}" href="{{ route('fire-safety.customization') }}">
                         <span class="nav-icon"><i class="fas fa-cog"></i></span>
-                        <span>{{ auth()->user()->role === 'viewer' ? 'School Info' : 'Customization' }}</span>
+                        <span>{{ auth()->user()->role === 'admin' ? 'Customization' : 'Update School Info' }}</span>
                     </a>
                 </li>
+                @endif
             </ul>
             <hr class="bg-white my-4">
         </div>
@@ -240,7 +421,8 @@
     <!-- Main Content -->
     <div class="main-content">
         @if(isset($schools) && $schools->isNotEmpty())
-            <!-- School Selection Tabs -->
+            @if(auth()->user()->role === 'admin')
+            <!-- School Selection Tabs (Admin only) -->
             <div class="row mb-4">
                 <div class="col-12">
                     <div class="card dashboard-card">
@@ -274,6 +456,7 @@
                     </div>
                 </div>
             </div>
+            @endif
         @elseif(isset($schools) && $schools->isEmpty() && !Route::is('fire-safety.dashboard'))
              <div class="row mb-4">
                 <div class="col-12">
@@ -324,7 +507,161 @@
         </div>
     </div>
 
+    <!-- Global Notification Reply Modal -->
+    <div class="modal fade" id="notifReplyModal" tabindex="-1" style="z-index: 1060;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Reply to Notification</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="notifReplyForm">
+                    <div class="modal-body">
+                        <input type="hidden" name="item_id" id="replyItemId">
+                        <input type="hidden" name="school_id" id="replySchoolId">
+                        <div class="mb-3">
+                            <label class="form-label">Your Reply</label>
+                            <textarea class="form-control" name="message" rows="4" placeholder="Type your reply here..." required></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Send Reply</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const notifList = document.getElementById('notificationList');
+            const notifBadge = document.getElementById('notifBadge');
+            const notifDropdown = document.getElementById('notificationDropdown');
+
+            function fetchNotifications() {
+                fetch('{{ route("fire-safety.notifications") }}')
+                    .then(response => response.json())
+                    .then(data => {
+                        renderNotifications(data);
+                    })
+                    .catch(err => console.error('Error fetching notifications:', err));
+            }
+
+            function renderNotifications(data) {
+                const alerts = data.alerts || [];
+                const events = data.events || [];
+                const all = [...alerts, ...events].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+                
+                if (all.length === 0) {
+                    notifList.innerHTML = '<div class="dropdown-item text-center py-3 text-muted">No notifications</div>';
+                    notifBadge.classList.add('d-none');
+                    return;
+                }
+
+                notifBadge.textContent = data.unread_count || all.length;
+                notifBadge.classList.remove('d-none');
+
+                notifList.innerHTML = '';
+                all.forEach(item => {
+                    const isAlert = item.item_type === 'alert';
+                    const icon = isAlert ? 'fa-exclamation-triangle' : 'fa-calendar-alt';
+                    const color = isAlert ? (item.type === 'danger' ? 'danger' : 'warning') : 'info';
+                    
+                    const div = document.createElement('div');
+                    div.className = 'dropdown-item p-3 border-bottom';
+                    div.innerHTML = `
+                        <div class="d-flex w-100">
+                            <div class="flex-shrink-0 me-3">
+                                <span class="badge bg-${color}-subtle text-${color} p-2 rounded">
+                                    <i class="fas ${icon}"></i>
+                                </span>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <h6 class="mb-0 fw-bold small">${item.title}</h6>
+                                    <small class="text-muted" style="font-size: 0.7rem;">${new Date(item.created_at).toLocaleDateString()}</small>
+                                </div>
+                                <p class="mb-1 small text-truncate" style="max-width: 200px;">${item.description}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted fw-bold" style="font-size: 0.65rem;">${item.school_name}</small>
+                                    <button class="btn btn-xs btn-outline-primary py-0 px-2 reply-btn" 
+                                            data-id="${item.id}" 
+                                            data-school="${item.school_id}" 
+                                            style="font-size: 0.65rem;">
+                                        Reply
+                                    </button>
+                                </div>
+                                ${item.replies && item.replies.length > 0 ? `
+                                    <div class="mt-2 bg-light p-1 rounded border-start border-primary border-3">
+                                        <small class="d-block fw-bold" style="font-size: 0.6rem;">Recent Reply:</small>
+                                        <small class="text-muted" style="font-size: 0.65rem;">${item.replies[item.replies.length-1].message}</small>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                    notifList.appendChild(div);
+                });
+
+                // Attach reply events
+                notifList.querySelectorAll('.reply-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        document.getElementById('replyItemId').value = this.dataset.id;
+                        document.getElementById('replySchoolId').value = this.dataset.school;
+                        const modal = new bootstrap.Modal(document.getElementById('notifReplyModal'));
+                        modal.show();
+                    });
+                });
+            }
+
+            // Initial fetch
+            fetchNotifications();
+
+            // Handle Reply Submission
+            const replyForm = document.getElementById('notifReplyForm');
+            replyForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData.entries());
+
+                fetch('{{ route("fire-safety.notification.reply") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(res => {
+                    if (res.success) {
+                        bootstrap.Modal.getInstance(document.getElementById('notifReplyModal')).hide();
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Sent!',
+                            text: 'Your reply has been registered.',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                        fetchNotifications();
+                        replyForm.reset();
+                    }
+                })
+                .catch(err => {
+                    console.error('Error sending reply:', err);
+                    Swal.fire('Error', 'Failed to send reply.', 'error');
+                });
+            });
+        });
+    </script>
+
     <script>
         function switchSchool(schoolId) {
             fetch(`/fire-safety/set-school/${schoolId}`, {
@@ -360,6 +697,31 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             moveModalsToBody();
+            
+            // Sidebar Toggle Logic
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    document.body.classList.toggle('show-sidebar');
+                });
+            }
+            
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', function() {
+                    document.body.classList.remove('show-sidebar');
+                });
+            }
+
+            // Close sidebar on link click (mobile)
+            document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    if (window.innerWidth < 992) {
+                        document.body.classList.remove('show-sidebar');
+                    }
+                });
+            });
             
             // Also watch for dynamically added modals if any
             const observer = new MutationObserver(function(mutations) {

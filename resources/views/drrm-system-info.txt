@@ -1,0 +1,539 @@
+================================================================================
+         DRRM COMPLIANCE SYSTEM — SYSTEM INFORMATION & MODULE OVERVIEW
+================================================================================
+  Document Type : System Overview & Module Description
+  File Location : resources/views/drrm-system-info.txt
+  Last Updated  : February 18, 2026
+  Framework     : Laravel (PHP) | Bootstrap 5 | Blade Templating Engine
+================================================================================
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ SECTION 1 — WHAT IS THE DRRM COMPLIANCE SYSTEM?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The DRRM (Disaster Risk Reduction and Management) Compliance System is a
+web-based platform designed for schools and educational institutions to monitor,
+manage, and maintain compliance with disaster preparedness and safety standards.
+
+The system is built on the Laravel PHP framework and uses a role-based access
+control model with three user roles:
+
+  • Admin       — Full access to all modules, user management, configuration,
+                  and report generation.
+  • Contributor — Can add and update data within assigned modules and schools.
+  • Viewer      — Read-only access; can view data but cannot modify records.
+
+The system is composed of FIVE (5) major compliance modules accessible from the
+main dashboard:
+
+  1. Fire Safety Compliance
+  2. Typhoon / Flooding Compliance
+  3. Incident Checklist
+  4. Comprehensive School Safety  (currently under development)
+  5. Hazard Mapping               (currently under development)
+
+Additionally, the system includes a PIE-PRA sub-module (Pre-Disaster Intelligent
+Evacuation Predictor & Resource Allocator) integrated within the Typhoon module.
+
+The main dashboard also supports:
+  • System Announcements — Admins can post image-based announcements (posters/
+    flyers) that appear as a carousel banner at the top of the dashboard.
+  • User Management — Admins can create, update, enable/disable, and assign
+    module access to user accounts.
+  • System Overview — A quick stats panel showing total active alerts, completed
+    tasks, pending actions, and total records.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ SECTION 2 — FIRE SAFETY COMPLIANCE MODULE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Theme Color : Red (#D12428)
+  Route Prefix: /fire-safety
+  Access Guard : module.access:fire_safety
+
+OVERVIEW:
+---------
+The Fire Safety Compliance Module is the primary and most comprehensive module
+of the DRRM system. It enables administrators and contributors to manage and
+monitor the fire safety status of multiple schools. Each school is evaluated
+based on a set of configurable compliance criteria covering buildings, alarm
+systems, fire extinguishers, rooms, and evacuation plans.
+
+SCHOOL STATUS SYSTEM:
+---------------------
+Each registered school is automatically assigned one of three statuses:
+
+  • PASSED         — The school has fully configured all required modules and
+                     meets all compliance criteria (100% compliance). No issues
+                     are detected.
+  • ONGOING IMPROVEMENT — The school has been configured but has one or more
+                     identified issues (e.g., missing extinguishers, non-
+                     functional alarms, incomplete evacuation plans). The system
+                     lists specific issues per module.
+  • UNCONFIGURED   — The school has been registered but has not yet completed
+                     the required setup (buildings, alarms, rooms, extinguishers,
+                     and/or evacuation plans have not been configured).
+
+The dashboard displays a sortable and filterable table of all schools with their
+status, identified issues, last inspection date, and action buttons.
+
+SUB-MODULES WITHIN FIRE SAFETY:
+--------------------------------
+
+  A. BUILDINGS
+  ─────────────
+  Manages the physical buildings of each school. Each building record includes:
+    - Building Number/Code and Name
+    - Building Type (Classroom, Laboratory, Administrative Office, Gymnasium,
+      Cafeteria, etc.)
+    - Number of Floors and Total Rooms
+    - Number of Secondary/Emergency Exits
+    - Minimum Required Fire Extinguishers
+    - Safety Features (Sprinkler System, Emergency Lighting, Exit Signs,
+      Fire Doors, Two Stairways)
+    - Year Constructed and Last Renovation
+    - Compliance Score (calculated automatically based on alarms, extinguishers,
+      exits, and evacuation plans)
+
+  Building compliance is calculated as a percentage (0–100%). Buildings with
+  80%+ are marked Compliant (green), 60–79% as Needs Attention (yellow), and
+  below 60% as Non-Compliant (red).
+
+  Features:
+    - Add, view, and update building records
+    - Filter buildings by compliance status
+    - View floor and room history (removed floors/rooms with reasons)
+    - Print Building Summary Report (PDF-ready)
+    - Print Alarm Details Report per school
+
+  B. ALARM SYSTEMS
+  ─────────────────
+  Tracks fire alarm systems installed in each building. Each alarm record
+  includes:
+    - Alarm Code (unique identifier per school)
+    - Building Coverage (one alarm can cover multiple buildings)
+    - Status: Functional / Active / Online / Offline / Maintenance
+    - Last Test Date and Next Scheduled Test
+    - Alarm History Log
+
+  Features:
+    - Add new alarm systems with building and floor assignment
+    - Test alarms (logs the test date and updates status)
+    - Remove alarms with archiving
+    - View upcoming alarm test schedule
+    - Alarm history per school
+
+  C. FIRE EXTINGUISHERS
+  ──────────────────────
+  Manages fire extinguishers assigned to specific rooms within buildings. Each
+  extinguisher record includes:
+    - Extinguisher Type (ABC Dry Chemical, CO2, Water, etc.)
+    - Serial Number
+    - Assigned Room and Building
+    - Status: Active / Expired / For Replacement / Maintenance
+    - Expiry Date
+    - Health Bar (visual indicator of extinguisher condition as a percentage)
+    - Inspection History
+
+  Features:
+    - Add extinguishers per room
+    - Update extinguisher details and status
+    - Remove extinguishers with archiving
+    - View recent extinguisher inspections
+    - Print Extinguisher Details Report per school
+    - Room-based assignment with nearest candidate room suggestions
+
+  D. EVACUATION PLANS
+  ────────────────────
+  Manages evacuation plans and routes for each building. Each plan includes:
+    - Building assignment
+    - Evacuation route description and assembly point
+    - Plan image/map upload
+    - Approval status
+    - Drill scheduling and history
+
+  Features:
+    - Add and update evacuation plans per building
+    - View evacuation routes and assembly points
+    - Schedule and record evacuation drills
+    - View drill history (drill type, date, time started/finished, elapsed time,
+      number of students and personnel, safety checklist results, observers,
+      remarks, monitored by, and DRRM coordinator)
+    - Drill types: Earthquake, Fire, or Both
+
+  E. INSPECTION CHECKLIST (DRILL & INSPECTION MONITORING)
+  ─────────────────────────────────────────────────────────
+  The "Inspect Now" feature allows recording of actual drill and inspection
+  events for a school. Each inspection record captures:
+    - Drill Type (Earthquake / Fire / Both)
+    - Date and Time of Inspection
+    - Time Started, Time Finished, and Elapsed Time
+    - Number of Exits, Buildings, Students, and Personnel
+    - Safety Checklist Items (configurable via Customization page)
+    - Observer Types Present (configurable via Customization page)
+    - Remarks and Findings
+    - Monitored By (representative name)
+    - School DRRM Coordinator and School Head/Principal
+
+  Inspection history is viewable per school and can be printed as a report.
+
+  F. CUSTOMIZATION (SYSTEM CONFIGURATION)
+  ─────────────────────────────────────────
+  Admins can configure the following items used across the Fire Safety module:
+    - Building Types (e.g., Classroom Building, Science Lab, Gymnasium)
+    - Inspection Checklist Items (items checked during drills)
+    - Observer Types (e.g., BFP Inspector, Division Supervisor, Principal)
+    - School registration and management (add, edit, delete schools)
+
+ALERTS & EVENTS:
+----------------
+The Fire Safety dashboard includes an Alerts and Events panel:
+  • Alerts — Safety alerts posted per school (Critical/Warning/Information),
+             with title, description, and timestamp.
+  • Events — Scheduled safety events per school (e.g., Annual Fire Drill),
+             with date, time, and description.
+
+REPORTS:
+--------
+The module supports printable reports:
+  - School Summary Report (all schools with compliance overview)
+  - Building Summary Report (per school: building details, extinguisher counts,
+    alarm coverage, secondary exits, compliance remarks)
+  - Alarm Details Report (per school: all alarm systems with status)
+  - Extinguisher Details Report (per school: all extinguishers with status)
+  - Inspection/Drill Report (per inspection record)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ SECTION 3 — TYPHOON / FLOODING COMPLIANCE MODULE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Theme Color : Dark Navy Blue (#1B4C6D)
+  Route Prefix: /typhoon
+  Access Guard : module.access:typhoon_flood
+
+OVERVIEW:
+---------
+The Typhoon/Flooding Compliance Module is designed to manage and monitor the
+response to typhoon and flooding events. It focuses on casualty tracking,
+evacuation center management, evacuee registration, and real-time monitoring
+of flood and typhoon conditions.
+
+KEY FEATURES:
+-------------
+
+  A. DASHBOARD SUMMARY CARDS
+  ───────────────────────────
+  The dashboard displays four real-time summary counters:
+    - Missing    — Number of individuals reported missing
+    - Injured    — Number of individuals reported injured
+    - Deceased   — Number of individuals reported deceased
+    - Evacuees   — Total number of individuals currently evacuated
+
+  B. EVACUATION CENTERS
+  ──────────────────────
+  Manages schools and facilities designated as evacuation centers. Each
+  evacuation center record includes:
+    - School/Center Name and Identification
+    - Operational Status: Operational / Partial / Closed
+    - Capacity (maximum number of individuals the center can accommodate)
+    - Current Occupancy (number of individuals currently inside)
+    - Available Slots (Capacity minus Current Occupancy)
+    - Usage Status: Cleared / Occupied / Full
+    - Monitoring & Reports Status
+
+  Features:
+    - Create new evacuation centers (link to existing registered school or
+      create a new entry)
+    - Update evacuation center details and status
+    - View individual evacuation center details (families registered,
+      occupancy breakdown)
+    - Register evacuee families directly from the center's action button
+
+  C. FAMILY & EVACUEE REGISTRATION
+  ──────────────────────────────────
+  Allows registration of evacuated families into a selected evacuation center.
+  Each family registration includes:
+    - Evacuation Center assignment
+    - Family Head Name
+    - Collective Needs (shared items needed by the whole family)
+    - Family Special Concerns (checkboxes):
+        • Pregnant member
+        • PWD (Person with Disability)
+        • Senior Citizen
+        • Lactating mother
+        • Child under 5 years old
+    - Family Members (dynamic, multiple rows):
+        • Full Name
+        • Age
+        • Gender (Male/Female)
+        • Individual Needs (optional)
+    - Check-in date/time (automatically recorded)
+
+  D. EVACUEE SUMMARY PANEL
+  ─────────────────────────
+  Displays:
+    - Total Families Evacuated
+    - Total Individuals Evacuated
+    - Recently Registered Families (today's count)
+    - Vulnerable Groups Summary:
+        • Pregnant count
+        • PWD count
+        • Senior Citizen count
+
+  E. REAL-TIME MONITORING
+  ────────────────────────
+  The module includes a real-time monitoring section that refreshes every
+  30 seconds via AJAX polling. It displays:
+    - Flood Level (current water level with station name)
+    - Typhoon Track (typhoon name and wind speed in km/h)
+    - Evacuation Routes Status (clear/blocked roads)
+    - Last Updated timestamp badge
+
+  F. PIE-PRA SUB-MODULE
+  ──────────────────────
+  (Pre-Disaster Intelligent Evacuation Predictor & Resource Allocator)
+
+  PIE-PRA is an intelligent pre-disaster planning tool that:
+    - Runs disaster scenarios (Typhoon, Flood, Earthquake, Other)
+    - Accepts a scenario name, hazard type, and lead time (in hours)
+    - Generates AI-assisted recommendations for:
+        • School ranking by risk level
+        • Suggested class suspension timing
+        • Evacuation start recommendations
+        • Resource pre-positioning estimates
+    - Manages volunteers (registration, skills, assignments)
+    - Matches volunteers to evacuation centers based on skills
+    - Generates QR-based check-in/check-out for volunteers
+    - Issues volunteer assignment certificates
+    - Maintains a history of all scenarios run
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ SECTION 4 — INCIDENT CHECKLIST MODULE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Theme Color : Yellow-Orange (#F2C94C / #F2994A)
+  Route Prefix: /incidents
+  Access Guard : module.access:incident_checklist
+  Note        : Admin-only for logging, printing, and managing incident types.
+                Assigned users can view and interact with the daily checklist.
+
+OVERVIEW:
+---------
+The Incident Checklist Module is a calendar-based incident tracking and
+compliance monitoring system. It allows authorized users to log incidents and
+compliance events that occur in schools, visualize them on a monthly calendar,
+and maintain a daily compliance checklist.
+
+KEY FEATURES:
+-------------
+
+  A. INTERACTIVE MONTHLY CALENDAR
+  ─────────────────────────────────
+  The main view is a full monthly calendar grid (Sunday–Saturday) where:
+    - Each day cell shows color-coded incident dots (by incident type)
+    - Compliance/Event badges appear on days with logged events
+    - Hovering over a day shows a tooltip with incident type, event name,
+      and school name
+    - Clicking a day opens a Day Details Modal showing all incidents and
+      compliance events for that day, with options to edit or delete entries
+    - Navigation arrows allow moving between months
+    - A "Today" button returns to the current month
+    - A "Print Calendar" button generates a printable calendar view
+
+  B. INCIDENT TYPES
+  ──────────────────
+  The system supports multiple incident types, each with a distinct color:
+    - Cyclone        (Blue)
+    - Rainfall       (Cyan)
+    - Earthquake     (Purple)
+    - Landslide      (Lavender)
+    - Flooding       (Teal)
+    - Fire           (Red)
+    - Accident       (Pink)
+    - Violence       (Dark Gray)
+    - Others         (Green)
+
+  Admins can add custom incident types via the "+" button in the Legend panel.
+
+  C. COMPLIANCE STATUS / EVENTS
+  ──────────────────────────────
+  In addition to incidents, the system tracks compliance events such as:
+    - Holiday
+    - Class Suspension
+    - No Suspension
+    - Face-to-Face Suspension
+    - Division Memo Suspension
+    - Other custom statuses (added by admin)
+
+  Each status has a distinct color badge displayed on the calendar.
+
+  D. LOGGING AN INCIDENT OR EVENT
+  ────────────────────────────────
+  The "Log New Incident" button opens a modal with two tabs:
+
+    Tab 1 — INCIDENT:
+      - Incident Type (dropdown, from configured types)
+      - Date
+      - School Name (with autocomplete search)
+      - Affected Personnel (optional)
+      - Affected Students (optional)
+      - Remarks/Description (required)
+      - Attachment/Evidence (PDF, JPG, PNG — required, max 10MB)
+
+    Tab 2 — COMPLIANCE STATUS/EVENT:
+      - Compliance Status/Event (dropdown, from configured statuses)
+      - Date
+      - School Name (with autocomplete search)
+      - Remarks/Description (required)
+      - Attachment/Evidence (optional, PDF/JPG/PNG, max 10MB)
+
+  E. MONTHLY INCIDENT SPECIFICS PANEL
+  ─────────────────────────────────────
+  A side panel shows a scrollable list of all incidents and events logged for
+  the current month, displaying:
+    - Date and time
+    - School name
+    - Incident type or compliance status badge
+    - Remarks (truncated)
+
+  Below the list, summary statistics are shown:
+    - Total Logs (incidents + events)
+    - Incident count
+    - Events count
+    - Incident Type Distribution (pie chart)
+    - Incident Trend by Day (line chart)
+
+  F. QUICK COMPLIANCE CHECKLIST
+  ──────────────────────────────
+  A daily checklist panel (resets every day) allows users to:
+    - Check off compliance tasks for the current date
+    - Add new checklist items via a text input
+    - Delete checklist items
+    - Items are saved per day and auto-reset the following day
+
+  G. DATA BACKUP & RESTORE
+  ─────────────────────────
+  The module supports:
+    - Export Backup — Downloads all incident data as a JSON file
+    - Import Backup — Restores incident data from a previously exported JSON file
+
+  H. PRINT CALENDAR
+  ──────────────────
+  Admins can print a formatted monthly calendar showing all incidents and
+  compliance events for a selected month, suitable for physical records and
+  submission to division offices.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ SECTION 5 — COMPREHENSIVE SCHOOL SAFETY MODULE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Theme Color : Brown (#5C4033)
+  Route Prefix: /comprehensive-school-safety
+  Status      : UNDER DEVELOPMENT (currently redirects to main dashboard)
+
+OVERVIEW (PLANNED):
+-------------------
+The Comprehensive School Safety (CSS) Module is an evaluation compliance system
+that assesses schools across three pillars of the Comprehensive School Safety
+Framework (CSSF):
+
+  Pillar 1 — SAFE LEARNING FACILITIES
+    Evaluates the physical safety of school buildings and infrastructure,
+    including structural integrity, fire safety compliance, sanitation, and
+    accessibility for persons with disabilities (PWDs).
+
+  Pillar 2 — SCHOOL DISASTER MANAGEMENT
+    Assesses the school's disaster risk management policies, plans, and
+    organizational capacity, including the existence of a School DRRM Plan,
+    a functioning DRRM Team, and linkages with local government units (LGUs)
+    and emergency response agencies.
+
+  Pillar 3 — DISASTER RISK REDUCTION (DRR) IN EDUCATION
+    Evaluates the integration of DRR concepts into the school curriculum,
+    teacher training, and student awareness programs.
+
+INTENDED FEATURES (WHEN FULLY DEVELOPED):
+------------------------------------------
+  - School-by-school evaluation using a standardized CSS assessment tool
+  - Scoring and rating system per pillar
+  - Identification of gaps and recommendations for improvement
+  - Generation of CSS compliance reports
+  - Tracking of improvement over time
+  - Integration with the Fire Safety module data for Pillar 1 assessment
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ SECTION 6 — HAZARD MAPPING MODULE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Theme Color : Teal (#0D7377)
+  Route Prefix: /hazard-mapping
+  Status      : UNDER DEVELOPMENT (currently redirects to main dashboard)
+
+OVERVIEW (PLANNED):
+-------------------
+The Hazard Mapping Module is designed to help schools identify, assess, and
+visually map hazards that affect their school sites and surrounding areas. The
+goal is to support risk reduction and preparedness planning by providing a
+clear picture of local hazard exposure.
+
+INTENDED FEATURES (WHEN FULLY DEVELOPED):
+------------------------------------------
+  - Interactive map interface for plotting school locations and hazard zones
+  - Hazard type identification and classification:
+      • Flood-prone areas
+      • Landslide-susceptible zones
+      • Earthquake fault lines and liquefaction zones
+      • Fire-prone areas
+      • Storm surge zones
+      • Other local hazards
+  - Hazard risk level assignment (Low / Moderate / High / Very High)
+  - Proximity analysis (distance from school to nearest hazard zone)
+  - Hazard exposure summary per school
+  - Integration with PAGASA, PHIVOLCS, and MGB hazard data sources
+  - Generation of school-level hazard maps for submission to division offices
+  - Historical hazard event logging per school location
+  - Recommendations for school site relocation or structural reinforcement
+    based on hazard exposure
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ SECTION 7 — SYSTEM TECHNICAL SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Backend Framework : Laravel (PHP)
+  Frontend          : Bootstrap 5, Vanilla CSS, Font Awesome 6, Chart.js
+  Templating Engine : Blade (Laravel)
+  Database          : MySQL (via XAMPP / phpMyAdmin)
+  Authentication    : Laravel Auth with role-based access control
+  File Storage      : Laravel Storage (local disk, public symlink)
+  Real-time Updates : AJAX polling (30-second intervals for Typhoon module)
+  PDF/Print Reports : Browser print (CSS print media queries)
+  Data Backup       : JSON export/import (Incident module)
+
+USER ROLES SUMMARY:
+-------------------
+  Role         | Permissions
+  ─────────────┼──────────────────────────────────────────────────────────────
+  admin        | Full access: manage users, all modules, configuration, reports
+  contributor  | Add/update data in assigned modules and schools
+  viewer       | Read-only access to all assigned modules
+
+MODULE ACCESS CONTROL:
+-----------------------
+  Module Key            | Module Name
+  ──────────────────────┼──────────────────────────────────────────────────────
+  fire_safety           | Fire Safety Compliance
+  typhoon_flood         | Typhoon / Flooding Compliance
+  incident_checklist    | Incident Checklist
+  pie_pra               | PIE-PRA (Pre-Disaster Predictor & Allocator)
+  (comprehensive_school_safety and hazard_mapping — under development)
+
+================================================================================
+                          END OF SYSTEM INFORMATION FILE
+================================================================================

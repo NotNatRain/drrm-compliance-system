@@ -14,6 +14,10 @@ Route::get('/', function () {
 
 Auth::routes();
 
+// Password Reset Code Verification
+Route::get('password/verify', [\App\Http\Controllers\Auth\PasswordResetCodeController::class, 'showVerifyForm'])->name('password.verify-form');
+Route::post('password/verify', [\App\Http\Controllers\Auth\PasswordResetCodeController::class, 'verifyCode'])->name('password.verify-code');
+
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 // Main dashboard
@@ -25,6 +29,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::post('/users', [DashboardController::class, 'storeUser'])->name('users.store');
     Route::get('/users/{id}', [DashboardController::class, 'getUser'])->name('users.show');
     Route::put('/users/{id}', [DashboardController::class, 'updateUser'])->name('users.update');
+    Route::post('/users/{id}/toggle-status', [DashboardController::class, 'toggleUserStatus'])->name('users.toggle-status');
     Route::post('/users/{id}/assign', [DashboardController::class, 'assignAccess'])->name('users.assign');
     Route::delete('/users/{id}', [DashboardController::class, 'deleteUser'])->name('users.destroy');
 });
@@ -87,6 +92,8 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     Route::get('/school/{id}/issues', [FireSafetyController::class, 'getSchoolIssues'])->name('fire-safety.school.issues');
     Route::post('/school/alert', [FireSafetyController::class, 'storeAlert'])->name('fire-safety.school.alert.store');
     Route::post('/school/event', [FireSafetyController::class, 'storeEvent'])->name('fire-safety.school.event.store');
+    Route::post('/notification/reply', [FireSafetyController::class, 'replyToNotification'])->name('fire-safety.notification.reply');
+    Route::get('/notifications', [FireSafetyController::class, 'getNotifications'])->name('fire-safety.notifications');
     Route::post('/set-school/{id}', [FireSafetyController::class, 'setActiveSchool'])->name('fire-safety.set-school');
 
     // Report Printing Routes

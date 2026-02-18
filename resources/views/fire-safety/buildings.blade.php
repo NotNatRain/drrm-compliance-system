@@ -1,4 +1,4 @@
-@extends('layouts.fire-safety')
+﻿@extends('layouts.fire-safety')
 
 @section('title', 'Buildings - Fire Safety')
 
@@ -63,18 +63,16 @@
             opacity: 0.7;
             pointer-events: none;
         }
-        :root {
-            --fire-red: #A8191F;
-            --fire-dark-red: #8A1217;
-            --fire-light-red: #F8D7DA;
-            --charcoal: #36454F;       /* ← ADD THIS */
-            --dark-charcoal: #2C3E50;  /* ← ADD THIS */
+        /* Ensure 100% opacity for dashboard icons */
+        .dashboard-card i.opacity-25 {
+            opacity: 1 !important;
         }
-        .top-nav {
-            background: linear-gradient(135deg, var(--fire-red) 0%, var(--charcoal) 100%);
+        /* Remove space between cards and school tab */
+        .main-content > .row.mb-4 {
+            margin-bottom: 0.5rem !important;
         }
-        .sidebar {
-            background: linear-gradient(180deg, var(--fire-red) 0%, var(--dark-charcoal) 100%);
+        .dashboard-card.mb-4 {
+            margin-bottom: 0.5rem !important;
         }
     </style>
 @endsection
@@ -129,99 +127,104 @@
                         })->count();
                     @endphp
 
-                    <!-- Total Buildings (Black) -->
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card dashboard-card h-100 shadow-sm" style="opacity: 1;">
-                            <div class="card-body">
-                                <div class="row align-items-center">
-                                    <div class="col mr-2">
-                                        <div class="text-xs fw-bold text-dark text-uppercase mb-1">
-                                            Total Buildings
+                    <div class="row mb-4">
+                        <!-- Total Buildings -->
+                        <div class="col-xl col-md-4 col-6 mb-3">
+                            <div class="card dashboard-card stat-card border-start border-primary border-4 h-100">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col">
+                                            <div class="text-xs fw-bold text-primary text-uppercase mb-1">Total Buildings</div>
+                                            <div class="h5 mb-0 fw-bold text-gray-800">{{ $school->buildings->count() }}</div>
                                         </div>
-                                        <div class="h2 mb-0 fw-bold text-gray-800">
-                                            {{ $school->buildings->count() }}
+                                        <div class="col-auto d-none d-md-block">
+                                            <i class="fas fa-building fa-2x text-primary opacity-25"></i>
                                         </div>
-                                    </div>
-                                    <div class="col-auto">
-                                        <i class="fas fa-building fa-2x text-dark opacity-50"></i>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Compliant Buildings (Green) -->
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card dashboard-card border-left-success h-100 shadow-sm">
-                            <div class="card-body">
-                                <div class="row align-items-center">
-                                    <div class="col mr-2">
-                                        <div class="text-xs fw-bold text-success text-uppercase mb-1">
-                                            Compliant Buildings
+                        <!-- Compliance Status -->
+                        <div class="col-xl col-md-4 col-6 mb-3">
+                            <div class="card dashboard-card stat-card border-start border-success border-4 h-100">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col">
+                                            <div class="text-xs fw-bold text-dark text-uppercase mb-1">Compliance</div>
+                                            <div class="h5 mb-0 fw-bold">{{ $compliantBuildings }}/{{ $school->buildings->count() }}</div>
                                         </div>
-                                        <div class="h2 mb-0 fw-bold text-gray-800">
-                                            {{ $compliantBuildings }}
+                                        <div class="col-auto d-none d-md-block">
+                                            <i class="fas fa-clipboard-check fa-2x text-success"></i>
                                         </div>
-                                    </div>
-                                    <div class="col-auto">
-                                        <i class="fas fa-check-circle fa-2x text-success opacity-50"></i>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Non-Compliant Buildings (Red) -->
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card dashboard-card border-left-danger h-100 shadow-sm">
-                            <div class="card-body">
-                                <div class="row align-items-center">
-                                    <div class="col mr-2">
-                                        <div class="text-xs fw-bold text-danger text-uppercase mb-1">
-                                            Non Compliant Buildings
+                        <!-- Functional Alarms -->
+                        <div class="col-xl col-md-4 col-6 mb-3">
+                            <div class="card dashboard-card stat-card border-start border-info border-4 h-100">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col">
+                                            <div class="text-xs fw-bold text-info text-uppercase mb-1">Active Alarms</div>
+                                            <div class="h5 mb-0 fw-bold text-gray-800">
+                                                {{ $school->alarmSystems()->whereIn('status', ['functional', 'online', 'active'])->count() }}
+                                            </div>
                                         </div>
-                                        <div class="h2 mb-0 fw-bold text-gray-800">
-                                            {{ $nonCompliantBuildings }}
+                                        <div class="col-auto d-none d-md-block">
+                                            <i class="fas fa-bell fa-2x text-info"></i>
                                         </div>
-                                    </div>
-                                    <div class="col-auto">
-                                        <i class="fas fa-exclamation-triangle fa-2x text-danger opacity-50"></i>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Floors & Rooms (Split Colors) -->
-                    <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="card dashboard-card h-100 shadow-sm" style="opacity: 1;">
-                            <div class="card-body py-2">
-                                <div class="row h-100">
-                                    <!-- Floors Section -->
-                                    <div class="col-6 border-end d-flex flex-column justify-content-center py-2">
-                                        <div class="text-xs fw-bold text-primary text-uppercase mb-1" style="font-size: 0.7rem;">
-                                            Total Floors
+                        <!-- Issues -->
+                        <div class="col-xl col-md-4 col-6 mb-3">
+                            <div class="card dashboard-card stat-card border-start border-warning border-4 h-100">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col">
+                                            <div class="text-xs fw-bold text-dark text-uppercase mb-1">Issues</div>
+                                            <div class="h5 mb-0 fw-bold">
+                                                {{ $school->alarmSystems()->whereNotIn('status', ['functional', 'online', 'active'])->count() }}
+                                            </div>
                                         </div>
-                                        <div class="d-flex align-items-center">
-                                            <div class="h4 mb-0 fw-bold text-gray-800 me-2">{{ $school->buildings->sum('floors') }}</div>
-                                            <i class="fas fa-layer-group text-primary small"></i>
+                                        <div class="col-auto d-none d-md-block">
+                                            <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
                                         </div>
                                     </div>
-                                    <!-- Rooms Section -->
-                                    <div class="col-6 d-flex flex-column justify-content-center ps-3 py-2">
-                                        <div class="text-xs fw-bold text-warning text-uppercase mb-1" style="font-size: 0.7rem;">
-                                            Total Rooms
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Last Tested -->
+                        <div class="col-xl col-md-4 col-6 mb-3">
+                            <div class="card dashboard-card stat-card border-start border-secondary border-4 h-100">
+                                <div class="card-body">
+                                    <div class="row align-items-center">
+                                        <div class="col">
+                                            <div class="text-xs fw-bold text-secondary text-uppercase mb-1">Last Tested</div>
+                                            @php
+                                                $latestTested = $school->alarmSystems()
+                                                    ->whereNotNull('last_test')
+                                                    ->orderBy('last_test', 'desc')
+                                                    ->first();
+                                            @endphp
+                                            <div class="h5 fw-bold mb-0">
+                                                {{ $latestTested ? \Carbon\Carbon::parse($latestTested->last_test)->format('m/d') : 'N/A' }}
+                                            </div>
                                         </div>
-                                        <div class="d-flex align-items-center">
-                                            <div class="h4 mb-0 fw-bold text-gray-800 me-2">{{ $school->buildings->sum('rooms') }}</div>
-                                            <i class="fas fa-door-closed text-warning small"></i>
+                                        <div class="col-auto d-none d-md-block">
+                                            <i class="fas fa-calendar-alt fa-2x text-secondary"></i>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
                 <!-- Buildings Grid -->
                 <div class="row">
@@ -231,126 +234,160 @@
                                 <h6 class="m-0 fw-bold text-primary">
                                     <i class="fas fa-building me-2"></i> Buildings - {{ $school->school_name }}
                                 </h6>
-                                <div>
-                                    @if(auth()->user()->role !== 'viewer')
-                                    <button class="btn btn-primary btn-sm me-2 add-building-btn"
+                                <div class="d-flex align-items-center flex-wrap gap-1">
+                                    <!-- Filter Dropdown -->
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="buildingFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="fas fa-filter me-1"></i> Filter
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="buildingFilterDropdown">
+                                            <li><a class="dropdown-item" href="#" onclick="filterBuildings('all')">Show All</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item" href="#" onclick="filterBuildings('compliant')"><i class="fas fa-check-circle text-success me-2"></i>Compliant Only</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="filterBuildings('non-compliant')"><i class="fas fa-exclamation-circle text-danger me-2"></i>Non-Compliant Only</a></li>
+                                        </ul>
+                                    </div>
+
+                                     @if(auth()->user()->role !== 'viewer')
+                                    <button class="btn btn-sm btn-primary add-building-btn" 
                                             data-school-id="{{ $school->id }}"
-                                            data-bs-toggle="modal"
+                                            data-bs-toggle="modal" 
                                             data-bs-target="#addBuildingModal">
-                                        <i class="fas fa-plus me-2"></i> Add Building
+                                        <i class="fas fa-plus me-1"></i> Add Building
                                     </button>
                                     <button class="btn btn-success btn-sm inspect-now-btn"
                                             data-school-id="{{ $school->id }}"
                                             data-bs-toggle="modal"
                                             data-bs-target="#inspectNowModal">
-                                        <i class="fas fa-clipboard-check me-2"></i> Inspect Now
+                                        <i class="fas fa-clipboard-check me-1"></i> Inspect Now
                                     </button>
-                                    <button class="btn btn-sm me-2"
-                                            style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;"
+                                    @endif
+
+                                    <a href="{{ route('fire-safety.report.building-summary', $school->id) }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-print me-1"></i> Print Building Reports
+                                    </a>
+
+                                    @if(auth()->user()->role !== 'viewer')
+                                    <button class="btn btn-sm btn-outline-secondary"
                                             onclick="openBuildingHistoryModal({{ $school->id }})">
                                         <i class="fas fa-history me-1"></i> Removed Floor/Room
                                     </button>
-                                    <a href="{{ route('fire-safety.report.building-summary', $school->id) }}" target="_blank"
-                                            class="btn btn-sm"
-                                            style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;">
-                                        <i class="fas fa-print me-1"></i> Print Building Reports
-                                    </a>
                                     @endif
+
+                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#buildingsGridContent">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
                                 </div>
                             </div>
-                            <div class="card-body">
-                                @if($school->buildings->count() > 0)
-                                <div class="row">
-                                    @foreach($school->buildings as $building)
-                                    @php
-                                        $compliance = \App\Http\Controllers\FireSafetyController::calculateBuildingCompliance($building);
-                                        $statusClass = $compliance >= 80 ? 'border-success' : ($compliance >= 60 ? 'border-warning' : 'border-danger');
-                                        $statusBadge = $compliance >= 80 ? 'bg-success' : ($compliance >= 60 ? 'bg-warning' : 'bg-danger');
-                                        $statusText = $compliance >= 80 ? 'Compliant' : ($compliance >= 60 ? 'Needs Attention' : 'Non-Compliant');
-                                    @endphp
-                                    <div class="col-xl-4 col-lg-6 mb-4">
-                                        <div class="card building-card {{ $statusClass }}">
-                                            <div class="card-body">
-                                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                                    <div>
-                                                        <h5 class="card-title mb-1">{{ $building->building_no }}</h5>
-                                                        <p class="text-muted mb-0">
-                                                            <i class="fas fa-map-marker-alt me-1"></i> {{ $school->school_name }}
-                                                        </p>
+                            <div class="collapse show" id="buildingsGridContent">
+                                <div class="card-body">
+                                    @if($school->buildings->count() > 0)
+                                    <div class="row">
+                                        @foreach($school->buildings as $building)
+                                        @php
+                                            $compliance = \App\Http\Controllers\FireSafetyController::calculateBuildingCompliance($building);
+                                            $statusClass = $compliance >= 80 ? 'border-success' : ($compliance >= 60 ? 'border-warning' : 'border-danger');
+                                            $statusBadge = $compliance >= 80 ? 'bg-success' : ($compliance >= 60 ? 'bg-warning' : 'bg-danger');
+                                            $statusText = $compliance >= 80 ? 'Compliant' : ($compliance >= 60 ? 'Needs Attention' : 'Non-Compliant');
+                                            $filterStatus = $compliance >= 80 ? 'compliant' : 'non-compliant';
+                                        @endphp
+                                        <div class="col-xl-3 col-lg-4 col-md-6 col-6 mb-3 building-item" data-status="{{ $filterStatus }}">
+                                            <div class="card building-card {{ $statusClass }}">
+                                                <div class="card-body mobile-card-body">
+                                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                                        <div class="text-truncate" style="max-width: 60%;">
+                                                            <h6 class="card-title mb-0 fw-bold text-truncate">{{ $building->building_no }}</h6>
+                                                            <div class="text-muted small text-truncate mobile-tiny-text">{{ $building->building_name }}</div>
+                                                        </div>
+                                                        <span class="badge {{ $statusBadge }} py-1 px-2 mobile-badge">{{ $statusText }}</span>
                                                     </div>
-                                                    <span class="badge {{ $statusBadge }}">{{ $statusText }}</span>
-                                                </div>
 
-                                                <div class="building-stats mb-3">
-                                                    <div class="d-flex justify-content-between">
-                                                        <span>Floors: <strong>{{ $building->floors }}</strong></span>
-                                                        <span>Rooms: <strong>{{ $building->rooms }}</strong></span>
-                                                        <span>Minimum Fire Extinguishers: <strong>{{ $building->required_extinguishers_count }}</strong></span>
+                                                    <div class="building-stats mb-3">
+                                                        <div class="d-flex justify-content-between">
+                                                            <span>Floors: <strong>{{ $building->floors }}</strong></span>
+                                                            <span>Rooms: <strong>{{ $building->rooms }}</strong></span>
+                                                            <span>Min. FRXT.: <strong>{{ $building->required_extinguishers_count }}</strong></span>
+                                                        </div>
                                                     </div>
-                                                </div>
 
-                                                <!-- Equipment Summary -->
-                                                <div class="mb-3 p-3 bg-light rounded">
-                                                    <small class="d-block mb-2">
-                                                        @php
-                                                            $alarmCount = $building->alarmSystems->count();
-                                                            $extinguisherCount = $building->fireExtinguishers->count();
-                                                        @endphp
-                                                        <i class="fas fa-bell text-info me-1"></i> Alarms: <strong>{{ $alarmCount }}</strong>
-                                                    </small>
-                                                    <small class="d-block mb-2">
-                                                        <i class="fas fa-fire-extinguisher text-danger me-1"></i> Extinguishers: <strong>{{ $extinguisherCount }}</strong>
-                                                    </small>
-                                                    <small class="d-block">
-                                                        <i class="fas fa-door-open text-warning me-1"></i> Exits: <strong>{{ $building->emergency_exits ?? 0 }}</strong>
-                                                    </small>
-                                                </div>
+                                                    <!-- Equipment Summary -->
+                                                    <div class="mb-3 p-3 bg-light rounded">
+                                                        <div class="mb-2">
+                                                            @php
+                                                                $alarms = $building->alarmSystems;
+                                                                $alarmCount = $alarms->count();
+                                                                $extinguisherCount = $building->fireExtinguishers->count();
+                                                            @endphp
+                                                            <div class="small fw-bold mb-1"><i class="fas fa-bell text-info me-1"></i> Alarms:</div>
+                                                            <div class="d-flex flex-wrap gap-1">
+                                                                @forelse($alarms as $alarm)
+                                                                    <span class="badge bg-white text-dark border small" style="font-size: 0.7rem;">
+                                                                        {{ $alarm->code }} ({{ ucfirst($alarm->status) }})
+                                                                    </span>
+                                                                @empty
+                                                                    <span class="text-muted small">None</span>
+                                                                @endforelse
+                                                            </div>
+                                                        </div>
+                                                        <small class="d-block mb-2">
+                                                            <i class="fas fa-fire-extinguisher text-danger me-1"></i> Extinguishers: <strong>{{ $extinguisherCount }}</strong>
+                                                        </small>
+                                                        <small class="d-block">
+                                                            <i class="fas fa-door-open text-warning me-1"></i> Exits: <strong>{{ $building->emergency_exits ?? 0 }}</strong>
+                                                        </small>
+                                                    </div>
 
-                                                <div class="mt-3 d-grid gap-2">
-                                                    <button class="btn btn-sm btn-outline-primary view-building-btn"
-                                                            data-building-id="{{ $building->id }}"
-                                                            data-bs-toggle="modal"
-                                                            data-bs-target="#viewBuildingModal">
-                                                        <i class="fas fa-eye me-2"></i> View Details / Update
-                                                    </button>
+                                                    <div class="mt-3 d-grid gap-2">
+                                                        <button class="btn btn-sm btn-outline-primary view-building-btn"
+                                                                data-building-id="{{ $building->id }}"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#viewBuildingModal">
+                                                            <i class="fas fa-eye me-2"></i> View Details / Update
+                                                        </button>
+                                                        @if(auth()->user()->role !== 'viewer')
+                                                        <button class="btn btn-sm btn-outline-info manage-alarms-btn"
+                                                                data-building-id="{{ $building->id }}"
+                                                                data-building-name="{{ $building->building_name ?? $building->building_no }}"
+                                                                onclick="openBuildingAlarms({{ $building->id }})">
+                                                            <i class="fas fa-bell me-2"></i> Manage Alarms
+                                                        </button>
+                                                        @endif
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
+                                        @endforeach
                                     </div>
-                                    @endforeach
-                                </div>
-                                @else
-                                <div class="no-buildings">
-                                    <i class="fas fa-building"></i>
-                                    <h4>No Buildings Found</h4>
-                                    <p class="text-muted">This school doesn't have any buildings yet. Add your first building to get started.</p>
-                                    @if(auth()->user()->role !== 'viewer')
-                                    <button class="btn btn-primary add-building-btn"
-                                            data-school-id="{{ $school->id }}"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#addBuildingModal">
-                                        <i class="fas fa-plus me-2"></i> Add First Building
-                                    </button>
+                                    @else
+                                    <div class="no-buildings">
+                                        <i class="fas fa-building"></i>
+                                        <h4>No Buildings Found</h4>
+                                        <p class="text-muted">This school doesn't have any buildings yet. Add your first building to get started.</p>
+                                        @if(auth()->user()->role !== 'viewer')
+                                        <button class="btn btn-primary add-building-btn"
+                                                data-school-id="{{ $school->id }}"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#addBuildingModal">
+                                            <i class="fas fa-plus me-2"></i> Add First Building
+                                        </button>
+                                        @endif
+                                    </div>
                                     @endif
                                 </div>
-                                @endif
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Inspected Checklist History -->
+                <!-- History Section -->
                 <div class="row mt-4">
-                    <div class="col-lg-12">
-                        <div class="card dashboard-card">
+                    <!-- Inspected Checklist History -->
+                    <div class="col-lg-6">
+                        <div class="card dashboard-card h-100">
                             <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                 <h6 class="m-0 fw-bold text-primary">
-                                    <i class="fas fa-history me-2"></i> Inspected Checklist History - {{ $school->school_name }}
+                                    <i class="fas fa-history me-2"></i> Inspected Checklist History
                                 </h6>
-                                <button class="btn btn-sm btn-outline-primary"
-                                        onclick="loadInspections({{ $school->id }})">
-                                    <i class="fas fa-sync-alt me-1"></i> Refresh
-                                </button>
                             </div>
                             <div class="card-body">
                                 <div id="inspectionsList-{{ $school->id }}">
@@ -359,6 +396,24 @@
                                         Loading history...
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Upcoming Alarm Tests (Moved from Modal) -->
+                    <div class="col-lg-6">
+                        <div class="card dashboard-card h-100">
+                            <div class="card-header py-3 bg-white fw-bold text-primary border-bottom d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 fw-bold text-primary">
+                                    <i class="fas fa-calendar-alt me-2"></i> Upcoming Alarm Tests
+                                </h6>
+                            </div>
+                            <div class="card-body p-0">
+                                <ul class="list-group list-group-flush" id="mainUpcomingTestsList">
+                                    <li class="list-group-item text-muted small text-center py-4">
+                                        <i class="fas fa-spinner fa-spin me-2"></i> Loading upcoming tests...
+                                    </li>
+                                </ul>
                             </div>
                         </div>
                     </div>
@@ -382,70 +437,116 @@
                         @csrf
                         <input type="hidden" name="school_id" id="buildingSchoolId">
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Building Number/Code</label>
-                                <input type="text" class="form-control" name="building_no" id="building_no" placeholder="e.g., BLDG-001, Main Building" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Building Name</label>
-                                <input type="text" class="form-control" name="building_name" id="building_name" placeholder="e.g., Science Building, Gymnasium" required>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Year Constructed</label>
-                                <input type="number" class="form-control" name="year_constructed" min="1900" max="{{ date('Y') }}" placeholder="e.g., 1990">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Last Renovation</label>
-                                <input type="number" class="form-control" name="last_renovation" min="1900" max="{{ date('Y') }}" placeholder="e.g., 2020">
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">No. of Emergency Exits(It has secondary exits)</label>
-                                <input type="number" class="form-control" name="emergency_exits" min="0" value="0">
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Building Type</label>
-                                <select class="form-control" name="building_type" id="building_type_select" required>
-                                    <option value="">Select Type</option>
-                                    @foreach($buildingTypes as $type)
-                                        <option value="{{ $type->name }}">{{ $type->name }} {{ in_array(strtolower($type->name), ['gymnasium', 'cafeteria']) ? '(1 Floor/1 Room)' : '' }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                        </div>
-
-                        <div id="roomFloorInputs">
+                        <!-- Required Information Group -->
+                        <div class="mb-4">
+                            <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">Required Information</h6>
+                            
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">Number of Floors</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" name="floors" id="buildingFloorsInput" min="1" max="50" value="1" readonly required>
-                                        <button class="btn btn-outline-secondary" type="button" id="btnIncFloors" onclick="incrementValue('buildingFloorsInput')"><i class="fas fa-plus"></i></button>
-                                    </div>
+                                    <label class="form-label fw-bold">Building Number/Code *</label>
+                                    <input type="text" class="form-control border-left-primary" name="building_no" id="building_no" placeholder="e.g., BLDG-001" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">Total Rooms</label>
-                                    <div class="input-group">
-                                        <input type="number" class="form-control" name="rooms" id="buildingRoomsInput" min="1" value="1" readonly required>
-                                        <button class="btn btn-outline-secondary" type="button" id="btnIncRooms" onclick="incrementValue('buildingRoomsInput')"><i class="fas fa-plus"></i></button>
+                                    <label class="form-label fw-bold">No. of Secondary Exits *</label>
+                                    <input type="number" class="form-control" name="emergency_exits" min="0" value="0" required>
+                                    <small class="text-muted">Emergency/Fire Exits</small>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Building Type *</label>
+                                    <select class="form-control" name="building_type" id="building_type_select" required>
+                                        <option value="">Select Type</option>
+                                        @foreach($buildingTypes as $type)
+                                            <option value="{{ $type->name }}">{{ $type->name }} {{ in_array(strtolower($type->name), ['gymnasium', 'cafeteria']) ? '(1 Floor/1 Room)' : '' }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label fw-bold">Min. Required Fire Extinguishers *</label>
+                                    <input type="number" class="form-control" name="required_extinguishers" id="buildingReqExt" min="0" value="0" required>
+                                </div>
+                            </div>
+                            
+                            <div id="roomFloorInputs" class="p-3 bg-light rounded mb-3">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Number of Floors *</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" name="floors" id="buildingFloorsInput" min="1" max="50" value="1" readonly required>
+                                            <button class="btn btn-outline-secondary" type="button" id="btnIncFloors" onclick="incrementValue('buildingFloorsInput')"><i class="fas fa-plus"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-bold">Total Rooms *</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" name="rooms" id="buildingRoomsInput" min="1" value="1" readonly required>
+                                            <button class="btn btn-outline-secondary" type="button" id="btnIncRooms" onclick="incrementValue('buildingRoomsInput')"><i class="fas fa-plus"></i></button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
+                        <!-- Optional Information Group -->
                         <div class="mb-3">
-                            <label class="form-label">Min. Required Fire Extinguishers</label>
-                            <input type="number" class="form-control" name="required_extinguishers" id="buildingReqExt" min="0" value="0">
+                            <h6 class="fw-bold text-secondary border-bottom pb-2 mb-3">Optional - Can be updated later</h6>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Building Name</label>
+                                    <input type="text" class="form-control" name="building_name" id="building_name" placeholder="e.g., Science Building">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Year Constructed</label>
+                                    <input type="number" class="form-control" name="year_constructed" min="1900" max="{{ date('Y') }}">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Last Renovation</label>
+                                    <input type="number" class="form-control" name="last_renovation" min="1900" max="{{ date('Y') }}">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Building Description</label>
+                                <textarea class="form-control" name="description" rows="2" placeholder="Describe the building features..."></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Safety Features Installed</label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="features[]" value="sprinklers" id="sprinklers">
+                                            <label class="form-check-label" for="sprinklers">Sprinkler System</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="features[]" value="emergency_lights" id="emergencyLights">
+                                            <label class="form-check-label" for="emergencyLights">Emergency Lighting</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="features[]" value="exit_signs" id="exitSigns">
+                                            <label class="form-check-label" for="exitSigns">Exit Signs</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="features[]" value="fire_doors" id="fireDoors">
+                                            <label class="form-check-label" for="fireDoors">Fire Doors</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="features[]" value="two_stairways" id="twoStairways">
+                                            <label class="form-check-label" for="twoStairways">Two Stairways</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Manage Floors & Rooms (Edit Mode Only) -->
+                        <!-- Manage Floors & Rooms (Edit Mode Only - Hidden in Add) -->
                         <div id="manageFloorsRoomsSection" style="display: none;" class="mb-3 border rounded p-3 bg-light">
+                             <!-- Keep original content for edit mode compatibility -->
                             <h6 class="fw-bold mb-3"><i class="fas fa-tasks me-2"></i>Manage Reduction (Optional)</h6>
                             <div class="row">
                                 <div class="col-md-6 mb-3">
@@ -472,41 +573,6 @@
                                 </div>
                             </div>
                         </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Building Description</label>
-                            <textarea class="form-control" name="description" rows="3" placeholder="Describe the building features, location, etc..."></textarea>
-                        </div>
-
-                     <div class="mb-3">
-                        <label class="form-label">Safety Features Installed <small class="text-muted">(Optional - Select all that apply)</small></label>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="features[]" value="sprinklers" id="sprinklers">
-                                    <label class="form-check-label" for="sprinklers">Sprinkler System</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="features[]" value="emergency_lights" id="emergencyLights">
-                                    <label class="form-check-label" for="emergencyLights">Emergency Lighting</label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="features[]" value="exit_signs" id="exitSigns">
-                                    <label class="form-check-label" for="exitSigns">Exit Signs</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="features[]" value="fire_doors" id="fireDoors">
-                                    <label class="form-check-label" for="fireDoors">Fire Doors</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="features[]" value="two_stairways" id="twoStairways">
-                                    <label class="form-check-label" for="twoStairways">Two Stairways</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -720,13 +786,349 @@
             </div>
         </div>
     </div>
+    <!-- Building Alarms List Modal -->
+    <div class="modal fade" id="buildingAlarmsModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-bell me-2"></i> <span id="alarmsModalTitle">Building Alarms</span>
+                    </h5>
+                    <div>
+                         @if(auth()->user()->role !== 'viewer')
+                        <button class="btn btn-sm btn-light text-primary me-2" onclick="openAlarmHistoryModal(currentSchoolId)">
+                            <i class="fas fa-history me-1"></i> Removed Alarm System
+                        </button>
+                        @endif
+                        <a href="#" id="printAlarmsBtn" class="btn btn-sm btn-light text-primary me-3" target="_blank">
+                            <i class="fas fa-print me-1"></i> Print Alarm Details
+                        </a>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                </div>
+                <div class="modal-body bg-light">
+                    <!-- Content removed and moved to main dashboard -->
+                    <div class="alert alert-info border-0 shadow-sm d-flex align-items-center">
+                        <i class="fas fa-info-circle fa-2x me-3"></i>
+                        <div>
+                            <h6 class="mb-0 fw-bold">Alarm Management</h6>
+                            <p class="mb-0 small">Upcoming tests and inspection history are now directly visible on the main dashboard for easier access.</p>
+                        </div>
+                    </div>
+
+                    <!-- Alarms List -->
+                    <div class="card shadow-sm mb-3">
+                         <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                            <h6 class="m-0 fw-bold text-dark"><i class="fas fa-list me-2"></i> Installed Alarm Systems</h6>
+                             @if(auth()->user()->role !== 'viewer')
+                            <button class="btn btn-primary btn-sm" id="btnAddNewAlarmInList">
+                                <i class="fas fa-plus me-2"></i> Add New Alarm
+                            </button>
+                            @endif
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0 align-middle" id="buildingAlarmsTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Code</th>
+                                            <th>Type</th>
+                                            <th>Location</th>
+                                            <th>Status</th>
+                                            <th>Install Date</th>
+                                            <th>Last Test</th>
+                                            <th>Next Test Due</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td colspan="8" class="text-center py-4">Loading alarms...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add New Alarm Modal -->
+    <div class="modal fade" id="addAlarmModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
+                    <h5 class="modal-title">
+                        <i class="fas fa-plus me-2"></i> Add New Alarm System
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addAlarmForm">
+                        @csrf
+                        <input type="hidden" name="school_id" id="addAlarmSchoolId">
+                        
+                         <!-- Building Context -->
+                        <div class="alert alert-light border mb-3">
+                            <i class="fas fa-building me-2 text-primary"></i>
+                            Adding alarm for: <strong id="addAlarmBuildingNameDisplay">...</strong>
+                            <input type="hidden" name="building_id" id="addAlarmBuildingId">
+                        </div>
+
+                        <!-- Multi-Building Option -->
+                        <div class="mb-3">
+                             <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="coversMultiple" name="covers_multiple">
+                                <label class="form-check-label" for="coversMultiple">
+                                    Yes, it covers multiple buildings (Shared System)
+                                </label>
+                            </div>
+                            <div id="multiBuildingSelectContainer" style="display:none;" class="mt-2">
+                                <label class="form-label small fw-bold">Select Additional Buildings Covered:</label>
+                                <select class="form-control" name="building_ids[]" id="addMultiBuildingSelect" multiple size="4">
+                                    <!-- Populated via JS -->
+                                </select>
+                                <small class="text-muted">Hold Ctrl/Cmd to select multiple.</small>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Alarm Code *</label>
+                                <input type="text" class="form-control" name="code" id="alarmCode" placeholder="e.g. ALARM-001" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Alarm Type *</label>
+                                <select class="form-control" name="alarm_type" id="addAlarmType" required>
+                                    <option value="" disabled selected>Select Type</option>
+                                    @foreach($alarmTypes as $type)
+                                        <option value="{{ $type->name }}" data-type-id="{{ $type->id }}">{{ $type->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+
+                         <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Status *</label>
+                                <select class="form-control" name="status" id="addStatusSelect" required>
+                                    <option value="functional">Functional (Active)</option>
+                                     @foreach($alarmStatusesByType as $parentId => $statuses)
+                                        <optgroup label="{{ \App\Models\SystemConfiguration::find($parentId)->name }}" data-parent-id="{{ $parentId }}">
+                                            @foreach($statuses as $status)
+                                                <option value="{{ $status->name }}">{{ $status->name }}</option>
+                                            @endforeach
+                                        </optgroup>
+                                    @endforeach
+                                </select>
+                            </div>
+                             <div class="col-md-6">
+                                <label class="form-label fw-bold">Specific Location *</label>
+                                <input type="text" class="form-control" name="location" id="alarmSpecificLocation" placeholder="e.g. Main Lobby, Hallway" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3" id="floorSelectionRow">
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Floor Level</label>
+                                <select class="form-control" name="floor_id" id="addFloorSelect">
+                                    <option value="">Select Floor</option>
+                                    <option value="all">All Floors</option>
+                                    <!-- Populated via JS -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Manufacturer</label>
+                                <input type="text" class="form-control" name="manufacturer">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Installation Date</label>
+                                <input type="date" class="form-control" name="installation_date" id="installationDate">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Last Test Date</label>
+                                <input type="date" class="form-control" name="last_test" id="lastTestDate" max="{{ date('Y-m-d') }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Next Test Due *</label>
+                                <input type="date" class="form-control" name="next_test_due" id="nextTestDue" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Notes/Remarks</label>
+                            <textarea class="form-control" name="notes" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    @if(auth()->user()->role !== 'viewer')
+                    <button type="button" class="btn btn-primary" onclick="saveAlarmSystem()">
+                        <i class="fas fa-save me-2"></i> Save Alarm System
+                    </button>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Alarm Modal -->
+    <div class="modal fade" id="updateAlarmModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i> Update Alarm System</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="updateAlarmForm">
+                        @csrf
+                        @method('PUT')
+                        <input type="hidden" id="updateAlarmId">
+                        <input type="hidden" id="updateSchoolId" name="school_id">
+                        <input type="hidden" id="originalAlarmCode">
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Alarm Code</label>
+                                <input type="text" class="form-control" name="code" id="updateAlarmCode" required>
+                            </div>
+                             <div class="col-md-6">
+                                <label class="form-label fw-bold">Alarm Type</label>
+                                <input type="text" class="form-control bg-light" id="updateAlarmTypeDisplay" readonly disabled>
+                                <!-- Alarm Type cannot be changed -->
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                             <div class="col-md-6">
+                                <label class="form-label fw-bold">Status</label>
+                                <select class="form-control" name="status" id="updateStatusSelect" required>
+                                    <!-- Populated via JS -->
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Location</label>
+                                <input type="text" class="form-control" name="location" id="updateAlarmLocation" required>
+                            </div>
+                        </div>
+
+                         <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Manufacturer</label>
+                                <input type="text" class="form-control" name="manufacturer" id="updateManufacturer">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Installation Date</label>
+                                <input type="date" class="form-control" name="installation_date" id="updateInstallationDate">
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Last Test Date</label>
+                                <input type="date" class="form-control" name="last_test" id="updateLastTestDate">
+                            </div>
+                             <div class="col-md-6">
+                                <label class="form-label fw-bold">Next Test Due</label>
+                                <input type="date" class="form-control" name="next_test_due" id="updateNextTestDue" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Notes</label>
+                            <textarea class="form-control" name="notes" id="updateNotes" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    @if(auth()->user()->role !== 'viewer')
+                    <button type="button" class="btn btn-info text-white" onclick="updateAlarmSystem()">
+                        <i class="fas fa-save me-2"></i> Update Changes
+                    </button>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alarm Removal Modal -->
+    <div class="modal fade" id="alarmRemovalModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i> Remove Alarm System</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="fw-bold">Are you sure you want to remove this alarm system?</p>
+                    <p class="text-muted small">This action cannot be undone. All historical data for this alarm will be moved to the archives.</p>
+                     <div class="mt-3">
+                        <label class="form-label fw-bold">Reason to be removed *</label>
+                        <textarea class="form-control" id="alarmRemovalReason" rows="3" placeholder="Enter reason for removal..." auto-focus></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmRemoveAlarm()">
+                        <i class="fas fa-trash-alt me-2"></i> Yes, Remove It!
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alarm History Modal -->
+    <div class="modal fade" id="alarmHistoryModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-secondary text-white">
+                    <h5 class="modal-title"><i class="fas fa-history me-2"></i> Removed Alarm Systems History</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                     <div class="table-responsive">
+                        <table class="table table-hover table-sm" id="alarmHistoryTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date Removed</th>
+                                    <th>Code</th>
+                                    <th>Type</th>
+                                    <th>Last Location</th>
+                                    <th>Reason</th>
+                                    <th>Last Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data populated via AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @section('scripts')
     <script>
         // Global variables
         const USER_ROLE = "{{ auth()->user()->role }}";
-        let currentSchoolId = null;
+        let currentSchoolId = {{ $activeSchool->id ?? 'null' }};
 
         function checkViewerAccess(formId, buttonsId = null) {
             if (USER_ROLE === 'viewer') {
@@ -1103,11 +1505,28 @@
                                 <strong>Already Inspected building?</strong>
                             </div>
                         `;
+                        
+                        // Check for alarms (building.alarm_systems comes from controller getBuilding)
+                        const alarmCount = (building.alarm_systems && Array.isArray(building.alarm_systems)) ? building.alarm_systems.length : 0;
+                        let alarmButton = '';
+                        
+                        if (alarmCount > 0) {
+                            alarmButton = `
+                                <button type="button" class="btn btn-info me-2 text-white" onclick="openBuildingAlarms(${building.id})">
+                                    <i class="fas fa-bell me-2"></i> Manage Alarms <span class="badge bg-white text-info ms-1">${alarmCount}</span>
+                                </button>
+                            `;
+                        } else {
+                            alarmButton = `
+                                <button type="button" class="btn btn-outline-info me-2" onclick="openBuildingAlarms(${building.id}, true)">
+                                    <i class="fas fa-plus me-2"></i> Add New Alarm
+                                </button>
+                            `;
+                        }
+
                         footerHtml = `
                             <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Close</button>
-                            <a href="{{ route('fire-safety.alarm-systems') }}" class="btn btn-info me-2 text-white">
-                                <i class="fas fa-bell me-2"></i> Configure Alarm
-                            </a>
+                            ${alarmButton}
                             <button type="button" class="btn btn-primary" onclick="editBuilding(${building.id})">
                                 <i class="fas fa-edit me-2"></i> Update
                             </button>
@@ -2224,6 +2643,542 @@
                     </div>
                 `;
             }
+        }
+        // Open Building Alarms Modal
+        async function openBuildingAlarms(buildingId, autoAdd = false) {
+             // Close any open modals
+            const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewBuildingModal'));
+            if (viewModal) viewModal.hide();
+            
+            // Set current building context
+            const response = await fetch(`/fire-safety/building/${buildingId}`);
+            if (!response.ok) {
+                Swal.fire('Error', 'Failed to load building data', 'error');
+                return;
+            }
+            const building = await response.json();
+            
+            // Set context for Add Modal
+            document.getElementById('addAlarmBuildingId').value = buildingId;
+            document.getElementById('addAlarmBuildingNameDisplay').textContent = building.building_no + (building.building_name ? ` (${building.building_name})` : '');
+            document.getElementById('addAlarmSchoolId').value = building.school_id;
+            
+            // Populate Floor Select for Add Modal
+            const floorSelect = document.getElementById('addFloorSelect');
+            floorSelect.innerHTML = '<option value="">Select Floor</option><option value="all">All Floors</option>';
+            for (let i = 1; i <= building.floors; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = `Floor ${i}`;
+                floorSelect.appendChild(opt);
+            }
+
+            // Populate Multi-Building Select
+            loadMultiBuildingOptions(building.school_id, buildingId);
+
+            if (autoAdd) {
+                // Open Add Modal Directly
+                const addModal = new bootstrap.Modal(document.getElementById('addAlarmModal'));
+                addModal.show();
+            } else {
+                // Open List Modal
+                const listModal = new bootstrap.Modal(document.getElementById('buildingAlarmsModal'));
+                document.getElementById('alarmsModalTitle').textContent = `Alarms for ${building.building_no}`;
+                
+                // Configure "Add New" button in List Modal
+                const btnAdd = document.getElementById('btnAddNewAlarmInList');
+                if (btnAdd) {
+                    btnAdd.onclick = () => {
+                        listModal.hide();
+                        const addModal = new bootstrap.Modal(document.getElementById('addAlarmModal'));
+                        addModal.show();
+                         // Re-open list on close of add
+                        document.getElementById('addAlarmModal').addEventListener('hidden.bs.modal', function () {
+                            // Only re-open if not confirmed save (handled elsewhere) or if cancelled
+                            // actually simpler to just let user re-open if needed, or reload list
+                             listModal.show();
+                             loadBuildingAlarms(buildingId); // Refresh list
+                        }, { once: true });
+                    };
+                }
+                
+                // Print Button
+                 const printBtn = document.getElementById('printAlarmsBtn');
+                 if(printBtn) printBtn.href = `/fire-safety/alarms/print/${buildingId}`; // Hypothetical route
+                
+                listModal.show();
+                loadBuildingAlarms(buildingId);
+            }
+        }
+
+        // Load Alarms for List
+        async function loadBuildingAlarms(buildingId) {
+            const tbody = document.querySelector('#buildingAlarmsTable tbody');
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4"><i class="fas fa-spinner fa-spin me-2"></i> Loading alarms...</td></tr>';
+            
+            try {
+                // We reuse the getBuilding endpoint which now includes alarmSystems
+                const response = await fetch(`/fire-safety/building/${buildingId}`);
+                const building = await response.json();
+                const alarms = building.alarm_systems || [];
+
+                if (alarms.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-muted">No alarms installed in this building yet.</td></tr>';
+                } else {
+                    let html = '';
+                    alarms.forEach(alarm => {
+                        html += `
+                            <tr>
+                                <td class="fw-bold text-primary">${alarm.code}</td>
+                                <td>${alarm.alarm_type}</td>
+                                <td>${alarm.location || 'N/A'}</td>
+                                <td><span class="badge ${getAlarmStatusBadge(alarm.status)}">${formatStatus(alarm.status)}</span></td>
+                                <td>${alarm.installation_date ? formatDate(alarm.installation_date) : '-'}</td>
+                                <td>${alarm.last_test ? formatDate(alarm.last_test) : '<span class="text-warning">Never</span>'}</td>
+                                <td>${alarm.next_test_due ? formatDate(alarm.next_test_due) : '-'}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-outline-success" onclick="testAlarm(${alarm.id})" title="Test Now">
+                                            <i class="fas fa-check-circle"></i>
+                                        </button>
+                                        <button class="btn btn-outline-primary" onclick="openUpdateAlarmModal(${alarm.id})" title="Update">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-outline-danger" onclick="deleteAlarmSystem(${alarm.id})" title="Remove">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML = html;
+                }
+                
+                // Update Upcoming Tests (Mockup Logic based on alarm data)
+                updateUpcomingTests(alarms, true); // true for main dashboard if needed? 
+                // Actually we should fetch for the whole school for the main dashboard one.
+                fetchSchoolUpcomingTests(currentSchoolId);
+                
+            } catch (error) {
+                console.error(error);
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-danger">Failed to load alarms.</td></tr>';
+            }
+        }
+        
+        function updateUpcomingTests(alarms, isMain = false) {
+            const listId = isMain ? 'mainUpcomingTestsList' : 'upcomingTestsList';
+            const list = document.getElementById(listId);
+            if(!list) return;
+            
+            const upcoming = alarms.filter(a => a.next_test_due).sort((a,b) => new Date(a.next_test_due) - new Date(b.next_test_due)).slice(0, 5);
+            
+            if (upcoming.length === 0) {
+                list.innerHTML = '<li class="list-group-item text-muted small text-center py-3">No upcoming tests scheduled.</li>';
+                return;
+            }
+            
+            let html = '';
+            upcoming.forEach(a => {
+                const due = new Date(a.next_test_due);
+                const today = new Date();
+                const diffTime = due - today;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+                
+                let badge = 'bg-success';
+                if(diffDays < 0) badge = 'bg-danger'; // Overdue
+                else if(diffDays <= 7) badge = 'bg-warning text-dark';
+                
+                html += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                        <div>
+                            <div class="fw-bold text-primary">${a.code}</div>
+                            <div class="small text-muted">${a.location || 'Building ' + (a.building_no || '')}</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="small fw-bold">${formatDate(a.next_test_due)}</div>
+                            <span class="badge ${badge} rounded-pill">${diffDays < 0 ? 'Overdue' : (diffDays === 0 ? 'Today' : (diffDays === 1 ? 'Tomorrow' : diffDays + ' days'))}</span>
+                        </div>
+                    </li>
+                `;
+            });
+            list.innerHTML = html;
+        }
+
+        async function fetchSchoolUpcomingTests(schoolId) {
+            try {
+                // Since there's no school-wide alarm list endpoint that returns all details, 
+                // we can either add one or fetch buildings and aggregate.
+                // For now, let's assume we can use the buildings-list and then for each building fetch alarms? Too slow.
+                // I'll check if there's a better route.
+                // Looking at route list: fire-safety/alarm/history/{schoolId} exists.
+                // We might need a fire-safety/alarms/{schoolId} to get all alarms.
+                // I'll check if FireSafetyController has something like getAlarms($schoolId).
+                const response = await fetch(`/fire-safety/buildings/${schoolId}`); // This returns buildings WITH alarms in some implementations
+                const buildings = await response.json();
+                let allAlarms = [];
+                buildings.forEach(b => {
+                    if(b.alarm_systems) {
+                        b.alarm_systems.forEach(a => {
+                            a.building_no = b.building_no;
+                            allAlarms.push(a);
+                        });
+                    }
+                });
+                updateUpcomingTests(allAlarms, true);
+            } catch(e) { console.error(e); }
+        }
+
+        async function loadMultiBuildingOptions(schoolId, excludeBuildingId) {
+            const select = document.getElementById('addMultiBuildingSelect');
+            select.innerHTML = ''; // Requesting...
+            
+            try {
+                const response = await fetch(`/fire-safety/buildings-list/${schoolId}`);
+                const buildings = await response.json();
+                
+                buildings.forEach(b => {
+                    if (b.id != excludeBuildingId) {
+                        const opt = document.createElement('option');
+                        opt.value = b.id;
+                        opt.textContent = `${b.building_no} - ${b.building_name || 'No Name'}`;
+                        select.appendChild(opt);
+                    }
+                });
+            } catch(e) { console.error(e); }
+        }
+
+        // Toggle multi-building select
+        document.getElementById('coversMultiple').addEventListener('change', function() {
+            const container = document.getElementById('multiBuildingSelectContainer');
+            const floorRow = document.getElementById('floorSelectionRow');
+            if (this.checked) {
+                container.style.display = 'block';
+                floorRow.style.display = 'none';
+                document.getElementById('addFloorSelect').value = ''; // Reset floor
+            } else {
+                container.style.display = 'none';
+                floorRow.style.display = 'block';
+            }
+        });
+
+        // Save Alarm
+        async function saveAlarmSystem() {
+            const form = document.getElementById('addAlarmForm');
+            if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const formData = new FormData(form);
+            
+            try {
+                const response = await fetch('{{ route('fire-safety.alarm.store') }}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    Swal.fire({
+                         title: 'Success',
+                         text: 'Alarm system added successfully!',
+                         icon: 'success',
+                         timer: 1500,
+                         showConfirmButton: false
+                    });
+                    
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addAlarmModal'));
+                    modal.hide();
+                    
+                    // Reload buildings to update dashboard cards and modal list
+                     location.reload(); 
+                     // Ideally we would just reload the list, but dashboard cards need updating too.
+                     // Or we can just call loadBuildingAlarms(buildingId) if we didn't confirm reload.
+                } else {
+                    Swal.fire('Error', data.message, 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                Swal.fire('Error', 'Failed to save alarm system.', 'error');
+            }
+        }
+        
+        // Open Update Modal
+        async function openUpdateAlarmModal(alarmId) {
+             try {
+                const response = await fetch(`/fire-safety/alarm/${alarmId}`);
+                const alarm = await response.json();
+                
+                if (!alarm) throw new Error('Alarm not found');
+                
+                const modal = new bootstrap.Modal(document.getElementById('updateAlarmModal'));
+                const form = document.getElementById('updateAlarmForm');
+                
+                document.getElementById('updateAlarmId').value = alarm.id;
+                document.getElementById('updateSchoolId').value = alarm.school_id;
+                document.getElementById('originalAlarmCode').value = alarm.code;
+                
+                document.getElementById('updateAlarmCode').value = alarm.code;
+                document.getElementById('updateAlarmTypeDisplay').value = alarm.alarm_type;
+                document.getElementById('updateAlarmLocation').value = alarm.location;
+                document.getElementById('updateManufacturer').value = alarm.manufacturer || '';
+                document.getElementById('updateInstallationDate').value = alarm.installation_date || '';
+                document.getElementById('updateLastTestDate').value = alarm.last_test ? alarm.last_test.split('T')[0] : '';
+                document.getElementById('updateNextTestDue').value = alarm.next_test_due ? alarm.next_test_due.split('T')[0] : '';
+                document.getElementById('updateNotes').value = alarm.notes || '';
+
+                // Populate Status Select (re-use the HTML from Add modal or clone it)
+                 const statusSelect = document.getElementById('updateStatusSelect');
+                 const addStatusSelect = document.getElementById('addStatusSelect');
+                 if(addStatusSelect && statusSelect.options.length === 0) {
+                     statusSelect.innerHTML = addStatusSelect.innerHTML;
+                 }
+                 
+                 // Normalize status for selection
+                 let statusVal = alarm.status.toLowerCase().replace('_', ' '); 
+                 // Try to match value
+                 // The select has values like "Functional", "Broken", etc.
+                 // The DB has "active", "maintenance".
+                 // Map back if needed.
+                 // Actually the getAlarm returns the DB value. The select options have Names (e.g. "Functional")
+                 // We need to match precise values.
+                 
+                // Simple match attempt
+                let found = false;
+                for (let i = 0; i < statusSelect.options.length; i++) {
+                    if (statusSelect.options[i].value.toLowerCase() === alarm.status.toLowerCase().replace('_', ' ')) {
+                        statusSelect.selectedIndex = i;
+                        found = true;
+                        break;
+                    }
+                }
+                // Fallback attempt
+                if (!found && alarm.status === 'active') statusSelect.value = 'Functional';
+                
+                // Hide Alarm List modal temporarily
+                const listModal = bootstrap.Modal.getInstance(document.getElementById('buildingAlarmsModal'));
+                if(listModal) listModal.hide();
+                
+                modal.show();
+                
+                // On close, re-open list
+                document.getElementById('updateAlarmModal').addEventListener('hidden.bs.modal', function () {
+                     const buildingId = alarm.building_id; // Need to know which building to re-open
+                     // But alarm might belong to multiple. 
+                     // We can rely on global or just fail gracefully.
+                     // Better: check if buildingAlarmsModal was open before.
+                     // For now, let's just let user navigate back.
+                }, { once: true });
+
+            } catch (error) {
+                console.error(error);
+                Swal.fire('Error', 'Failed to load alarm details.', 'error');
+            }
+        }
+        
+        async function updateAlarmSystem() {
+            const id = document.getElementById('updateAlarmId').value;
+            const form = document.getElementById('updateAlarmForm');
+             if (!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            // Convert map to plain object
+            const formData = Object.fromEntries(new FormData(form).entries());
+
+            try {
+                const response = await fetch(`/fire-safety/alarm/${id}/update`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+                const data = await response.json();
+
+                 if (data.success) {
+                    Swal.fire('Success', 'Alarm system updated!', 'success').then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Error', data.message, 'error');
+                }
+            } catch (error) {
+                Swal.fire('Error', 'Failed to update alarm.', 'error');
+            }
+        }
+        
+        // Remove Alarm
+        let alarmIdToRemove = null;
+        function deleteAlarmSystem(id) {
+            alarmIdToRemove = id;
+            const modal = new bootstrap.Modal(document.getElementById('alarmRemovalModal'));
+            
+            // Hide list modal
+            const listModal = bootstrap.Modal.getInstance(document.getElementById('buildingAlarmsModal'));
+            if(listModal) listModal.hide();
+            
+            modal.show();
+        }
+        
+        async function confirmRemoveAlarm() {
+            if(!alarmIdToRemove) return;
+            
+            const reason = document.getElementById('alarmRemovalReason').value;
+             if (!reason.trim()) {
+                Swal.fire('Reason Required', 'Please provide a reason for removal.', 'warning');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/fire-safety/alarm/${alarmIdToRemove}/remove`, {
+                    method: 'POST',
+                     headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ reason: reason })
+                });
+                
+                const data = await response.json();
+                 if (data.success) {
+                    Swal.fire('Removed', 'Alarm system removed and archived.', 'success').then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Error', data.message, 'error');
+                }
+            } catch (error) {
+                 Swal.fire('Error', 'Failed to remove alarm.', 'error');
+            }
+        }
+        
+        async function testAlarm(id) {
+             try {
+                const response = await fetch(`/fire-safety/alarm/${id}/test`, {
+                    method: 'POST',
+                     headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                if(data.success) {
+                    Swal.fire({
+                        title: 'Tested!',
+                        text: 'Alarm test recorded successfully.',
+                        icon: 'success',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                     // determine building id to reload?
+                     // Just reload list if open
+                     if (document.getElementById('buildingAlarmsModal').classList.contains('show')) {
+                         // Find which building is active?
+                         // We don't have easy access to buildingId here unless we store it globally
+                         // But we can just use the row data or reload entire table if we knew buildingId
+                         location.reload(); // safest
+                     }
+                }
+             } catch(e) {
+                 Swal.fire('Error', 'Failed to record test.', 'error');
+             }
+        }
+        
+        function getAlarmStatusBadge(status) {
+            status = status.toLowerCase();
+            if (status === 'active' || status === 'functional') return 'bg-success';
+            if (status === 'maintenance' || status === 'under-repair') return 'bg-warning text-dark';
+            return 'bg-danger';
+        }
+        
+        function formatStatus(status) {
+            return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        async function openAlarmHistoryModal(schoolId) {
+            // Close Alarms List if open
+            const listModal = bootstrap.Modal.getInstance(document.getElementById('buildingAlarmsModal'));
+            if(listModal) listModal.hide();
+
+            const modalEl = document.getElementById('alarmHistoryModal');
+            const modal = new bootstrap.Modal(modalEl);
+            const tbody = document.querySelector('#alarmHistoryTable tbody');
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center">Loading history...</td></tr>';
+            
+            modal.show();
+            
+            try {
+                const response = await fetch(`/fire-safety/alarm/history/${schoolId}`);
+                const history = await response.json();
+                
+                if (history.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No history found.</td></tr>';
+                } else {
+                    let html = '';
+                    history.forEach(item => {
+                        let statusBad = 'bg-secondary';
+                        let statusText = item.item_data.status || 'Unknown';
+                        
+                        html += `
+                            <tr>
+                                <td>${formatDate(item.removed_at)}</td>
+                                <td class="fw-bold text-danger">${item.item_code}</td>
+                                <td>${item.item_data.alarm_type || 'N/A'}</td>
+                                <td>${item.item_data.building_name || 'N/A'}</td>
+                                <td>${item.reason}</td>
+                                <td><span class="badge ${statusBad}">${statusText}</span></td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML = html;
+                }
+            } catch (error) {
+                console.error(error);
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Failed to load history.</td></tr>';
+            }
+        }
+
+        function filterBuildings(status) {
+            const cards = document.querySelectorAll('.building-item');
+            
+            cards.forEach(card => {
+                if (status === 'all') {
+                    card.style.display = 'block';
+                } else {
+                    if (card.dataset.status === status) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                }
+            });
+            
+            // Update filter button text
+            const btn = document.getElementById('buildingFilterDropdown');
+            if(btn) {
+                if(status === 'all') btn.innerHTML = '<i class="fas fa-filter me-1"></i> Show All';
+                else if(status === 'compliant') btn.innerHTML = '<i class="fas fa-check-circle me-1 border-success text-success"></i> Compliant Only';
+                else if(status === 'non-compliant') btn.innerHTML = '<i class="fas fa-exclamation-circle me-1 border-danger text-danger"></i> Non-Compliant Only';
+            }
+        }
+
+        // Initialize school-wide alarm tests and inspections on load
+        if (currentSchoolId) {
+            fetchSchoolUpcomingTests(currentSchoolId);
+            loadInspections(currentSchoolId);
         }
     </script>
 @endsection

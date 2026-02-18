@@ -11,6 +11,7 @@ class FireSafetyAlarmSystem extends Model
     protected $fillable = [
         'school_id',
         'building_id',
+        'floor_id',
         'code',
         'location', // ← Make sure this is here
         'alarm_type',

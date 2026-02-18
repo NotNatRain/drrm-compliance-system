@@ -24,6 +24,7 @@ class User extends Authenticatable
         'role',
         'school_id',
         'module_access',
+        'is_active',
     ];
 
     /**
@@ -55,6 +56,29 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'module_access' => 'array',
+            'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Send the password reset notification.
+     *
+     * @param  string  $token
+     * @return void
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        // Instead of the token, we'll store a 6-digit code in the password_resets table
+        $code = rand(100000, 999999);
+        
+        \DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $this->email],
+            [
+                'token' => \Hash::make($code),
+                'created_at' => now()
+            ]
+        );
+
+        $this->notify(new \App\Notifications\VerifyCodeNotification($code));
     }
 }
