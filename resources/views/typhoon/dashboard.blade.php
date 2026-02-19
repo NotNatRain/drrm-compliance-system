@@ -13,7 +13,7 @@
                 <i class="fas fa-arrow-left"></i>
             </a>
             <h1 class="h3 mb-0" style="color: #1B4C6D;">
-                <i class="fas fa-desktop me-2"></i> Disaster Monitoring Dashboard
+                <i class="fas fa-desktop me-2"></i> Typhoon & Flood Monitoring Dashboard
             </h1>
         </div>
         <div class="d-flex align-items-center gap-2">

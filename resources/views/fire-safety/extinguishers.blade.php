@@ -1,6 +1,7 @@
 ﻿@extends('layouts.fire-safety')
 
 @section('title', 'Fire Extinguishers - Fire Safety')
+@section('page_title', 'Fire Extinguisher & Rooms')
 
 @section('styles')
     <style>
@@ -1573,5 +1574,12 @@
         function inspectRoom(roomId) {
             openUpdateRoomModal(roomId);
         }
+
+        // Fix 4: Auto-load Recent Inspections
+        document.addEventListener('DOMContentLoaded', () => {
+             if (typeof currentSchoolId !== 'undefined' && currentSchoolId) {
+                loadRecentInspections(currentSchoolId);
+             }
+        });
     </script>
 @endsection

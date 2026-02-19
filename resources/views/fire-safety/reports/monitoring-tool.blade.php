@@ -42,10 +42,21 @@
         <button onclick="window.print()" class="print-btn">Print Document</button>
     </div>
 
-    <div class="header">
-        <p>Republic of the Philippines</p>
-        <p>Department of Education</p>
-        <h3>MONITORING TOOL FOR EARTHQUAKE AND FIRE DRILLS IN SCHOOLS</h3>
+    <div class="header-container" style="position: relative; height: 80px; display: flex; align-items: center; margin-bottom: 20px;">
+        <!-- Logo and Agency Name (absolute left) -->
+        <div style="position: absolute; left: 0; top: 0; display: flex; align-items: center;">
+            <img src="{{ asset('images/Layer-0-1.png') }}" alt="Logo 1" style="height: 60px; margin-right: 10px;">
+            <img src="{{ asset('images/What-Is-the-Difference-Between-DepEd-Seal-and-DepEd-Logo.png') }}" alt="Logo 2" style="height: 60px; margin-right: 10px;">
+            <img src="{{ asset('images/drrmis-logo-2.png') }}" alt="Logo 3" style="height: 60px; margin-right: 15px;">
+            <div style="text-align: left;">
+                <h2 style="margin: 0; font-size: 16px; font-weight: bold; text-transform: uppercase;">DepEd DRRM</h2>
+            </div>
+        </div>
+        
+        <!-- Main Title (centered) -->
+        <div style="width: 100%; text-align: center;">
+            <h3 style="margin: 0; font-size: 14px; font-weight: bold; text-transform: uppercase;">MONITORING TOOL FOR EARTHQUAKE AND FIRE DRILLS IN SCHOOLS</h3>
+        </div>
     </div>
 
     <!-- 5-Column Table: School Info + Drill Data -->
@@ -96,7 +107,7 @@
                 @foreach($chunk as $item)
                 <td style="width: 33%;">
                     <span class="check-box">
-                        @if(is_bool($item) ? $item : (isset($item->checked) ? $item->checked : false))
+                        @if(is_string($item) || (is_bool($item) && $item) || (isset($item->checked) && $item->checked))
                             ✓
                         @endif
                     </span>

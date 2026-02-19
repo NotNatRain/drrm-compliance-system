@@ -1,11 +1,11 @@
 @extends('layouts.fire-safety')
 
 @section('title', 'Evacuation Plans - Fire Safety')
+@section('page_title', 'Evacuation Plans')
 @section('content')
     <div class="container-fluid">
         <!-- Page Heading -->
         <div class="d-sm-flex align-items-center justify-content-between mb-4">
-            <h1 class="h3 mb-0 text-gray-800">Evacuation Plans</h1>
             <button class="btn btn-primary" onclick="printAllPlans()">
                 <i class="fas fa-print me-2"></i> Print Plans Report
             </button>

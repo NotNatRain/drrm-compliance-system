@@ -1,6 +1,7 @@
 ﻿@extends('layouts.fire-safety')
 
 @section('title', 'Buildings - Fire Safety')
+@section('page_title', 'Buildings & Alarms')
 
 @section('styles')
     <style>
@@ -314,7 +315,8 @@
                                                     <div class="mb-3 p-3 bg-light rounded">
                                                         <div class="mb-2">
                                                             @php
-                                                                $alarms = $building->alarmSystems;
+                                                                // Fix 5: Merge single and multi-building alarms
+                                                                $alarms = $building->alarmSystems->merge($building->alarmSystemsMany)->unique('id');
                                                                 $alarmCount = $alarms->count();
                                                                 $extinguisherCount = $building->fireExtinguishers->count();
                                                             @endphp
@@ -322,7 +324,7 @@
                                                             <div class="d-flex flex-wrap gap-1">
                                                                 @forelse($alarms as $alarm)
                                                                     <span class="badge bg-white text-dark border small" style="font-size: 0.7rem;">
-                                                                        {{ $alarm->code }} ({{ ucfirst($alarm->status) }})
+                                                                        {{ $alarm->code }} - {{ $alarm->alarm_type }} ({{ ucfirst($alarm->status) }})
                                                                     </span>
                                                                 @empty
                                                                     <span class="text-muted small">None</span>
@@ -800,7 +802,7 @@
                             <i class="fas fa-history me-1"></i> Removed Alarm System
                         </button>
                         @endif
-                        <a href="#" id="printAlarmsBtn" class="btn btn-sm btn-light text-primary me-3" target="_blank">
+                        <a href="{{ route('fire-safety.report.alarm-details', $activeSchool->id) }}" id="printAlarmsBtn" class="btn btn-sm btn-light text-primary me-3" target="_blank">
                             <i class="fas fa-print me-1"></i> Print Alarm Details
                         </a>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -2001,7 +2003,7 @@
                             <td><div class="text-truncate" style="max-width: 250px;" title="${item.remarks || ''}">${item.remarks || '<span class="text-muted small">No remarks</span>'}</div></td>
                             <td class="text-center" style="width: 180px;">
                                 <div class="btn-group">
-                                    <button class="btn btn-sm btn-outline-primary" onclick="viewInspectionDetail(${item.id})">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewInspection(${item.id})">
                                         <i class="fas fa-eye me-1"></i> View
                                     </button>
                                     <a href="/fire-safety/inspection/${item.id}/print" target="_blank" class="btn btn-sm btn-outline-dark">
@@ -2173,12 +2175,12 @@
         async function saveBuilding() {
             const form = document.getElementById('addBuildingForm');
 
-            // Basic validation for required fields only
+            // Basic validation for required fields only (Building Name is Optional now)
             const buildingNo = form.querySelector('[name="building_no"]').value.trim();
-            const buildingName = form.querySelector('[name="building_name"]').value.trim();
+            // const buildingName = form.querySelector('[name="building_name"]').value.trim(); // Optional
 
-            if (!buildingNo || !buildingName) {
-                Swal.fire('Validation Error', 'Building number and name are required.', 'warning');
+            if (!buildingNo) {
+                Swal.fire('Validation Error', 'Building number is required.', 'warning');
                 return;
             }
 

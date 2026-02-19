@@ -315,7 +315,7 @@
                     <h4 class="text-white mb-0">
                         @yield('page_title', 'Fire Safety Module')
                         @if(auth()->user()->role !== 'admin' && isset($activeSchool))
-                            <small class="d-inline-block ms-2 opacity-75" style="font-size: 0.6em; font-weight: 400;">— {{ $activeSchool->school_name }}</small>
+                            <span class="d-inline-block ms-2 opacity-75 fw-normal">— {{ $activeSchool->school_name }}</span>
                         @endif
                     </h4>
                 </div>
