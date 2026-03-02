@@ -496,7 +496,7 @@ INTENDED FEATURES (WHEN FULLY DEVELOPED):
   - Proximity analysis (distance from school to nearest hazard zone)
   - Hazard exposure summary per school
   - Integration with PAGASA, PHIVOLCS, and MGB hazard data sources
-  - Generation of school-level hazard maps for submission to division offices
+  - Generation of school-level hazard maps for submission to division Administrative
   - Historical hazard event logging per school location
   - Recommendations for school site relocation or structural reinforcement
     based on hazard exposure

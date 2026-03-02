@@ -274,7 +274,7 @@ class FireSafetyController extends Controller
     // Get buildings for a school (AJAX)
     public function getBuildings($schoolId)
     {
-        $buildings = FireSafetyBuilding::where('school_id', $schoolId)->get();
+        $buildings = FireSafetyBuilding::where('school_id', $schoolId)->with(['alarmSystems', 'alarmSystemsMany'])->get();
         return response()->json($buildings);
     }
 
@@ -566,8 +566,13 @@ class FireSafetyController extends Controller
                 })->ignore($id)
             ],
             'room_name' => 'nullable|string',
-            'nearest_extinguisher_room_id' => 'nullable|exists:fire_safety_rooms,id'
+            'nearest_extinguisher_room_id' => 'nullable|exists:fire_safety_rooms,id',
+            'has_smoke_detector' => 'boolean'
         ]);
+
+        if (!isset($validated['has_smoke_detector'])) {
+            $validated['has_smoke_detector'] = false;
+        }
 
         // Only update room_name if it was actually provided
         if (empty($validated['room_name'])) {
@@ -655,10 +660,15 @@ public function storeRoom(Request $request)
         'school_id' => 'required|exists:firesafety_school_information,id',
         'building_id' => 'required|exists:firesafety_buildings,id',
         'room_code' => 'nullable|string|max:50',
-        'room_name' => 'required|string|max:120',
+        'room_name' => 'required|string|max:100',
         'room_type_config_id' => 'required|exists:system_configurations,id',
         'floor_no' => 'required|integer|min:1|max:50',
+        'has_smoke_detector' => 'boolean'
     ]);
+
+    if (!isset($validated['has_smoke_detector'])) {
+        $validated['has_smoke_detector'] = false;
+    }
 
     $roomTypeConfig = SystemConfiguration::where('id', $validated['room_type_config_id'])
         ->where('config_type', 'room_type')
@@ -839,7 +849,7 @@ public function getRoom($id)
             ], 422);
         }
 
-        // Laboratory rule: lab can only share with ONE clinic/auxiliary room (total 2 rooms)
+        // Laboratory rule: lab can only share with ONE clinic room (total 2 rooms)
         if ($centerRoom->room_type === 'laboratory' && count($coveredRoomIds) > 2) {
             return response()->json([
                 'success' => false,
@@ -1091,32 +1101,8 @@ public function getRoom($id)
 
     public static function calculateBuildingCompliance($building)
     {
-        // This is a simplified compliance calculation
-        $score = 0;
-        $maxScore = 100;
-
-        // Check for alarms
-        if ($building->alarmSystems->count() > 0) {
-            $score += 30;
-        }
-
-        // Check for extinguishers
-        if ($building->fireExtinguishers->count() > 0) {
-            $score += 30;
-        }
-
-        // Check for emergency exits
-        if ($building->emergency_exits && $building->emergency_exits > 0) {
-            $score += 20;
-        }
-
-        // Check for safety features
-        if ($building->features) {
-            $features = explode(',', $building->features);
-            $score += min(20, count($features) * 5);
-        }
-
-        return $score;
+        // Use the model's defined safety score logic
+        return $building->safety_score;
     }
 
     // Store new building
@@ -1613,7 +1599,7 @@ public function getRoom($id)
                 $query->with([
                     'evacuationPlan',
                     'alarmSystems' => function($q) {
-                        $q->whereIn('status', ['functional', 'online']);
+                        $q->where('status', 'active');
                     },
                     'fireExtinguishers' => function($q) {
                         $q->where('status', 'active');
@@ -1621,7 +1607,8 @@ public function getRoom($id)
                     'actualRooms'
                 ]);
             },
-            'buildings.evacuationPlan'
+            'buildings.evacuationPlan',
+            'schoolEvacuationPlan'
         ]);
 
         if (auth()->user()->role !== 'admin') {
@@ -1640,23 +1627,30 @@ public function getRoom($id)
         }
 
         $request->validate([
-            'building_id' => 'required|exists:firesafety_buildings,id',
+            'school_id' => 'required|exists:firesafety_school_information,id',
+            'building_id' => 'nullable|exists:firesafety_buildings,id',
             'plan_no' => 'required|string|max:50',
-            'exits' => 'required|integer|min:0',
-            'routes' => 'required|integer|min:1|max:10',
-            'areas' => 'required|integer|min:1|max:10',
-            'primary_route' => 'required|string',
-            'primary_assembly_area' => 'required|string',
-            'assembly_capacity' => 'nullable|integer|min:1',
-            'status' => 'nullable|in:active,draft,review,inactive',
+            'exits' => 'nullable|integer|min:0',
+            'routes' => 'nullable|integer|min:1|max:10',
+            'areas' => 'nullable|string',
+            'primary_route' => 'nullable|string',
+            'secondary_route' => 'nullable|string',
+            'primary_assembly_area' => 'nullable|string',
+            'secondary_assembly_area' => 'nullable|string',
+            'assembly_capacity' => 'nullable|integer|min:0',
+            'status' => 'nullable|string',
+            'safety_features_installed' => 'nullable|string',
+            'emergency_contacts' => 'nullable|string',
+            'special_instructions' => 'nullable|string',
+            'map_data' => 'nullable|string',
         ]);
 
         $plan = FireSafetyEvacuationPlan::create([
             'school_id' => $request->school_id,
             'building_id' => $request->building_id,
             'plan_no' => $request->plan_no,
-            'exits' => $request->exits,
-            'routes' => $request->routes,
+            'exits' => $request->exits ?? 0,
+            'routes' => $request->routes ?? 1,
             'areas' => $request->areas,
             'primary_route' => $request->primary_route,
             'secondary_route' => $request->secondary_route,
@@ -1665,12 +1659,13 @@ public function getRoom($id)
             'assembly_capacity' => $request->assembly_capacity ?? 0,
             'emergency_contacts' => $request->emergency_contacts,
             'special_instructions' => $request->special_instructions,
+            'safety_features_installed' => $request->safety_features_installed,
             'status' => $request->status ?? 'active',
             'approved_at' => $request->status === 'active' ? now() : null,
             'map_data' => $request->map_data,
         ]);
 
-        return response()->json(['success' => true, 'message' => 'Evacuation plan created successfully']);
+        return response()->json(['success' => true, 'message' => 'Evacuation plan created successfully', 'plan' => $plan]);
     }
 
     public function getEvacuationPlan($id)
@@ -1712,23 +1707,41 @@ public function getRoom($id)
 
         $request->validate([
             'plan_no' => 'required|string|max:50',
-            'exits' => 'required|integer|min:1',
-            'routes' => 'required|integer|min:1|max:5',
-            'areas' => 'required|integer|min:1|max:3',
-            'primary_route' => 'required|string',
-            'primary_assembly_area' => 'required|string',
-            'assembly_capacity' => 'required|integer|min:1',
-            'status' => 'required|in:active,draft,review,inactive',
+            'exits' => 'nullable|integer|min:0',
+            'routes' => 'nullable|integer|min:1|max:10',
+            'areas' => 'nullable|string',
+            'primary_route' => 'nullable|string',
+            'secondary_route' => 'nullable|string',
+            'primary_assembly_area' => 'nullable|string',
+            'secondary_assembly_area' => 'nullable|string',
+            'assembly_capacity' => 'nullable|integer|min:0',
+            'status' => 'required|string',
+            'safety_features_installed' => 'nullable|string',
+            'emergency_contacts' => 'nullable|string',
+            'special_instructions' => 'nullable|string',
+            'map_data' => 'nullable|string',
         ]);
 
-        $data = $request->all();
+        $data = $request->only([
+            'plan_no', 'exits', 'routes', 'areas', 
+            'primary_route', 'secondary_route', 
+            'primary_assembly_area', 'secondary_assembly_area', 
+            'assembly_capacity', 'emergency_contacts', 
+            'special_instructions', 'safety_features_installed', 'status', 'map_data'
+        ]);
+
+        // Ensure defaults for numeric fields
+        $data['exits'] = $request->exits ?? 0;
+        $data['routes'] = $request->routes ?? 1;
+        $data['assembly_capacity'] = $request->assembly_capacity ?? 0;
+
         if ($request->status === 'active' && $plan->status !== 'active') {
             $data['approved_at'] = now();
         }
 
         $plan->update($data);
 
-        return response()->json(['success' => true, 'message' => 'Evacuation plan updated successfully']);
+        return response()->json(['success' => true, 'message' => 'Evacuation plan updated successfully', 'plan' => $plan]);
     }
 
     public function deleteEvacuationPlan($id)
@@ -1938,14 +1951,14 @@ public function getRoom($id)
         if ($user->role === 'admin') {
             // Load all data for admin
             $schools = FireSafetySchool::withCount(['buildings', 'rooms', 'alarmSystems', 'extinguishers as fire_extinguishers_count'])->get();
-            $buildingTypes = SystemConfiguration::where('config_type', 'building_type')->orderBy('sort_order')->get();
-            $alarmTypes = SystemConfiguration::where('config_type', 'alarm_type')->orderBy('id')->get();
-            $alarmStatusesByType = SystemConfiguration::where('config_type', 'alarm_status')->whereNotNull('parent_id')->get()->groupBy('parent_id');
-            $extinguisherTypes = SystemConfiguration::where('config_type', 'extinguisher_type')->get();
-            $extinguisherStatuses = SystemConfiguration::where('config_type', 'extinguisher_status')->get();
-            $safetyFeatures = SystemConfiguration::where('config_type', 'safety_feature')->orderBy('sort_order')->get();
-            $calculatedPriorities = SystemConfiguration::where('config_type', 'calculated_priority')->orderBy('sort_order')->get();
-            $roomTypes = SystemConfiguration::where('config_type', 'room_type')->orderBy('sort_order')->get();
+            $buildingTypes = SystemConfiguration::where('config_type', 'building_type')->orderBy('sort_order')->get()->unique('name');
+            $alarmTypes = SystemConfiguration::where('config_type', 'alarm_type')->orderBy('id')->get()->unique('name');
+            $alarmStatusesByType = SystemConfiguration::where('config_type', 'alarm_status')->whereNotNull('parent_id')->get()->unique('name')->groupBy('parent_id');
+            $extinguisherTypes = SystemConfiguration::where('config_type', 'extinguisher_type')->get()->unique('name');
+            $extinguisherStatuses = SystemConfiguration::where('config_type', 'extinguisher_status')->get()->unique('name');
+            $safetyFeatures = SystemConfiguration::where('config_type', 'safety_feature')->orderBy('sort_order')->get()->unique('name');
+            $calculatedPriorities = SystemConfiguration::where('config_type', 'calculated_priority')->orderBy('sort_order')->get()->unique('name');
+            $roomTypes = SystemConfiguration::where('config_type', 'room_type')->orderBy('sort_order')->get()->unique('name');
             $inspectionChecklists = SystemConfiguration::where('config_type', 'inspection_checklist')->orderBy('sort_order')->get();
             $inspectionObservers = SystemConfiguration::where('config_type', 'inspection_observer')->orderBy('sort_order')->get();
 
@@ -2572,6 +2585,30 @@ public function getRoom($id)
         }
         $config->update($update);
 
+        if ($configType === 'alarm_type' && $request->has('statuses')) {
+            foreach ($request->statuses as $s) {
+                if (!empty($s['name'])) {
+                    if (isset($s['id']) && !empty($s['id'])) {
+                        \App\Models\SystemConfiguration::where('id', $s['id'])
+                            ->where('config_type', 'alarm_status')
+                            ->where('parent_id', $config->id)
+                            ->update([
+                                'name' => $s['name'],
+                                'color_class' => $s['color_class'] ?? 'bg-secondary'
+                            ]);
+                    } else {
+                        \App\Models\SystemConfiguration::create([
+                            'config_type' => 'alarm_status',
+                            'name' => $s['name'],
+                            'parent_id' => $config->id,
+                            'color_class' => $s['color_class'] ?? 'bg-secondary',
+                            'is_active' => true
+                        ]);
+                    }
+                }
+            }
+        }
+
         return response()->json(['success' => true, 'message' => 'Configuration updated successfully']);
     }
 
@@ -2843,6 +2880,24 @@ public function getRoom($id)
             ->get();
 
         return view('fire-safety.reports.extinguisher-details', compact('school', 'extinguishers'));
+    }
+
+    public function printEvacuationPlans(Request $request, $schoolId)
+    {
+        $school = FireSafetySchool::findOrFail($schoolId);
+        $query = FireSafetyEvacuationPlan::where('school_id', $schoolId)->with(['building']);
+
+        if ($request->has('building_id')) {
+            $query->where('building_id', $request->building_id);
+        }
+
+        if ($request->has('plan_id')) {
+            $query->where('id', $request->plan_id);
+        }
+
+        $plans = $query->get();
+
+        return view('fire-safety.reports.evacuation-plans', compact('school', 'plans'));
     }
     public function getNotifications()
     {

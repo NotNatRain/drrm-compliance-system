@@ -264,14 +264,13 @@
                                     </button>
                                     @endif
 
-                                    <a href="{{ route('fire-safety.report.building-summary', $school->id) }}" target="_blank" class="btn btn-sm btn-outline-secondary">
-                                        <i class="fas fa-print me-1"></i> Print Building Reports
-                                    </a>
+                                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#printOptionsModal">
+                                        <i class="fas fa-print me-1"></i> Print
+                                    </button>
 
                                     @if(auth()->user()->role !== 'viewer')
-                                    <button class="btn btn-sm btn-outline-secondary"
-                                            onclick="openBuildingHistoryModal({{ $school->id }})">
-                                        <i class="fas fa-history me-1"></i> Removed Floor/Room
+                                    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#historyOptionsModal">
+                                        <i class="fas fa-history me-1"></i> History
                                     </button>
                                     @endif
 
@@ -332,7 +331,7 @@
                                                             </div>
                                                         </div>
                                                         <small class="d-block mb-2">
-                                                            <i class="fas fa-fire-extinguisher text-danger me-1"></i> Extinguishers: <strong>{{ $extinguisherCount }}</strong>
+                                                            <i class="fas fa-fire-extinguisher text-primary me-1"></i> Extinguishers: <strong>{{ $extinguisherCount }}</strong>
                                                         </small>
                                                         <small class="d-block">
                                                             <i class="fas fa-door-open text-warning me-1"></i> Exits: <strong>{{ $building->emergency_exits ?? 0 }}</strong>
@@ -410,7 +409,7 @@
                                     <i class="fas fa-calendar-alt me-2"></i> Upcoming Alarm Tests
                                 </h6>
                             </div>
-                            <div class="card-body p-0">
+                            <div class="card-body p-0" style="max-height: 400px; overflow-y: auto;">
                                 <ul class="list-group list-group-flush" id="mainUpcomingTestsList">
                                     <li class="list-group-item text-muted small text-center py-4">
                                         <i class="fas fa-spinner fa-spin me-2"></i> Loading upcoming tests...
@@ -424,6 +423,46 @@
 @endsection
 
 @section('modals')
+    <!-- Print Options Modal -->
+    <div class="modal fade" id="printOptionsModal" tabindex="-1">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-secondary text-white">
+                    <h6 class="modal-title mb-0"><i class="fas fa-print me-2"></i> Print Options</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <a href="{{ route('fire-safety.report.building-summary', $school->id) }}" class="btn btn-outline-primary w-100 mb-3" target="_blank" onclick="bootstrap.Modal.getInstance(document.getElementById('printOptionsModal')).hide()">
+                        <i class="fas fa-file-alt me-2"></i> Print Building Reports
+                    </a>
+                    <a href="{{ route('fire-safety.report.alarm-details', $school->id) }}" class="btn btn-outline-info w-100" target="_blank" onclick="bootstrap.Modal.getInstance(document.getElementById('printOptionsModal')).hide()">
+                        <i class="fas fa-bell me-2"></i> Print Alarm Details
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Options Modal -->
+    <div class="modal fade" id="historyOptionsModal" tabindex="-1">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-secondary text-white">
+                    <h6 class="modal-title mb-0"><i class="fas fa-history me-2"></i> History Options</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <button class="btn btn-outline-secondary w-100 mb-3" onclick="openBuildingHistoryModal({{ $school->id }}); bootstrap.Modal.getInstance(document.getElementById('historyOptionsModal')).hide()">
+                        <i class="fas fa-building me-2"></i> Removed Floor/Room
+                    </button>
+                    <button class="btn btn-outline-secondary w-100" onclick="openAlarmHistoryModal({{ $school->id }}); bootstrap.Modal.getInstance(document.getElementById('historyOptionsModal')).hide()">
+                        <i class="fas fa-bell me-2"></i> Removed Alarm System
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Add Building Modal -->
     <div class="modal fade" id="addBuildingModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
@@ -797,14 +836,6 @@
                         <i class="fas fa-bell me-2"></i> <span id="alarmsModalTitle">Building Alarms</span>
                     </h5>
                     <div>
-                         @if(auth()->user()->role !== 'viewer')
-                        <button class="btn btn-sm btn-light text-primary me-2" onclick="openAlarmHistoryModal(currentSchoolId)">
-                            <i class="fas fa-history me-1"></i> Removed Alarm System
-                        </button>
-                        @endif
-                        <a href="{{ route('fire-safety.report.alarm-details', $activeSchool->id) }}" id="printAlarmsBtn" class="btn btn-sm btn-light text-primary me-3" target="_blank">
-                            <i class="fas fa-print me-1"></i> Print Alarm Details
-                        </a>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                 </div>
@@ -2773,7 +2804,7 @@
             const list = document.getElementById(listId);
             if(!list) return;
             
-            const upcoming = alarms.filter(a => a.next_test_due).sort((a,b) => new Date(a.next_test_due) - new Date(b.next_test_due)).slice(0, 5);
+            const upcoming = alarms.filter(a => a.next_test_due).sort((a,b) => new Date(a.next_test_due) - new Date(b.next_test_due));
             
             if (upcoming.length === 0) {
                 list.innerHTML = '<li class="list-group-item text-muted small text-center py-3">No upcoming tests scheduled.</li>';
@@ -2809,26 +2840,25 @@
 
         async function fetchSchoolUpcomingTests(schoolId) {
             try {
-                // Since there's no school-wide alarm list endpoint that returns all details, 
-                // we can either add one or fetch buildings and aggregate.
-                // For now, let's assume we can use the buildings-list and then for each building fetch alarms? Too slow.
-                // I'll check if there's a better route.
-                // Looking at route list: fire-safety/alarm/history/{schoolId} exists.
-                // We might need a fire-safety/alarms/{schoolId} to get all alarms.
-                // I'll check if FireSafetyController has something like getAlarms($schoolId).
-                const response = await fetch(`/fire-safety/buildings/${schoolId}`); // This returns buildings WITH alarms in some implementations
+                const response = await fetch(`/fire-safety/buildings/${schoolId}`);
                 const buildings = await response.json();
                 let allAlarms = [];
+                const alarmMap = new Map(); // To avoid duplicates
+
                 buildings.forEach(b => {
-                    if(b.alarm_systems) {
-                        b.alarm_systems.forEach(a => {
+                    const alarms = b.alarm_systems || b.alarmSystems || [];
+                    const alarmsMany = b.alarm_systems_many || b.alarmSystemsMany || [];
+                    
+                    [...alarms, ...alarmsMany].forEach(a => {
+                        if (!alarmMap.has(a.id)) {
                             a.building_no = b.building_no;
+                            alarmMap.set(a.id, a);
                             allAlarms.push(a);
-                        });
-                    }
+                        }
+                    });
                 });
                 updateUpcomingTests(allAlarms, true);
-            } catch(e) { console.error(e); }
+            } catch(e) { console.error('Error fetching upcoming tests:', e); }
         }
 
         async function loadMultiBuildingOptions(schoolId, excludeBuildingId) {
@@ -2942,6 +2972,29 @@
                      statusSelect.innerHTML = addStatusSelect.innerHTML;
                  }
                  
+                 // Filter statuses based on current alarm type name
+                 const currentAlarmTypeName = alarm.alarm_type;
+                 let targetParentId = null;
+
+                 const typeOptions = document.getElementById('addAlarmType').options;
+                 for (let i = 0; i < typeOptions.length; i++) {
+                     if (typeOptions[i].value === currentAlarmTypeName) {
+                         targetParentId = typeOptions[i].getAttribute('data-type-id');
+                         break;
+                     }
+                 }
+
+                 Array.from(statusSelect.querySelectorAll('optgroup')).forEach(optgroup => {
+                     if (optgroup.getAttribute('data-parent-id') === targetParentId) {
+                         optgroup.style.display = '';
+                         optgroup.disabled = false;
+                     } else {
+                         optgroup.style.display = 'none';
+                         optgroup.disabled = true;
+                     }
+                 });
+
+                 
                  // Normalize status for selection
                  let statusVal = alarm.status.toLowerCase().replace('_', ' '); 
                  // Try to match value
@@ -2996,7 +3049,7 @@
             const formData = Object.fromEntries(new FormData(form).entries());
 
             try {
-                const response = await fetch(`/fire-safety/alarm/${id}/update`, {
+                const response = await fetch(`/fire-safety/alarm/${id}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -3182,5 +3235,58 @@
             fetchSchoolUpcomingTests(currentSchoolId);
             loadInspections(currentSchoolId);
         }
+
+        // Connect Alarm Type and its Statuses
+        function connectAlarmTypeAndStatus(typeSelectId, statusSelectId) {
+            const typeSelect = document.getElementById(typeSelectId);
+            const statusSelect = document.getElementById(statusSelectId);
+
+            if (!typeSelect || !statusSelect) return;
+
+            typeSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                const selectedTypeId = selectedOption.getAttribute('data-type-id');
+                let firstVisibleOption = null;
+
+                // Loop through optgroups and hide/show based on parent ID
+                Array.from(statusSelect.querySelectorAll('optgroup')).forEach(optgroup => {
+                    if (optgroup.getAttribute('data-parent-id') === selectedTypeId) {
+                        optgroup.style.display = '';
+                        optgroup.disabled = false;
+                        if (!firstVisibleOption && optgroup.firstElementChild) {
+                            firstVisibleOption = optgroup.firstElementChild;
+                        }
+                    } else {
+                        optgroup.style.display = 'none';
+                        optgroup.disabled = true;
+                    }
+                });
+
+                // Set default to functional, or the first visible option
+                const functionalOption = statusSelect.querySelector('option[value="functional"]');
+                if (functionalOption && !functionalOption.disabled) {
+                    statusSelect.value = "functional";
+                } else if (firstVisibleOption) {
+                    statusSelect.value = firstVisibleOption.value;
+                } else {
+                    statusSelect.value = "";
+                }
+            });
+
+            // Trigger change event to set initial state
+            if (typeSelect.value) {
+                typeSelect.dispatchEvent(new Event('change'));
+            } else {
+                // If no type selected, hide all optgroups initially
+                Array.from(statusSelect.querySelectorAll('optgroup')).forEach(optgroup => {
+                    optgroup.style.display = 'none';
+                    optgroup.disabled = true;
+                });
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            connectAlarmTypeAndStatus('addAlarmType', 'addStatusSelect');
+        });
     </script>
 @endsection

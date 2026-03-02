@@ -421,7 +421,7 @@
     <!-- Main Content -->
     <div class="main-content">
         @if(isset($schools) && $schools->isNotEmpty())
-            @if(auth()->user()->role === 'admin')
+            @if(auth()->user()->role === 'admin' && !request()->routeIs(['fire-safety.dashboard', 'fire-safety.customization']))
             <!-- School Selection Tabs (Admin only) -->
             <div class="row mb-4">
                 <div class="col-12">
@@ -683,7 +683,28 @@
                 console.error('Error:', error);
                 Swal.fire('Error', 'An error occurred', 'error');
             });
+        }
 
+        function switchSchoolAndRedirect(schoolId, redirectUrl) {
+            fetch(`/fire-safety/set-school/${schoolId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = redirectUrl;
+                } else {
+                    Swal.fire('Error', 'Failed to switch school', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire('Error', 'An error occurred', 'error');
+            });
         }
 
         // Move modals to body to escape stacking contexts and ensure they are clickable

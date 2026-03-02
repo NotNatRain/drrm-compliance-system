@@ -64,6 +64,21 @@
         .sortable-handle {
             cursor: move;
             color: #6c757d;
+            display: none; /* Hide sortable handles as requested */
+        }
+
+        .card-header .toggle-icon {
+            cursor: pointer;
+            transition: transform 0.3s;
+            margin-right: 10px;
+        }
+
+        .card-collapsed .card-body {
+            display: none;
+        }
+
+        .card-collapsed .toggle-icon {
+            transform: rotate(-90deg);
         }
     </style>
 @endsection
@@ -246,10 +261,11 @@
             <div class="tab-pane fade" id="system-tab-pane">
                 <div class="row">
                     <!-- Building Types -->
-                    <div class="col-lg-6 mb-4">
+                    <div class="col-md-6 mb-4">
                         <div class="card dashboard-card h-100">
                             <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                 <h6 class="m-0 fw-bold text-primary">
+                                    <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'building-types-card')"></i>
                                     <i class="fas fa-building me-2"></i> Building Types
                                 </h6>
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addBuildingTypeModal">
@@ -257,32 +273,33 @@
                                 </button>
                             </div>
                             <div class="card-body">
-                                <div id="buildingTypesList" class="sortable-list">
+                                <div id="buildingTypesList" class="sortable-list row row-cols-1 row-cols-md-2 g-3">
                                     @foreach($buildingTypes as $type)
-                                    <div class="config-item" data-id="{{ $type->id }}">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <strong>{{ $type->name }}</strong>
-                                                <div class="text-muted small">{{ $type->description }}</div>
+                                    <div class="col">
+                                        <div class="config-item h-100 mb-0" data-id="{{ $type->id }}">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong>{{ $type->name }}</strong>
+                                                    <div class="text-muted small">{{ $type->description }}</div>
+                                                </div>
+                                                <div class="d-flex">
+                                                    <span class="badge config-badge {{ $type->is_active ? 'bg-success' : 'bg-secondary' }}">
+                                                        {{ $type->is_active ? 'Active' : 'Inactive' }}
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div class="d-flex">
-                                                <span class="badge config-badge {{ $type->is_active ? 'bg-success' : 'bg-secondary' }}">
-                                                    {{ $type->is_active ? 'Active' : 'Inactive' }}
-                                                </span>
-                                                <i class="fas fa-grip-vertical sortable-handle ms-3" style="cursor: move;"></i>
+                                            <div class="mt-2">
+                                                <button class="btn btn-sm btn-outline-primary edit-config-btn"
+                                                        data-id="{{ $type->id }}"
+                                                        data-type="building_type"
+                                                        data-name="{{ $type->name }}"
+                                                        data-description="{{ $type->description }}"
+                                                        data-is-active="{{ $type->is_active }}"
+                                                        data-min-floors="{{ $type->min_floors ?? '' }}"
+                                                        data-total-rooms="{{ $type->total_rooms ?? '' }}">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </button>
                                             </div>
-                                        </div>
-                                        <div class="mt-2">
-                                            <button class="btn btn-sm btn-outline-primary edit-config-btn"
-                                                    data-id="{{ $type->id }}"
-                                                    data-type="building_type"
-                                                    data-name="{{ $type->name }}"
-                                                    data-description="{{ $type->description }}"
-                                                    data-is-active="{{ $type->is_active }}"
-                                                    data-min-floors="{{ $type->min_floors ?? '' }}"
-                                                    data-total-rooms="{{ $type->total_rooms ?? '' }}">
-                                                <i class="fas fa-edit"></i> Edit
-                                            </button>
                                         </div>
                                     </div>
                                     @endforeach
@@ -292,10 +309,11 @@
                     </div>
 
                     <!-- Alarm Types & Statuses -->
-                    <div class="col-lg-6 mb-4">
+                    <div class="col-md-6 mb-4">
                         <div class="card dashboard-card h-100">
                             <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                 <h6 class="m-0 fw-bold text-primary">
+                                    <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'alarm-config-card')"></i>
                                     <i class="fas fa-bell me-2"></i> Alarm Configuration
                                 </h6>
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addAlarmTypeModal">
@@ -304,31 +322,34 @@
                             </div>
                             <div class="card-body">
                                 <h6>Alarm Types &amp; Statuses</h6>
-                                <div id="alarmTypesList">
+                                <div id="alarmTypesList" class="row row-cols-1 row-cols-md-2 g-3">
                                     @foreach($alarmTypes as $type)
-                                    @php $typeStatuses = $alarmStatusesByType->get($type->id, collect()); @endphp
-                                    <div class="config-item mb-3">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <strong>{{ $type->name }}</strong>
-                                            <span class="badge config-badge {{ $type->is_active ? 'bg-success' : 'bg-secondary' }}">
-                                                {{ $type->is_active ? 'Active' : 'Inactive' }}
-                                            </span>
-                                        </div>
-                                        @if($typeStatuses->isNotEmpty())
-                                        <ul class="list-unstyled small mb-2 ms-3 mt-1">
-                                            @foreach($typeStatuses as $status)
-                                            <li><span class="badge {{ $status->color_class ?? 'bg-secondary' }} me-1">{{ $status->name }}</span></li>
-                                            @endforeach
-                                        </ul>
-                                        @endif
-                                        <div class="mt-2">
-                                            <button class="btn btn-sm btn-outline-primary edit-config-btn"
-                                                    data-id="{{ $type->id }}"
-                                                    data-type="alarm_type"
-                                                    data-name="{{ $type->name }}"
-                                                    data-is-active="{{ $type->is_active }}">
-                                                <i class="fas fa-edit"></i> Edit
-                                            </button>
+                                    <div class="col">
+                                        @php $typeStatuses = $alarmStatusesByType->get($type->id, collect()); @endphp
+                                        <div class="config-item h-100 mb-0">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <strong>{{ $type->name }}</strong>
+                                                <span class="badge config-badge {{ $type->is_active ? 'bg-success' : 'bg-secondary' }}">
+                                                    {{ $type->is_active ? 'Active' : 'Inactive' }}
+                                                </span>
+                                            </div>
+                                            @if($typeStatuses->isNotEmpty())
+                                            <ul class="list-unstyled small mb-2 ms-3 mt-1">
+                                                @foreach($typeStatuses as $status)
+                                                <li><span class="badge {{ $status->color_class ?? 'bg-secondary' }} me-1">{{ $status->name }}</span></li>
+                                                @endforeach
+                                            </ul>
+                                            @endif
+                                            <div class="mt-2">
+                                                <button class="btn btn-sm btn-outline-primary edit-config-btn"
+                                                        data-id="{{ $type->id }}"
+                                                        data-type="alarm_type"
+                                                        data-name="{{ $type->name }}"
+                                                        data-is-active="{{ $type->is_active }}"
+                                                        data-statuses="{{ $typeStatuses->toJson() }}">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                     @endforeach
@@ -338,10 +359,11 @@
                     </div>
 
                     <!-- Fire Extinguisher Configuration -->
-                    <div class="col-lg-6 mb-4">
+                    <div class="col-md-6 mb-4">
                         <div class="card dashboard-card h-100">
                             <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                 <h6 class="m-0 fw-bold text-primary">
+                                    <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'extinguisher-config-card')"></i>
                                     <i class="fas fa-fire-extinguisher me-2"></i> Extinguisher Configuration
                                 </h6>
                                 <div>
@@ -356,22 +378,24 @@
                             <div class="card-body">
                                 <div class="mb-4">
                                     <h6>Extinguisher Types</h6>
-                                    <div id="extinguisherTypesList">
+                                    <div id="extinguisherTypesList" class="row row-cols-1 row-cols-md-2 g-3">
                                         @foreach($extinguisherTypes as $type)
-                                        <div class="config-item">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <strong>{{ $type->name }}</strong>
-                                                <span class="text-muted small">{{ $type->code }}</span>
-                                            </div>
-                                            <div class="mt-2">
-                                                <button class="btn btn-sm btn-outline-primary edit-config-btn"
-                                                        data-id="{{ $type->id }}"
-                                                        data-type="extinguisher_type"
-                                                        data-name="{{ $type->name }}"
-                                                        data-code="{{ $type->code }}"
-                                                        data-description="{{ $type->description }}">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </button>
+                                        <div class="col">
+                                            <div class="config-item h-100 mb-0">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <strong>{{ $type->name }}</strong>
+                                                    <span class="text-muted small">{{ $type->code }}</span>
+                                                </div>
+                                                <div class="mt-2">
+                                                    <button class="btn btn-sm btn-outline-primary edit-config-btn"
+                                                            data-id="{{ $type->id }}"
+                                                            data-type="extinguisher_type"
+                                                            data-name="{{ $type->name }}"
+                                                            data-code="{{ $type->code }}"
+                                                            data-description="{{ $type->description }}">
+                                                        <i class="fas fa-edit"></i> Edit
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                         @endforeach
@@ -380,30 +404,32 @@
 
                                 <div>
                                     <h6>Extinguisher Status</h6>
-                                    <div id="extinguisherStatusList">
+                                    <div id="extinguisherStatusList" class="row row-cols-1 row-cols-md-2 g-3">
                                         @foreach($extinguisherStatuses as $status)
-                                        <div class="config-item">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <strong>{{ $status->name }}</strong>
-                                                    @if($status->pressure_min !== null || $status->pressure_max !== null)
-                                                    <div class="small text-muted">Pressure: {{ $status->pressure_min !== null && $status->pressure_max !== null ? $status->pressure_min . ' - ' . $status->pressure_max : ($status->pressure_min ?? $status->pressure_max) }} (psi)</div>
-                                                    @else
-                                                    <div class="small text-muted">Pressure: —</div>
-                                                    @endif
+                                        <div class="col">
+                                            <div class="config-item h-100 mb-0">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <strong>{{ $status->name }}</strong>
+                                                        @if($status->pressure_min !== null || $status->pressure_max !== null)
+                                                        <div class="small text-muted">Pressure: {{ $status->pressure_min !== null && $status->pressure_max !== null ? $status->pressure_min . ' - ' . $status->pressure_max : ($status->pressure_min ?? $status->pressure_max) }} (psi)</div>
+                                                        @else
+                                                        <div class="small text-muted">Pressure: —</div>
+                                                        @endif
+                                                    </div>
+                                                    <span class="badge config-badge {{ $status->color_class ?? 'bg-secondary' }}">{{ $status->category ?? '—' }}</span>
                                                 </div>
-                                                <span class="badge config-badge {{ $status->color_class ?? 'bg-secondary' }}">{{ $status->category ?? '—' }}</span>
-                                            </div>
-                                            <div class="mt-2">
-                                                <button class="btn btn-sm btn-outline-primary edit-config-btn"
-                                                        data-id="{{ $status->id }}"
-                                                        data-type="extinguisher_status"
-                                                        data-name="{{ $status->name }}"
-                                                        data-description="{{ $status->description }}"
-                                                        data-pressure-min="{{ $status->pressure_min ?? '' }}"
-                                                        data-pressure-max="{{ $status->pressure_max ?? '' }}">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </button>
+                                                <div class="mt-2">
+                                                    <button class="btn btn-sm btn-outline-primary edit-config-btn"
+                                                            data-id="{{ $status->id }}"
+                                                            data-type="extinguisher_status"
+                                                            data-name="{{ $status->name }}"
+                                                            data-description="{{ $status->description }}"
+                                                            data-pressure-min="{{ $status->pressure_min ?? '' }}"
+                                                            data-pressure-max="{{ $status->pressure_max ?? '' }}">
+                                                        <i class="fas fa-edit"></i> Edit
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                         @endforeach
@@ -414,10 +440,11 @@
                     </div>
 
                     <!-- Safety Features -->
-                    <div class="col-lg-6 mb-4">
+                    <div class="col-md-6 mb-4">
                         <div class="card dashboard-card h-100">
                             <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                 <h6 class="m-0 fw-bold text-primary">
+                                    <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'safety-features-card')"></i>
                                     <i class="fas fa-shield-alt me-2"></i> Safety Features
                                 </h6>
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addSafetyFeatureModal">
@@ -425,28 +452,29 @@
                                 </button>
                             </div>
                             <div class="card-body">
-                                <div id="safetyFeaturesList" class="sortable-list">
+                                <div id="safetyFeaturesList" class="sortable-list row row-cols-1 row-cols-md-2 g-3">
                                     @foreach($safetyFeatures as $feature)
-                                    <div class="config-item" data-id="{{ $feature->id }}">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <strong>{{ $feature->name }}</strong>
-                                                <div class="text-muted small">{{ $feature->description }}</div>
+                                    <div class="col">
+                                        <div class="config-item h-100 mb-0" data-id="{{ $feature->id }}">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong>{{ $feature->name }}</strong>
+                                                    <div class="text-muted small">{{ $feature->description }}</div>
+                                                </div>
+                                                <div class="d-flex">
+                                                    <span class="badge config-badge bg-info">{{ $feature->category }}</span>
+                                                </div>
                                             </div>
-                                            <div class="d-flex">
-                                                <span class="badge config-badge bg-info">{{ $feature->category }}</span>
-                                                <i class="fas fa-grip-vertical sortable-handle ms-3" style="cursor: move;"></i>
+                                            <div class="mt-2">
+                                                <button class="btn btn-sm btn-outline-primary edit-config-btn"
+                                                        data-id="{{ $feature->id }}"
+                                                        data-type="safety_feature"
+                                                        data-name="{{ $feature->name }}"
+                                                        data-description="{{ $feature->description }}"
+                                                        data-category="{{ $feature->category }}">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </button>
                                             </div>
-                                        </div>
-                                        <div class="mt-2">
-                                            <button class="btn btn-sm btn-outline-primary edit-config-btn"
-                                                    data-id="{{ $feature->id }}"
-                                                    data-type="safety_feature"
-                                                    data-name="{{ $feature->name }}"
-                                                    data-description="{{ $feature->description }}"
-                                                    data-category="{{ $feature->category }}">
-                                                <i class="fas fa-edit"></i> Edit
-                                            </button>
                                         </div>
                                     </div>
                                     @endforeach
@@ -456,10 +484,11 @@
                     </div>
 
                     <!-- Room Types & Calculated Priority -->
-                    <div class="col-lg-6 mb-4">
+                    <div class="col-md-6 mb-4">
                         <div class="card dashboard-card h-100">
                             <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                 <h6 class="m-0 fw-bold text-primary">
+                                    <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'room-types-card')"></i>
                                     <i class="fas fa-door-open me-2"></i> Room Types
                                 </h6>
                                 <div>
@@ -474,24 +503,26 @@
                             <div class="card-body">
                                 <div class="mb-4">
                                     <h6>Calculated Priority</h6>
-                                    <div id="calculatedPriorityList">
+                                    <div id="calculatedPriorityList" class="row row-cols-1 row-cols-md-2 g-3">
                                         @foreach(($calculatedPriorities ?? collect()) as $p)
-                                        <div class="config-item">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <strong>{{ $p->name }}</strong>
-                                                    <div class="small text-muted">Max covered rooms: {{ $p->max_rooms_covered ?? '—' }} (max 5)</div>
+                                        <div class="col">
+                                            <div class="config-item h-100 mb-0">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <strong>{{ $p->name }}</strong>
+                                                        <div class="small text-muted">Max covered rooms: {{ $p->max_rooms_covered ?? '—' }} (max 5)</div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div class="mt-2">
-                                                <button class="btn btn-sm btn-outline-primary edit-config-btn"
-                                                        data-id="{{ $p->id }}"
-                                                        data-type="calculated_priority"
-                                                        data-name="{{ $p->name }}"
-                                                        data-description="{{ $p->description }}"
-                                                        data-max-rooms="{{ $p->max_rooms_covered ?? '' }}">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </button>
+                                                <div class="mt-2">
+                                                    <button class="btn btn-sm btn-outline-primary edit-config-btn"
+                                                            data-id="{{ $p->id }}"
+                                                            data-type="calculated_priority"
+                                                            data-name="{{ $p->name }}"
+                                                            data-description="{{ $p->description }}"
+                                                            data-max-rooms="{{ $p->max_rooms_covered ?? '' }}">
+                                                        <i class="fas fa-edit"></i> Edit
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                         @endforeach
@@ -500,30 +531,32 @@
 
                                 <div>
                                     <h6>Room Types</h6>
-                                    <div id="roomTypesList">
+                                    <div id="roomTypesList" class="row row-cols-1 row-cols-md-2 g-3">
                                         @foreach(($roomTypes ?? collect()) as $rt)
-                                        @php $p = ($calculatedPriorities ?? collect())->firstWhere('id', $rt->parent_id); @endphp
-                                        <div class="config-item">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <strong>{{ $rt->name }}</strong>
-                                                    <div class="small text-muted">
-                                                        Priority: {{ $p->name ?? '—' }}
-                                                        @if($p && $p->max_rooms_covered)
-                                                            (Up to {{ $p->max_rooms_covered }} rooms)
-                                                        @endif
+                                        <div class="col">
+                                            @php $p = ($calculatedPriorities ?? collect())->firstWhere('id', $rt->parent_id); @endphp
+                                            <div class="config-item h-100 mb-0">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <strong>{{ $rt->name }}</strong>
+                                                        <div class="small text-muted">
+                                                            Priority: {{ $p->name ?? '—' }}
+                                                            @if($p && $p->max_rooms_covered)
+                                                                (Up to {{ $p->max_rooms_covered }} rooms)
+                                                            @endif
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                            <div class="mt-2">
-                                                <button class="btn btn-sm btn-outline-primary edit-config-btn"
-                                                        data-id="{{ $rt->id }}"
-                                                        data-type="room_type"
-                                                        data-name="{{ $rt->name }}"
-                                                        data-description="{{ $rt->description }}"
-                                                        data-parent-id="{{ $rt->parent_id ?? '' }}">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </button>
+                                                <div class="mt-2">
+                                                    <button class="btn btn-sm btn-outline-primary edit-config-btn"
+                                                            data-id="{{ $rt->id }}"
+                                                            data-type="room_type"
+                                                            data-name="{{ $rt->name }}"
+                                                            data-description="{{ $rt->description }}"
+                                                            data-parent-id="{{ $rt->parent_id ?? '' }}">
+                                                        <i class="fas fa-edit"></i> Edit
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                         @endforeach
@@ -532,14 +565,13 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
 
                     <!-- School Inspection Checklist -->
-                    <div class="col-lg-6 mb-4">
-                        <div class="card dashboard-card h-100">
+                    <div class="col-md-6 mb-4">
+                        <div class="card dashboard-card h-100" id="inspection-checklist-card">
                             <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                 <h6 class="m-0 fw-bold text-primary">
+                                    <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'inspection-checklist-card')"></i>
                                     <i class="fas fa-tasks me-2"></i> Inspection Checklist
                                 </h6>
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addInspectionChecklistModal">
@@ -547,31 +579,30 @@
                                 </button>
                             </div>
                             <div class="card-body">
-                                <div id="inspectionChecklistList" class="sortable-list">
+                                <div id="inspectionChecklistList" class="sortable-list row row-cols-1 row-cols-md-2 g-3">
                                     @foreach($inspectionChecklists as $item)
-                                    <div class="config-item" data-id="{{ $item->id }}">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <strong>{{ $item->name }}</strong>
-                                                <div class="text-muted small">{{ $item->description }}</div>
+                                    <div class="col">
+                                        <div class="config-item h-100 mb-0" data-id="{{ $item->id }}">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong>{{ $item->name }}</strong>
+                                                    <div class="text-muted small">{{ $item->description }}</div>
+                                                </div>
                                             </div>
-                                            <div class="d-flex align-items-center">
-                                                <i class="fas fa-grip-vertical sortable-handle me-3"></i>
+                                            <div class="mt-2 text-end">
+                                                <button class="btn btn-sm btn-outline-primary edit-config-btn"
+                                                        data-id="{{ $item->id }}"
+                                                        data-type="inspection_checklist"
+                                                        data-name="{{ $item->name }}"
+                                                        data-description="{{ $item->description }}">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger delete-config-btn"
+                                                        data-id="{{ $item->id }}"
+                                                        data-type="inspection_checklist">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
                                             </div>
-                                        </div>
-                                        <div class="mt-2 text-end">
-                                            <button class="btn btn-sm btn-outline-primary edit-config-btn"
-                                                    data-id="{{ $item->id }}"
-                                                    data-type="inspection_checklist"
-                                                    data-name="{{ $item->name }}"
-                                                    data-description="{{ $item->description }}">
-                                                <i class="fas fa-edit"></i> Edit
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-danger delete-config-btn"
-                                                    data-id="{{ $item->id }}"
-                                                    data-type="inspection_checklist">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
                                         </div>
                                     </div>
                                     @endforeach
@@ -581,10 +612,11 @@
                     </div>
 
                     <!-- Other Observers -->
-                    <div class="col-lg-6 mb-4">
-                        <div class="card dashboard-card h-100">
+                    <div class="col-md-6 mb-4">
+                        <div class="card dashboard-card h-100" id="other-observers-card">
                             <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                 <h6 class="m-0 fw-bold text-primary">
+                                    <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'other-observers-card')"></i>
                                     <i class="fas fa-users-viewfinder me-2"></i> Other Observers
                                 </h6>
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addInspectionObserverModal">
@@ -592,31 +624,30 @@
                                 </button>
                             </div>
                             <div class="card-body">
-                                <div id="inspectionObserverList" class="sortable-list">
+                                <div id="inspectionObserverList" class="sortable-list row row-cols-1 row-cols-md-2 g-3">
                                     @foreach($inspectionObservers as $item)
-                                    <div class="config-item" data-id="{{ $item->id }}">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <strong>{{ $item->name }}</strong>
-                                                <div class="text-muted small">{{ $item->description }}</div>
+                                    <div class="col">
+                                        <div class="config-item h-100 mb-0" data-id="{{ $item->id }}">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <strong>{{ $item->name }}</strong>
+                                                    <div class="text-muted small">{{ $item->description }}</div>
+                                                </div>
                                             </div>
-                                            <div class="d-flex align-items-center">
-                                                <i class="fas fa-grip-vertical sortable-handle me-3"></i>
+                                            <div class="mt-2 text-end">
+                                                <button class="btn btn-sm btn-outline-primary edit-config-btn"
+                                                        data-id="{{ $item->id }}"
+                                                        data-type="inspection_observer"
+                                                        data-name="{{ $item->name }}"
+                                                        data-description="{{ $item->description }}">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger delete-config-btn"
+                                                        data-id="{{ $item->id }}"
+                                                        data-type="inspection_observer">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
                                             </div>
-                                        </div>
-                                        <div class="mt-2 text-end">
-                                            <button class="btn btn-sm btn-outline-primary edit-config-btn"
-                                                    data-id="{{ $item->id }}"
-                                                    data-type="inspection_observer"
-                                                    data-name="{{ $item->name }}"
-                                                    data-description="{{ $item->description }}">
-                                                <i class="fas fa-edit"></i> Edit
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-danger delete-config-btn"
-                                                    data-id="{{ $item->id }}"
-                                                    data-type="inspection_observer">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
                                         </div>
                                     </div>
                                     @endforeach
@@ -624,6 +655,8 @@
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
 
             <!-- Backup & Restore Tab -->
             <div class="tab-pane fade" id="backup-tab-pane">
@@ -2544,6 +2577,65 @@
             const isRoomType = (type === 'room_type');
             const isInspectionChecklist = (type === 'inspection_checklist');
             const isInspectionObserver = (type === 'inspection_observer');
+            const isAlarmType = (type === 'alarm_type');
+
+            let alarmStatusesHtml = '';
+            if (isAlarmType) {
+                const statuses = JSON.parse(event.currentTarget.dataset.statuses || '[]');
+                alarmStatusesHtml = `
+                    <div class="mt-4 border-top pt-3">
+                        <h6>Manage Statuses</h6>
+                        <small class="text-muted d-block mb-3">Add or edit statuses for this alarm type. Deletion is not allowed.</small>
+                        <div id="alarmEditStatusesList">
+                            ${statuses.map((s, index) => `
+                                <div class="config-item p-2 mb-2 bg-light">
+                                    <input type="hidden" name="statuses[${index}][id]" value="${s.id}">
+                                    <div class="row g-2">
+                                        <div class="col-8">
+                                            <input type="text" class="form-control form-control-sm" name="statuses[${index}][name]" value="${s.name}" required>
+                                        </div>
+                                        <div class="col-4">
+                                            <select class="form-control form-control-sm" name="statuses[${index}][color_class]">
+                                                <option value="bg-success" ${s.color_class === 'bg-success' ? 'selected' : ''}>Green (Functional)</option>
+                                                <option value="bg-danger" ${s.color_class === 'bg-danger' ? 'selected' : ''}>Red (Non-Functional)</option>
+                                                <option value="bg-warning text-dark" ${s.color_class === 'bg-warning text-dark' ? 'selected' : ''}>Yellow (Maintenance)</option>
+                                                <option value="bg-secondary" ${s.color_class === 'bg-secondary' ? 'selected' : ''}>Gray</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-info w-100" onclick="addNewAlarmStatusToModal()">
+                            <i class="fas fa-plus me-1"></i> Add More Status
+                        </button>
+                    </div>
+                `;
+                
+                // Expose helper to add new status fields
+                window.addNewAlarmStatusToModal = function() {
+                    const list = document.getElementById('alarmEditStatusesList');
+                    const index = list.children.length;
+                    const html = `
+                        <div class="config-item p-2 mb-2 bg-light">
+                            <div class="row g-2">
+                                <div class="col-8">
+                                    <input type="text" class="form-control form-control-sm" name="statuses[${index}][name]" placeholder="New Status Name" required>
+                                </div>
+                                <div class="col-4">
+                                    <select class="form-control form-control-sm" name="statuses[${index}][color_class]">
+                                        <option value="bg-success">Green</option>
+                                        <option value="bg-danger">Red</option>
+                                        <option value="bg-warning">Yellow</option>
+                                        <option value="bg-secondary" selected>Gray</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    list.insertAdjacentHTML('beforeend', html);
+                };
+            }
             const pressureRangeHtml = isExtinguisherStatus ? `
                                     <div class="mb-3">
                                         <label class="form-label">Pressure level range (psi) *</label>
@@ -2635,6 +2727,7 @@
                                         </div>
                                     </div>
                                     ` : ''}
+                                    ${alarmStatusesHtml}
                                 </form>
                             </div>
                             <div class="modal-footer">
@@ -2749,6 +2842,27 @@
                     text: 'Failed to delete configuration'
                 });
             }
+        }
+        // Initialize card states
+        document.addEventListener('DOMContentLoaded', function() {
+            const cardStates = JSON.parse(localStorage.getItem('fireSafetyCardStates') || '{}');
+            Object.keys(cardStates).forEach(cardId => {
+                const card = document.getElementById(cardId);
+                if (card && cardStates[cardId] === 'collapsed') {
+                    card.classList.add('card-collapsed');
+                }
+            });
+        });
+
+        // Toggle division
+        function toggleDivision(icon, cardId) {
+            const card = icon.closest('.card');
+            card.id = cardId; // Ensure card has ID for persistence
+            card.classList.toggle('card-collapsed');
+            
+            const cardStates = JSON.parse(localStorage.getItem('fireSafetyCardStates') || '{}');
+            cardStates[cardId] = card.classList.contains('card-collapsed') ? 'collapsed' : 'expanded';
+            localStorage.setItem('fireSafetyCardStates', JSON.stringify(cardStates));
         }
     </script>
 @endsection

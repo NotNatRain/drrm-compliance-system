@@ -35,7 +35,20 @@
         .health-warning { background-color: #ffc107; } /* For Refill */
         .health-danger { background-color: #dc3545; } /* Empty/Missing */
 
-        /* SweetAlert2 Custom Styling */
+        /* Card toggle styling */
+        .card-header .toggle-icon {
+            cursor: pointer;
+            transition: transform 0.3s;
+            margin-right: 10px;
+        }
+
+        .card-collapsed .card-body {
+            display: none;
+        }
+
+        .card-collapsed .toggle-icon {
+            transform: rotate(-90deg);
+        }
     </style>
 @endsection
 
@@ -144,9 +157,10 @@
                         <!-- Buildings -->
                         <div class="row">
                             <div class="col-12 mb-4">
-                                <div class="card dashboard-card">
+                                <div class="card dashboard-card" id="room-ext-card-{{ $school->id }}">
                                     <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                         <h6 class="m-0 fw-bold text-primary">
+                                            <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'room-ext-card-{{ $school->id }}')"></i>
                                             <i class="fas fa-list me-2"></i> Room-Based Extinguishers - {{ $school->school_name }}
                                         </h6>
                                         <div>
@@ -245,7 +259,7 @@
                                                                                                     <div class="text-muted small">{{ $room->room_code }}</div>
                                                                                                 </td>
                                                                                                 <td>
-                                                                                                    <span class="badge bg-{{ $room->room_type === 'laboratory' ? 'danger' : ($room->room_type === 'auxiliary' ? 'info' : 'secondary') }}">
+                                                                                                    <span class="badge bg-{{ $room->room_type === 'laboratory' ? 'danger' : ($room->room_type === 'clinic' ? 'info' : 'secondary') }}">
                                                                                                         {{ ucfirst($room->room_type) }}
                                                                                                     </span>
                                                                                                 </td>
@@ -259,6 +273,15 @@
                                                                                                     @else
                                                                                                         <span class="badge bg-warning text-dark">Uncovered</span>
                                                                                                     @endif
+@if(Str::contains(strtolower($room->room_type), ['administration', 'office']))
+<div class="mt-1">
+<span class="badge {{ $room->has_smoke_detector ? 'bg-success' : 'bg-danger' }}">
+<i class="fas {{ $room->has_smoke_detector ? 'fa-check-circle' : 'fa-times-circle' }} me-1"></i>
+Smoke Detector
+</span>
+</div>
+@endif
+
                                                                                                 </td>
                                                                                                 <td class="text-end">
                                                                                                     <button class="btn btn-sm btn-outline-primary" onclick="openUpdateRoomModal({{ $room->id }})">
@@ -380,9 +403,10 @@
                         <!-- Recent Inspections -->
                         <div class="row mt-4">
                             <div class="col-12">
-                                <div class="card dashboard-card">
+                                <div class="card dashboard-card" id="recent-inspections-card-{{ $school->id }}">
                                     <div class="card-header py-3 d-flex justify-content-between align-items-center bg-light">
                                         <h6 class="m-0 fw-bold text-dark">
+                                            <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'recent-inspections-card-{{ $school->id }}')"></i>
                                             <i class="fas fa-history me-2"></i> Recent Inspections - {{ $school->school_name }}
                                         </h6>
                                         <button class="btn btn-sm btn-outline-secondary" onclick="loadRecentInspections({{ $school->id }})">
@@ -525,6 +549,15 @@
                             </select>
                             <div class="form-text small">Select the room that houses the extinguisher covering this room. Only rooms on the same floor with coverage capacity are shown.</div>
                         </div>
+
+                        <div class="mb-3 d-none" id="updateRoomSmokeDetectorRow">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_smoke_detector" id="updateRoomSmokeDetector" value="1">
+                                <label class="form-check-label fw-bold" for="updateRoomSmokeDetector">
+                                    Has Smoke Detector?
+                                </label>
+                            </div>
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -597,6 +630,15 @@
                         <div class="mb-3">
                             <label class="form-label fw-bold text-muted">Calculated Priority</label>
                             <input type="text" class="form-control bg-light" id="room_priority" readonly value="">
+                        </div>
+
+                        <div class="mb-3 d-none" id="addRoomSmokeDetectorRow">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_smoke_detector" id="addRoomSmokeDetector" value="1">
+                                <label class="form-check-label fw-bold" for="addRoomSmokeDetector">
+                                    Has Smoke Detector?
+                                </label>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -708,7 +750,7 @@
                         </div>
 
                         <div class="alert alert-info mb-0 py-2 small">
-                            <i class="fas fa-info-circle me-2"></i><strong>Note:</strong> Laboratories can cover themselves + 1 clinic/auxiliary room max.
+                            <i class="fas fa-info-circle me-2"></i><strong>Note:</strong> Laboratories can cover themselves + 1 clinic room max.
                         </div>
                     </form>
                 </div>
@@ -1009,6 +1051,16 @@
             const opt = typeSelect?.selectedOptions?.[0];
             const label = opt?.dataset?.priorityLabel || '';
             const maxRooms = opt?.dataset?.maxRooms || '';
+            
+            const roomTypeName = opt ? opt.textContent.trim().toLowerCase() : '';
+            const smokeDetectorRow = document.getElementById('addRoomSmokeDetectorRow');
+            if (roomTypeName.includes('administration') || roomTypeName.includes('office')) {
+                smokeDetectorRow.classList.remove('d-none');
+            } else {
+                smokeDetectorRow.classList.add('d-none');
+                document.getElementById('addRoomSmokeDetector').checked = false;
+            }
+
             if (label) {
                 priorityInput.value = maxRooms ? `${label} (Up to ${maxRooms} rooms)` : label;
             } else {
@@ -1122,7 +1174,7 @@
                 }
             });
 
-            // If center is laboratory: allow only 2 rooms total and only auxiliary can be the other
+            // If center is laboratory: allow only 2 rooms total and only clinic can be the other
             if (centerType === 'laboratory') {
                 Array.from(coveredSelect.options).forEach(o => {
                     const t = o.dataset.roomType;
@@ -1130,7 +1182,7 @@
                         o.disabled = false;
                         return;
                     }
-                    o.disabled = (t !== 'auxiliary');
+                    o.disabled = (t !== 'clinic');
                     if (o.disabled) o.selected = false;
                 });
             } else {
@@ -1181,7 +1233,7 @@
 
             const centerType = document.getElementById('centerRoomSelect').selectedOptions[0]?.dataset?.roomType;
             if (centerType === 'laboratory' && covered.length > 2) {
-                Swal.fire('Constraint Error', 'Laboratory can only cover itself, or itself + 1 clinic/auxiliary room.', 'warning');
+                Swal.fire('Constraint Error', 'Laboratory can only cover itself, or itself + 1 clinic room.', 'warning');
                 return;
             }
 
@@ -1522,6 +1574,17 @@
                     });
                 }
 
+                // Smoke detector checkbox for Admin/Office
+                const smokeDetectorRow = document.getElementById('updateRoomSmokeDetectorRow');
+                const smokeDetectorInput = document.getElementById('updateRoomSmokeDetector');
+                const typeName = (data.room_type || '').toLowerCase();
+                if (typeName.includes('administration') || typeName.includes('office')) {
+                    smokeDetectorRow.classList.remove('d-none');
+                    smokeDetectorInput.checked = !!data.has_smoke_detector;
+                } else {
+                    smokeDetectorRow.classList.add('d-none');
+                }
+
                 const modalEl = document.getElementById('updateRoomModal');
                 const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
                 modal.show();
@@ -1575,11 +1638,34 @@
             openUpdateRoomModal(roomId);
         }
 
-        // Fix 4: Auto-load Recent Inspections
-        document.addEventListener('DOMContentLoaded', () => {
-             if (typeof currentSchoolId !== 'undefined' && currentSchoolId) {
-                loadRecentInspections(currentSchoolId);
-             }
+        // Initialize card states
+        document.addEventListener('DOMContentLoaded', function() {
+            const cardStates = JSON.parse(localStorage.getItem('fireSafetyExtCardStates') || '{}');
+            Object.keys(cardStates).forEach(cardId => {
+                const card = document.getElementById(cardId);
+                // We use a general check or specifically look for our cards
+                if (card && cardStates[cardId] === 'collapsed') {
+                    card.classList.add('card-collapsed');
+                }
+            });
+
+            // Initial load of inspections for the currently active tab
+            const activeTab = document.querySelector('.tab-pane.show.active');
+            if (activeTab) {
+                const sId = activeTab.id.replace('school-', '');
+                loadRecentInspections(sId);
+            }
         });
+
+        // Toggle division function
+        function toggleDivision(icon, cardId) {
+            const card = icon.closest('.card');
+            card.id = cardId;
+            card.classList.toggle('card-collapsed');
+            
+            const cardStates = JSON.parse(localStorage.getItem('fireSafetyExtCardStates') || '{}');
+            cardStates[cardId] = card.classList.contains('card-collapsed') ? 'collapsed' : 'expanded';
+            localStorage.setItem('fireSafetyExtCardStates', JSON.stringify(cardStates));
+        }
     </script>
 @endsection

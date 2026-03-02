@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class FireSafetySchool extends Model
 {
@@ -29,27 +30,32 @@ class FireSafetySchool extends Model
     ];
 
     // Relationships
-    public function extinguishers(): HasMany
+    public function extinguishers(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(FireSafetyExtinguisher::class, 'school_id');
     }
 
-    public function alarmSystems(): HasMany
+    public function alarmSystems(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(FireSafetyAlarmSystem::class, 'school_id');
     }
 
-    public function buildings(): HasMany
+    public function buildings(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(FireSafetyBuilding::class, 'school_id');
     }
 
-    public function evacuationPlans(): HasMany
+    public function evacuationPlans(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(FireSafetyEvacuationPlan::class, 'school_id');
     }
+
+    public function schoolEvacuationPlan(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(FireSafetyEvacuationPlan::class, 'school_id')->whereNull('building_id')->where('status', 'active');
+    }
     
-    public function rooms(): HasMany
+    public function rooms(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(FireSafetyRoom::class, 'school_id');
     }
@@ -67,6 +73,11 @@ class FireSafetySchool extends Model
     // Helper methods for evacuation plans page
     public function getBuildingsWithPlansCountAttribute(): int
     {
+        // If there's an active school-wide plan, all buildings are technically covered
+        if ($this->schoolEvacuationPlan) {
+            return $this->buildings()->count();
+        }
+
         return $this->buildings()->whereHas('evacuationPlan', function($query) {
             $query->where('status', 'active');
         })->count();
@@ -79,20 +90,20 @@ class FireSafetySchool extends Model
     
     public function getTotalFunctionalAlarmsAttribute(): int
     {
-        return $this->buildings()->withCount(['alarmSystems as functional_count' => function($query) {
-            $query->whereIn('status', ['functional', 'online']);
-        }])->get()->sum('functional_count');
+        return $this->alarmSystems()->whereIn('status', ['active', 'functional', 'online'])->count();
     }
     
     public function getTotalActiveExtinguishersAttribute(): int
     {
-        return $this->buildings()->withCount(['fireExtinguishers as active_count' => function($query) {
-            $query->where('status', 'active');
-        }])->get()->sum('active_count');
+        return $this->extinguishers()->where('status', 'active')->count();
     }
     
     public function getEvacuationCoveragePercentageAttribute(): float
     {
+        if ($this->schoolEvacuationPlan) {
+            return 100.0;
+        }
+
         $totalBuildings = $this->buildings()->count();
         if ($totalBuildings === 0) return 0;
         

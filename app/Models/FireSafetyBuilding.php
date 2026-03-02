@@ -77,7 +77,7 @@ class FireSafetyBuilding extends Model
     // Helper methods
     public function getFunctionalAlarmsCountAttribute(): int
     {
-        return $this->alarmSystems()->whereIn('status', ['functional', 'online'])->count();
+        return $this->alarmSystems()->where('status', 'active')->count();
     }
     
     public function getActiveExtinguishersCountAttribute(): int
@@ -97,20 +97,32 @@ class FireSafetyBuilding extends Model
     {
         $score = 0;
         
-        // Check alarms (30 points)
+        // 1. Check Alarms (30 points)
+        // Turns green/compliant if there is a functional alarm
         if ($this->functionalAlarmsCount > 0) {
             $score += 30;
         }
         
-        // Check extinguishers (40 points)
+        // 2. Check Extinguishers (30 points)
+        // Must meet the minimum required active extinguishers
         if ($this->activeExtinguishersCount >= $this->requiredExtinguishersCount) {
-            $score += 40;
+            $score += 30;
         }
         
-        // Check emergency exits (30 points)
-        $requiredExits = min(2, ceil(($this->floors ?? 1) * 0.5));
-        if ($this->emergency_exits >= $requiredExits) {
-            $score += 30;
+        // 3. Check Evacuation Plans (30 or 40 points)
+        // 100% (40 points) if specific building plan exists
+        // 90% (30 points) if only school-wide plan exists
+        if ($this->hasEvacuationPlan()) {
+            $score += 40;
+        } else {
+            // Check for school-wide plan
+            $hasSchoolPlan = FireSafetyEvacuationPlan::where('school_id', $this->school_id)
+                ->whereNull('building_id')
+                ->where('status', 'active')
+                ->exists();
+            if ($hasSchoolPlan) {
+                $score += 30;
+            }
         }
         
         return $score;

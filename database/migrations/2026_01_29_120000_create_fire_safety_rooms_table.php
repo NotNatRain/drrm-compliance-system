@@ -21,7 +21,7 @@ return new class extends Migration
 
             $table->string('room_code')->nullable(); // e.g. Rm-101
             $table->string('room_name'); // e.g. Room 101, Science Lab
-            $table->enum('room_type', ['classroom', 'laboratory', 'auxiliary', 'office', 'storage', 'others'])
+            $table->enum('room_type', ['classroom', 'laboratory', 'clinic', 'administration', 'storage', 'others'])
                 ->default('classroom');
             $table->unsignedSmallInteger('floor_no')->nullable();
 

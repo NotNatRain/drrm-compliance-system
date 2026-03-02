@@ -206,7 +206,7 @@
                                     <div class="col-12">
                                         <div class="card dashboard-card">
                                             <div class="card-body">
-                                                <div class="d-flex flex-wrap justify-content-center gap-2">
+                                                <div class="d-flex justify-content-between w-100 gap-2">
                                                     @if(auth()->user()->role === 'admin' || (auth()->user()->role === 'contributor' && !auth()->user()->school_id))
                                                         <button class="btn btn-outline-primary flex-grow-1 flex-md-grow-0" data-bs-toggle="modal" data-bs-target="#addInspectionModal">
                                                             <i class="fas fa-plus-circle me-2"></i> Add Inspection
@@ -656,7 +656,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (status === 'unconfigured') {
                 unconfiguredView.style.display = 'block';
                 ongoingView.style.display = 'none';
-                renderUnconfiguredChecklist(school.config_status);
+                renderUnconfiguredChecklist(school.config_status, school.school_id, school.id);
             } else {
                 unconfiguredView.style.display = 'none';
                 ongoingView.style.display = 'block';
@@ -665,7 +665,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    function renderUnconfiguredChecklist(config) {
+    function renderUnconfiguredChecklist(config, schoolIdDisplay, schoolIdDb) {
         const modules = [
             { id: 'Building', key: 'has_buildings', color: 'primary', icon: 'fa-building' },
             { id: 'Alarm', key: 'has_alarms', color: 'info', icon: 'fa-bell' },
@@ -685,11 +685,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 `<span class="badge bg-secondary"><i class="fas fa-clock me-1"></i> Pending</span>`;
 
             const btn = card.querySelector('a');
+            const route = btn.getAttribute('href');
             btn.className = `btn btn-sm mt-2 ${isDone ? 'btn-success' : 'btn-outline-dark'}`;
             if (userRole === 'viewer') {
                 btn.innerHTML = '<i class="fas fa-search me-1"></i> View';
             } else {
-                btn.innerHTML = isDone ? '<i class="fas fa-edit me-1"></i> Update' : '<i class="fas fa-plus me-1"></i> Setup Now';
+                if (!isDone) {
+                    btn.innerHTML = '<i class="fas fa-plus me-1"></i> Setup Now';
+                    if (userRole === 'admin') {
+                         btn.onclick = function(e) {
+                             e.preventDefault();
+                             switchSchoolAndRedirect(schoolIdDb, route);
+                         };
+                    }
+                } else {
+                    btn.innerHTML = '<i class="fas fa-edit me-1"></i> Update';
+                     if (userRole === 'admin') {
+                         btn.onclick = function(e) {
+                             e.preventDefault();
+                             switchSchoolAndRedirect(schoolIdDb, route);
+                         };
+                    }
+                }
             }
         });
     }

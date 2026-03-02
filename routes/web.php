@@ -101,6 +101,7 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     Route::get('/reports/building-summary/{schoolId}', [FireSafetyController::class, 'printBuildingSummary'])->name('fire-safety.report.building-summary');
     Route::get('/reports/alarm-details/{schoolId}', [FireSafetyController::class, 'printAlarmDetails'])->name('fire-safety.report.alarm-details');
     Route::get('/reports/extinguisher-details/{schoolId}', [FireSafetyController::class, 'printExtinguisherDetails'])->name('fire-safety.report.extinguisher-details');
+    Route::get('/reports/evacuation-plans/{schoolId}', [FireSafetyController::class, 'printEvacuationPlans'])->name('fire-safety.report.evacuation-plans');
 
     // School management (Customization page)
     Route::post('/school', [FireSafetyController::class, 'storeSchool'])
@@ -126,6 +127,7 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     Route::get('/alarm/{id}', [FireSafetyController::class, 'getAlarm']);
     Route::post('/alarm/store', [FireSafetyController::class, 'storeAlarm'])->name('fire-safety.alarm.store');
     Route::put('/alarm/{id}', [FireSafetyController::class, 'updateAlarm']);
+    Route::post('/alarm/{id}/update', [FireSafetyController::class, 'updateAlarm'])->name('fire-safety.alarm.update');
     Route::post('/alarm/{id}/test', [FireSafetyController::class, 'testAlarm']);
     Route::post('/alarm/{id}/remove', [FireSafetyController::class, 'removeAlarm'])->name('fire-safety.alarm.remove');
     Route::get('/alarm/history/{schoolId}', [FireSafetyController::class, 'getAlarmHistory'])->name('fire-safety.alarm.history');

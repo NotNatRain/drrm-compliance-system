@@ -58,9 +58,7 @@ return new class extends Migration
             ['name' => 'Laboratory', 'parent_id' => $dedicatedId, 'sort_order' => 3],
             ['name' => 'Clinic', 'parent_id' => $dedicatedId, 'sort_order' => 4],
             ['name' => 'Storage', 'parent_id' => $dedicatedId, 'sort_order' => 5],
-            ['name' => 'Auxiliary', 'parent_id' => $dedicatedId, 'sort_order' => 6],
-            ['name' => 'Office', 'parent_id' => $dedicatedId, 'sort_order' => 7],
-        ];
+          ];
 
         foreach ($defaults as $d) {
             $exists = DB::table('system_configurations')

@@ -62,9 +62,9 @@ class FireSafetyRoom extends Model
     {
         return match($this->room_type) {
             'laboratory' => 'danger',
-            'auxiliary' => 'info',
+            'clinic' => 'info',
             'classroom' => 'primary',
-            'office' => 'success',
+            'administration' => 'success',
             'storage' => 'warning',
             default => 'secondary'
         };

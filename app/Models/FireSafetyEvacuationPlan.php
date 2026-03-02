@@ -23,6 +23,7 @@ class FireSafetyEvacuationPlan extends Model
         'assembly_capacity',
         'emergency_contacts',
         'special_instructions',
+        'safety_features_installed',
         'status',
         'approved_at',
         'map_data'
