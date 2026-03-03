@@ -126,14 +126,14 @@
             border: none;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        
+
         /* Shared Styles for Status/Modals */
         .status-badge {
             padding: 4px 12px;
             border-radius: 20px;
             font-size: 0.8rem;
         }
-        
+
         /* Modals Z-Index Fix */
         .modal { z-index: 1065 !important; }
         .modal-backdrop { z-index: 1060 !important; }
@@ -156,7 +156,7 @@
         }
         .nav-tabs .nav-link:hover {
             color: white;
-            background-color: #8A1217; 
+            background-color: #8A1217;
             border-color: #8A1217 #8A1217 #dee2e6;
         }
         .nav-tabs .nav-link.active {
@@ -166,7 +166,7 @@
             position: relative;
             z-index: 1;
         }
-        
+
         /* School Selection Card */
         .school-select-card {
             cursor: pointer;
@@ -187,16 +187,16 @@
         /* Global Responsive Utilities */
         @media (max-width: 767.98px) {
             body { font-size: 0.85rem; }
-            
+
             /* Force stat cards to 2 columns on mobile (col-md-6 override) */
             .stat-card .col-auto { display: none; } /* hide large icon on mobile */
             .stat-card .card-body .row { display: block; }
             .stat-card .card-body { padding: 8px !important; text-align: center; }
             .stat-card .text-xs { font-size: 0.6rem !important; line-height: 1; margin-bottom: 2px !important; }
             .stat-card .h2 { font-size: 1.1rem !important; margin-bottom: 0 !important; }
-            
+
             .main-content { padding: 10px; }
-            
+
             .card-header.d-flex, .card-header .d-flex {
                 flex-direction: column;
                 align-items: stretch !important;
@@ -218,7 +218,7 @@
                 padding: 4px 8px !important;
                 margin-right: 0 !important;
             }
-            
+
             /* Table Scaling */
             .table { font-size: 0.75rem !important; }
             .table th, .table td { padding: 6px 4px !important; }
@@ -229,13 +229,13 @@
             .h4 { font-size: 1rem !important; }
             .h5 { font-size: 0.9rem !important; }
             .h6 { font-size: 0.85rem !important; }
-            
+
             /* Compact Cards for Mobile */
-            .dashboard-card { 
-                margin-bottom: 10px !important; 
+            .dashboard-card {
+                margin-bottom: 10px !important;
             }
             .dashboard-card .card-body { padding: 8px !important; }
-            
+
 
             .mobile-text-truncate {
                 white-space: nowrap;
@@ -243,12 +243,12 @@
                 text-overflow: ellipsis;
                 max-width: 100%;
             }
-            
+
             .mobile-stack {
                 flex-direction: column !important;
                 gap: 5px !important;
             }
-            
+
             /* High Density Utilities - Mobile Only */
             .mobile-card-body { padding: 8px !important; }
             .mobile-compact-text { font-size: 0.75rem !important; }
@@ -256,7 +256,7 @@
             .mobile-badge { font-size: 0.6rem !important; padding: 2px 4px !important; }
             .mobile-h-80 { height: 80px !important; }
             .mobile-mb-2 { margin-bottom: 0.5rem !important; }
-            
+
             /* Responsive Tabs */
             .nav-tabs {
                 flex-wrap: nowrap !important;
@@ -269,7 +269,7 @@
                 white-space: nowrap !important;
                 padding: 6px 10px !important;
             }
-            
+
             /* Table Fitting Force */
             .compact-mobile-table {
                 font-size: 0.65rem !important;
@@ -285,7 +285,7 @@
                 font-size: 0.55rem !important;
                 padding: 1px 3px !important;
             }
-            
+
             /* Admin Header Fix */
             .settings-tabs .nav-link {
                 padding: 10px !important;
@@ -404,7 +404,7 @@
                         <span>Evacuation Plans</span>
                     </a>
                 </li>
-                
+
                 @if(auth()->user()->role !== 'viewer')
                 <li class="nav-item">
                     <a class="nav-link {{ Route::is('fire-safety.customization') ? 'active' : '' }}" href="{{ route('fire-safety.customization') }}">
@@ -444,7 +444,7 @@
                                     <!-- <= 4 Schools: Show All Tabs -->
                                     @foreach($schools as $school)
                                     <li class="nav-item">
-                                        <button class="nav-link {{ (isset($activeSchool) && $activeSchool->id == $school->id) ? 'active' : '' }}" 
+                                        <button class="nav-link {{ (isset($activeSchool) && $activeSchool->id == $school->id) ? 'active' : '' }}"
                                                 onclick="switchSchool({{ $school->id }})">
                                             {{ $school->school_name }}
                                         </button>
@@ -483,7 +483,7 @@
                         @if(isset($schools))
                             @foreach($schools as $school)
                             <div class="col-md-6 mb-3">
-                                <div class="card school-select-card h-100 {{ (isset($activeSchool) && $activeSchool->id == $school->id) ? 'active' : '' }}" 
+                                <div class="card school-select-card h-100 {{ (isset($activeSchool) && $activeSchool->id == $school->id) ? 'active' : '' }}"
                                      onclick="switchSchool({{ $school->id }})">
                                     <div class="card-body d-flex align-items-center">
                                         <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white me-3" style="width: 50px; height: 50px; flex-shrink: 0;">
@@ -537,12 +537,14 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const notifList = document.getElementById('notificationList');
             const notifBadge = document.getElementById('notifBadge');
             const notifDropdown = document.getElementById('notificationDropdown');
+            const currentUserRole = "{{ auth()->user()->role }}";
+            const currentUserSchoolId = "{{ auth()->user()->school_id }}";
 
             function fetchNotifications() {
                 fetch('{{ route("fire-safety.notifications") }}')
@@ -557,7 +559,7 @@
                 const alerts = data.alerts || [];
                 const events = data.events || [];
                 const all = [...alerts, ...events].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-                
+
                 if (all.length === 0) {
                     notifList.innerHTML = '<div class="dropdown-item text-center py-3 text-muted">No notifications</div>';
                     notifBadge.classList.add('d-none');
@@ -572,7 +574,7 @@
                     const isAlert = item.item_type === 'alert';
                     const icon = isAlert ? 'fa-exclamation-triangle' : 'fa-calendar-alt';
                     const color = isAlert ? (item.type === 'danger' ? 'danger' : 'warning') : 'info';
-                    
+
                     const div = document.createElement('div');
                     div.className = 'dropdown-item p-3 border-bottom';
                     div.innerHTML = `
@@ -587,20 +589,21 @@
                                     <h6 class="mb-0 fw-bold small">${item.title}</h6>
                                     <small class="text-muted" style="font-size: 0.7rem;">${new Date(item.created_at).toLocaleDateString()}</small>
                                 </div>
+                                ${item.posted_by ? `<div class="mb-1 small text-muted">Posted by: ${item.posted_by}</div>` : ''}
                                 <p class="mb-1 small text-truncate" style="max-width: 200px;">${item.description}</p>
                                 <div class="d-flex justify-content-between align-items-center">
                                     <small class="text-muted fw-bold" style="font-size: 0.65rem;">${item.school_name}</small>
-                                    <button class="btn btn-xs btn-outline-primary py-0 px-2 reply-btn" 
-                                            data-id="${item.id}" 
-                                            data-school="${item.school_id}" 
+                                    <button class="btn btn-xs btn-outline-primary py-0 px-2 reply-btn"
+                                            data-id="${item.id}"
+                                            data-school="${item.school_id}"
                                             style="font-size: 0.65rem;">
-                                        Reply
+                                        Reply${item.replies && item.replies.length ? ' ('+item.replies.length+')' : ''}
                                     </button>
                                 </div>
                                 ${item.replies && item.replies.length > 0 ? `
                                     <div class="mt-2 bg-light p-1 rounded border-start border-primary border-3">
-                                        <small class="d-block fw-bold" style="font-size: 0.6rem;">Recent Reply:</small>
-                                        <small class="text-muted" style="font-size: 0.65rem;">${item.replies[item.replies.length-1].message}</small>
+                                        <small class="d-block fw-bold" style="font-size: 0.6rem;">Replies:</small>
+                                        ${item.replies.map(r => `<div class="small text-muted mb-1"><strong>${r.user_name}</strong>: ${r.message}</div>`).join('')}
                                     </div>
                                 ` : ''}
                             </div>
@@ -624,6 +627,32 @@
             // Initial fetch
             fetchNotifications();
 
+            // Auto-select school in Add Alert/Event modals for contributors
+            const alertModalEl = document.getElementById('addAlertModal');
+            const eventModalEl = document.getElementById('addEventModal');
+            if (alertModalEl) {
+                alertModalEl.addEventListener('show.bs.modal', () => {
+                    const sel = document.getElementById('alertSchoolSelect');
+                    if (sel) {
+                        if (currentUserRole !== 'admin') {
+                            sel.value = currentUserSchoolId || '';
+                            sel.disabled = true;
+                        }
+                    }
+                });
+            }
+            if (eventModalEl) {
+                eventModalEl.addEventListener('show.bs.modal', () => {
+                    const sel = document.getElementById('eventSchoolSelect');
+                    if (sel) {
+                        if (currentUserRole !== 'admin') {
+                            sel.value = currentUserSchoolId || '';
+                            sel.disabled = true;
+                        }
+                    }
+                });
+            }
+
             // Handle Reply Submission
             const replyForm = document.getElementById('notifReplyForm');
             replyForm.addEventListener('submit', function(e) {
@@ -635,11 +664,21 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
                     body: JSON.stringify(data)
                 })
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) {
+                        // attempt JSON error otherwise throw text
+                        return response.text().then(txt => {
+                            try { return Promise.reject(JSON.parse(txt)); }
+                            catch(_){ return Promise.reject({ message: txt }); }
+                        });
+                    }
+                    return response.json();
+                })
                 .then(res => {
                     if (res.success) {
                         bootstrap.Modal.getInstance(document.getElementById('notifReplyModal')).hide();
@@ -652,11 +691,14 @@
                         });
                         fetchNotifications();
                         replyForm.reset();
+                    } else {
+                        Swal.fire('Error', res.message || 'Failed to send reply.', 'error');
                     }
                 })
                 .catch(err => {
                     console.error('Error sending reply:', err);
-                    Swal.fire('Error', 'Failed to send reply.', 'error');
+                    const errorMsg = err.message || (err.errors ? Object.values(err.errors).flat().join(', ') : 'Failed to send reply.');
+                    Swal.fire('Error', errorMsg, 'error');
                 });
             });
         });
@@ -718,17 +760,17 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             moveModalsToBody();
-            
+
             // Sidebar Toggle Logic
             const sidebarToggle = document.getElementById('sidebarToggle');
             const sidebarOverlay = document.getElementById('sidebarOverlay');
-            
+
             if (sidebarToggle) {
                 sidebarToggle.addEventListener('click', function() {
                     document.body.classList.toggle('show-sidebar');
                 });
             }
-            
+
             if (sidebarOverlay) {
                 sidebarOverlay.addEventListener('click', function() {
                     document.body.classList.remove('show-sidebar');
@@ -743,7 +785,7 @@
                     }
                 });
             });
-            
+
             // Also watch for dynamically added modals if any
             const observer = new MutationObserver(function(mutations) {
                 mutations.forEach(function(mutation) {
@@ -756,7 +798,7 @@
                     });
                 });
             });
-            
+
             observer.observe(document.body, { childList: true, subtree: true });
         });
     </script>

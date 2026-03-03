@@ -32,8 +32,8 @@
             text-shadow: 0 0 2px rgba(255,255,255,0.8);
         }
         .health-good { background-color: #28a745; } /* OK */
-        .health-warning { background-color: #ffc107; } /* For Refill */
-        .health-danger { background-color: #dc3545; } /* Empty/Missing */
+        .health-warning { background-color: #ffc107; } /* For Preventive Maintenance */
+        .health-danger { background-color: #dc3545; } /* Used/Missing */
 
         /* Card toggle styling */
         .card-header .toggle-icon {
@@ -49,6 +49,19 @@
         .card-collapsed .toggle-icon {
             transform: rotate(-90deg);
         }
+        /* status carousel animation */
+        #statusCarousel .status-slide {
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            position: absolute;
+            right: 0;
+            left: 0;
+        }
+        #statusCarousel .status-slide.active {
+            opacity: 1;
+            position: relative;
+        }
+        #statusCarousel { position: relative; min-height: 2.5rem; }
     </style>
 @endsection
 
@@ -73,13 +86,20 @@
             $evaluationCount = $allExts->where('status', 'active')->count();
             $evaluationPassed = $requiredExtinguishers > 0 && $evaluationCount >= $requiredExtinguishers;
             $compliancePercent = $actualTotalRooms > 0 ? round(($coveredRoomIds->count() / $actualTotalRooms) * 100, 1) : 0;
+
+            // Status Breakdown Metrics
+            $activeCount = $allExts->where('status', 'active')->count();
+            $maintenanceCount = $allExts->where('status', 'maintenance')->count();
+            $usedCount = $allExts->where('status', 'expired')->count();
+            $missingCount = $allExts->where('status', 'missing')->count();
+            $totalExts = $allExts->count();
         @endphp
 
         <!-- Summary -->
         <div class="row mb-4">
 
                             <!-- Total Rooms -->
-                            <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="col-xl-3 col-lg-4 col-md-6 col-6 mb-4">
                                 <div class="card dashboard-card h-100 border-left-primary">
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-center">
@@ -93,54 +113,73 @@
                                 </div>
                             </div>
 
-                            <!-- Room Coverage (Combined) -->
-                            <div class="col-xl-3 col-md-6 mb-4">
+                            <!-- Room Coverage (with Compliance %) -->
+                            <div class="col-xl-3 col-lg-4 col-md-6 col-6 mb-4">
                                 <div class="card dashboard-card h-100 border-left-success">
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <div class="text-xs fw-bold text-dark text-uppercase mb-1">Room Coverage</div>
-                                                <div class="mb-0 fw-bold">
+                                            <div style="width: 100%;">
+                                                <div class="text-xs fw-bold text-dark text-uppercase mb-2">Room Coverage Status</div>
+                                                <div class="mb-3 fw-bold">
                                                     <span class="text-success">{{ $coveredRoomIds->count() }} Covered<i class="bi bi-check-circle-fill ms-1"></i></span>
                                                     <span class="text-muted mx-1">|</span>
                                                     <span class="text-danger">{{ $uncoveredRoomsCount }} Uncovered X</span>
                                                 </div>
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <span class="text-xs text-muted text-uppercase fw-bold">School Coverage Compliance</span>
+                                                    <span class="h5 mb-0 fw-bold text-info">{{ $compliancePercent }}%</span>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Coverage Compliance (%) -->
-                            <div class="col-xl-3 col-md-6 mb-4">
+                            <!-- Existing/Needed Extinguishers with Status Breakdown -->
+                            <div class="col-xl-3 col-lg-4 col-md-6 col-6 mb-4">
+                                <div class="card dashboard-card h-100 border-left-warning">
+                                    <div class="card-body">
+                                        <div>
+                                            <div class="text-xs fw-bold text-warning text-uppercase mb-3">Existing / Needed</div>
+                                            <div class="h2 mb-1 fw-bold text-gray-800">{{ $totalExts }} / {{ $requiredExtinguishers }}</div>
+                                        </div>
+                                        <div class="mt-3" style="position: relative;">
+                                            <div id="statusCarousel" class="small">
+                                                <div class="status-slide active mb-2">
+                                                    <span class="badge bg-success d-inline-block">Active</span>
+                                                    <span class="fw-bold ms-2">{{ $activeCount }}</span>
+                                                </div>
+                                                <div class="status-slide mb-2">
+                                                    <span class="badge bg-warning d-inline-block">For Preventive Maintenance</span>
+                                                    <span class="fw-bold ms-2">{{ $maintenanceCount }}</span>
+                                                </div>
+                                                <div class="status-slide mb-2">
+                                                    <span class="badge bg-info d-inline-block">Used</span>
+                                                    <span class="fw-bold ms-2">{{ $usedCount }}</span>
+                                                </div>
+                                                <div class="status-slide">
+                                                    <span class="badge bg-danger d-inline-block">Missing</span>
+                                                    <span class="fw-bold ms-2">{{ $missingCount }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Evaluation Status -->
+                            <div class="col-xl-3 col-lg-4 col-md-6 col-6 mb-4">
                                 <div class="card dashboard-card h-100 border-left-info">
                                     <div class="card-body">
                                         <div class="d-flex justify-content-between align-items-center">
                                             <div>
-                                                <div class="text-xs fw-bold text-info text-uppercase mb-1">School Coverage Compliance</div>
-                                                <div class="h2 mb-0 fw-bold text-gray-800">
-                                                    {{ $compliancePercent }}%
-                                                </div>
-                                            </div>
-                                            <i class="fas fa-percent fa-2x text-info"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Extinguisher Status Ratio -->
-                            <div class="col-xl-3 col-md-6 mb-4">
-                                <div class="card dashboard-card h-100 border-left-warning">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <div class="text-xs fw-bold text-warning text-uppercase mb-1">School's Fire Extinguisher Evaluation Result</div>
+                                                <div class="text-xs fw-bold text-info text-uppercase mb-1">Passed / Needed</div>
                                                 <div class="h2 mb-0 fw-bold text-gray-800">
                                                     {{ $evaluationCount }} / {{ $requiredExtinguishers }}
                                                     <span class="text-xs text-muted fw-normal">{{ $evaluationPassed ? 'Passed' : 'Failed' }}</span>
                                                 </div>
                                             </div>
-                                            <i class="fas fa-clipboard-check fa-2x text-warning"></i>
+                                            <i class="fas fa-clipboard-check fa-2x text-info"></i>
                                         </div>
                                     </div>
                                 </div>
@@ -211,22 +250,21 @@
 
                                                     <div class="accordion-item mb-2">
                                                         <h2 class="accordion-header" id="heading-{{ $school->id }}-{{ $building->id }}">
-                                                            <button class="accordion-button {{ $loop->first ? '' : 'collapsed' }}" type="button"
+                                                            <button class="accordion-button collapsed" type="button"
                                                                     data-bs-toggle="collapse"
                                                                     data-bs-target="#collapse-{{ $school->id }}-{{ $building->id }}"
-                                                                    aria-expanded="{{ $loop->first ? 'true' : 'false' }}"
+                                                                    aria-expanded="false"
                                                                     aria-controls="collapse-{{ $school->id }}-{{ $building->id }}">
                                                                 <strong class="me-2">{{ $building->building_no }}</strong>
                                                                 <span class="text-muted">{{ $building->building_name }}</span>
                                                             </button>
                                                         </h2>
-                                                        <div id="collapse-{{ $school->id }}-{{ $building->id }}"
-                                                             class="accordion-collapse collapse {{ $loop->first ? 'show' : '' }}"
-                                                             aria-labelledby="heading-{{ $school->id }}-{{ $building->id }}"
-                                                             data-bs-parent="#buildingAccordion-{{ $school->id }}">
+                                                            <div id="collapse-{{ $school->id }}-{{ $building->id }}"
+                                                                class="accordion-collapse collapse"
+                                                                aria-labelledby="heading-{{ $school->id }}-{{ $building->id }}">
                                                             <div class="accordion-body">
                                                                 <div class="row">
-                                                                    <div class="col-lg-7 mb-4">
+                                                                    <div class="col-lg-7 col-md-6 mb-4">
                                                                         <div class="d-flex align-items-center justify-content-between mb-3">
                                                                             <h6 class="fw-bold mb-0"><i class="fas fa-door-closed me-2"></i>Rooms</h6>
                                                                             <div class="bg-light border rounded px-3 py-1 shadow-sm d-flex align-items-center">
@@ -296,17 +334,15 @@ Smoke Detector
                                                                         @endif
                                                                     </div>
 
-                                                                    <div class="col-lg-5 mb-4">
+                                                                    <div class="col-lg-5 col-md-6 mb-4">
                                                                         <div class="d-flex justify-content-between align-items-center mb-2">
                                                                             <h6 class="fw-bold mb-0"><i class="fas fa-fire-extinguisher me-2"></i>Extinguishers & Details</h6>
                                                                             @php
-                                                                                $bldgExts = $building->fireExtinguishers;
-                                                                                $bldgActive = $bldgExts->where('status', 'active')->count();
-                                                                                $required = $building->required_extinguishers_count;
-                                                                                $evalText = $bldgActive >= $required ? 'Passed' : 'Failed';
-                                                                                $evalColor = $evalText === 'Passed' ? 'success' : 'danger';
+                                                                                $compliance = \App\Http\Controllers\FireSafetyController::calculateBuildingCompliance($building);
+                                                                                $evalText = $compliance >= 80 ? 'Compliant' : 'Non‑Compliant';
+                                                                                $evalColor = $compliance >= 80 ? 'success' : 'danger';
                                                                             @endphp
-                                                                            <span class="badge bg-{{ $evalColor }}">Evaluation Result: {{ $evalText }} ({{ $bldgActive }}/{{ $required }})</span>
+                                                                            {{-- <span class="badge bg-{{ $evalColor }}">Evaluation Result: {{ $evalText }} @if($compliance < 80)(requires extinguisher, alarm, and plan)@endif</span> --}}
                                                                         </div>
                                                                         @if($building->fireExtinguishers->isEmpty())
                                                                             <div class="alert alert-secondary mb-0">
@@ -322,11 +358,11 @@ Smoke Detector
                                                         $badgeClass = 'success';
 
                                                             if ($ext->status === 'maintenance') {
-                                                                $statusLabel = 'For Refill';
+                                                                $statusLabel = 'For Preventive Maintenance';
                                                                 $healthClass = 'health-warning';
                                                                 $badgeClass = 'warning';
                                                             } elseif ($ext->status === 'expired' || $ext->status === 'missing') {
-                                                                $statusLabel = $ext->status === 'expired' ? 'Empty' : 'Missing';
+                                                                $statusLabel = $ext->status === 'expired' ? 'Used' : 'Missing';
                                                                 $healthClass = 'health-danger';
                                                                 $badgeClass = 'danger';
                                                             } elseif ($ext->status === 'purchase') {
@@ -373,7 +409,7 @@ Smoke Detector
                                                             <tr class="text-center align-middle">
                                                                 <td class="fw-bold">{{ $ext->code }}</td>
                                                                 <td>{{ $ext->date_checked ? \Carbon\Carbon::parse($ext->date_checked)->format('m-d-Y') : 'N/A' }}</td>
-                                                                <td>{{ $ext->centerRoom->room_name ?? 'N/A' }}</td>
+                                                                <td class="{{ !$ext->centerRoom ? 'bg-light' : '' }}">{{ $ext->centerRoom->room_name ?? 'Unassigned' }}</td>
                                                                 <td>{{ $ext->coveredRooms->count() }} Rooms</td>
                                                                 <td class="p-2">
                                                                     <button class="btn btn-sm btn-primary w-100"
@@ -461,13 +497,31 @@ Smoke Detector
                             <input type="text" class="form-control bg-light" id="updateExtCode" readonly>
                         </div>
 
+                        <div class="alert alert-light border mb-3">
+                            <i class="fas fa-building me-2 text-primary"></i>
+                            Located in: <strong id="updateExtBuildingNameDisplay">...</strong> | Floor <strong id="updateExtFloorDisplay">—</strong> | Room <strong id="updateExtRoomDisplay">—</strong>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Center Room</label>
+                            <select class="form-control" name="room_id" id="updateCenterRoomSelect" onchange="handleUpdateCenterRoomChange()">
+                                <option value="">Select Center Room</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Covered Rooms (Select up to 3)</label>
+                            <select class="form-control" id="updateCoveredRoomsSelect" name="covered_room_ids[]" multiple size="5"></select>
+                            <div class="form-text small">Use Ctrl/Cmd + Click to select multiple. Laboratory rule applies.</div>
+                        </div>
+
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">Status *</label>
                                 <select class="form-control" name="status" id="updateExtStatus" required onchange="handleUpdateStatusChange()">
                                     <option value="active">OK (Active)</option>
-                                    <option value="maintenance">For Refill</option>
-                                    <option value="expired">Empty</option>
+                                    <option value="maintenance">For Preventive Maintenance</option>
+                                    <option value="expired">Used</option>
                                     <option value="missing">Missing</option>
                                     <option value="purchase">For Purchase</option>
                                     <option value="decommissioned">Decommissioned</option>
@@ -605,10 +659,7 @@ Smoke Detector
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Room Name *</label>
-                            <input type="text" class="form-control" name="room_name" placeholder="e.g., Room 101, Science Lab" required>
-                        </div>
+                        <!-- Room Name field removed per UI request; backend will default to code or empty string -->
 
                         <div class="mb-3">
                             <label class="form-label fw-bold">Room Type *</label>
@@ -667,6 +718,8 @@ Smoke Detector
                         @csrf
                         <input type="hidden" name="school_id" id="extSchoolId">
 
+                        <!-- Required Information -->
+                        <h6 class="fw-bold">Required Information</h6>
                         <div class="row">
                             <div class="col-md-3 mb-3">
                                 <label class="form-label fw-bold">Code *</label>
@@ -690,15 +743,15 @@ Smoke Detector
                                 <label class="form-label fw-bold">Status *</label>
                                 <select class="form-control" name="status" id="addExtStatus" required onchange="handleAddStatusChange()">
                                     <option value="active">Active</option>
-                                    <option value="maintenance">For Refill</option>
-                                    <option value="expired">Empty</option>
+                                    <option value="maintenance">For Preventive Maintenance</option>
+                                    <option value="expired">Used</option>
                                     <option value="missing">Missing</option>
                                     <option value="purchase">For Purchase</option>
                                     <option value="decommissioned">Decommissioned</option>
                                 </select>
                             </div>
                             <div class="col-md-3 mb-3">
-                                <label class="form-label fw-bold">Pressure (0-100%)</label>
+                                <label class="form-label fw-bold">Pressure (0-100%) *</label>
                                 <input type="number" class="form-control" name="pressure_level" id="addExtPressure" min="0" max="100" value="100" required>
                             </div>
                         </div>
@@ -710,35 +763,40 @@ Smoke Detector
                                     <option value="">Select Building</option>
                                 </select>
                             </div>
+                        </div>
+
+                        <hr>
+                        <!-- Optional Information (can be updated later) -->
+                        <h6 class="fw-bold">Optional Information (can update later)</h6>
+                        <div class="row">
                             <div class="col-md-4 mb-3">
                                 <label class="form-label fw-bold">Floor</label>
-                                <select class="form-control" id="extFloorSelect" disabled onchange="handleExtFloorChange()">
+                                <select class="form-control" id="extFloorSelect" onchange="handleExtFloorChange()" disabled>
                                     <option value="">Select Floor</option>
                                 </select>
                             </div>
                             <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Center Room *</label>
-                                <select class="form-control" name="room_id" id="centerRoomSelect" required onchange="handleCenterRoomChange()">
+                                <label class="form-label fw-bold">Center Room</label>
+                                <select class="form-control" name="room_id" id="centerRoomSelect" onchange="handleCenterRoomChange()">
                                     <option value="">Select Center Room</option>
                                 </select>
                             </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Covered Rooms (Select up to 3) *</label>
-                            <select class="form-control" id="coveredRoomsSelect" name="covered_room_ids[]" multiple size="5" required>
-                            </select>
-                            <div class="form-text small">Use Ctrl/Cmd + Click to select multiple. Laboratory rule applies.</div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-bold">Covered Rooms (up to 3)</label>
+                                <select class="form-control" id="coveredRoomsSelect" name="covered_room_ids[]" multiple size="5">
+                                </select>
+                                <div class="form-text small">Use Ctrl/Cmd + Click to select multiple. Laboratory rule applies.</div>
+                            </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Date Checked *</label>
-                                <input type="date" class="form-control" name="date_checked" required>
+                                <label class="form-label fw-bold">Date Checked</label>
+                                <input type="date" class="form-control" name="date_checked">
                             </div>
                             <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Evaluation Result *</label>
-                                <select class="form-control" name="evaluation_result" required>
+                                <label class="form-label fw-bold">Evaluation Result</label>
+                                <select class="form-control" name="evaluation_result">
                                     <option value="Passed">Passed</option>
                                     <option value="Failed">Failed</option>
                                 </select>
@@ -851,7 +909,7 @@ Smoke Detector
                     if (pressureInput.value < 70) pressureInput.value = 70;
                     if (pressureInput.value > 100) pressureInput.value = 100;
                     break;
-                case 'maintenance': // For Refill
+                case 'maintenance': // For Preventive Maintenance
                     pressureInput.min = 20;
                     pressureInput.max = 69;
                     if (pressureInput.value < 20) pressureInput.value = 20;
@@ -1051,7 +1109,7 @@ Smoke Detector
             const opt = typeSelect?.selectedOptions?.[0];
             const label = opt?.dataset?.priorityLabel || '';
             const maxRooms = opt?.dataset?.maxRooms || '';
-            
+
             const roomTypeName = opt ? opt.textContent.trim().toLowerCase() : '';
             const smokeDetectorRow = document.getElementById('addRoomSmokeDetectorRow');
             if (roomTypeName.includes('administration') || roomTypeName.includes('office')) {
@@ -1129,7 +1187,8 @@ Smoke Detector
             const filteredRooms = currentBuildingRooms.filter(r => String(r.floor_no) === String(selectedFloor));
 
             filteredRooms.forEach(r => {
-                const label = `${r.room_name}${r.room_code ? ' (' + r.room_code + ')' : ''} - ${r.room_type}`;
+                const labelName = r.room_name || r.room_code || ('Room ' + r.id);
+                const label = `${labelName}${r.room_code && r.room_name ? ' (' + r.room_code + ')' : ''} - ${r.room_type}`;
 
                 const optCenter = document.createElement('option');
                 optCenter.value = r.id;
@@ -1145,19 +1204,101 @@ Smoke Detector
             });
         }
 
-        async function handleExtTypeChange() {
-            const select = document.getElementById('ext_type_select');
-            const otherContainer = document.getElementById('otherTypeContainer');
-            const otherInput = document.getElementById('other_type_input');
+        async function handleUpdateExtTypeChange() {
+            // reuse same logic as add function if ever needed
+            handleExtTypeChange();
+        }
 
-            if (select.value === 'Other') {
-                otherContainer.classList.remove('d-none');
-                otherInput.required = true;
-                otherInput.focus();
+        // ---------- update modal helpers ----------
+        async function handleUpdateExtBuildingChange() {
+            const buildingSelect = document.getElementById('updateExtBuildingSelect');
+            const floorSelect = document.getElementById('updateExtFloorSelect');
+            const centerSelect = document.getElementById('updateCenterRoomSelect');
+            const coveredSelect = document.getElementById('updateCoveredRoomsSelect');
+
+            const buildingId = buildingSelect.value;
+
+            floorSelect.innerHTML = '<option value="">Select Floor</option>';
+            centerSelect.innerHTML = '<option value="">Select Center Room</option>';
+            coveredSelect.innerHTML = '';
+            if (!buildingId) {
+                floorSelect.disabled = true;
+                return;
+            }
+
+            // Populate floors
+            const selectedOption = buildingSelect.options[buildingSelect.selectedIndex];
+            const floors = parseInt(selectedOption.dataset.floors) || 1;
+            for (let i = 1; i <= floors; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = `Floor ${i}`;
+                floorSelect.appendChild(opt);
+            }
+            floorSelect.disabled = false;
+
+            // fetch rooms
+            try {
+                const resp = await fetch(`/fire-safety/rooms/${buildingId}`, { headers: { 'Accept': 'application/json' } });
+                currentBuildingRooms = await resp.json();
+            } catch (e) {
+                console.error(e);
+                Swal.fire('Error', 'Failed to load rooms.', 'error');
+            }
+        }
+
+        function handleUpdateExtFloorChange() {
+            const floorSelect = document.getElementById('updateExtFloorSelect');
+            const centerSelect = document.getElementById('updateCenterRoomSelect');
+            const coveredSelect = document.getElementById('updateCoveredRoomsSelect');
+
+            const selectedFloor = floorSelect.value;
+            centerSelect.innerHTML = '<option value="">Select Center Room</option>';
+            coveredSelect.innerHTML = '';
+            if (!selectedFloor) return;
+
+            const filteredRooms = currentBuildingRooms.filter(r => String(r.floor_no) === String(selectedFloor));
+            filteredRooms.forEach(r => {
+                const labelName = r.room_name || r.room_code || ('Room ' + r.id);
+                const label = `${labelName}${r.room_code && r.room_name ? ' (' + r.room_code + ')' : ''} - ${r.room_type}`;
+                const optCenter = document.createElement('option');
+                optCenter.value = r.id;
+                optCenter.textContent = label;
+                optCenter.dataset.roomType = r.room_type;
+                centerSelect.appendChild(optCenter);
+
+                const optCovered = document.createElement('option');
+                optCovered.value = r.id;
+                optCovered.textContent = label;
+                optCovered.dataset.roomType = r.room_type;
+                coveredSelect.appendChild(optCovered);
+            });
+        }
+
+        function handleUpdateCenterRoomChange() {
+            const centerSelect = document.getElementById('updateCenterRoomSelect');
+            const coveredSelect = document.getElementById('updateCoveredRoomsSelect');
+            const centerId = centerSelect.value;
+            const centerType = centerSelect.selectedOptions[0]?.dataset?.roomType;
+
+            Array.from(coveredSelect.options).forEach(o => {
+                if (String(o.value) === String(centerId)) {
+                    o.selected = true;
+                }
+            });
+
+            if (centerType === 'laboratory') {
+                Array.from(coveredSelect.options).forEach(o => {
+                    const t = o.dataset.roomType;
+                    if (String(o.value) === String(centerId)) {
+                        o.disabled = false;
+                        return;
+                    }
+                    o.disabled = (t !== 'clinic');
+                    if (o.disabled) o.selected = false;
+                });
             } else {
-                otherContainer.classList.add('d-none');
-                otherInput.required = false;
-                otherInput.value = '';
+                Array.from(coveredSelect.options).forEach(o => o.disabled = false);
             }
         }
 
@@ -1218,21 +1359,14 @@ Smoke Detector
             const centerId = document.getElementById('centerRoomSelect').value;
             const covered = Array.from(document.getElementById('coveredRoomsSelect').selectedOptions).map(o => o.value);
 
-            if (!centerId) {
-                Swal.fire('Selection Required', 'Please select a center room.', 'warning');
-                return;
-            }
-            if (covered.length < 1 || covered.length > 3) {
-                Swal.fire('Invalid Selection', 'Please select 1 to 3 covered rooms.', 'warning');
-                return;
-            }
-            if (!covered.includes(centerId)) {
+            // center and covered rooms are optional during creation. Only validate when values provided.
+            if (centerId && covered.length > 0 && !covered.includes(centerId)) {
                 Swal.fire('Inconsistent Selection', 'Covered rooms must include the center room.', 'warning');
                 return;
             }
 
             const centerType = document.getElementById('centerRoomSelect').selectedOptions[0]?.dataset?.roomType;
-            if (centerType === 'laboratory' && covered.length > 2) {
+            if (centerId && centerType === 'laboratory' && covered.length > 2) {
                 Swal.fire('Constraint Error', 'Laboratory can only cover itself, or itself + 1 clinic room.', 'warning');
                 return;
             }
@@ -1277,28 +1411,150 @@ Smoke Detector
             }
         });
 
-        function openUpdateModal(id, code, status, pressure) {
-            document.getElementById('updateExtId').value = id;
-            document.getElementById('updateExtCode').value = code;
-            document.getElementById('updateExtStatus').value = status;
-            document.getElementById('updateExtPressure').value = pressure;
-            document.getElementById('updateExtNotes').value = '';
+    async function openUpdateModal(id, code, status, pressure) {
+        document.getElementById('updateExtId').value = id;
+        document.getElementById('updateExtCode').value = code;
+        document.getElementById('updateExtStatus').value = status;
+        document.getElementById('updateExtPressure').value = pressure;
+        document.getElementById('updateExtNotes').value = '';
 
-            // Reset removal logic
-            if (document.getElementById('removeExtBtn')) document.getElementById('removeExtBtn').style.display = 'none';
-            if (document.getElementById('extRemovalReasonSection')) document.getElementById('extRemovalReasonSection').classList.add('d-none');
-            if (document.getElementById('extRemovalReason')) document.getElementById('extRemovalReason').value = '';
+        // Reset removal logic
+        if (document.getElementById('removeExtBtn')) document.getElementById('removeExtBtn').style.display = 'none';
+        if (document.getElementById('extRemovalReasonSection')) document.getElementById('extRemovalReasonSection').classList.add('d-none');
+        if (document.getElementById('extRemovalReason')) document.getElementById('extRemovalReason').value = '';
+
+        // Clear displays
+        document.getElementById('updateExtBuildingNameDisplay').textContent = 'Loading...';
+        document.getElementById('updateExtFloorDisplay').textContent = '—';
+        const roomSpan = document.getElementById('updateExtRoomDisplay');
+        if (roomSpan) roomSpan.textContent = '—';
+
+        // Clear room selects
+        const centerSelect = document.getElementById('updateCenterRoomSelect');
+        const coveredSelect = document.getElementById('updateCoveredRoomsSelect');
+        centerSelect.innerHTML = '<option value="">Loading rooms...</option>';
+        coveredSelect.innerHTML = '';
+        centerSelect.disabled = true;
+        coveredSelect.disabled = true;
+
+        try {
+            // Fetch extinguisher details
+            const resp = await fetch(`/fire-safety/extinguisher/${id}`);
+            if (!resp.ok) throw new Error('Failed to fetch extinguisher');
+            const ext = await resp.json();
+
+            console.log('Extinguisher data:', ext); // Debug log
+
+            // Populate floor and room display only (remove building info)
+            if (ext.floor_no) {
+                document.getElementById('updateExtFloorDisplay').textContent = ext.floor_no;
+            } else {
+                document.getElementById('updateExtFloorDisplay').textContent = '—';
+            }
+
+            if (roomSpan && ext.room) {
+                roomSpan.textContent = ext.room.room_name || ext.room.room_code || `#${ext.room.id}`;
+            } else {
+                roomSpan.textContent = '—';
+            }
+
+            // Optionally, you can also hide or set a static message for the building label
+            // The building name display element can be set to empty or hidden
+            document.getElementById('updateExtBuildingNameDisplay').textContent = '';
+
+            // Fetch building rooms with coverage status
+            if (ext.building_id) {
+                const roomsResp = await fetch(`/fire-safety/building/${ext.building_id}/rooms-with-coverage`);
+                if (!roomsResp.ok) throw new Error('Failed to fetch rooms');
+                const roomsData = await roomsResp.json();
+
+                console.log('Rooms data:', roomsData); // Debug log
+
+                // Get current extinguisher's covered rooms
+                const currentCoveredIds = ext.covered_rooms ? ext.covered_rooms.map(cr => Number(cr.id)) : [];
+                const currentCenterId = ext.room_id ? Number(ext.room_id) : null;
+
+                // Filter rooms - show only those that are:
+                // 1. On the same floor as the extinguisher, OR
+                // 2. Currently assigned to this extinguisher
+                const availableRooms = roomsData.rooms.filter(r => {
+                    const roomId = Number(r.id);
+                    const isCurrentCenter = currentCenterId === roomId;
+                    const isCurrentCovered = currentCoveredIds.includes(roomId);
+                    const coveredByOthers = roomsData.covered_room_ids.includes(roomId) && !isCurrentCenter && !isCurrentCovered;
+                    const sameFloor = ext.floor_no ? Number(r.floor_no) === Number(ext.floor_no) : true;
+
+                    // Show room if it's on same floor OR currently assigned, and not covered by others
+                    return (sameFloor || isCurrentCenter || isCurrentCovered) && !coveredByOthers;
+                });
+
+                console.log('Available rooms:', availableRooms); // Debug log
+
+                // Populate selects
+                centerSelect.innerHTML = '<option value="">Select Center Room</option>';
+                coveredSelect.innerHTML = '';
+
+                availableRooms.forEach(r => {
+                    const displayName = r.room_name
+                        ? `${r.room_name} (${r.room_code || 'No Code'})`
+                        : r.room_code || `Room #${r.id}`;
+
+                    // Add to center select
+                    const optCenter = document.createElement('option');
+                    optCenter.value = r.id;
+                    optCenter.textContent = `${displayName} - Floor ${r.floor_no} (${r.room_type || 'Unknown'})`;
+                    optCenter.dataset.roomType = r.room_type || '';
+                    if (currentCenterId === Number(r.id)) {
+                        optCenter.selected = true;
+                    }
+                    centerSelect.appendChild(optCenter);
+
+                    // Add to covered select
+                    const optCovered = document.createElement('option');
+                    optCovered.value = r.id;
+                    optCovered.textContent = `${displayName} - Floor ${r.floor_no} (${r.room_type || 'Unknown'})`;
+                    optCovered.dataset.roomType = r.room_type || '';
+                    if (currentCoveredIds.includes(Number(r.id))) {
+                        optCovered.selected = true;
+                    }
+                    coveredSelect.appendChild(optCovered);
+                });
+
+                // If no rooms available on the same floor, show message
+                if (availableRooms.length === 0) {
+                    centerSelect.innerHTML = '<option value="">No available rooms on this floor</option>';
+                    coveredSelect.innerHTML = '<option value="">No available rooms on this floor</option>';
+                }
+
+                // Enable selects for editing
+                centerSelect.disabled = false;
+                coveredSelect.disabled = false;
+
+                // Remove any existing generated hidden inputs
+                document.querySelectorAll('#updateExtForm input[data-generated]').forEach(i => i.remove());
+
+                // Trigger center room change to apply laboratory rules if needed
+                if (centerSelect.value) {
+                    setTimeout(() => handleUpdateCenterRoomChange(), 100);
+                }
+            }
 
             const modalEl = document.getElementById('updateExtModal');
             const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
             modal.show();
 
-            // Check initial status for remove button
             handleUpdateStatusChange();
-
-            // Enforce viewer role restrictions
             checkViewerAccess('updateExtForm');
+
+        } catch (e) {
+            console.error('Failed to fetch extinguisher details:', e);
+            Swal.fire('Error', 'Failed to load extinguisher details. Please try again.', 'error');
+
+            // Show empty selects on error
+            document.getElementById('updateCenterRoomSelect').innerHTML = '<option value="">Error loading rooms</option>';
+            document.getElementById('updateCoveredRoomsSelect').innerHTML = '';
         }
+    }
 
         function handleUpdateStatusChange() {
             const statusSelect = document.getElementById('updateExtStatus');
@@ -1491,8 +1747,8 @@ Smoke Detector
                     let badgeClass = 'secondary';
                     let statusLabel = item.status;
                     if (item.status === 'active') { badgeClass = 'success'; statusLabel = 'OK'; }
-                    else if (item.status === 'maintenance') { badgeClass = 'warning'; statusLabel = 'For Refill'; }
-                    else if (item.status === 'expired') { badgeClass = 'danger'; statusLabel = 'Empty'; }
+                    else if (item.status === 'maintenance') { badgeClass = 'warning'; statusLabel = 'For Preventive Maintenance'; }
+                    else if (item.status === 'expired') { badgeClass = 'danger'; statusLabel = 'Used'; }
                     else if (item.status === 'missing') { badgeClass = 'danger'; statusLabel = 'Missing'; }
                     else if (item.status === 'purchase') { badgeClass = 'dark'; statusLabel = 'For Purchase'; }
                     else if (item.status === 'decommissioned') { badgeClass = 'danger'; statusLabel = 'Decommissioned'; }
@@ -1638,7 +1894,7 @@ Smoke Detector
             openUpdateRoomModal(roomId);
         }
 
-        // Initialize card states
+        // Initialize card states and building accordion persistence
         document.addEventListener('DOMContentLoaded', function() {
             const cardStates = JSON.parse(localStorage.getItem('fireSafetyExtCardStates') || '{}');
             Object.keys(cardStates).forEach(cardId => {
@@ -1648,6 +1904,17 @@ Smoke Detector
                     card.classList.add('card-collapsed');
                 }
             });
+
+            // Persist building accordion state (manually applied)
+            initBuildingAccordionPersistence();
+            // Attach manual toggles for building headers
+            document.querySelectorAll('.accordion-button[data-bs-target]').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                });
+            });
+
+            // kick off status carousel after DOM load
+            initStatusCarousel();
 
             // Initial load of inspections for the currently active tab
             const activeTab = document.querySelector('.tab-pane.show.active');
@@ -1662,10 +1929,62 @@ Smoke Detector
             const card = icon.closest('.card');
             card.id = cardId;
             card.classList.toggle('card-collapsed');
-            
+
             const cardStates = JSON.parse(localStorage.getItem('fireSafetyExtCardStates') || '{}');
             cardStates[cardId] = card.classList.contains('card-collapsed') ? 'collapsed' : 'expanded';
             localStorage.setItem('fireSafetyExtCardStates', JSON.stringify(cardStates));
+        }
+
+        // Building accordion persistence helpers (manual collapse)
+        function initBuildingAccordionPersistence() {
+            // Clear any existing saved states to start fresh
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                let key = localStorage.key(i);
+                if (key && key.startsWith('fireSafetyOpenBuildings_')) {
+                    keysToRemove.push(key);
+                }
+            }
+            keysToRemove.forEach(key => localStorage.removeItem(key));
+
+            // Ensure all buildings are closed by default
+            document.querySelectorAll('[id^="collapse-"]').forEach(el => {
+                el.classList.remove('show');
+                const btn = document.querySelector(`.accordion-button[data-bs-target="#${el.id}"]`);
+                if (btn) {
+                    btn.classList.add('collapsed');
+                    btn.setAttribute('aria-expanded', 'false');
+                }
+            });
+        }
+
+        // helper to update localStorage when manually toggling
+        function updateOpenBuildings(id, add) {
+            const parts = id.replace('#','').split('-');
+            const schoolId = parts[1];
+            const key = `fireSafetyOpenBuildings_${schoolId}`;
+            let list = JSON.parse(localStorage.getItem(key) || '[]');
+            if (add) {
+                if (!list.includes(id.replace('#','')) ) list.push(id.replace('#',''));
+            } else {
+                list = list.filter(x => x !== id.replace('#',''));
+            }
+            localStorage.setItem(key, JSON.stringify(list));
+        }
+
+        // Status carousel helpers
+        function initStatusCarousel() {
+            const slides = document.querySelectorAll('#statusCarousel .status-slide');
+            if (slides.length === 0) return;
+            let current = 0;
+            slides.forEach((s,i)=>{
+                if(i!==0) s.classList.remove('active');
+            });
+            setInterval(() => {
+                slides[current].classList.remove('active');
+                current = (current + 1) % slides.length;
+                slides[current].classList.add('active');
+            }, 3000);
         }
     </script>
 @endsection

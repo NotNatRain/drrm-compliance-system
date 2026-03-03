@@ -91,7 +91,7 @@
         <div class="header-title">
             <h1>Fire Alarm System Inspection and Coverage Details</h1>
         </div>
-        
+
         <div class="info-grid">
             <div class="info-row">
                 <div><strong>Name of School:</strong> {{ $school->school_name }}</div>
@@ -120,7 +120,13 @@
             @foreach($alarms as $alarm)
                 <tr>
                     <td><strong>{{ $alarm->code }}</strong></td>
-                    <td>{{ $alarm->building ? $alarm->building->building_no . ($alarm->building->building_name ? ' (' . $alarm->building->building_name . ')' : '') : 'N/A' }}</td>
+                    <td>
+                        @if($alarm->buildings && $alarm->buildings->count() > 0)
+                            {{ $alarm->buildings->map(function($b) { return $b->building_no . ($b->building_name ? ' (' . $b->building_name . ')' : ''); })->join(', ') }}
+                        @else
+                            N/A
+                        @endif
+                    </td>
                     <td>{{ $alarm->alarm_type }}</td>
                     <td class="status-cell">{{ strtoupper($alarm->status) }}</td>
                     <td>{{ $alarm->last_test ? \Carbon\Carbon::parse($alarm->last_test)->format('M d, Y') : 'N/A' }}</td>

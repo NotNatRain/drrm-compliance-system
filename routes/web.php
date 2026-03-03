@@ -86,7 +86,11 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     Route::post('/backup/restore', [FireSafetyController::class, 'restoreFireSafetyBackup'])->name('fire-safety.backup.restore');
     Route::get('/schools/export', [FireSafetyController::class, 'exportSchools'])->name('fire-safety.schools.export');
 
-    // AJAX routes for dynamic loading (specific /school/history before /school/{id})
+    // SPECIFIC ROUTES FIRST - Put these BEFORE the general school routes
+    Route::get('/extinguisher/{id}', [FireSafetyController::class, 'getExtinguisher'])->name('fire-safety.extinguisher.show');
+    Route::get('/building/{buildingId}/rooms-with-coverage', [FireSafetyController::class, 'getBuildingRoomsWithCoverage'])->name('fire-safety.building.rooms-with-coverage');
+
+    // THEN the AJAX routes for dynamic loading (specific /school/history before /school/{id})
     Route::get('/school/history', [FireSafetyController::class, 'getSchoolHistory'])->name('fire-safety.school.history')->middleware('auth');
     Route::get('/school/{id}', [FireSafetyController::class, 'getSchoolDetails'])->name('fire-safety.school.details');
     Route::get('/school/{id}/issues', [FireSafetyController::class, 'getSchoolIssues'])->name('fire-safety.school.issues');
@@ -155,10 +159,12 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     Route::post('/room/{id}/update', [FireSafetyController::class, 'updateRoom'])->name('fire-safety.room.update');
     Route::get('/room/{id}/candidates', [FireSafetyController::class, 'getNearestCandidateRooms'])->name('fire-safety.room.candidates');
     Route::post('/extinguisher/store', [FireSafetyController::class, 'storeExtinguisher'])->name('fire-safety.extinguisher.store');
+    Route::get('/extinguisher/{id}', [FireSafetyController::class, 'getExtinguisher'])->name('fire-safety.extinguisher.show');
     Route::post('/extinguisher/{id}/update', [FireSafetyController::class, 'updateExtinguisher'])->name('fire-safety.extinguisher.update');
     Route::post('/extinguisher/{id}/remove', [FireSafetyController::class, 'removeExtinguisher'])->name('fire-safety.extinguisher.remove');
     Route::get('/extinguisher/history/{schoolId}', [FireSafetyController::class, 'getExtinguisherHistory'])->name('fire-safety.extinguisher.history');
     Route::get('/extinguisher/inspections/{schoolId}', [FireSafetyController::class, 'getRecentExtinguisherInspections'])->name('fire-safety.extinguisher.inspections');
+    Route::get('/building/{buildingId}/rooms-with-coverage', [FireSafetyController::class, 'getBuildingRoomsWithCoverage'])->name('fire-safety.building.rooms-with-coverage');
 });
 
 

@@ -15,6 +15,7 @@ class FireSafetyAlarmSystem extends Model
         'code',
         'location', // ← Make sure this is here
         'alarm_type',
+        'floor_id',
         'status',
         'last_test',
         'next_test_due',

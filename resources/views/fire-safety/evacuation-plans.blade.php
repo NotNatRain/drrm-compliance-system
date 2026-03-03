@@ -4,7 +4,7 @@
 @section('page_title', 'Evacuation Plans')
 @section('content')
     <div class="container-fluid">
-   
+
         @if(!$activeSchool)
             <div class="alert alert-info">
                 <i class="fas fa-info-circle me-2"></i> No active school selected. Please select a school from the dashboard.
@@ -21,7 +21,7 @@
                         $totalExtinguishers = $school->totalActiveExtinguishers;
                     @endphp
 
-                    <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-6 mb-4">
                         <div class="card dashboard-card border-left-success h-100">
                             <div class="card-body">
                                 <div class="row align-items-center">
@@ -40,7 +40,7 @@
                         </div>
                     </div>
 
-                    <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-6 mb-4">
                         <div class="card dashboard-card border-left-primary h-100">
                             <div class="card-body">
                                 <div class="row align-items-center">
@@ -59,7 +59,7 @@
                         </div>
                     </div>
 
-                    <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-6 mb-4">
                         <div class="card dashboard-card border-left-warning h-100">
                             <div class="card-body">
                                 <div class="row align-items-center">
@@ -80,7 +80,7 @@
                         </div>
                     </div>
 
-                    <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="col-xl-3 col-lg-4 col-md-6 col-6 mb-4">
                         <div class="card dashboard-card border-left-info h-100">
                             <div class="card-body">
                                 <div class="row align-items-center">
@@ -159,7 +159,7 @@
                                                             onclick="openScheduleDrillModal({{ $school->id }})">
                                                         <i class="fas fa-bullhorn me-2"></i> Schedule Drill
                                                     </button>
-                                                    
+
                                                     <button class="btn btn-sm me-2" style="background-color: #e9ecef; border: 1px solid #ced4da; color: black; font-size: 0.75rem;" onclick="printAllPlans({{ $school->id }})">
                                                         <i class="fas fa-print me-1"></i> Print Plans Report
                                                     </button>
@@ -172,13 +172,23 @@
                                     @php
                                         $plan = $building->evacuationPlan;
                                         $safetyScore = $building->safety_score;
-                                        
-                                        $hasSchoolPlan = ($school->schoolEvacuationPlan !== null);
-                                        $statusClass = $plan ? 'border-' . $plan->status_color : ($hasSchoolPlan ? 'border-secondary opacity-75' : 'border-danger');
-                                        $statusBadge = $plan ? 'bg-' . $plan->status_color : ($hasSchoolPlan ? 'bg-secondary' : 'bg-danger');
-                                        $statusText = $plan ? $plan->status_label : ($hasSchoolPlan ? 'Optional' : 'No Plan');
 
-                                        // New Safety Text requirements: 
+                                        $hasSchoolPlan = ($school->schoolEvacuationPlan !== null);
+                                        if ($plan) {
+                                            $statusClass = 'border-' . $plan->status_color;
+                                            $statusBadge = 'bg-' . $plan->status_color;
+                                            $statusText = $plan->status_label;
+                                        } elseif ($hasSchoolPlan) {
+                                            $statusClass = 'border-success';
+                                            $statusBadge = 'bg-success';
+                                            $statusText = 'Passed';
+                                        } else {
+                                            $statusClass = 'border-danger';
+                                            $statusBadge = 'bg-danger';
+                                            $statusText = 'No Plan';
+                                        }
+
+                                        // New Safety Text requirements:
                                         // 100% = Perfect, 90% = Passed
                                         if ($safetyScore >= 100) {
                                             $safetyText = 'Perfect';
@@ -295,7 +305,7 @@
                                                                 data-bs-target="#editBuildingPlanModal">
                                                             <i class="fas fa-edit me-1"></i> Edit
                                                         </button>
-                                                        <button class="btn btn-sm btn-outline-secondary w-50" 
+                                                        <button class="btn btn-sm btn-outline-secondary w-50"
                                                                 onclick="window.open('/fire-safety/reports/evacuation-plans/{{ $school->id }}?building_id={{ $building->id }}', '_blank')">
                                                             <i class="fas fa-print me-1"></i> Print
                                                         </button>
@@ -362,14 +372,13 @@
                                     <div class="mt-3 p-3 bg-white border rounded shadow-sm">
                                         <h6 class="fw-bold fs-sm mb-2 text-dark border-bottom pb-2">Map Legend:</h6>
                                         <div class="d-flex flex-wrap gap-4 text-secondary small">
-                                            <div class="d-flex align-items-center"><span style="width: 20px; height: 20px; background: white; border: 3px solid black; margin-right: 8px; display:inline-block;"></span> <strong>Building</strong></div>
-                                            <div class="d-flex align-items-center"><span style="width: 12px; height: 12px; border: 1px solid #333; margin-right: 8px; background:#f8f9fa; display:inline-block;"></span> Room</div>
-                                            <div class="d-flex align-items-center"><i class="fas fa-stairs me-2 text-dark"></i> Stairway</div>
-                                            <div class="d-flex align-items-center"><i class="fas fa-circle text-danger me-2" style="font-size: 14px;"></i> Alarm</div>
-                                            <div class="d-flex align-items-center"><span style="width: 14px; height: 8px; background: #dc3545; margin-right: 8px; display:inline-block; border-radius:2px;"></span> Extinguisher</div>
-                                            <div class="d-flex align-items-center"><i class="fas fa-door-open me-2 text-success"></i> Exit</div>
-                                            <div class="d-flex align-items-center"><span style="color: green; font-weight: 800; margin-right: 8px;">ROUTE</span> Evacuation Route</div>
-                                            <div class="d-flex align-items-center"><span style="border: 2px dashed #0d6efd; background: #e7f5ff; width: 24px; height: 16px; margin-right: 8px; display:inline-block;"></span> Assembly Area</div>
+                                            <div class="d-flex align-items-center"><span style="width: 30px; height: 30px; background: white; border: 2px solid black; margin-right: 8px; display:inline-block;"></span> <strong>Building</strong></div>
+                                            <div class="d-flex align-items-center"><span style="width: 24px; height: 1px; background: black; margin-right: 8px; display:inline-block;"></span> <strong>Floor Divider</strong></div>
+                                            <div class="d-flex align-items-center"><span style="width: 15px; height: 15px; background: #f0f0f0; border: 1px solid #333; margin-right: 8px; display:inline-block;"></span> <strong>Room</strong></div>
+                                            <div class="d-flex align-items-center"><span style="font-size: 16px; margin-right: 8px;">🧯</span> <strong>Fire Extinguisher</strong></div>
+                                            <div class="d-flex align-items-center"><span style="font-size: 16px; margin-right: 8px;">🔔</span> <strong>Alarm System</strong></div>
+                                            <div class="d-flex align-items-center"><span style="font-size: 14px; margin-right: 8px;">⚪</span> <strong>Smoke Detector</strong></div>
+                                            <div class="d-flex align-items-center"><span style="background: green; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-right: 8px;">Plan OK</span> <strong>Evacuation Plan</strong></div>
                                         </div>
                                     </div>
                                 </div>
@@ -381,7 +390,7 @@
 
                 <!-- Evacuation Drill Schedule -->
                 <div class="row mt-4">
-                    <div class="col-lg-8">
+                    <div class="col-lg-8 col-md-6">
                         <div class="card dashboard-card">
                             <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                 <h6 class="m-0 fw-bold text-primary">
@@ -403,7 +412,7 @@
                         </div>
                     </div>
 
-                    <div class="col-lg-4">
+                    <div class="col-lg-4 col-md-6">
                         <div class="card dashboard-card">
                             <div class="card-header py-3 bg-primary text-white">
                                 <h6 class="m-0 fw-bold">
@@ -869,7 +878,7 @@
         let currentSchoolId = null;
         let currentPlanId = null;
         const userRole = "{{ auth()->user()->role }}";
-        let drillsData = {}; 
+        let drillsData = {};
 
         // Global check for viewer access
         function checkViewerAccess(formId) {
@@ -1296,22 +1305,22 @@
             const form = document.getElementById('scheduleDrillForm');
             if (!form.checkValidity()) { form.reportValidity(); return; }
             const formData = new FormData(form);
-            
+
             const scopeField = form.querySelector('input[name="building_scope"]:checked');
             const scope = scopeField ? scopeField.value : 'all';
-            
+
             let checkboxes;
             if (scope === 'all') {
                 checkboxes = document.querySelectorAll('.building-checkbox');
             } else {
                 checkboxes = document.querySelectorAll('.building-checkbox:checked');
             }
-            
-            if (checkboxes.length === 0) { 
-                Swal.fire('Error', 'No buildings available or selected for this drill.', 'error'); 
-                return; 
+
+            if (checkboxes.length === 0) {
+                Swal.fire('Error', 'No buildings available or selected for this drill.', 'error');
+                return;
             }
-            
+
             checkboxes.forEach(cb => formData.append('building_ids[]', cb.value));
 
             try {
@@ -1331,7 +1340,7 @@
             try {
                 const res = await fetch(`/fire-safety/drill/${drillId}`);
                 const drill = await res.json();
-                
+
                 let bHtml = '';
                 if (drill.buildings && drill.buildings.length > 0) {
                     drill.buildings.forEach(b => {
@@ -1480,54 +1489,376 @@
             let x = 50, y = 50;
 
             buildings.forEach((building, index) => {
-                const bDiv = document.createElement('div');
-                bDiv.className = 'map-element building-element';
-                bDiv.id = `map-bldg-${building.id}`;
-                bDiv.dataset.id = `building_${building.id}`;
-                bDiv.dataset.schoolId = schoolId;
-                bDiv.style.position = 'absolute';
-                
+                const buildingContainerDiv = document.createElement('div');
+                buildingContainerDiv.className = 'map-element building-element';
+                buildingContainerDiv.id = `map-bldg-${building.id}`;
+                buildingContainerDiv.dataset.id = `building_${building.id}`;
+                buildingContainerDiv.dataset.schoolId = schoolId;
+                buildingContainerDiv.dataset.buildingId = building.id;
+                buildingContainerDiv.dataset.buildingNo = building.building_no;
+                buildingContainerDiv.style.position = 'absolute';
+
+                // Building dimensions (reduced width; height calculated so rooms are square)
+                const buildingWidth = 300;
+                const floors = building.floors || 1;
+                const roomsPerFloor = 3;
+                // spacing between rooms/floors
+                const roomGap = 10;
+                const floorGap = 10;
+
+                // compute room size based on available width
+                const usableWidth = buildingWidth - roomGap * (roomsPerFloor + 1);
+                const roomWidth = usableWidth / roomsPerFloor;
+                const floorHeight = roomWidth; // square rooms
+                // total building height = header (30px) + gaps + floors*floorHeight
+                const buildingHeight = 30 + floorGap * (floors + 1) + floors * floorHeight;
+
                 // Use saved coordinates if available
-                if (school.map_layout && school.map_layout[bDiv.dataset.id]) {
-                    bDiv.style.left = school.map_layout[bDiv.dataset.id].x + 'px';
-                    bDiv.style.top = school.map_layout[bDiv.dataset.id].y + 'px';
+                if (school.map_layout && school.map_layout[buildingContainerDiv.dataset.id]) {
+                    buildingContainerDiv.style.left = school.map_layout[buildingContainerDiv.dataset.id].x + 'px';
+                    buildingContainerDiv.style.top = school.map_layout[buildingContainerDiv.dataset.id].y + 'px';
                 } else {
-                    bDiv.style.left = x + 'px';
-                    bDiv.style.top = y + 'px';
-                    
-                    x += 220;
-                    if (x > 800) { x = 50; y += 180; }
+                    buildingContainerDiv.style.left = x + 'px';
+                    buildingContainerDiv.style.top = y + 'px';
+
+                    x += buildingWidth + 20;
+                    if (x > 1200) { x = 50; y += buildingHeight + 50; }
                 }
-                
-                bDiv.style.width = '200px';
-                bDiv.style.padding = '10px';
-                bDiv.style.backgroundColor = 'white';
-                bDiv.style.border = '3px solid black';
-                bDiv.style.borderRadius = '5px';
-                bDiv.style.boxShadow = '2px 2px 5px rgba(0,0,0,0.2)';
-                bDiv.style.cursor = 'default';
 
-                const planBadge = building.evacuation_plan ? `<span class="badge bg-success float-end">Plan OK</span>` : `<span class="badge bg-danger float-end">No Plan</span>`;
+                buildingContainerDiv.style.width = buildingWidth + 'px';
+                buildingContainerDiv.style.height = buildingHeight + 'px';
+                buildingContainerDiv.style.backgroundColor = 'white';
+                buildingContainerDiv.style.border = '3px solid black';
+                buildingContainerDiv.style.borderRadius = '0px';
+                buildingContainerDiv.style.boxShadow = '3px 3px 8px rgba(0,0,0,0.3)';
+                buildingContainerDiv.style.cursor = 'default';
+                buildingContainerDiv.style.overflow = 'hidden';
+                buildingContainerDiv.style.padding = '0px';
 
-                bDiv.innerHTML = `
-                    <div class="mb-2 pb-1 border-bottom d-flex justify-content-between align-items-center">
-                        <strong class="text-primary">${building.building_no}</strong>
-                        ${planBadge}
-                    </div>
-                    <div style="font-size: 0.75rem;">
-                        <div><i class="fas fa-layer-group me-1"></i> Floors: ${building.floors || 1}</div>
-                        <div><i class="fas fa-door-open me-1"></i> Exits: ${building.emergency_exits || 0}</div>
-                    </div>
-                    <div class="mt-2 text-center">
-                        <button class="btn btn-tiny btn-outline-secondary w-100" onclick="viewPlan(${building.evacuation_plan ? building.evacuation_plan.id : 'null'}, ${building.id}, '${building.building_no}')" style="font-size: 0.6rem;">
-                            View Details
+                // Create building header
+                const headerDiv = document.createElement('div');
+                // make sure bell icon appears below header if it exists
+                headerDiv.style.padding = '5px 8px';
+                headerDiv.style.backgroundColor = '#007bff';
+                headerDiv.style.color = 'white';
+                headerDiv.style.fontSize = '12px';
+                headerDiv.style.fontWeight = 'bold';
+                headerDiv.style.borderBottom = '2px solid black';
+                headerDiv.style.display = 'flex';
+                headerDiv.style.justifyContent = 'space-between';
+                headerDiv.style.alignItems = 'center';
+
+                // Check if building has an evacuation plan (check both camelCase and snake_case)
+                const hasPlan = building.evacuation_plan || building.evacuationPlan || school.evacuation_plan || school.evacuationPlan;
+
+                headerDiv.innerHTML = `
+                    <span>${building.building_no}</span>
+                    <span style="font-size: 10px;">${building.building_name || ''}</span>
+                    <span style="background: ${hasPlan ? 'green' : 'red'}; padding: 2px 6px; border-radius: 3px; font-size: 9px;">
+                        ${hasPlan ? 'Plan OK' : 'No Plan'}
+                    </span>
+                `;
+                buildingContainerDiv.appendChild(headerDiv);
+
+                // Create building interior canvas using SVG
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('width', buildingWidth);
+                svg.setAttribute('height', buildingHeight - 30);
+                // allow pointer events so rooms and icons can be clicked
+                svg.setAttribute('style', 'display: block; cursor: inherit;');
+
+                // floorHeight and roomWidth already computed above for square rooms
+                // const floorHeight = (buildingHeight - 30 - floorGap * (floors + 1)) / floors;
+                // const roomWidth = (buildingWidth - roomGap * (roomsPerFloor + 1)) / roomsPerFloor;
+
+                // Draw floors and rooms
+                for (let floorIdx = 0; floorIdx < floors; floorIdx++) {
+                    // bottom floor should appear lowest in the svg, so invert the y-coordinate calculation
+                    const floorY = floorGap + (floors - 1 - floorIdx) * (floorHeight + floorGap);
+
+                    // Draw horizontal lines for floor separators
+                    if (floorIdx > 0) {
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', '0');
+                        line.setAttribute('y1', floorY);
+                        line.setAttribute('x2', buildingWidth);
+                        line.setAttribute('y2', floorY);
+                        line.setAttribute('stroke', 'black');
+                        line.setAttribute('stroke-width', '2');
+                        svg.appendChild(line);
+                    }
+
+                    // Draw vertical lines for room separators
+                    for (let roomIdx = 0; roomIdx < roomsPerFloor - 1; roomIdx++) {
+                        const roomX = roomGap + (roomIdx + 1) * (roomWidth + roomGap);
+                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        line.setAttribute('x1', roomX);
+                        line.setAttribute('y1', floorY);
+                        line.setAttribute('x2', roomX);
+                        line.setAttribute('y2', floorY + floorHeight);
+                        line.setAttribute('stroke', 'black');
+                        line.setAttribute('stroke-width', '1');
+                        svg.appendChild(line);
+                    }
+
+                    // Draw a closing horizontal line at the bottom of the lowest floor (after inversion lowest floor is floorIdx 0)
+                    if (floorIdx === 0) {
+                        const bottomLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                        bottomLine.setAttribute('x1', '0');
+                        bottomLine.setAttribute('y1', floorY + floorHeight);
+                        bottomLine.setAttribute('x2', buildingWidth);
+                        bottomLine.setAttribute('y2', floorY + floorHeight);
+                        bottomLine.setAttribute('stroke', 'black');
+                        bottomLine.setAttribute('stroke-width', '2');
+                        svg.appendChild(bottomLine);
+                    }
+
+                    // Add rooms to each floor
+                    const floorRooms = building.actual_rooms && Array.isArray(building.actual_rooms) ? building.actual_rooms.filter(r => (r.floor_no || r.floor) === (floorIdx + 1)) : [];
+
+                    for (let roomIdx = 0; roomIdx < roomsPerFloor; roomIdx++) {
+                        const roomX = roomGap + roomIdx * (roomWidth + roomGap);
+                        const room = floorRooms.length > roomIdx ? floorRooms[roomIdx] : null;
+
+                        // Draw room rectangle background (light gray)
+                        const roomRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                        roomRect.setAttribute('x', roomX + 1);
+                        roomRect.setAttribute('y', floorY + 1);
+                        roomRect.setAttribute('width', roomWidth - 2);
+                        roomRect.setAttribute('height', floorHeight - 2);
+                        roomRect.setAttribute('fill', room ? '#f0f0f0' : '#ffffff');
+                        roomRect.setAttribute('stroke', 'none');
+                        if (room) {
+                            roomRect.style.cursor = 'pointer';
+                            roomRect.addEventListener('click', e => {
+                                e.stopPropagation();
+                                // navigate to extinguisher list for this room
+                                openRoomExtinguishers(building.id, room.id, schoolId);
+                            });
+                        }
+                        svg.appendChild(roomRect);
+
+                        // Add room number/label
+                        if (room) {
+                            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                            text.setAttribute('x', roomX + roomWidth / 2);
+                            text.setAttribute('y', floorY + 12);
+                            text.setAttribute('text-anchor', 'middle');
+                            text.setAttribute('font-size', '9px');
+                            text.setAttribute('font-weight', 'bold');
+                            text.setAttribute('fill', '#333');
+                            text.textContent = room.room_name || `R${room.id}`;
+                            svg.appendChild(text);
+
+                            // Add fire extinguisher icon if assigned to this room
+                            const extinguishers = building.fire_extinguishers ? building.fire_extinguishers.filter(e => e.room_id === room.id) : [];
+                            if (extinguishers.length > 0) {
+                                const extIcon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                                // place icon at center of room
+                                extIcon.setAttribute('x', roomX + roomWidth / 2);
+                                extIcon.setAttribute('y', floorY + floorHeight / 2 + 4);
+                                extIcon.setAttribute('font-size', '16px');
+                                extIcon.setAttribute('title', `${extinguishers.length} extinguisher(s)`);
+                                extIcon.textContent = '🧯';
+                                extIcon.style.cursor = 'pointer';
+                                extIcon.onclick = e => {
+                                    e.stopPropagation();
+                                    openRoomExtinguishers(building.id, room.id, schoolId);
+                                };
+                                svg.appendChild(extIcon);
+                            }
+
+                            // Add smoke detector for office/admin rooms
+                            const isOfficeOrAdmin = room.room_type_config &&
+                                                   (room.room_type_config.type_name &&
+                                                   (room.room_type_config.type_name.toLowerCase().includes('office') ||
+                                                    room.room_type_config.type_name.toLowerCase().includes('admin')));
+                            if (isOfficeOrAdmin) {
+                                const detectorIcon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                                detectorIcon.setAttribute('x', roomX + roomWidth - 12);
+                                detectorIcon.setAttribute('y', floorY + 14);
+                                detectorIcon.setAttribute('font-size', '12px');
+                                detectorIcon.setAttribute('title', 'Smoke detector');
+                                detectorIcon.textContent = '⚪';
+                                svg.appendChild(detectorIcon);
+                            }
+                        }
+                    }
+                    // place alarms icons on this floor, if any
+                    const thisFloor = floorIdx + 1;
+                    const floorAlarms = alarms.filter(a => Number(a.floor_id) === thisFloor);
+                    floorAlarms.forEach((a, idx) => {
+                        const alarmIcon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        alarmIcon.setAttribute('x', roomGap + (idx * 18) + 5);
+                        alarmIcon.setAttribute('y', floorY + 14);
+                        alarmIcon.setAttribute('font-size', '16px');
+                        alarmIcon.setAttribute('title', `Alarm: ${a.code}`);
+                        alarmIcon.textContent = '🔔';
+                        svg.appendChild(alarmIcon);
+                    });
+                }
+
+                // Draw outer border of building
+                const outerBorder = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                outerBorder.setAttribute('x', '0');
+                outerBorder.setAttribute('y', '0');
+                outerBorder.setAttribute('width', buildingWidth);
+                outerBorder.setAttribute('height', buildingHeight - 30);
+                outerBorder.setAttribute('fill', 'none');
+                outerBorder.setAttribute('stroke', 'black');
+                outerBorder.setAttribute('stroke-width', '3');
+                svg.appendChild(outerBorder);
+
+                buildingContainerDiv.appendChild(svg);
+
+                // Add info button
+                const infoBtn = document.createElement('div');
+                infoBtn.style.position = 'absolute';
+                infoBtn.style.bottom = '5px';
+                infoBtn.style.left = '5px';
+                infoBtn.style.cursor = 'pointer';
+                infoBtn.style.fontSize = '14px';
+                infoBtn.innerHTML = '<i class="fas fa-info-circle" style="color: #0066cc;"></i>';
+                const planData = building.evacuation_plan || building.evacuationPlan;
+                infoBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    viewPlan(planData ? planData.id : 'null', building.id, building.building_no);
+                };
+                buildingContainerDiv.appendChild(infoBtn);
+
+                canvas.appendChild(buildingContainerDiv);
+
+                // Add click handler to open context menu
+                buildingContainerDiv.addEventListener('click', function(e) {
+                    if (!isMapEditable[schoolId] && !e.target.closest('svg') && e.target !== infoBtn) {
+                        e.preventDefault();
+                        showBuildingOptions(building.id, building.building_no, schoolId);
+                    }
+                });
+
+                makeDraggable(buildingContainerDiv, schoolId);
+            });
+        }
+
+        function showBuildingOptions(buildingId, buildingNo, schoolId) {
+            const menu = `
+                <div class="contextMenu" id="buildingContextMenu" style="position: fixed; background: white; border: 1px solid #ccc; border-radius: 4px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 10000;">
+                    <div style="padding: 10px; min-width: 200px;">
+                        <h6 style="margin: 0 0 10px 0; padding-bottom: 10px; border-bottom: 1px solid #eee;">Add to Building ${buildingNo}</h6>
+                        <button class="btn btn-sm btn-block btn-outline-primary mb-2" onclick="openAddRoom(${buildingId}, '${buildingNo}', ${schoolId}); closeContextMenu();" style="width: 100%; text-align: left; padding: 8px 10px; border-radius: 3px; display: block;">
+                            <i class="fas fa-door-open me-2"></i> Add Room
+                        </button>
+                        <button class="btn btn-sm btn-block btn-outline-danger mb-2" onclick="openAddFloor(${buildingId}, '${buildingNo}', ${schoolId}); closeContextMenu();" style="width: 100%; text-align: left; padding: 8px 10px; border-radius: 3px; display: block;">
+                            <i class="fas fa-layer-group me-2"></i> Add Floor
+                        </button>
+                        <button class="btn btn-sm btn-block btn-outline-warning mb-2" onclick="openAddExtinguisher(${buildingId}, '${buildingNo}', ${schoolId}); closeContextMenu();" style="width: 100%; text-align: left; padding: 8px 10px; border-radius: 3px; display: block;">
+                            <i class="fas fa-fire-extinguisher me-2"></i> Add Extinguisher
+                        </button>
+                        <button class="btn btn-sm btn-block btn-outline-danger" onclick="openAddAlarm(${buildingId}, '${buildingNo}', ${schoolId}); closeContextMenu();" style="width: 100%; text-align: left; padding: 8px 10px; border-radius: 3px; display: block;">
+                            <i class="fas fa-bell me-2"></i> Add Alarm
                         </button>
                     </div>
-                `;
+                </div>
+            `;
 
-                canvas.appendChild(bDiv);
-                makeDraggable(bDiv, schoolId);
+            let existingMenu = document.getElementById('buildingContextMenu');
+            if (existingMenu) {
+                existingMenu.remove();
+            }
+
+            document.body.insertAdjacentHTML('beforeend', menu);
+
+            const menuElement = document.getElementById('buildingContextMenu');
+            menuElement.style.left = (event.pageX) + 'px';
+            menuElement.style.top = (event.pageY) + 'px';
+
+            document.addEventListener('click', closeContextMenuOnClickOutside);
+        }
+
+        function closeContextMenu() {
+            const menu = document.getElementById('buildingContextMenu');
+            if (menu) {
+                menu.remove();
+            }
+        }
+
+        function closeContextMenuOnClickOutside(e) {
+            const menu = document.getElementById('buildingContextMenu');
+            if (menu && !menu.contains(e.target) && e.target.id !== 'buildingContextMenu') {
+                menu.remove();
+                document.removeEventListener('click', closeContextMenuOnClickOutside);
+            }
+        }
+
+        function openAddRoom(buildingId, buildingNo, schoolId) {
+            // Redirect to buildings page or open modal to add room
+            window.location.href = `/fire-safety/buildings?tab=tab-rooms&building=${buildingId}`;
+        }
+
+        function openAddFloor(buildingId, buildingNo, schoolId) {
+            // Use the building edit modal
+            Swal.fire({
+                title: 'Add Floor to Building',
+                html: `Building: <strong>${buildingNo}</strong><br><br>
+                       <input type="number" id="floorInput" class="form-control" placeholder="Number of floors" min="1" max="5">`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Update',
+                confirmButtonColor: '#dc3545'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    const floors = parseInt(document.getElementById('floorInput').value);
+                    if (!isNaN(floors) && floors > 0) {
+                        updateBuildingFloors(buildingId, floors);
+                    } else {
+                        errorSwal('Please enter a valid number of floors');
+                    }
+                }
             });
+        }
+
+        function updateBuildingFloors(buildingId, floors) {
+            fetch(`/fire-safety/building/${buildingId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ floors: floors })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    successSwal('Floors updated successfully!');
+                    // Refresh the map
+                    const schoolId = data.school_id;
+                    initEvacuationMap(schoolId);
+                } else {
+                    errorSwal(data.message || 'Failed to update floors');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                errorSwal('Error updating floors');
+            });
+        }
+
+        function openAddExtinguisher(buildingId, buildingNo, schoolId) {
+            // Redirect to extinguishers page
+            window.location.href = `/fire-safety/extinguishers?tab=tab-extinguishers&building=${buildingId}`;
+        }
+
+        function openAddAlarm(buildingId, buildingNo, schoolId) {
+            // Redirect to alarm systems page
+            window.location.href = `/fire-safety/alarm-systems?building=${buildingId}`;
+        }
+
+        // removed openRoom; use openRoomExtinguishers for room clicks
+
+        function openRoomExtinguishers(buildingId, roomId, schoolId) {
+            // navigate to extinguisher list filtered by building and room
+            window.location.href = `/fire-safety/extinguishers?tab=tab-extinguishers&building=${buildingId}&room=${roomId}`;
         }
 
         function toggleMapEdit(schoolId) {

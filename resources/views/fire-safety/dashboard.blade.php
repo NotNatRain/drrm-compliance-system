@@ -102,7 +102,7 @@
                 <div class="card dashboard-card mb-4">
                     <div class="card-header py-3 d-flex justify-content-between align-items-center">
                         <h6 class="m-0 fw-bold text-primary">School Safety Status</h6>
-                        <div class="d-flex gap-2">
+                        <div class="d-flex gap-2 align-items-center">
                             <select id="statusFilter" class="form-select form-select-sm" style="width: auto;">
                                 <option value="all">All Status</option>
                                 <option value="passed">Passed</option>
@@ -115,6 +115,17 @@
                                 <option value="inspection_asc">Last Inspection (Oldest)</option>
                                 <option value="inspection_desc">Last Inspection (Newest)</option>
                             </select>
+                            @if(auth()->user()->role === 'admin' || (auth()->user()->role === 'contributor' && !auth()->user()->school_id))
+                                <button class="btn btn-outline-primary flex-grow-1 flex-md-grow-0" data-bs-toggle="modal" data-bs-target="#addInspectionModal">
+                                    <i class="fas fa-plus-circle me-1"></i> Add School
+                                </button>
+                                <button class="btn btn-info flex-grow-1 flex-md-grow-0" data-bs-toggle="modal" data-bs-target="#evacInfoModal">
+                                    <i class="fas fa-map-signs me-2"></i> View Evacuation Plans
+                                </button>
+                                <a href="{{ route('fire-safety.report.school-summary') }}" target="_blank" class="btn btn-success flex-grow-1 flex-md-grow-0">
+                                    <i class="fas fa-file-pdf me-2"></i> Generate Report
+                                </a>
+                            @endif
                         </div>
                     </div>
                     <div class="card-body">
@@ -201,43 +212,22 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                @if(auth()->user()->role !== 'viewer')
-                                <div class="row mt-4">
-                                    <div class="col-12">
-                                        <div class="card dashboard-card">
-                                            <div class="card-body">
-                                                <div class="d-flex justify-content-between w-100 gap-2">
-                                                    @if(auth()->user()->role === 'admin' || (auth()->user()->role === 'contributor' && !auth()->user()->school_id))
-                                                        <button class="btn btn-outline-primary flex-grow-1 flex-md-grow-0" data-bs-toggle="modal" data-bs-target="#addInspectionModal">
-                                                            <i class="fas fa-plus-circle me-2"></i> Add Inspection
-                                                        </button>
-                                                    @endif
-                                                    <button class="btn btn-danger flex-grow-1 flex-md-grow-0" data-bs-toggle="modal" data-bs-target="#addAlertModal">
-                                                        <i class="fas fa-exclamation-triangle me-2"></i> Add Alert
-                                                    </button>
-                                                    <button class="btn btn-primary flex-grow-1 flex-md-grow-0" data-bs-toggle="modal" data-bs-target="#addEventModal">
-                                                        <i class="fas fa-calendar-plus me-2"></i> Add Event
-                                                    </button>
-                                                    <button class="btn btn-info flex-grow-1 flex-md-grow-0" data-bs-toggle="modal" data-bs-target="#evacInfoModal">
-                                                        <i class="fas fa-map-signs me-2"></i> View Evacuation Plans
-                                                    </button>
-                                                    <a href="{{ route('fire-safety.report.school-summary') }}" target="_blank" class="btn btn-success flex-grow-1 flex-md-grow-0">
-                                                        <i class="fas fa-file-pdf me-2"></i> Generate Report
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                @endif
+
                             </div>
                             <div class="col-lg-4">
                                 <!-- Alerts for All Schools -->
                                 <div class="card dashboard-card mb-4">
                                     <div class="card-header py-3 bg-danger text-white">
-                                        <h6 class="m-0 fw-bold">
-                                            <i class="fas fa-exclamation-circle me-2"></i> Alerts
-                                        </h6>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h6 class="m-0 fw-bold">
+                                                <i class="fas fa-exclamation-circle me-2"></i> Alerts
+                                            </h6>
+                                            @if(auth()->user()->role !== 'viewer')
+                                                <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#addAlertModal">
+                                                    <i class="fas fa-bullhorn me-1"></i> Announce
+                                                </button>
+                                            @endif
+                                        </div>
                                     </div>
                                     <div class="card-body" id="allAlerts">
                                         @forelse($allAlerts as $alert)
@@ -261,9 +251,16 @@
                                 <!-- Events for All Schools -->
                                 <div class="card dashboard-card">
                                     <div class="card-header py-3 bg-primary text-white">
-                                        <h6 class="m-0 fw-bold">
-                                            <i class="fas fa-calendar-alt me-2"></i> Events
-                                        </h6>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h6 class="m-0 fw-bold">
+                                                <i class="fas fa-calendar-alt me-2"></i> Events
+                                            </h6>
+                                            @if(auth()->user()->role !== 'viewer')
+                                                <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#addEventModal">
+                                                    <i class="fas fa-bullhorn me-1"></i> Announce
+                                                </button>
+                                            @endif
+                                        </div>
                                     </div>
                                     <div class="card-body" id="allEvents">
                                         @forelse($allEvents as $event)
@@ -505,12 +502,19 @@
                         <div class="modal-body">
                             <div class="mb-3">
                                 <label class="form-label">School *</label>
-                                <select class="form-select" name="school_id" required>
-                                    <option value="">Select School</option>
-                                    <option value="all">All Schools</option>
-                                    @foreach($schools as $school)
-                                        <option value="{{ $school->id }}">{{ $school->school_name }}</option>
-                                    @endforeach
+                                <select class="form-select" name="school_id" id="alertSchoolSelect" required>
+                                    @if(auth()->user()->role === 'admin')
+                                        <option value="">Select School</option>
+                                        <option value="all">All Schools</option>
+                                        @foreach($schools as $school)
+                                            <option value="{{ $school->id }}">{{ $school->school_name }}</option>
+                                        @endforeach
+                                    @else
+                                        @php
+                                            $mySchool = $schools->firstWhere('id', auth()->user()->school_id);
+                                        @endphp
+                                        <option value="{{ auth()->user()->school_id }}">{{ $mySchool?->school_name ?? 'My School' }}</option>
+                                    @endif
                                 </select>
                             </div>
                             <div class="mb-3">
@@ -552,12 +556,19 @@
                         <div class="modal-body">
                             <div class="mb-3">
                                 <label class="form-label">School *</label>
-                                <select class="form-select" name="school_id" required>
-                                    <option value="">Select School</option>
-                                    <option value="all">All Schools</option>
-                                    @foreach($schools as $school)
-                                        <option value="{{ $school->id }}">{{ $school->school_name }}</option>
-                                    @endforeach
+                                <select class="form-select" name="school_id" id="eventSchoolSelect" required>
+                                    @if(auth()->user()->role === 'admin')
+                                        <option value="">Select School</option>
+                                        <option value="all">All Schools</option>
+                                        @foreach($schools as $school)
+                                            <option value="{{ $school->id }}">{{ $school->school_name }}</option>
+                                        @endforeach
+                                    @else
+                                        @php
+                                            $mySchool = $schools->firstWhere('id', auth()->user()->school_id);
+                                        @endphp
+                                        <option value="{{ auth()->user()->school_id }}">{{ $mySchool?->school_name ?? 'My School' }}</option>
+                                    @endif
                                 </select>
                             </div>
                             <div class="mb-3">

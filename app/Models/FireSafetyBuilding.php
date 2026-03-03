@@ -24,7 +24,11 @@ class FireSafetyBuilding extends Model
         'building_type',
         'description',
         'features',
-        'required_extinguishers'
+        'required_extinguishers',
+        // compliance / scoring fields
+        'safety_score',
+        'compliance_status',
+        'compliance_reason'
     ];
 
     protected $casts = [
@@ -34,7 +38,8 @@ class FireSafetyBuilding extends Model
         'max_rooms' => 'integer',
         'year_constructed' => 'integer',
         'last_renovation' => 'integer',
-        'emergency_exits' => 'integer'
+        'emergency_exits' => 'integer',
+        'safety_score' => 'integer'
     ];
 
     // Relationships
@@ -67,24 +72,24 @@ class FireSafetyBuilding extends Model
     {
         return $this->belongsToMany(FireSafetyEvacuationDrill::class, 'fire_safety_drill_building', 'building_id', 'drill_id');
     }
-    
+
     // Add this new relationship
     public function evacuationPlan(): HasOne
     {
         return $this->hasOne(FireSafetyEvacuationPlan::class, 'building_id');
     }
-    
+
     // Helper methods
     public function getFunctionalAlarmsCountAttribute(): int
     {
         return $this->alarmSystems()->where('status', 'active')->count();
     }
-    
+
     public function getActiveExtinguishersCountAttribute(): int
     {
         return $this->fireExtinguishers()->where('status', 'active')->count();
     }
-    
+
     public function getRequiredExtinguishersCountAttribute(): int
     {
         if ($this->required_extinguishers > 0) {
@@ -92,51 +97,52 @@ class FireSafetyBuilding extends Model
         }
         return max(1, (int) ceil(($this->rooms ?? 0) / 3));
     }
-    
+
     public function getSafetyScoreAttribute(): int
     {
-        $score = 0;
-        
-        // 1. Check Alarms (30 points)
-        // Turns green/compliant if there is a functional alarm
-        if ($this->functionalAlarmsCount > 0) {
-            $score += 30;
-        }
-        
-        // 2. Check Extinguishers (30 points)
-        // Must meet the minimum required active extinguishers
-        if ($this->activeExtinguishersCount >= $this->requiredExtinguishersCount) {
-            $score += 30;
-        }
-        
-        // 3. Check Evacuation Plans (30 or 40 points)
-        // 100% (40 points) if specific building plan exists
-        // 90% (30 points) if only school-wide plan exists
-        if ($this->hasEvacuationPlan()) {
-            $score += 40;
-        } else {
-            // Check for school-wide plan
-            $hasSchoolPlan = FireSafetyEvacuationPlan::where('school_id', $this->school_id)
-                ->whereNull('building_id')
-                ->where('status', 'active')
-                ->exists();
-            if ($hasSchoolPlan) {
-                $score += 30;
-            }
-        }
-        
-        return $score;
+        // Weighted scoring updated per request:
+        // - Extinguishers: up to 45 points (proportional to requirement)
+        // - Alarms: 45 points (binary: functional alarm present at building or school)
+        // - Plans: up to 10 points, where a school-level plan grants 5 points and a building-level plan grants additional 5 points
+        // This makes a building with extinguishers + alarm + school plan score 95 (Passed).
+
+        $required = max(1, $this->requiredExtinguishersCount ?: 1);
+        $extCount = $this->activeExtinguishersCount;
+
+        // Extinguisher score: proportional up to 45
+        $extRatio = min(1, $extCount / $required);
+        $extScore = (int) round($extRatio * 45);
+
+        // Alarm score: 45 if building or school has a functional/active alarm
+        $schoolHasAlarm = $this->school->alarmSystems()->where('status', 'active')->exists();
+        $alarmScore = ($this->functionalAlarmsCount > 0 || $schoolHasAlarm) ? 45 : 0;
+
+        // Plan score: school-level = 5, building-level = additional 5
+        $schoolHasPlan = FireSafetyEvacuationPlan::where('school_id', $this->school_id)
+            ->whereNull('building_id')
+            ->where('status', 'active')
+            ->exists();
+        $buildingHasPlan = $this->hasEvacuationPlan();
+
+        $planScore = 0;
+        if ($schoolHasPlan) $planScore += 5;
+        if ($buildingHasPlan) $planScore += 5;
+
+        $score = $extScore + $alarmScore + $planScore;
+
+        // Cap at 100
+        return min(100, $score);
     }
-    
+
     public function getSafetyStatusAttribute(): string
     {
         $score = $this->safetyScore;
-        
+
         if ($score >= 80) return 'good';
         if ($score >= 60) return 'fair';
         return 'poor';
     }
-    
+
     public function getSafetyStatusLabelAttribute(): string
     {
         return match($this->safetyStatus) {
@@ -146,7 +152,7 @@ class FireSafetyBuilding extends Model
             default => 'Unknown'
         };
     }
-    
+
     public function getSafetyStatusColorAttribute(): string
     {
         return match($this->safetyStatus) {
@@ -156,49 +162,49 @@ class FireSafetyBuilding extends Model
             default => 'secondary'
         };
     }
-    
+
     public function hasEvacuationPlan(): bool
     {
         return $this->evacuationPlan()->exists();
     }
-    
+
     public function getEvacuationPlanStatusAttribute(): ?string
     {
         if (!$this->hasEvacuationPlan()) {
             return null;
         }
-        
+
         return $this->evacuationPlan->status;
     }
-    
+
     public function getEvacuationPlanStatusColorAttribute(): ?string
     {
         if (!$this->hasEvacuationPlan()) {
             return 'danger';
         }
-        
+
         return $this->evacuationPlan->statusColor;
     }
-    
+
     public function getEvacuationPlanStatusLabelAttribute(): ?string
     {
         if (!$this->hasEvacuationPlan()) {
             return 'No Plan';
         }
-        
+
         return $this->evacuationPlan->statusLabel;
     }
-    
+
     public function getFeaturesArrayAttribute(): array
     {
         if (empty($this->features)) {
             return [];
         }
-        
+
         if (is_array($this->features)) {
             return $this->features;
         }
-        
+
         try {
             $features = json_decode($this->features, true);
             return is_array($features) ? $features : [];

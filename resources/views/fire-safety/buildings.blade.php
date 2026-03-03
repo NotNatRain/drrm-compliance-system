@@ -250,9 +250,9 @@
                                     </div>
 
                                      @if(auth()->user()->role !== 'viewer')
-                                    <button class="btn btn-sm btn-primary add-building-btn" 
+                                    <button class="btn btn-sm btn-primary add-building-btn"
                                             data-school-id="{{ $school->id }}"
-                                            data-bs-toggle="modal" 
+                                            data-bs-toggle="modal"
                                             data-bs-target="#addBuildingModal">
                                         <i class="fas fa-plus me-1"></i> Add Building
                                     </button>
@@ -481,7 +481,7 @@
                         <!-- Required Information Group -->
                         <div class="mb-4">
                             <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">Required Information</h6>
-                            
+
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-bold">Building Number/Code *</label>
@@ -509,7 +509,7 @@
                                     <input type="number" class="form-control" name="required_extinguishers" id="buildingReqExt" min="0" value="0" required>
                                 </div>
                             </div>
-                            
+
                             <div id="roomFloorInputs" class="p-3 bg-light rounded mb-3">
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
@@ -533,7 +533,7 @@
                         <!-- Optional Information Group -->
                         <div class="mb-3">
                             <h6 class="fw-bold text-secondary border-bottom pb-2 mb-3">Optional - Can be updated later</h6>
-                            
+
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label">Building Name</label>
@@ -868,7 +868,7 @@
                                             <th>Type</th>
                                             <th>Location</th>
                                             <th>Status</th>
-                                            <th>Install Date</th>
+                                            <th>Floor</th>
                                             <th>Last Test</th>
                                             <th>Next Test Due</th>
                                             <th>Actions</th>
@@ -903,7 +903,7 @@
                     <form id="addAlarmForm">
                         @csrf
                         <input type="hidden" name="school_id" id="addAlarmSchoolId">
-                        
+
                          <!-- Building Context -->
                         <div class="alert alert-light border mb-3">
                             <i class="fas fa-building me-2 text-primary"></i>
@@ -928,6 +928,9 @@
                             </div>
                         </div>
 
+                        <!-- Required Information -->
+                        <h6 class="mt-3">Required Information</h6>
+                        <hr />
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Alarm Code *</label>
@@ -943,8 +946,7 @@
                                 </select>
                             </div>
                         </div>
-
-                         <div class="row mb-3">
+                        <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Status *</label>
                                 <select class="form-control" name="status" id="addStatusSelect" required>
@@ -959,33 +961,14 @@
                                 </select>
                             </div>
                              <div class="col-md-6">
-                                <label class="form-label fw-bold">Specific Location *</label>
-                                <input type="text" class="form-control" name="location" id="alarmSpecificLocation" placeholder="e.g. Main Lobby, Hallway" required>
-                            </div>
-                        </div>
-                        
-                        <div class="row mb-3" id="floorSelectionRow">
-                            <div class="col-12">
-                                <label class="form-label fw-bold">Floor Level</label>
-                                <select class="form-control" name="floor_id" id="addFloorSelect">
+                                <label class="form-label fw-bold">Floor Level *</label>
+                                <select class="form-control" name="floor_id" id="addFloorSelect" required>
                                     <option value="">Select Floor</option>
                                     <option value="all">All Floors</option>
                                     <!-- Populated via JS -->
                                 </select>
                             </div>
                         </div>
-
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">Manufacturer</label>
-                                <input type="text" class="form-control" name="manufacturer">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold">Installation Date</label>
-                                <input type="date" class="form-control" name="installation_date" id="installationDate">
-                            </div>
-                        </div>
-
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Last Test Date</label>
@@ -997,9 +980,28 @@
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Notes/Remarks</label>
-                            <textarea class="form-control" name="notes" rows="2"></textarea>
+                        <!-- Optional Information -->
+                        <h6 class="mt-4">Optional – Can be updated later</h6>
+                        <hr />
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Specific Location</label>
+                                <input type="text" class="form-control" name="location" id="alarmSpecificLocation" placeholder="e.g. Main Lobby, Hallway">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Manufacturer</label>
+                                <input type="text" class="form-control" name="manufacturer">
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Installation Date</label>
+                                <input type="date" class="form-control" name="installation_date" id="installationDate">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Notes/Remarks</label>
+                                <textarea class="form-control" name="notes" rows="2"></textarea>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -1031,6 +1033,34 @@
                         <input type="hidden" id="updateSchoolId" name="school_id">
                         <input type="hidden" id="originalAlarmCode">
 
+                        <!-- Building Context for Update -->
+                        <div class="alert alert-light border mb-3">
+                            <i class="fas fa-building me-2 text-primary"></i>
+                            Updating alarm for: <strong id="updateAlarmBuildingNameDisplay">...</strong>
+                            <input type="hidden" name="building_id" id="updateAlarmBuildingId">
+                        </div>
+
+                        <!-- Multi-Building Option (Shared System) -->
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="updateCoversMultiple" name="covers_multiple">
+                                <label class="form-check-label" for="updateCoversMultiple">
+                                    Yes, it covers multiple buildings (Shared System)
+                                </label>
+                            </div>
+                            <div id="updateMultiBuildingSelectContainer" style="display:none;" class="mt-3 p-3 bg-light border rounded">
+                                <label class="form-label small fw-bold">Currently Assigned Buildings:</label>
+                                <div id="updateCurrentBuildingsList" class="mb-3 small">
+                                    <!-- List of currently assigned buildings -->
+                                </div>
+                                <label class="form-label small fw-bold d-block mb-2">Select Additional Buildings to Cover:</label>
+                                <select class="form-control" name="building_ids[]" id="updateMultiBuildingSelect" multiple size="4">
+                                    <!-- Populated via JS -->
+                                </select>
+                                <small class="text-muted d-block mt-2">Hold Ctrl/Cmd to select multiple. (Primary building shown above)</small>
+                            </div>
+                        </div>
+
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Alarm Code</label>
@@ -1053,6 +1083,17 @@
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Location</label>
                                 <input type="text" class="form-control" name="location" id="updateAlarmLocation" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Floor Level</label>
+                                <select class="form-control" name="floor_id" id="updateFloorSelect" required>
+                                    <option value="">Select Floor</option>
+                                    <option value="all">All Floors</option>
+                                    <!-- Populated via JS -->
+                                </select>
                             </div>
                         </div>
 
@@ -1293,6 +1334,20 @@
             };
 
             return typeMap[type.toLowerCase()] || type.charAt(0).toUpperCase() + type.slice(1);
+        }
+
+        // helper to convert floor identifier into human-readable label
+        function formatFloorLabel(floor) {
+            if (!floor) return '-';
+            if (floor === 'all' || floor === 'ALL') return 'Entire Building';
+            const num = Number(floor);
+            if (isNaN(num)) return floor;
+            const j = num % 10, k = num % 100;
+            let suffix = 'th';
+            if (j === 1 && k !== 11) suffix = 'st';
+            else if (j === 2 && k !== 12) suffix = 'nd';
+            else if (j === 3 && k !== 13) suffix = 'rd';
+            return num + suffix;
         }
 
         // Store current school ID (already initialized above)
@@ -1538,11 +1593,11 @@
                                 <strong>Already Inspected building?</strong>
                             </div>
                         `;
-                        
+
                         // Check for alarms (building.alarm_systems comes from controller getBuilding)
                         const alarmCount = (building.alarm_systems && Array.isArray(building.alarm_systems)) ? building.alarm_systems.length : 0;
                         let alarmButton = '';
-                        
+
                         if (alarmCount > 0) {
                             alarmButton = `
                                 <button type="button" class="btn btn-info me-2 text-white" onclick="openBuildingAlarms(${building.id})">
@@ -2682,7 +2737,7 @@
              // Close any open modals
             const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewBuildingModal'));
             if (viewModal) viewModal.hide();
-            
+
             // Set current building context
             const response = await fetch(`/fire-safety/building/${buildingId}`);
             if (!response.ok) {
@@ -2690,12 +2745,12 @@
                 return;
             }
             const building = await response.json();
-            
+
             // Set context for Add Modal
             document.getElementById('addAlarmBuildingId').value = buildingId;
             document.getElementById('addAlarmBuildingNameDisplay').textContent = building.building_no + (building.building_name ? ` (${building.building_name})` : '');
             document.getElementById('addAlarmSchoolId').value = building.school_id;
-            
+
             // Populate Floor Select for Add Modal
             const floorSelect = document.getElementById('addFloorSelect');
             floorSelect.innerHTML = '<option value="">Select Floor</option><option value="all">All Floors</option>';
@@ -2707,7 +2762,7 @@
             }
 
             // Populate Multi-Building Select
-            loadMultiBuildingOptions(building.school_id, buildingId);
+            loadMultiBuildingOptions(building.school_id, buildingId, 'addMultiBuildingSelect');
 
             if (autoAdd) {
                 // Open Add Modal Directly
@@ -2717,7 +2772,7 @@
                 // Open List Modal
                 const listModal = new bootstrap.Modal(document.getElementById('buildingAlarmsModal'));
                 document.getElementById('alarmsModalTitle').textContent = `Alarms for ${building.building_no}`;
-                
+
                 // Configure "Add New" button in List Modal
                 const btnAdd = document.getElementById('btnAddNewAlarmInList');
                 if (btnAdd) {
@@ -2734,11 +2789,11 @@
                         }, { once: true });
                     };
                 }
-                
+
                 // Print Button
                  const printBtn = document.getElementById('printAlarmsBtn');
                  if(printBtn) printBtn.href = `/fire-safety/alarms/print/${buildingId}`; // Hypothetical route
-                
+
                 listModal.show();
                 loadBuildingAlarms(buildingId);
             }
@@ -2748,7 +2803,7 @@
         async function loadBuildingAlarms(buildingId) {
             const tbody = document.querySelector('#buildingAlarmsTable tbody');
             tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4"><i class="fas fa-spinner fa-spin me-2"></i> Loading alarms...</td></tr>';
-            
+
             try {
                 // We reuse the getBuilding endpoint which now includes alarmSystems
                 const response = await fetch(`/fire-safety/building/${buildingId}`);
@@ -2761,67 +2816,67 @@
                     let html = '';
                     alarms.forEach(alarm => {
                         html += `
-                            <tr>
-                                <td class="fw-bold text-primary">${alarm.code}</td>
-                                <td>${alarm.alarm_type}</td>
-                                <td>${alarm.location || 'N/A'}</td>
-                                <td><span class="badge ${getAlarmStatusBadge(alarm.status)}">${formatStatus(alarm.status)}</span></td>
-                                <td>${alarm.installation_date ? formatDate(alarm.installation_date) : '-'}</td>
-                                <td>${alarm.last_test ? formatDate(alarm.last_test) : '<span class="text-warning">Never</span>'}</td>
-                                <td>${alarm.next_test_due ? formatDate(alarm.next_test_due) : '-'}</td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-outline-success" onclick="testAlarm(${alarm.id})" title="Test Now">
-                                            <i class="fas fa-check-circle"></i>
-                                        </button>
-                                        <button class="btn btn-outline-primary" onclick="openUpdateAlarmModal(${alarm.id})" title="Update">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="btn btn-outline-danger" onclick="deleteAlarmSystem(${alarm.id})" title="Remove">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        `;
+                                <tr>
+                                    <td class="fw-bold text-primary">${alarm.code}</td>  <!-- Code -->
+                                    <td>${alarm.alarm_type}</td>  <!-- Type -->
+                                    <td>${alarm.location || '-'}</td>  <!-- Location (if you have location data) -->
+                                    <td><span class="badge ${getAlarmStatusBadge(alarm.status)}">${formatStatus(alarm.status)}</span></td>  <!-- Status -->
+                                    <td>${formatFloorLabel(alarm.floor_id)}</td>  <!-- Floor (now after Last Test) -->
+                                    <td>${alarm.last_test ? formatDate(alarm.last_test) : '<span class="text-warning">Never</span>'}</td>  <!-- Last Test (moved up) -->
+                                    <td>${alarm.next_test_due ? formatDate(alarm.next_test_due) : '-'}</td>  <!-- Next Test Due (after Floor) -->
+                                    <td>  <!-- Actions -->
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-success" onclick="testAlarm(${alarm.id})" title="Test Now">
+                                                <i class="fas fa-check-circle"></i>
+                                            </button>
+                                            <button class="btn btn-outline-primary" onclick="openUpdateAlarmModal(${alarm.id})" title="Update">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger" onclick="deleteAlarmSystem(${alarm.id})" title="Remove">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
                     });
                     tbody.innerHTML = html;
                 }
-                
+
                 // Update Upcoming Tests (Mockup Logic based on alarm data)
-                updateUpcomingTests(alarms, true); // true for main dashboard if needed? 
+                updateUpcomingTests(alarms, true); // true for main dashboard if needed?
                 // Actually we should fetch for the whole school for the main dashboard one.
                 fetchSchoolUpcomingTests(currentSchoolId);
-                
+
             } catch (error) {
                 console.error(error);
                 tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4 text-danger">Failed to load alarms.</td></tr>';
             }
         }
-        
+
         function updateUpcomingTests(alarms, isMain = false) {
             const listId = isMain ? 'mainUpcomingTestsList' : 'upcomingTestsList';
             const list = document.getElementById(listId);
             if(!list) return;
-            
+
             const upcoming = alarms.filter(a => a.next_test_due).sort((a,b) => new Date(a.next_test_due) - new Date(b.next_test_due));
-            
+
             if (upcoming.length === 0) {
                 list.innerHTML = '<li class="list-group-item text-muted small text-center py-3">No upcoming tests scheduled.</li>';
                 return;
             }
-            
+
             let html = '';
             upcoming.forEach(a => {
                 const due = new Date(a.next_test_due);
                 const today = new Date();
                 const diffTime = due - today;
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-                
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
                 let badge = 'bg-success';
                 if(diffDays < 0) badge = 'bg-danger'; // Overdue
                 else if(diffDays <= 7) badge = 'bg-warning text-dark';
-                
+
                 html += `
                     <li class="list-group-item d-flex justify-content-between align-items-center py-3">
                         <div>
@@ -2848,7 +2903,7 @@
                 buildings.forEach(b => {
                     const alarms = b.alarm_systems || b.alarmSystems || [];
                     const alarmsMany = b.alarm_systems_many || b.alarmSystemsMany || [];
-                    
+
                     [...alarms, ...alarmsMany].forEach(a => {
                         if (!alarmMap.has(a.id)) {
                             a.building_no = b.building_no;
@@ -2861,14 +2916,15 @@
             } catch(e) { console.error('Error fetching upcoming tests:', e); }
         }
 
-        async function loadMultiBuildingOptions(schoolId, excludeBuildingId) {
-            const select = document.getElementById('addMultiBuildingSelect');
+        async function loadMultiBuildingOptions(schoolId, excludeBuildingId, selectId = 'addMultiBuildingSelect') {
+            const select = document.getElementById(selectId);
+            if (!select) return;
             select.innerHTML = ''; // Requesting...
-            
+
             try {
                 const response = await fetch(`/fire-safety/buildings-list/${schoolId}`);
                 const buildings = await response.json();
-                
+
                 buildings.forEach(b => {
                     if (b.id != excludeBuildingId) {
                         const opt = document.createElement('option');
@@ -2894,6 +2950,21 @@
             }
         });
 
+        // toggle for update modal multi-building
+        const updateCoversChk = document.getElementById('updateCoversMultiple');
+        if (updateCoversChk) {
+            updateCoversChk.addEventListener('change', function() {
+                const container = document.getElementById('updateMultiBuildingSelectContainer');
+                const sel = document.getElementById('updateMultiBuildingSelect');
+                if (this.checked) {
+                    container.style.display = 'block';
+                } else {
+                    container.style.display = 'none';
+                    if(sel) Array.from(sel.options).forEach(o=>o.selected = false);
+                }
+            });
+        }
+
         // Save Alarm
         async function saveAlarmSystem() {
             const form = document.getElementById('addAlarmForm');
@@ -2903,7 +2974,7 @@
             }
 
             const formData = new FormData(form);
-            
+
             try {
                 const response = await fetch('{{ route('fire-safety.alarm.store') }}', {
                     method: 'POST',
@@ -2913,9 +2984,9 @@
                     },
                     body: formData
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     Swal.fire({
                          title: 'Success',
@@ -2924,12 +2995,12 @@
                          timer: 1500,
                          showConfirmButton: false
                     });
-                    
+
                     const modal = bootstrap.Modal.getInstance(document.getElementById('addAlarmModal'));
                     modal.hide();
-                    
+
                     // Reload buildings to update dashboard cards and modal list
-                     location.reload(); 
+                     location.reload();
                      // Ideally we would just reload the list, but dashboard cards need updating too.
                      // Or we can just call loadBuildingAlarms(buildingId) if we didn't confirm reload.
                 } else {
@@ -2940,22 +3011,60 @@
                 Swal.fire('Error', 'Failed to save alarm system.', 'error');
             }
         }
-        
+
         // Open Update Modal
         async function openUpdateAlarmModal(alarmId) {
              try {
                 const response = await fetch(`/fire-safety/alarm/${alarmId}`);
                 const alarm = await response.json();
-                
+
                 if (!alarm) throw new Error('Alarm not found');
-                
+
                 const modal = new bootstrap.Modal(document.getElementById('updateAlarmModal'));
                 const form = document.getElementById('updateAlarmForm');
-                
+
                 document.getElementById('updateAlarmId').value = alarm.id;
                 document.getElementById('updateSchoolId').value = alarm.school_id;
                 document.getElementById('originalAlarmCode').value = alarm.code;
-                
+
+                // building context
+                document.getElementById('updateAlarmBuildingId').value = alarm.building_id;
+                try {
+                    const bresp = await fetch(`/fire-safety/building/${alarm.building_id}`);
+                    const building = await bresp.json();
+                    document.getElementById('updateAlarmBuildingNameDisplay').textContent = building.building_no + (building.building_name ? ` (${building.building_name})` : '');
+                } catch(e) {
+                    console.error('Failed to load building for update modal', e);
+                }
+
+                // load multi-building options for update
+                await loadMultiBuildingOptions(alarm.school_id, alarm.building_id, 'updateMultiBuildingSelect');
+
+                // determine multi status and pre-select
+                const isMulti = alarm.buildings && alarm.buildings.length > 1;
+                const updateCheck = document.getElementById('updateCoversMultiple');
+                if(updateCheck) updateCheck.checked = isMulti;
+                const multiContainer = document.getElementById('updateMultiBuildingSelectContainer');
+                const currentBuildingsList = document.getElementById('updateCurrentBuildingsList');
+
+                if(isMulti) {
+                    if(multiContainer) multiContainer.style.display = 'block';
+                    // Display currently assigned buildings
+                    if(currentBuildingsList && alarm.buildings) {
+                        const buildingText = alarm.buildings.map(b => `<span class="badge bg-primary me-2">${b.building_no}${b.building_name ? ' - ' + b.building_name : ''}</span>`).join('');
+                        currentBuildingsList.innerHTML = `<div class="mb-2">${buildingText}</div>`;
+                    }
+                    // pre-select additional buildings
+                    const assignedIds = alarm.buildings.map(b => b.id).filter(id => id != alarm.building_id);
+                    assignedIds.forEach(id => {
+                        const opt = document.querySelector(`#updateMultiBuildingSelect option[value="${id}"]`);
+                        if(opt) opt.selected = true;
+                    });
+                } else {
+                    if(multiContainer) multiContainer.style.display = 'none';
+                    if(currentBuildingsList) currentBuildingsList.innerHTML = '';
+                }
+
                 document.getElementById('updateAlarmCode').value = alarm.code;
                 document.getElementById('updateAlarmTypeDisplay').value = alarm.alarm_type;
                 document.getElementById('updateAlarmLocation').value = alarm.location;
@@ -2965,13 +3074,32 @@
                 document.getElementById('updateNextTestDue').value = alarm.next_test_due ? alarm.next_test_due.split('T')[0] : '';
                 document.getElementById('updateNotes').value = alarm.notes || '';
 
+                // Populate Floor Select for Update Modal
+                const floorSelect = document.getElementById('updateFloorSelect');
+                try {
+                    const building = await fetch(`/fire-safety/building/${alarm.building_id}`).then(r => r.json());
+                    floorSelect.innerHTML = '<option value="">Select Floor</option><option value="all">All Floors</option>';
+                    for (let i = 1; i <= building.floors; i++) {
+                        const opt = document.createElement('option');
+                        opt.value = i;
+                        opt.textContent = `Floor ${i}`;
+                        floorSelect.appendChild(opt);
+                    }
+                    // Pre-select current floor
+                    if (alarm.floor_id) {
+                        floorSelect.value = alarm.floor_id;
+                    }
+                } catch(e) {
+                    console.error('Failed to populate floors', e);
+                }
+
                 // Populate Status Select (re-use the HTML from Add modal or clone it)
                  const statusSelect = document.getElementById('updateStatusSelect');
                  const addStatusSelect = document.getElementById('addStatusSelect');
                  if(addStatusSelect && statusSelect.options.length === 0) {
                      statusSelect.innerHTML = addStatusSelect.innerHTML;
                  }
-                 
+
                  // Filter statuses based on current alarm type name
                  const currentAlarmTypeName = alarm.alarm_type;
                  let targetParentId = null;
@@ -2994,16 +3122,16 @@
                      }
                  });
 
-                 
+
                  // Normalize status for selection
-                 let statusVal = alarm.status.toLowerCase().replace('_', ' '); 
+                 let statusVal = alarm.status.toLowerCase().replace('_', ' ');
                  // Try to match value
                  // The select has values like "Functional", "Broken", etc.
                  // The DB has "active", "maintenance".
                  // Map back if needed.
                  // Actually the getAlarm returns the DB value. The select options have Names (e.g. "Functional")
                  // We need to match precise values.
-                 
+
                 // Simple match attempt
                 let found = false;
                 for (let i = 0; i < statusSelect.options.length; i++) {
@@ -3015,17 +3143,17 @@
                 }
                 // Fallback attempt
                 if (!found && alarm.status === 'active') statusSelect.value = 'Functional';
-                
+
                 // Hide Alarm List modal temporarily
                 const listModal = bootstrap.Modal.getInstance(document.getElementById('buildingAlarmsModal'));
                 if(listModal) listModal.hide();
-                
+
                 modal.show();
-                
+
                 // On close, re-open list
                 document.getElementById('updateAlarmModal').addEventListener('hidden.bs.modal', function () {
                      const buildingId = alarm.building_id; // Need to know which building to re-open
-                     // But alarm might belong to multiple. 
+                     // But alarm might belong to multiple.
                      // We can rely on global or just fail gracefully.
                      // Better: check if buildingAlarmsModal was open before.
                      // For now, let's just let user navigate back.
@@ -3036,7 +3164,7 @@
                 Swal.fire('Error', 'Failed to load alarm details.', 'error');
             }
         }
-        
+
         async function updateAlarmSystem() {
             const id = document.getElementById('updateAlarmId').value;
             const form = document.getElementById('updateAlarmForm');
@@ -3045,8 +3173,25 @@
                 return;
             }
 
-            // Convert map to plain object
-            const formData = Object.fromEntries(new FormData(form).entries());
+            // Convert form values to plain object, preserving arrays (e.g. building_ids[])
+            const formData = new FormData(form);
+            const formObj = {};
+            for (const [key, value] of formData.entries()) {
+                if (formObj.hasOwnProperty(key)) {
+                    if (Array.isArray(formObj[key])) {
+                        formObj[key].push(value);
+                    } else {
+                        formObj[key] = [formObj[key], value];
+                    }
+                } else {
+                    formObj[key] = value;
+                }
+            }
+
+            // Ensure building_id is included
+            if (!formObj.building_id || formObj.building_id === '') {
+                formObj.building_id = document.getElementById('updateAlarmBuildingId').value;
+            }
 
             try {
                 const response = await fetch(`/fire-safety/alarm/${id}`, {
@@ -3056,7 +3201,7 @@
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify(formData)
+                    body: JSON.stringify(formObj)
                 });
                 const data = await response.json();
 
@@ -3071,29 +3216,29 @@
                 Swal.fire('Error', 'Failed to update alarm.', 'error');
             }
         }
-        
+
         // Remove Alarm
         let alarmIdToRemove = null;
         function deleteAlarmSystem(id) {
             alarmIdToRemove = id;
             const modal = new bootstrap.Modal(document.getElementById('alarmRemovalModal'));
-            
+
             // Hide list modal
             const listModal = bootstrap.Modal.getInstance(document.getElementById('buildingAlarmsModal'));
             if(listModal) listModal.hide();
-            
+
             modal.show();
         }
-        
+
         async function confirmRemoveAlarm() {
             if(!alarmIdToRemove) return;
-            
+
             const reason = document.getElementById('alarmRemovalReason').value;
              if (!reason.trim()) {
                 Swal.fire('Reason Required', 'Please provide a reason for removal.', 'warning');
                 return;
             }
-            
+
             try {
                 const response = await fetch(`/fire-safety/alarm/${alarmIdToRemove}/remove`, {
                     method: 'POST',
@@ -3104,7 +3249,7 @@
                     },
                     body: JSON.stringify({ reason: reason })
                 });
-                
+
                 const data = await response.json();
                  if (data.success) {
                     Swal.fire('Removed', 'Alarm system removed and archived.', 'success').then(() => {
@@ -3117,7 +3262,7 @@
                  Swal.fire('Error', 'Failed to remove alarm.', 'error');
             }
         }
-        
+
         async function testAlarm(id) {
              try {
                 const response = await fetch(`/fire-safety/alarm/${id}/test`, {
@@ -3151,14 +3296,14 @@
                  Swal.fire('Error', 'Failed to record test.', 'error');
              }
         }
-        
+
         function getAlarmStatusBadge(status) {
             status = status.toLowerCase();
             if (status === 'active' || status === 'functional') return 'bg-success';
             if (status === 'maintenance' || status === 'under-repair') return 'bg-warning text-dark';
             return 'bg-danger';
         }
-        
+
         function formatStatus(status) {
             return status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         }
@@ -3172,13 +3317,13 @@
             const modal = new bootstrap.Modal(modalEl);
             const tbody = document.querySelector('#alarmHistoryTable tbody');
             tbody.innerHTML = '<tr><td colspan="6" class="text-center">Loading history...</td></tr>';
-            
+
             modal.show();
-            
+
             try {
                 const response = await fetch(`/fire-safety/alarm/history/${schoolId}`);
                 const history = await response.json();
-                
+
                 if (history.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No history found.</td></tr>';
                 } else {
@@ -3186,7 +3331,7 @@
                     history.forEach(item => {
                         let statusBad = 'bg-secondary';
                         let statusText = item.item_data.status || 'Unknown';
-                        
+
                         html += `
                             <tr>
                                 <td>${formatDate(item.removed_at)}</td>
@@ -3208,7 +3353,7 @@
 
         function filterBuildings(status) {
             const cards = document.querySelectorAll('.building-item');
-            
+
             cards.forEach(card => {
                 if (status === 'all') {
                     card.style.display = 'block';
@@ -3220,7 +3365,7 @@
                     }
                 }
             });
-            
+
             // Update filter button text
             const btn = document.getElementById('buildingFilterDropdown');
             if(btn) {
