@@ -27,4 +27,9 @@ class SystemConfiguration extends Model
         'is_active' => 'boolean',
         'sort_order' => 'integer',
     ];
+
+    public function parent()
+    {
+        return $this->belongsTo(SystemConfiguration::class, 'parent_id');
+    }
 }

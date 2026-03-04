@@ -57,9 +57,8 @@
 
         /* Glass Cards */
         .glass-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: #fff;
+            border: 1px solid rgba(0, 0, 0, 0.05);
             border-radius: 24px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
             height: 100%;
@@ -146,7 +145,6 @@
             align-items: center;
             margin-bottom: 10px;
             cursor: pointer;
-            transition: all 0.2s;
             border: 1px solid transparent;
         }
 
@@ -188,17 +186,16 @@
 
         .custom-table tr {
             background: #fff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
-            border-radius: 12px;
+            border-bottom: 1px solid #eee;
         }
 
         .custom-table td {
-            padding: 15px;
+            padding: 10px 15px;
             vertical-align: middle;
         }
 
-        .custom-table td:first-child { border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
-        .custom-table td:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+        .custom-table td:first-child { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+        .custom-table td:last-child { border-top-right-radius: 0; border-bottom-right-radius: 0; }
 
         .school-name {
             font-weight: 600;
@@ -229,7 +226,6 @@
             color: #fff;
             padding: 10px 20px;
             border-radius: 15px;
-            transition: all 0.3s;
             text-decoration: none !important;
         }
 
@@ -394,8 +390,8 @@
 
     <div class="container-fluid px-4">
         <div class="row">
-            <!-- Left Panel: Calendar -->
-            <div class="col-lg-7 mb-4">
+            <!-- Left Panel: Calendar (50%) -->
+            <div class="col-lg-6 mb-4">
                 <div class="glass-card calendar-container">
                     <div class="calendar-header">
                         <div class="calendar-title">
@@ -480,164 +476,181 @@
                             <small class="text-muted ms-2" style="font-size: 0.8rem;">Backup & restore data</small>
                         </div>
                     </div>
+
+                    <!-- Legend & Filters Inside Calendar -->
+                    <div class="mt-4 pt-3 border-top">
+                        <h6 class="fw-bold mb-3">Legend & Filters</h6>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="text-muted small text-uppercase mb-0">Incident Types</h6>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="addIncidentTypeBtn" title="Add incident type" style="padding: 1px 6px; font-size: 10px;">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div class="d-flex flex-wrap gap-1">
+                                    @foreach($incidentTypes as $type)
+                                        <div class="legend-tag {{ $type->color_class ?? 'type-others' }} edit-type-btn" data-id="{{ $type->id }}" data-name="{{ $type->name }}" style="padding: 2px 8px; font-size: 0.7rem;">
+                                            <div class="tag-dot" style="width: 6px; height: 6px; background: {{ in_array($type->color_class, ['type-flooding','type-others']) ? '#333' : '#fff' }};"></div>
+                                            <span>{{ $type->name }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                            <div class="col-12 mt-2">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="text-muted small text-uppercase mb-0">Compliance Status / Events</h6>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="addIncidentStatusBtn" title="Add status/event" style="padding: 1px 6px; font-size: 10px;">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <div class="d-flex flex-wrap gap-1">
+                                    @foreach($incidentStatuses as $status)
+                                        <div class="legend-tag {{ $status->color_class ?? 'status-no-suspension' }} edit-status-btn" data-id="{{ $status->id }}" data-name="{{ $status->name }}" style="padding: 2px 8px; font-size: 0.7rem;">
+                                            <span>{{ $status->name }}</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Right Panel: Incident Specifics -->
-            <div class="col-lg-5 mb-4">
-                <div class="glass-card p-4">
-                    <h5 class="fw-bold mb-4">
-                        <i class="fas fa-info-circle me-2 text-warning"></i>
-                        Monthly Incident Specifics
-                    </h5>
+            <!-- Right Container (50%) -->
+            <div class="col-lg-6">
+                <div class="row">
+                    <!-- Panel: Incident Specifics (35% of total, which is 70% of this container) -->
+                    <div class="col-lg-8 mb-4">
+                        <div class="glass-card p-4">
+                            <h5 class="fw-bold mb-4">
+                                <i class="fas fa-info-circle me-2 text-warning"></i>
+                                Monthly Incident Specifics
+                            </h5>
 
-                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
-                        <table class="custom-table">
-                            <tbody>
-                                @forelse($incidents ?? [] as $incident)
-                                <tr>
-                                    <td>
-                                        <div class="fw-bold">{{ $incident->incident_date->format('M j') }}</div>
-                                        <small class="text-muted">{{ $incident->created_at->format('h:i A') }}</small>
-                                    </td>
-                                    <td>
-                                        <div class="school-name">{{ $incident->school_name }}</div>
-                                        @if($incident->entry_type === 'incident' && $incident->incidentType)
-                                            <span class="badge {{ $incident->incidentType->color_class }} small">{{ $incident->incidentType->name }}</span>
-                                        @elseif($incident->entry_type === 'compliance' && $incident->incidentStatus)
-                                            <span class="badge {{ $incident->incidentStatus->color_class }} small">{{ $incident->incidentStatus->name }}</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <small class="text-truncate d-block" style="max-width: 150px;">{{ Str::limit($incident->remarks, 50) }}</small>
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="3" class="text-center py-5">
-                                        <div class="mb-3">
-                                            <i class="fas fa-folder-open fa-3x text-muted"></i>
-                                        </div>
-                                        <p class="text-muted">No incidents recorded for this month</p>
-                                    </td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
+                            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                <table class="custom-table">
+                                    <tbody>
+                                        @forelse($incidents ?? [] as $incident)
+                                        <tr>
+                                            <td>
+                                                <div class="fw-bold" style="font-size: 0.85rem;">{{ $incident->incident_date->format('M j') }}</div>
+                                                <small class="text-muted" style="font-size: 0.7rem;">{{ $incident->created_at->format('h:i A') }}</small>
+                                            </td>
+                                            <td>
+                                                <div class="school-name" style="font-size: 0.85rem;">{{ $incident->school_name }}</div>
+                                                @if($incident->entry_type === 'incident' && $incident->incidentType)
+                                                    <span class="badge {{ $incident->incidentType->color_class }}" style="font-size: 10px; padding: 2px 5px;">{{ $incident->incidentType->name }}</span>
+                                                @elseif($incident->entry_type === 'compliance' && $incident->incidentStatus)
+                                                    <span class="badge {{ $incident->incidentStatus->color_class }}" style="font-size: 10px; padding: 2px 5px;">{{ $incident->incidentStatus->name }}</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <small class="text-truncate d-block" style="max-width: 100px; font-size: 0.75rem;">{{ Str::limit($incident->remarks, 30) }}</small>
+                                            </td>
+                                        </tr>
+                                        @empty
+                                        <tr>
+                                            <td colspan="3" class="text-center py-5">
+                                                <div class="mb-3">
+                                                    <i class="fas fa-folder-open fa-2x text-muted"></i>
+                                                </div>
+                                                <p class="text-muted small">No incidents recorded for this month</p>
+                                            </td>
+                                        </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
 
-                    <div class="mt-4 pt-3 border-top">
-                        <div class="row text-center">
-                            <div class="col-4">
-                                <div class="stat-value">{{ $stats['total'] ?? 0 }}</div>
-                                <div class="stat-label">Total Logs</div>
-                            </div>
-                            <div class="col-4">
-                                <div class="stat-value text-danger">{{ $stats['incidents'] ?? 0 }}</div>
-                                <div class="stat-label">Incident</div>
-                            </div>
-                            <div class="col-4">
-                                <div class="stat-value text-success">{{ $stats['compliance'] ?? 0 }}</div>
-                                <div class="stat-label">Events</div>
+                            <div class="mt-4 pt-3 border-top">
+                                <div class="row text-center">
+                                    <div class="col-4">
+                                        <div class="stat-value" style="font-size: 1.2rem;">{{ $stats['total'] ?? 0 }}</div>
+                                        <div class="stat-label">Total</div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="stat-value text-danger" style="font-size: 1.2rem;">{{ $stats['incidents'] ?? 0 }}</div>
+                                        <div class="stat-label">Incident</div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="stat-value text-success" style="font-size: 1.2rem;">{{ $stats['compliance'] ?? 0 }}</div>
+                                        <div class="stat-label">Events</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="mt-4">
-                            <div class="row">
+                    </div>
+
+                    <!-- Right Panel: Quick Compliance Checklist (15% of total, which is 30% of this container) -->
+                    <div class="col-lg-4 mb-4">
+                        <div class="glass-card p-4 overflow-hidden position-relative">
+                            <div style="position: absolute; top: -10px; right: -10px; font-size: 4rem; color: rgba(242, 201, 76, 0.05);">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <h5 class="fw-bold mb-1">Quick Checklist</h5>
+                            <p class="text-muted small mb-3">Today: {{ \Carbon\Carbon::parse($checklistDate)->format('M j, Y') }}</p>
+                            <div id="checklistContainer" class="list-group list-group-flush bg-transparent" style="max-height: 400px; overflow-y: auto;">
+                                @foreach($checklistItems as $item)
+                                <div class="list-group-item bg-transparent border-0 px-0 py-2 d-flex align-items-center justify-content-between checklist-item-row" data-id="{{ $item->id }}">
+                                    <div class="form-check flex-grow-1">
+                                        <input class="form-check-input checklist-toggle" type="checkbox" id="checklist_{{ $item->id }}" {{ $item->is_completed ? 'checked' : '' }}>
+                                        <label class="form-check-label fw-600 ms-1 small" for="checklist_{{ $item->id }}">{{ $item->label }}</label>
+                                    </div>
+                                    <button type="button" class="btn btn-sm text-danger ms-1 checklist-delete" title="Remove item" style="padding: 0 5px;">
+                                        <i class="fas fa-trash small"></i>
+                                    </button>
+                                </div>
+                                @endforeach
+                            </div>
+                            <div class="mt-3">
+                                <div class="input-group input-group-sm">
+                                    <input type="text" id="newChecklistLabel" class="form-control" placeholder="Add item...">
+                                    <button class="btn btn-warning" type="button" id="addChecklistItemBtn">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Separate Charts Division (Covers specifics and checklist below them) -->
+                <div class="row">
+                    <div class="col-12 mb-4">
+                        <div class="glass-card p-4">
+                            <h5 class="fw-bold mb-3">
+                                <i class="fas fa-chart-bar me-2 text-warning"></i>
+                                Analytics Distribution & Trend
+                            </h5>
+                            <div class="row g-3">
                                 <!-- Left Chart: Incident Type Distribution -->
-                                <div class="col-md-6 mb-3">
-                                    <h6 class="text-muted text-uppercase small mb-2">
-                                        <i class="fas fa-chart-pie me-2 text-warning"></i> Incident Type Distribution
+                                <div class="col-md-6 border-end">
+                                    <h6 class="text-muted text-uppercase mb-3" style="font-size: 10px; font-weight: 700;">
+                                        <i class="fas fa-chart-pie me-1 text-warning"></i> Incident Type Distribution
                                     </h6>
-                                    <canvas id="incidentTypeChart" height="100"></canvas>
+                                    <div style="height: 200px; position: relative;">
+                                        <canvas id="incidentTypeChart"></canvas>
+                                    </div>
                                 </div>
 
                                 <!-- Right Chart: Incident Trend (Daily) -->
-                                <div class="col-md-6 mb-3">
-                                    <h6 class="text-muted text-uppercase small mb-2">
-                                        <i class="fas fa-chart-line me-2 text-warning"></i> Incident Trend (Daily)
+                                <div class="col-md-6 ps-md-4">
+                                    <h6 class="text-muted text-uppercase mb-3" style="font-size: 10px; font-weight: 700;">
+                                        <i class="fas fa-chart-line me-1 text-warning"></i> Incident Trend (Daily)
                                     </h6>
-                                    <canvas id="incidentTrendChart" height="100"></canvas>
+                                    <div style="height: 200px; position: relative;">
+                                        <canvas id="incidentTrendChart"></canvas>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Legend and Stats Section -->
-        <div class="row">
-            <div class="col-lg-8 mb-4">
-                <div class="glass-card p-4">
-                    <h5 class="fw-bold mb-4">Legend & Filters</h5>
-                    <div class="row">
-                        <div class="col-md-6 border-end">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="text-muted small text-uppercase mb-0">Incident Types</h6>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" id="addIncidentTypeBtn" title="Add incident type">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
-                            <div class="d-flex flex-wrap gap-2">
-                                @foreach($incidentTypes as $type)
-                                    <div class="legend-tag {{ $type->color_class ?? 'type-others' }}">
-                                        <div class="tag-dot" style="background: {{ in_array($type->color_class, ['type-flooding','type-others']) ? '#333' : '#fff' }};"></div>
-                                        <span>{{ $type->name }}</span>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                        <div class="col-md-6 ps-md-4">
-                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                <h6 class="text-muted small text-uppercase mb-0">Compliance Status / Events</h6>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" id="addIncidentStatusBtn" title="Add status/event">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
-                            <div class="d-flex flex-wrap gap-2">
-                                @foreach($incidentStatuses as $status)
-                                    <div class="legend-tag {{ $status->color_class ?? 'status-no-suspension' }}">
-                                        <span>{{ $status->name }}</span>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-4 mb-4">
-                <div class="glass-card p-4 overflow-hidden position-relative">
-                    <div style="position: absolute; top: -20px; right: -20px; font-size: 8rem; color: rgba(242, 201, 76, 0.05);">
-                        <i class="fas fa-shield-alt"></i>
-                    </div>
-                    <h5 class="fw-bold mb-1">Quick Compliance Checklist</h5>
-                    <p class="text-muted small mb-3">For {{ \Carbon\Carbon::parse($checklistDate)->format('F j, Y') }} (resets daily)</p>
-                    <div id="checklistContainer" class="list-group list-group-flush bg-transparent">
-                        @foreach($checklistItems as $item)
-                        <div class="list-group-item bg-transparent border-0 px-0 py-2 d-flex align-items-center justify-content-between checklist-item-row" data-id="{{ $item->id }}">
-                            <div class="form-check flex-grow-1">
-                                <input class="form-check-input checklist-toggle" type="checkbox" id="checklist_{{ $item->id }}" {{ $item->is_completed ? 'checked' : '' }}>
-                                <label class="form-check-label fw-600 ms-1" for="checklist_{{ $item->id }}">{{ $item->label }}</label>
-                            </div>
-                            <button type="button" class="btn btn-sm btn-outline-danger ms-2 checklist-delete" title="Remove item">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                        @endforeach
-                    </div>
-                    <div class="mt-3">
-                        <div class="input-group input-group-sm">
-                            <input type="text" id="newChecklistLabel" class="form-control" placeholder="Add checklist item...">
-                            <button class="btn btn-warning" type="button" id="addChecklistItemBtn">
-                                <i class="fas fa-plus"></i>
-                            </button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
 
     <!-- Log Incident Modal -->
     <div class="modal fade" id="logIncidentModal" tabindex="-1" aria-labelledby="logIncidentModalLabel" aria-hidden="true">
@@ -843,7 +856,9 @@
         const incidentsDateUrl = '{{ url("/incidents/date") }}';
         const incidentsStoreUrl = '{{ route("incidents.store") }}';
         const incidentTypeStoreUrl = '{{ route("incidents.types.store") }}';
+        const incidentTypeUpdateBaseUrl = '{{ url("/incidents/types") }}';
         const incidentStatusStoreUrl = '{{ route("incidents.statuses.store") }}';
+        const incidentStatusUpdateBaseUrl = '{{ url("/incidents/statuses") }}';
         const incidentsExportUrl = '{{ url("/incidents/export") }}';
         const incidentsImportUrl = '{{ url("/incidents/import") }}';
         const checklistIndexUrl = '{{ route("incidents.checklist.index") }}';
@@ -1222,18 +1237,41 @@
         }
         });
 
-        // Dynamic incident type/status add buttons with small modals
+        // Dynamic incident type/status add/edit buttons
         const addIncidentTypeBtn = document.getElementById('addIncidentTypeBtn');
         const addIncidentStatusBtn = document.getElementById('addIncidentStatusBtn');
         const addIncidentTypeModalEl = document.getElementById('addIncidentTypeModal');
         const addIncidentStatusModalEl = document.getElementById('addIncidentStatusModal');
 
+        let isTypeEditMode = false;
+        let currentTypeId = null;
+        let isStatusEditMode = false;
+        let currentStatusId = null;
+
         if (addIncidentTypeBtn && addIncidentTypeModalEl) {
             const addIncidentTypeModal = new bootstrap.Modal(addIncidentTypeModalEl);
             addIncidentTypeBtn.addEventListener('click', function () {
+                isTypeEditMode = false;
+                currentTypeId = null;
+                document.getElementById('addIncidentTypeModalLabel').innerHTML = '<i class="fas fa-plus-circle me-1 text-warning"></i> New Incident Type';
+                document.getElementById('saveIncidentTypeBtn').innerHTML = '<i class="fas fa-save me-1"></i> Save';
                 document.getElementById('newIncidentTypeName').value = '';
                 addIncidentTypeModal.show();
             });
+
+            // Edit Type listeners
+            document.querySelectorAll('.edit-type-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    isTypeEditMode = true;
+                    currentTypeId = this.getAttribute('data-id');
+                    const name = this.getAttribute('data-name');
+                    document.getElementById('addIncidentTypeModalLabel').innerHTML = '<i class="fas fa-edit me-1 text-warning"></i> Edit Incident Type';
+                    document.getElementById('saveIncidentTypeBtn').innerHTML = '<i class="fas fa-save me-1"></i> Update';
+                    document.getElementById('newIncidentTypeName').value = name;
+                    addIncidentTypeModal.show();
+                });
+            });
+
             document.getElementById('saveIncidentTypeBtn').addEventListener('click', function () {
                 const nameInput = document.getElementById('newIncidentTypeName');
                 const name = nameInput.value.trim();
@@ -1241,8 +1279,12 @@
                     nameInput.focus();
                     return;
                 }
-                fetch(incidentTypeStoreUrl, {
-                    method: 'POST',
+
+                const url = isTypeEditMode ? (incidentTypeUpdateBaseUrl + '/' + currentTypeId) : incidentTypeStoreUrl;
+                const method = isTypeEditMode ? 'PUT' : 'POST';
+
+                fetch(url, {
+                    method: method,
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': csrfToken,
@@ -1252,22 +1294,39 @@
                     body: JSON.stringify({ name })
                 }).then(r => r.json()).then(resp => {
                     if (!resp.success) {
-                        alert('Failed to add incident type.');
+                        alert('Failed to save incident type.');
                         return;
                     }
                     addIncidentTypeModal.hide();
-                    alert('Incident type added. The page will reload to show it.');
-                    window.location.reload();
-                }).catch(() => alert('Failed to add incident type.'));
+                    location.reload();
+                }).catch(() => alert('Failed to save incident type.'));
             });
         }
 
         if (addIncidentStatusBtn && addIncidentStatusModalEl) {
             const addIncidentStatusModal = new bootstrap.Modal(addIncidentStatusModalEl);
             addIncidentStatusBtn.addEventListener('click', function () {
+                isStatusEditMode = false;
+                currentStatusId = null;
+                document.getElementById('addIncidentStatusModalLabel').innerHTML = '<i class="fas fa-plus-circle me-1 text-warning"></i> New Status / Event';
+                document.getElementById('saveIncidentStatusBtn').innerHTML = '<i class="fas fa-save me-1"></i> Save';
                 document.getElementById('newIncidentStatusName').value = '';
                 addIncidentStatusModal.show();
             });
+
+            // Edit Status listeners
+            document.querySelectorAll('.edit-status-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    isStatusEditMode = true;
+                    currentStatusId = this.getAttribute('data-id');
+                    const name = this.getAttribute('data-name');
+                    document.getElementById('addIncidentStatusModalLabel').innerHTML = '<i class="fas fa-edit me-1 text-warning"></i> Edit Status / Event';
+                    document.getElementById('saveIncidentStatusBtn').innerHTML = '<i class="fas fa-save me-1"></i> Update';
+                    document.getElementById('newIncidentStatusName').value = name;
+                    addIncidentStatusModal.show();
+                });
+            });
+
             document.getElementById('saveIncidentStatusBtn').addEventListener('click', function () {
                 const nameInput = document.getElementById('newIncidentStatusName');
                 const name = nameInput.value.trim();
@@ -1275,8 +1334,12 @@
                     nameInput.focus();
                     return;
                 }
-                fetch(incidentStatusStoreUrl, {
-                    method: 'POST',
+
+                const url = isStatusEditMode ? (incidentStatusUpdateBaseUrl + '/' + currentStatusId) : incidentStatusStoreUrl;
+                const method = isStatusEditMode ? 'PUT' : 'POST';
+
+                fetch(url, {
+                    method: method,
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': csrfToken,
@@ -1286,13 +1349,12 @@
                     body: JSON.stringify({ name })
                 }).then(r => r.json()).then(resp => {
                     if (!resp.success) {
-                        alert('Failed to add status/event.');
+                        alert('Failed to save status/event.');
                         return;
                     }
                     addIncidentStatusModal.hide();
-                    alert('Status/event added. The page will reload to show it.');
-                    window.location.reload();
-                }).catch(() => alert('Failed to add status/event.'));
+                    location.reload();
+                }).catch(() => alert('Failed to save status/event.'));
             });
         }
 

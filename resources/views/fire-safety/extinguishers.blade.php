@@ -219,13 +219,13 @@
                                             <button class="btn btn-sm ms-2"
                                                     style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;"
                                                     onclick="openExtHistoryModal({{ $school->id }})">
-                                                <i class="fas fa-history me-1"></i> Removed Fire Extinguisher
+                                                <i class="fas fa-history me-1"></i> Removed FEXT
                                             </button>
                                             @endif
                                             <a href="{{ route('fire-safety.report.extinguisher-details', $school->id) }}" target="_blank"
                                                     class="btn btn-sm ms-2"
                                                     style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;">
-                                                <i class="fas fa-print me-1"></i> Print Fire Extinguisher Details
+                                                <i class="fas fa-print me-1"></i> Print Details
                                             </a>
                                         </div>
                                     </div>
@@ -261,7 +261,8 @@
                                                         </h2>
                                                             <div id="collapse-{{ $school->id }}-{{ $building->id }}"
                                                                 class="accordion-collapse collapse"
-                                                                aria-labelledby="heading-{{ $school->id }}-{{ $building->id }}">
+                                                                aria-labelledby="heading-{{ $school->id }}-{{ $building->id }}"
+                                                                data-bs-parent="#buildingAccordion-{{ $school->id }}">
                                                             <div class="accordion-body">
                                                                 <div class="row">
                                                                     <div class="col-lg-7 col-md-6 mb-4">
@@ -273,9 +274,10 @@
                                                                             </div>
                                                                         </div>
                                                                         @if($building->actualRooms->isEmpty())
-                                                                            <div class="alert alert-secondary mb-0">
-                                                                                No rooms defined yet for this building.
-                                                                            </div>
+                                                                            <button class="btn btn-outline-secondary w-100 mb-0 py-3 border-dashed" 
+                                                                                    onclick="openAddRoomForBuilding({{ $school->id }}, {{ $building->id }}, '{{ $building->building_no }} - {{ $building->building_name }}')">
+                                                                                <i class="fas fa-door-open me-2"></i> No rooms defined yet for this building. Add Room?
+                                                                            </button>
                                                                         @else
                                                                             <div class="table-responsive">
                                                                                 <table class="table table-sm table-hover align-middle compact-mobile-table">
@@ -285,6 +287,7 @@
                                                                                             <th>Type</th>
                                                                                             <th>Floor</th>
                                                                                             <th>Covered By</th>
+                                                                                            <th>Remarks</th>
                                                                                             <th class="text-end">Action</th>
                                                                                         </tr>
                                                                                     </thead>
@@ -293,8 +296,7 @@
                                                                                             @php $ext = $coverageMap[$room->id] ?? null; @endphp
                                                                                             <tr>
                                                                                                 <td>
-                                                                                                    <div class="fw-semibold">{{ $room->room_name }}</div>
-                                                                                                    <div class="text-muted small">{{ $room->room_code }}</div>
+                                                                                                    <div class="fw-semibold">{{ $room->room_code }}</div>
                                                                                                 </td>
                                                                                                 <td>
                                                                                                     <span class="badge bg-{{ $room->room_type === 'laboratory' ? 'danger' : ($room->room_type === 'clinic' ? 'info' : 'secondary') }}">
@@ -311,15 +313,18 @@
                                                                                                     @else
                                                                                                         <span class="badge bg-warning text-dark">Uncovered</span>
                                                                                                     @endif
-@if(Str::contains(strtolower($room->room_type), ['administration', 'office']))
-<div class="mt-1">
-<span class="badge {{ $room->has_smoke_detector ? 'bg-success' : 'bg-danger' }}">
-<i class="fas {{ $room->has_smoke_detector ? 'fa-check-circle' : 'fa-times-circle' }} me-1"></i>
-Smoke Detector
-</span>
-</div>
-@endif
+                                                                                                    @if(Str::contains(strtolower($room->room_type), ['administration', 'office']))
+                                                                                                        <div class="mt-1">
+                                                                                                            <span class="badge {{ $room->has_smoke_detector ? 'bg-success' : 'bg-danger' }}">
+                                                                                                            <i class="fas {{ $room->has_smoke_detector ? 'fa-check-circle' : 'fa-times-circle' }} me-1"></i>
+                                                                                                                Smoke Detector
+                                                                                                            </span>
+                                                                                                        </div>
+                                                                                                    @endif
 
+                                                                                                </td>
+                                                                                                <td>
+                                                                                                    <span class="text-muted small">{{ $room->remarks ?: '—' }}</span>
                                                                                                 </td>
                                                                                                 <td class="text-end">
                                                                                                     <button class="btn btn-sm btn-outline-primary" onclick="openUpdateRoomModal({{ $room->id }})">
@@ -329,6 +334,18 @@ Smoke Detector
                                                                                             </tr>
                                                                                         @endforeach
                                                                                     </tbody>
+                                                                                    @if($building->actualRooms->count() < $building->rooms && auth()->user()->role !== 'viewer')
+                                                                                    <tfoot class="border-top-0">
+                                                                                        <tr>
+                                                                                            <td colspan="6" class="p-0">
+                                                                                                <button class="btn btn-primary w-100 rounded-0 py-2 fw-bold" 
+                                                                                                        onclick="openAddRoomForBuilding({{ $school->id }}, {{ $building->id }}, '{{ $building->building_no }} - {{ $building->building_name }}')">
+                                                                                                    <i class="fas fa-plus-circle me-1"></i> Add Room for {{ $building->building_no }}
+                                                                                                </button>
+                                                                                            </td>
+                                                                                        </tr>
+                                                                                    </tfoot>
+                                                                                    @endif
                                                                                 </table>
                                                                             </div>
                                                                         @endif
@@ -345,9 +362,10 @@ Smoke Detector
                                                                             {{-- <span class="badge bg-{{ $evalColor }}">Evaluation Result: {{ $evalText }} @if($compliance < 80)(requires extinguisher, alarm, and plan)@endif</span> --}}
                                                                         </div>
                                                                         @if($building->fireExtinguishers->isEmpty())
-                                                                            <div class="alert alert-secondary mb-0">
-                                                                                No extinguishers recorded yet for this building.
-                                                                            </div>
+                                                                            <button class="btn btn-outline-secondary w-100 mb-0 py-4 border-dashed"
+                                                                                    onclick="openAddExtinguisherForBuilding({{ $school->id }}, {{ $building->id }}, '{{ $building->building_no }} - {{ $building->building_name }}')">
+                                                                                <i class="fas fa-fire-extinguisher me-2"></i> No extinguishers recorded yet for this building. Add Extinguisher?
+                                                                            </button>
                                                                         @else
                                             <div class="table-responsive">
                                                 @foreach($building->fireExtinguishers as $ext)
@@ -409,7 +427,7 @@ Smoke Detector
                                                             <tr class="text-center align-middle">
                                                                 <td class="fw-bold">{{ $ext->code }}</td>
                                                                 <td>{{ $ext->date_checked ? \Carbon\Carbon::parse($ext->date_checked)->format('m-d-Y') : 'N/A' }}</td>
-                                                                <td class="{{ !$ext->centerRoom ? 'bg-light' : '' }}">{{ $ext->centerRoom->room_name ?? 'Unassigned' }}</td>
+                                                                <td class="{{ !$ext->centerRoom ? 'bg-light' : '' }}">{{ $ext->centerRoom->room_code ?? 'Unassigned' }}</td>
                                                                 <td>{{ $ext->coveredRooms->count() }} Rooms</td>
                                                                 <td class="p-2">
                                                                     <button class="btn btn-sm btn-primary w-100"
@@ -421,6 +439,16 @@ Smoke Detector
                                                         </table>
                                                     </div>
                                                 @endforeach
+                                                
+                                                @if($building->fireExtinguishers->count() < $building->requiredExtinguishersCount && auth()->user()->role !== 'viewer')
+                                                <div class="mt-2">
+                                                    <button class="btn btn-primary w-100 py-2 fw-bold shadow-sm" 
+                                                            onclick="openAddExtinguisherForBuilding({{ $school->id }}, {{ $building->id }}, '{{ $building->building_no }} - {{ $building->building_name }}')">
+                                                        <i class="fas fa-plus-circle me-1"></i> Add Extinguisher for {{ $building->building_no }}
+                                                        <div class="small opacity-75 fw-normal">Current: {{ $building->fireExtinguishers->count() }} / Required: {{ $building->requiredExtinguishersCount }}</div>
+                                                    </button>
+                                                </div>
+                                                @endif
                                             </div>
                                                                         @endif
                                                                     </div>
@@ -443,30 +471,105 @@ Smoke Detector
                                     <div class="card-header py-3 d-flex justify-content-between align-items-center bg-light">
                                         <h6 class="m-0 fw-bold text-dark">
                                             <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'recent-inspections-card-{{ $school->id }}')"></i>
-                                            <i class="fas fa-history me-2"></i> Recent Inspections - {{ $school->school_name }}
+                                            <i class="fas fa-history me-2"></i> Recent Updates & Inspections - {{ $school->school_name }}
                                         </h6>
-                                        <button class="btn btn-sm btn-outline-secondary" onclick="loadRecentInspections({{ $school->id }})">
-                                            <i class="fas fa-sync-alt"></i>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="refreshRecentData({{ $school->id }})">
+                                            <i class="fas fa-sync-alt"></i> Refresh All
                                         </button>
                                     </div>
                                     <div class="card-body">
-                                        <div class="table-responsive">
-                                            <table class="table table-sm table-striped" id="inspectionsTable-{{ $school->id }}">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Date</th>
-                                                        <th>Extinguisher Code</th>
-                                                        <th>Location</th>
-                                                        <th>Inspector</th>
-                                                        <th>Status</th>
-                                                        <th>Pressure</th>
-                                                        <th>Notes / Remarks</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <tr><td colspan="6" class="text-center text-muted">Loading...</td></tr>
-                                                </tbody>
-                                            </table>
+                                        <!-- FIRE EXTINGUISHER INSPECTIONS -->
+                                        <div class="mb-4">
+                                            <h6 class="fw-bold text-primary mb-3"><i class="fas fa-fire-extinguisher me-2"></i>Recent Extinguisher Inspections</h6>
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-hover border" id="inspectionsTable-{{ $school->id }}">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th>Date</th>
+                                                            <th>Extinguisher Code</th>
+                                                            <th>Location</th>
+                                                            <th>Inspector</th>
+                                                            <th>Status</th>
+                                                            <th>Pressure</th>
+                                                            <th>Notes / Remarks</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @forelse($school->recent_inspections_data ?? [] as $item)
+                                                            @php
+                                                                $badgeClass = 'secondary';
+                                                                $statusLabel = $item->status;
+                                                                if ($item->status === 'active') { $badgeClass = 'success'; $statusLabel = 'OK'; }
+                                                                elseif ($item->status === 'maintenance') { $badgeClass = 'warning'; $statusLabel = 'For Preventive Maintenance'; }
+                                                                elseif ($item->status === 'expired') { $badgeClass = 'danger'; $statusLabel = 'Used'; }
+                                                                elseif ($item->status === 'missing') { $badgeClass = 'danger'; $statusLabel = 'Missing'; }
+                                                                elseif ($item->status === 'purchase') { $badgeClass = 'dark'; $statusLabel = 'For Purchase'; }
+                                                                elseif ($item->status === 'decommissioned') { $badgeClass = 'danger'; $statusLabel = 'Decommissioned'; }
+                                                            @endphp
+                                                            <tr>
+                                                                <td>{{ \Carbon\Carbon::parse($item->inspection_date)->format('Y-m-d') }}</td>
+                                                                <td class="fw-bold">{{ $item->extinguisher->code }}</td>
+                                                                <td>{{ ($item->extinguisher->building->building_no ?? '?') }} - {{ ($item->extinguisher->centerRoom->room_name ?? '?') }}</td>
+                                                                <td>{{ $item->inspector->name ?? 'Unknown' }}</td>
+                                                                <td><span class="badge bg-{{ $badgeClass }}">{{ $statusLabel }}</span></td>
+                                                                <td>{{ $item->pressure_level }}%</td>
+                                                                <td>{{ $item->notes ?? '-' }}</td>
+                                                            </tr>
+                                                        @empty
+                                                            <tr><td colspan="7" class="text-center text-muted">No recent inspections found.</td></tr>
+                                                        @endforelse
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+
+                                        <hr class="my-4">
+
+                                        <!-- ROOM UPDATES -->
+                                        <div class="mb-2">
+                                            <h6 class="fw-bold text-info mb-3"><i class="fas fa-door-open me-2"></i>Recent Room Updates</h6>
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-hover border" id="roomsUpdatesTable-{{ $school->id }}">
+                                                    <thead class="table-light">
+                                                        <tr>
+                                                            <th>Room Code/No</th>
+                                                            <th>Room Name</th>
+                                                            <th>Floor Level</th>
+                                                            <th>Building Code</th>
+                                                            <th>Nearest Extinguisher Room</th>
+                                                            <th>Remarks</th>
+                                                            <th class="text-end">Action</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @forelse($school->recent_room_updates_data ?? [] as $item)
+                                                            @php
+                                                                $nearest = 'None / Uncovered';
+                                                                if ($item->hostedExtinguisher) {
+                                                                    $nearest = 'HOST ROOM';
+                                                                } elseif ($item->nearestExtinguisherRoom) {
+                                                                    $nearest = $item->nearestExtinguisherRoom->room_code;
+                                                                }
+                                                            @endphp
+                                                            <tr>
+                                                                <td class="fw-bold">{{ $item->room_code ?? 'N/A' }}</td>
+                                                                <td>{{ $item->room_name ?? '-' }}</td>
+                                                                <td>{{ $item->floor_label }}</td>
+                                                                <td>{{ $item->building->building_no ?? '?' }}</td>
+                                                                <td>{{ $nearest }}</td>
+                                                                <td>{{ $item->remarks ?? '-' }}</td>
+                                                                <td class="text-end">
+                                                                    <button class="btn btn-sm btn-outline-primary" onclick="openUpdateRoomModal({{ $item->id }})">
+                                                                        <i class="fas fa-search"></i> Inspect
+                                                                    </button>
+                                                                </td>
+                                                            </tr>
+                                                        @empty
+                                                            <tr><td colspan="7" class="text-center text-muted">No recent room updates found.</td></tr>
+                                                        @endforelse
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -533,20 +636,20 @@ Smoke Detector
                             </div>
                         </div>
 
-                        <div class="mb-3">
+                        <div class="mb-3" id="updateExtNotesContainer">
                             <label class="form-label fw-bold">Notes / Remarks *</label>
                             <textarea class="form-control" name="notes" id="updateExtNotes" rows="3" placeholder="Reason for update..." required></textarea>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="updateExtCloseBtn">Close</button>
                     @if(auth()->user()->role !== 'viewer')
                     <!-- Remove button -->
                     <button type="button" class="btn btn-outline-danger" id="removeExtBtn" style="display: none;" onclick="showExtRemovalReason()">
                         <i class="fas fa-trash-alt me-2"></i>Remove
                     </button>
-                    <button type="button" class="btn btn-primary" onclick="saveExtinguisherStatus()">
+                    <button type="button" class="btn btn-primary" onclick="saveExtinguisherStatus()" id="updateExtSaveBtn">
                         <i class="fas fa-save me-2"></i>Update Status
                     </button>
                     @endif
@@ -582,18 +685,19 @@ Smoke Detector
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Room Code</label>
+                                <label class="form-label fw-bold">Room Code/No.</label>
                                 <input type="text" class="form-control" name="room_code" id="updateRoomCode" placeholder="e.g., Rm-101">
                             </div>
                             <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Room Name</label>
+                                <input type="text" class="form-control" name="room_name" id="updateRoomName" placeholder="e.g., Science Lab">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
                                 <label class="form-label fw-bold text-muted">Floor Level</label>
                                 <input type="text" class="form-control bg-light" id="updateRoomFloor" readonly>
                             </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold text-muted small">Update Room Name (Optional)</label>
-                            <input type="text" class="form-control" name="room_name" id="updateRoomName" placeholder="Leave blank to keep current name">
                         </div>
 
                         <div class="mb-3">
@@ -602,6 +706,11 @@ Smoke Detector
                                 <option value="">None / Self-Covered</option>
                             </select>
                             <div class="form-text small">Select the room that houses the extinguisher covering this room. Only rooms on the same floor with coverage capacity are shown.</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Remarks</label>
+                            <textarea class="form-control" name="remarks" id="updateRoomRemarks" rows="2" placeholder="Room remarks..."></textarea>
                         </div>
 
                         <div class="mb-3 d-none" id="updateRoomSmokeDetectorRow">
@@ -639,17 +748,12 @@ Smoke Detector
                         @csrf
                         <input type="hidden" name="school_id" id="roomSchoolId">
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Building *</label>
-                            <select class="form-control" name="building_id" id="roomBuildingSelect" required>
-                                <option value="">Select Building</option>
-                            </select>
-                        </div>
-
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Room Code</label>
-                                <input type="text" class="form-control" name="room_code" placeholder="e.g., Rm-101">
+                                <label class="form-label fw-bold">Building *</label>
+                                <select class="form-control" name="building_id" id="roomBuildingSelect" required>
+                                    <option value="">Select Building</option>
+                                </select>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">Floor No.</label>
@@ -658,29 +762,43 @@ Smoke Detector
                                 </select>
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Room Code</label>
+                                <input type="text" class="form-control" name="room_code" placeholder="e.g., Rm-101">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Room Name <span class="text-muted fw-normal">(Optional)</span></label>
+                                <input type="text" class="form-control" name="room_name" placeholder="e.g., Science Lab">
+                            </div>
+                        </div>
 
-                        <!-- Room Name field removed per UI request; backend will default to code or empty string -->
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Room Type *</label>
-                            <select class="form-control" name="room_type_config_id" id="room_type_select" required onchange="updateRoomPriority()">
-                                <option value="">Select room type</option>
-                                @foreach(($roomTypes ?? collect()) as $rt)
-                                    @php
-                                        $p = ($calculatedPriorities ?? collect())->firstWhere('id', $rt->parent_id);
-                                    @endphp
-                                    <option value="{{ $rt->id }}"
-                                            data-priority-label="{{ $p->name ?? '' }}"
-                                            data-max-rooms="{{ $p->max_rooms_covered ?? '' }}">
-                                        {{ $rt->name }}
-                                    </option>
-                                @endforeach
-                            </select>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Room Type *</label>
+                                <select class="form-control" name="room_type_config_id" id="room_type_select" required onchange="updateRoomPriority()">
+                                    <option value="">Select room type</option>
+                                    @foreach(($roomTypes ?? collect()) as $rt)
+                                        @php
+                                            $p = ($calculatedPriorities ?? collect())->firstWhere('id', $rt->parent_id);
+                                        @endphp
+                                        <option value="{{ $rt->id }}"
+                                                data-priority-label="{{ $p->name ?? '' }}"
+                                                data-max-rooms="{{ $p->max_rooms_covered ?? '' }}">
+                                            {{ $rt->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold text-muted">Calculated Priority</label>
+                                <input type="text" class="form-control bg-light" id="room_priority" readonly value="">
+                            </div>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-bold text-muted">Calculated Priority</label>
-                            <input type="text" class="form-control bg-light" id="room_priority" readonly value="">
+                            <label class="form-label fw-bold">Remarks</label>
+                            <textarea class="form-control" name="remarks" id="addRoomRemarks" rows="2" placeholder="Enter room remarks..."></textarea>
                         </div>
 
                         <div class="mb-3 d-none" id="addRoomSmokeDetectorRow">
@@ -776,8 +894,8 @@ Smoke Detector
                                 </select>
                             </div>
                             <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Center Room</label>
-                                <select class="form-control" name="room_id" id="centerRoomSelect" onchange="handleCenterRoomChange()">
+                                <label class="form-label fw-bold">Center Room *</label>
+                                <select class="form-control" name="room_id" id="centerRoomSelect" onchange="handleCenterRoomChange()" required>
                                     <option value="">Select Center Room</option>
                                 </select>
                             </div>
@@ -808,7 +926,7 @@ Smoke Detector
                         </div>
 
                         <div class="alert alert-info mb-0 py-2 small">
-                            <i class="fas fa-info-circle me-2"></i><strong>Note:</strong> Laboratories can cover themselves + 1 clinic room max.
+                            <i class="fas fa-info-circle me-2"></i><strong>Note:</strong> Coverage limit is determined by the center room's priority set in customization.
                         </div>
                     </form>
                 </div>
@@ -936,57 +1054,81 @@ Smoke Detector
         }
 
         // Populate building selects for a school
-        function populateBuildingsForSchool(schoolId) {
+        function populateBuildingsForSchool(schoolId, preSelectedId = null, preSelectedText = '') {
             const school = schools.find(s => String(s.id) === String(schoolId));
             const buildings = (school && school.buildings) ? school.buildings : [];
 
             const roomBuildingSelect = document.getElementById('roomBuildingSelect');
             const extBuildingSelect = document.getElementById('extBuildingSelect');
 
-            roomBuildingSelect.innerHTML = '<option value="">Select Building</option>';
-            extBuildingSelect.innerHTML = '<option value="">Select Building</option>';
+            const createOption = (b, isLocked = false) => {
+                const opt = document.createElement('option');
+                opt.value = b.id;
+                opt.textContent = isLocked ? `Building: ${preSelectedText} (Locked)` : b.building_no + (b.building_name ? ` (${b.building_name})` : '');
+                opt.dataset.floors = b.floors || 0;
+                opt.dataset.type = b.building_type || '';
+                opt.dataset.rooms_limit = b.rooms || 0;
+                return opt;
+            };
+
+            const resetSelect = (select) => {
+                select.innerHTML = '';
+                if (preSelectedId) {
+                    const building = buildings.find(b => String(b.id) === String(preSelectedId));
+                    if (building) {
+                        select.appendChild(createOption(building, true));
+                    } else {
+                        const defaultOpt = document.createElement('option');
+                        defaultOpt.value = preSelectedId;
+                        defaultOpt.textContent = `Building: ${preSelectedText} (Locked)`;
+                        select.appendChild(defaultOpt);
+                    }
+                } else {
+                    const defaultOpt = document.createElement('option');
+                    defaultOpt.value = "";
+                    defaultOpt.textContent = "Select Building";
+                    select.appendChild(defaultOpt);
+                }
+            };
+
+            resetSelect(roomBuildingSelect);
+            resetSelect(extBuildingSelect);
 
             buildings.forEach(b => {
-                const opt1 = document.createElement('option');
-                opt1.value = b.id;
-                opt1.textContent = b.building_no + (b.building_name ? ` (${b.building_name})` : '');
-                // Store floors and type for logic
-                opt1.dataset.floors = b.floors || 0;
-                opt1.dataset.type = b.building_type || '';
-                opt1.dataset.rooms_limit = b.rooms || 0;
-                roomBuildingSelect.appendChild(opt1);
-
-                const opt2 = document.createElement('option');
-                opt2.value = b.id;
-                opt2.textContent = b.building_no + (b.building_name ? ` (${b.building_name})` : '');
-                opt2.dataset.floors = b.floors || 0;
-                extBuildingSelect.appendChild(opt2);
+                if (preSelectedId && String(b.id) === String(preSelectedId)) return;
+                roomBuildingSelect.appendChild(createOption(b));
+                extBuildingSelect.appendChild(createOption(b));
             });
         }
 
-        // Handle Building Selection in Add Room (Populate Floors & Check Type & Check Rules)
-        document.getElementById('roomBuildingSelect').addEventListener('change', async function() {
-            const select = this;
+        // Named function for room floor population so it can be called/awaited explicitly
+        async function updateRoomFloors(buildingId) {
             const floorSelect = document.getElementById('roomFloorSelect');
             floorSelect.innerHTML = '<option value="">Select Floor</option>';
             floorSelect.disabled = true;
 
-            const option = select.options[select.selectedIndex];
-            if (!option || !option.value) return;
+            if (!buildingId) return;
 
-            const buildingId = option.value;
-            const type = option.dataset.type;
-            const totalRequiredRooms = parseInt(option.dataset.rooms_limit) || parseInt(schools.flatMap(s => s.buildings).find(b => b.id == buildingId)?.rooms) || 0;
-            const totalFloors = parseInt(option.dataset.floors) || 1;
+            // Find building data from global schools array
+            let building = null;
+            for (const s of schools) {
+                building = s.buildings.find(b => String(b.id) === String(buildingId));
+                if (building) break;
+            }
+
+            if (!building) return;
+
+            const type = building.building_type || '';
+            const totalRequiredRooms = parseInt(building.rooms) || 0;
+            const totalFloors = parseInt(building.floors) || 1;
 
             // Restriction for Gymnasium and Cafeteria
-            if (type.toLowerCase() === 'gymnasium' || type.toLowerCase() === 'cafeteria or canteens') {
+            if (type.toLowerCase() === 'gymnasium' || type.toLowerCase() === 'cafeteria or canteens' || type.toLowerCase().includes('cafeteria')) {
                 Swal.fire({
                     title: 'Building Restriction',
                     text: 'Gymnasium & Cafeteria buildings have only 1 room. You cannot add more rooms to them.',
                     icon: 'warning'
                 });
-                select.value = ""; // Reset
                 return;
             }
 
@@ -1004,20 +1146,17 @@ Smoke Detector
                 const emptyFloorsCount = Object.values(roomsByFloor).filter(c => c === 0).length;
                 const remainingSlots = totalRequiredRooms - currentTotalCount;
 
-                floorSelect.disabled = false;
                 const getOrdinal = (n) => {
                     const s = ["th", "st", "nd", "rd"];
                     const v = n % 100;
                     return n + (s[(v - 20) % 10] || s[v] || s[0]);
                 };
 
+                floorSelect.innerHTML = '<option value="">Select Floor</option>';
                 for (let i = 1; i <= totalFloors; i++) {
                     const floorIsEmpty = (roomsByFloor[i] === 0 || !roomsByFloor[i]);
                     const emptyOtherFloors = floorIsEmpty ? (emptyFloorsCount - 1) : emptyFloorsCount;
 
-                    // Logic: If we add to this floor, will we have enough slots left for all other empty floors?
-                    // Needed: emptyOtherFloors slots.
-                    // Available if we take one slot now: remainingSlots - 1. (Wait, remainingSlots is totalRequiredRooms - currentTotalCount)
                     if ((remainingSlots - 1) >= emptyOtherFloors) {
                         const opt = document.createElement('option');
                         opt.value = i;
@@ -1026,21 +1165,30 @@ Smoke Detector
                     }
                 }
 
-                if (floorSelect.options.length <= 1) {
-                    Swal.fire('Limit Reached', 'No more rooms can be added without violating the minimum floor requirement or building room limit.', 'warning');
+                if (floorSelect.options.length <= 1 && totalRequiredRooms > 0) {
+                    Swal.fire('Limit Reached', 'No more rooms can be added without violating building room limit.', 'warning');
                     floorSelect.disabled = true;
+                } else {
+                    floorSelect.disabled = false;
                 }
 
             } catch (e) {
-                console.error(e);
+                console.error('Error in updateRoomFloors:', e);
                 floorSelect.disabled = false; // Fallback
             }
+        }
+
+        // Handle Building Selection in Add Room
+        document.getElementById('roomBuildingSelect').addEventListener('change', function() {
+            updateRoomFloors(this.value);
         });
 
         // Hook modal open events to set school_id and populate buildings
         document.getElementById('addRoomModal').addEventListener('show.bs.modal', function (event) {
             const btn = event.relatedTarget;
-            const schoolId = btn?.getAttribute('data-school-id');
+            if (!btn) return; // Ignore if opened manually via JS (which handles its own population)
+
+            const schoolId = btn.getAttribute('data-school-id');
             document.getElementById('roomSchoolId').value = schoolId || '';
             populateBuildingsForSchool(schoolId);
 
@@ -1050,7 +1198,9 @@ Smoke Detector
 
         document.getElementById('addExtModal').addEventListener('show.bs.modal', function (event) {
             const btn = event.relatedTarget;
-            const schoolId = btn?.getAttribute('data-school-id');
+            if (!btn) return; // Ignore if opened manually
+
+            const schoolId = btn.getAttribute('data-school-id');
             document.getElementById('extSchoolId').value = schoolId || '';
             populateBuildingsForSchool(schoolId);
 
@@ -1066,14 +1216,39 @@ Smoke Detector
 
         async function saveRoom() {
             const form = document.getElementById('addRoomForm');
+            if (!form) return;
+
+            // Temporarily enable disabled fields so they are included in FormData
+            const disabledFields = Array.from(form.querySelectorAll(':disabled'));
+            disabledFields.forEach(el => el.disabled = false);
+
             if (!form.checkValidity()) {
                 form.reportValidity();
+                Swal.fire({
+                    title: 'Missing Information',
+                    text: 'Please fill in all required fields marked with *',
+                    icon: 'warning',
+                    toast: true,
+                    position: 'top-end',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+                disabledFields.forEach(el => el.disabled = true);
                 return;
             }
 
             const formData = new FormData(form);
+            // Restore disabled state
+            disabledFields.forEach(el => el.disabled = true);
 
             try {
+                // Show loading state
+                const saveBtn = document.querySelector('button[onclick="saveRoom()"]');
+                if (saveBtn) {
+                    saveBtn.disabled = true;
+                    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+                }
+
                 const resp = await fetch(`{{ route('fire-safety.room.store') }}`, {
                     method: 'POST',
                     headers: {
@@ -1084,6 +1259,12 @@ Smoke Detector
                 });
 
                 const data = await resp.json();
+                
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Room';
+                }
+
                 if (!resp.ok || !data.success) {
                     Swal.fire('Error', data.message || 'Failed to add room', 'error');
                     return;
@@ -1095,6 +1276,11 @@ Smoke Detector
             } catch (e) {
                 console.error(e);
                 Swal.fire('Error', 'Failed to add room. Please try again.', 'error');
+                const saveBtn = document.querySelector('button[onclick="saveRoom()"]');
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Room';
+                }
             }
         }
 
@@ -1187,19 +1373,20 @@ Smoke Detector
             const filteredRooms = currentBuildingRooms.filter(r => String(r.floor_no) === String(selectedFloor));
 
             filteredRooms.forEach(r => {
-                const labelName = r.room_name || r.room_code || ('Room ' + r.id);
-                const label = `${labelName}${r.room_code && r.room_name ? ' (' + r.room_code + ')' : ''} - ${r.room_type}`;
+                const label = `${r.room_code || ('Room ' + r.id)} - ${r.room_type}`;
 
                 const optCenter = document.createElement('option');
                 optCenter.value = r.id;
                 optCenter.textContent = label;
                 optCenter.dataset.roomType = r.room_type;
+                optCenter.dataset.maxRooms = r.max_rooms || 2;
                 centerSelect.appendChild(optCenter);
 
                 const optCovered = document.createElement('option');
                 optCovered.value = r.id;
                 optCovered.textContent = label;
                 optCovered.dataset.roomType = r.room_type;
+                optCovered.dataset.maxRooms = r.max_rooms || 2;
                 coveredSelect.appendChild(optCovered);
             });
         }
@@ -1259,27 +1446,47 @@ Smoke Detector
 
             const filteredRooms = currentBuildingRooms.filter(r => String(r.floor_no) === String(selectedFloor));
             filteredRooms.forEach(r => {
-                const labelName = r.room_name || r.room_code || ('Room ' + r.id);
-                const label = `${labelName}${r.room_code && r.room_name ? ' (' + r.room_code + ')' : ''} - ${r.room_type}`;
+                const label = `${r.room_code || ('Room ' + r.id)} - ${r.room_type}`;
                 const optCenter = document.createElement('option');
                 optCenter.value = r.id;
                 optCenter.textContent = label;
                 optCenter.dataset.roomType = r.room_type;
+                optCenter.dataset.maxRooms = r.max_rooms || 2;
                 centerSelect.appendChild(optCenter);
 
                 const optCovered = document.createElement('option');
                 optCovered.value = r.id;
                 optCovered.textContent = label;
                 optCovered.dataset.roomType = r.room_type;
+                optCovered.dataset.maxRooms = r.max_rooms || 2;
                 coveredSelect.appendChild(optCovered);
             });
+        }
+
+
+
+        function handleCenterRoomChange() {
+            const centerSelect = document.getElementById('centerRoomSelect');
+            const coveredSelect = document.getElementById('coveredRoomsSelect');
+            const centerId = centerSelect.value;
+            if (!centerId) return;
+
+            Array.from(coveredSelect.options).forEach(o => {
+                if (String(o.value) === String(centerId)) {
+                    o.selected = true;
+                }
+            });
+
+            const max = parseInt(centerSelect.selectedOptions[0]?.dataset?.maxRooms) || 3;
+            const helpText = document.querySelector('#addExtModal .form-text');
+            if (helpText) helpText.innerHTML = `Use Ctrl/Cmd + Click to select multiple. Current limit: <b>${max}</b> rooms for its priority.`;
         }
 
         function handleUpdateCenterRoomChange() {
             const centerSelect = document.getElementById('updateCenterRoomSelect');
             const coveredSelect = document.getElementById('updateCoveredRoomsSelect');
             const centerId = centerSelect.value;
-            const centerType = centerSelect.selectedOptions[0]?.dataset?.roomType;
+            if (!centerId) return;
 
             Array.from(coveredSelect.options).forEach(o => {
                 if (String(o.value) === String(centerId)) {
@@ -1287,94 +1494,75 @@ Smoke Detector
                 }
             });
 
-            if (centerType === 'laboratory') {
-                Array.from(coveredSelect.options).forEach(o => {
-                    const t = o.dataset.roomType;
-                    if (String(o.value) === String(centerId)) {
-                        o.disabled = false;
-                        return;
-                    }
-                    o.disabled = (t !== 'clinic');
-                    if (o.disabled) o.selected = false;
-                });
-            } else {
-                Array.from(coveredSelect.options).forEach(o => o.disabled = false);
-            }
-        }
-
-        function handleCenterRoomChange() {
-            const centerSelect = document.getElementById('centerRoomSelect');
-            const coveredSelect = document.getElementById('coveredRoomsSelect');
-            const centerId = centerSelect.value;
-            const centerType = centerSelect.selectedOptions[0]?.dataset?.roomType;
-
-            // auto-select center room in covered rooms
-            Array.from(coveredSelect.options).forEach(o => {
-                if (String(o.value) === String(centerId)) {
-                    o.selected = true;
-                }
-            });
-
-            // If center is laboratory: allow only 2 rooms total and only clinic can be the other
-            if (centerType === 'laboratory') {
-                Array.from(coveredSelect.options).forEach(o => {
-                    const t = o.dataset.roomType;
-                    if (String(o.value) === String(centerId)) {
-                        o.disabled = false;
-                        return;
-                    }
-                    o.disabled = (t !== 'clinic');
-                    if (o.disabled) o.selected = false;
-                });
-            } else {
-                // enable all options
-                Array.from(coveredSelect.options).forEach(o => { o.disabled = false; });
-            }
+            const max = parseInt(centerSelect.selectedOptions[0]?.dataset?.maxRooms) || 3;
+            const helpText = document.querySelector('#updateExtModal .form-text');
+            if (helpText) helpText.innerHTML = `Use Ctrl/Cmd + Click to select multiple. Current limit: <b>${max}</b> rooms for its priority.`;
         }
 
         async function saveExtinguisher() {
             const form = document.getElementById('addExtForm');
+            if (!form) return;
+            
+            // Temporarily enable disabled fields so they are included in FormData
+            const disabledFields = Array.from(form.querySelectorAll(':disabled'));
+            disabledFields.forEach(el => el.disabled = false);
+
             if (!form.checkValidity()) {
                 form.reportValidity();
+                Swal.fire({
+                    title: 'Missing Information',
+                    text: 'Please fill in all required fields marked with *',
+                    icon: 'warning',
+                    toast: true,
+                    position: 'top-end',
+                    timer: 3000,
+                    showConfirmButton: false
+                });
+                disabledFields.forEach(el => el.disabled = true);
                 return;
             }
+
+            const formData = new FormData(form);
+            // Restore disabled state
+            disabledFields.forEach(el => el.disabled = true);
 
             const typeSelect = document.getElementById('ext_type_select');
             const otherInput = document.getElementById('other_type_input');
 
-            // Create a temporary cloned FormData to manipulate values if needed
-            // Actually, we can just append or change values in the original FormData object before sending
-            const formData = new FormData(form);
-
-            if (typeSelect.value === 'Other') {
+            if (typeSelect && typeSelect.value === 'Other') {
                 if (!otherInput.value.trim()) {
                     Swal.fire('Required', 'Please specify the extinguisher type.', 'warning');
                     otherInput.focus();
                     return;
                 }
-                // Override 'type' with the custom value
                 formData.set('type', otherInput.value.trim());
             }
 
             const centerId = document.getElementById('centerRoomSelect').value;
-            const covered = Array.from(document.getElementById('coveredRoomsSelect').selectedOptions).map(o => o.value);
+            const coveredSelect = document.getElementById('coveredRoomsSelect');
+            const covered = Array.from(coveredSelect.selectedOptions).map(o => o.value);
 
-            // center and covered rooms are optional during creation. Only validate when values provided.
             if (centerId && covered.length > 0 && !covered.includes(centerId)) {
                 Swal.fire('Inconsistent Selection', 'Covered rooms must include the center room.', 'warning');
                 return;
             }
 
-            const centerType = document.getElementById('centerRoomSelect').selectedOptions[0]?.dataset?.roomType;
-            if (centerId && centerType === 'laboratory' && covered.length > 2) {
-                Swal.fire('Constraint Error', 'Laboratory can only cover itself, or itself + 1 clinic room.', 'warning');
+            const selectedCenter = document.getElementById('centerRoomSelect').selectedOptions[0];
+            const maxLimit = selectedCenter ? (parseInt(selectedCenter.dataset.maxRooms) || 3) : 3;
+            
+            if (centerId && covered.length > maxLimit) {
+                Swal.fire('Constraint Error', `This center room type can only cover up to ${maxLimit} rooms.`, 'warning');
                 return;
             }
 
-            // Update pressure based on status if needed, or enforce validation later
-            // For now, simple validation
-
             try {
+                // Show loading state
+                const saveBtn = document.querySelector('button[onclick="saveExtinguisher()"]');
+                if (saveBtn) {
+                    saveBtn.disabled = true;
+                    saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+                }
+
                 const resp = await fetch(`{{ route('fire-safety.extinguisher.store') }}`, {
                     method: 'POST',
                     headers: {
@@ -1385,6 +1573,12 @@ Smoke Detector
                 });
 
                 const data = await resp.json();
+                
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Extinguisher';
+                }
+
                 if (!resp.ok || !data.success) {
                     Swal.fire('Error', data.message || 'Failed to add extinguisher', 'error');
                     return;
@@ -1396,17 +1590,25 @@ Smoke Detector
             } catch (e) {
                 console.error(e);
                 Swal.fire('Error', 'Failed to add extinguisher. Please try again.', 'error');
+                const saveBtn = document.querySelector('button[onclick="saveExtinguisher()"]');
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Extinguisher';
+                }
             }
         }
 
-        // Enforce max 3 selections for covered rooms
         document.addEventListener('change', function (e) {
-            if (e.target && e.target.id === 'coveredRoomsSelect') {
-                const selected = Array.from(e.target.selectedOptions);
-                if (selected.length > 3) {
-                    // keep first 3
-                    selected.slice(3).forEach(o => o.selected = false);
-                    Swal.fire('Limit Reached', 'Max of 3 rooms can be covered by one extinguisher.', 'info');
+            const t = e.target;
+            if (t && (t.id === 'coveredRoomsSelect' || t.id === 'updateCoveredRoomsSelect')) {
+                const centerId = t.id === 'coveredRoomsSelect' ? 'centerRoomSelect' : 'updateCenterRoomSelect';
+                const centerSelect = document.getElementById(centerId);
+                const max = parseInt(centerSelect.selectedOptions[0]?.dataset?.maxRooms) || 3;
+                
+                const selected = Array.from(t.selectedOptions);
+                if (selected.length > max) {
+                    selected.slice(max).forEach(o => o.selected = false);
+                    Swal.fire('Limit Reached', `This host room's type can only cover up to ${max} rooms based on its priority.`, 'info');
                 }
             }
         });
@@ -1453,7 +1655,7 @@ Smoke Detector
             }
 
             if (roomSpan && ext.room) {
-                roomSpan.textContent = ext.room.room_name || ext.room.room_code || `#${ext.room.id}`;
+                roomSpan.textContent = ext.room.room_code || `#${ext.room.id}`;
             } else {
                 roomSpan.textContent = '—';
             }
@@ -1495,15 +1697,14 @@ Smoke Detector
                 coveredSelect.innerHTML = '';
 
                 availableRooms.forEach(r => {
-                    const displayName = r.room_name
-                        ? `${r.room_name} (${r.room_code || 'No Code'})`
-                        : r.room_code || `Room #${r.id}`;
+                    const displayName = r.room_code || `Room #${r.id}`;
 
                     // Add to center select
                     const optCenter = document.createElement('option');
                     optCenter.value = r.id;
                     optCenter.textContent = `${displayName} - Floor ${r.floor_no} (${r.room_type || 'Unknown'})`;
                     optCenter.dataset.roomType = r.room_type || '';
+                    optCenter.dataset.maxRooms = r.max_rooms || 2;
                     if (currentCenterId === Number(r.id)) {
                         optCenter.selected = true;
                     }
@@ -1514,6 +1715,7 @@ Smoke Detector
                     optCovered.value = r.id;
                     optCovered.textContent = `${displayName} - Floor ${r.floor_no} (${r.room_type || 'Unknown'})`;
                     optCovered.dataset.roomType = r.room_type || '';
+                    optCovered.dataset.maxRooms = r.max_rooms || 2;
                     if (currentCoveredIds.includes(Number(r.id))) {
                         optCovered.selected = true;
                     }
@@ -1529,6 +1731,7 @@ Smoke Detector
                 // Enable selects for editing
                 centerSelect.disabled = false;
                 coveredSelect.disabled = false;
+                centerSelect.required = true;
 
                 // Remove any existing generated hidden inputs
                 document.querySelectorAll('#updateExtForm input[data-generated]').forEach(i => i.remove());
@@ -1564,13 +1767,18 @@ Smoke Detector
 
             // Show/Hide Remove button if status is Decommissioned
             const removeBtn = document.getElementById('removeExtBtn');
+            const removalSection = document.getElementById('extRemovalReasonSection');
             if (removeBtn) {
                 if (status === 'decommissioned') {
                     removeBtn.style.display = 'inline-block';
                 } else {
                     removeBtn.style.display = 'none';
-                    if (document.getElementById('extRemovalReasonSection')) {
-                        document.getElementById('extRemovalReasonSection').classList.add('d-none');
+                    if (removalSection) {
+                        removalSection.classList.add('d-none');
+                        // Ensure other fields are shown if we switch away from decommissioned
+                        document.getElementById('updateExtNotesContainer').style.display = 'block';
+                        document.getElementById('updateExtCloseBtn').style.display = 'inline-block';
+                        document.getElementById('updateExtSaveBtn').style.display = 'inline-block';
                     }
                 }
             }
@@ -1596,10 +1804,34 @@ Smoke Detector
         function showExtRemovalReason() {
             const section = document.getElementById('extRemovalReasonSection');
             if(!section) return;
+            
             section.classList.toggle('d-none');
-            if (!section.classList.contains('d-none')) {
+            const isVisible = !section.classList.contains('d-none');
+
+            // Toggle visibility of other elements per request
+            const notesContainer = document.getElementById('updateExtNotesContainer');
+            const closeBtn = document.getElementById('updateExtCloseBtn');
+            const saveBtn = document.getElementById('updateExtSaveBtn');
+            const removeBtn = document.getElementById('removeExtBtn');
+
+            if (isVisible) {
+                if(notesContainer) notesContainer.style.display = 'none';
+                if(closeBtn) closeBtn.style.display = 'none';
+                if(saveBtn) saveBtn.style.display = 'none';
+                if(removeBtn) {
+                    removeBtn.innerHTML = '<i class="fas fa-arrow-left me-2"></i>Cancel Removal';
+                    removeBtn.className = 'btn btn-outline-secondary';
+                }
                 const input = document.getElementById('extRemovalReason');
                 if(input) input.focus();
+            } else {
+                if(notesContainer) notesContainer.style.display = 'block';
+                if(closeBtn) closeBtn.style.display = 'inline-block';
+                if(saveBtn) saveBtn.style.display = 'inline-block';
+                if(removeBtn) {
+                    removeBtn.innerHTML = '<i class="fas fa-trash-alt me-2"></i>Remove';
+                    removeBtn.className = 'btn btn-outline-danger';
+                }
             }
         }
 
@@ -1703,6 +1935,16 @@ Smoke Detector
                 return;
             }
 
+            const centerId = document.getElementById('updateCenterRoomSelect').value;
+            const covered = Array.from(document.getElementById('updateCoveredRoomsSelect').selectedOptions).map(o => o.value);
+            const centerOpt = document.getElementById('updateCenterRoomSelect').selectedOptions[0];
+            const maxLimit = centerOpt ? parseInt(centerOpt.dataset.maxRooms) : 3;
+
+            if (centerId && covered.length > maxLimit) {
+                Swal.fire('Constraint Error', `This host room's type can only cover up to ${maxLimit} rooms based on its priority.`, 'warning');
+                return;
+            }
+
             const formData = new FormData(form);
 
             try {
@@ -1729,16 +1971,23 @@ Smoke Detector
             }
         }
 
+        async function refreshRecentData(schoolId) {
+            await Promise.all([
+                loadRecentInspections(schoolId),
+                loadRecentRoomUpdates(schoolId)
+            ]);
+        }
+
         async function loadRecentInspections(schoolId) {
             const tableBody = document.querySelector(`#inspectionsTable-${schoolId} tbody`);
-            tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Loading...</td></tr>';
+            if (!tableBody) return;
 
             try {
                 const resp = await fetch(`/fire-safety/extinguisher/inspections/${schoolId}`);
                 const data = await resp.json();
 
                 if (data.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No recent inspections found.</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No recent inspections found.</td></tr>';
                     return;
                 }
 
@@ -1768,27 +2017,86 @@ Smoke Detector
                 });
             } catch(e) {
                 console.error(e);
-                tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Failed to load data.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Failed to load data.</td></tr>';
             }
         }
 
-        // Load inspections on page load for the active tab
-        document.addEventListener('DOMContentLoaded', () => {
-           const activeTabPane = document.querySelector('.tab-pane.show.active');
-           if(activeTabPane) {
-               const sId = activeTabPane.id.replace('school-', '');
-               loadRecentInspections(sId);
-           }
 
-           // Listener for tab changes
-           const tabEls = document.querySelectorAll('button[data-bs-toggle="tab"]');
-           tabEls.forEach(tabEl => {
-               tabEl.addEventListener('shown.bs.tab', function (event) {
-                   const targetId = event.target.getAttribute('data-bs-target');
-                   const sId = targetId.replace('#school-', '');
-                   loadRecentInspections(sId);
-               });
-           });
+
+        async function loadRecentRoomUpdates(schoolId) {
+            const tableBody = document.querySelector(`#roomsUpdatesTable-${schoolId} tbody`);
+            if (!tableBody) return;
+
+            try {
+                const resp = await fetch(`/fire-safety/recent-room-updates/${schoolId}`);
+                const data = await resp.json();
+
+                if (data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No recent room updates found.</td></tr>';
+                    return;
+                }
+
+                tableBody.innerHTML = '';
+                data.forEach(item => {
+                    const row = `
+                        <tr>
+                            <td class="fw-bold">${item.room_code || 'N/A'}</td>
+                            <td>${item.room_name || '-'}</td>
+                            <td>${item.floor_level}</td>
+                            <td>${item.building_code}</td>
+                            <td>${item.nearest_extinguisher}</td>
+                            <td>${item.remarks || '-'}</td>
+                            <td class="text-end">
+                                <button class="btn btn-sm btn-outline-primary" onclick="openUpdateRoomModal(${item.room_id})">
+                                    <i class="fas fa-search"></i> Inspect
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.insertAdjacentHTML('beforeend', row);
+                });
+            } catch(e) {
+                console.error(e);
+                tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Failed to load data.</td></tr>';
+            }
+        }
+
+        // Initialize all components on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Restore card expansion states
+            const cardStates = JSON.parse(localStorage.getItem('fireSafetyExtCardStates') || '{}');
+            Object.keys(cardStates).forEach(cardId => {
+                const card = document.getElementById(cardId);
+                if (card && cardStates[cardId] === 'collapsed') {
+                    card.classList.add('card-collapsed');
+                }
+            });
+
+            // Initialize other components
+            if (typeof initBuildingAccordionPersistence === 'function') initBuildingAccordionPersistence();
+            if (typeof initStatusCarousel === 'function') initStatusCarousel();
+
+            // Initial load of data for the active tab or active school
+            const activeTabPane = document.querySelector('.tab-pane.show.active');
+            let initialSchoolId = '{{ $activeSchool->id ?? "" }}';
+            
+            if(activeTabPane) {
+                initialSchoolId = activeTabPane.id.replace('school-', '');
+            }
+            
+            if(initialSchoolId) {
+                refreshRecentData(initialSchoolId);
+            }
+
+            // Listener for tab changes
+            const tabEls = document.querySelectorAll('button[data-bs-toggle="tab"]');
+            tabEls.forEach(tabEl => {
+                tabEl.addEventListener('shown.bs.tab', function (event) {
+                    const targetId = event.target.getAttribute('data-bs-target');
+                    const sId = targetId.replace('#school-', '');
+                    refreshRecentData(sId);
+                });
+            });
         });
 
 
@@ -1800,15 +2108,16 @@ Smoke Detector
 
                 document.getElementById('updateRoomId').value = data.id;
                 document.getElementById('updateRoomCode').value = data.room_code || '';
-                document.getElementById('updateRoomName').value = data.room_name;
+                document.getElementById('updateRoomName').value = data.room_name || '';
                 document.getElementById('updateRoomFloor').value = data.floor_no + " Floor";
+                document.getElementById('updateRoomRemarks').value = data.remarks || '';
 
                 // Populate candidates for nearest extinguisher
                 const candidatesResp = await fetch(`/fire-safety/room/${roomId}/candidates`);
                 const candidates = await candidatesResp.json();
 
                 const select = document.getElementById('updateRoomNearest');
-                select.innerHTML = '<option value="">None / Self-Covered</option>';
+                select.innerHTML = ''; // Start fresh
 
                 if (data.is_center_room) {
                     select.disabled = true;
@@ -1821,11 +2130,29 @@ Smoke Detector
                 } else {
                     select.disabled = false;
                     select.classList.remove('bg-light');
+                    
+                    // Add "None / Self-Covered" option
+                    const noneOpt = document.createElement('option');
+                    noneOpt.value = "";
+                    noneOpt.textContent = "None / Uncovered";
+                    noneOpt.selected = (!data.host_room_id);
+                    select.appendChild(noneOpt);
+
+                    // If it's covered by a room NOT in candidates (e.g. extinguisher full), still show it
+                    const currentHostInCandidates = candidates.some(c => c.id == data.host_room_id);
+                    if (data.host_room_id && !currentHostInCandidates) {
+                        const hostOpt = document.createElement('option');
+                        hostOpt.value = data.host_room_id;
+                        hostOpt.textContent = `${data.host_room_code || ('Room #' + data.host_room_id)} (Current)`;
+                        hostOpt.selected = true;
+                        select.appendChild(hostOpt);
+                    }
+
                     candidates.forEach(c => {
                         const opt = document.createElement('option');
                         opt.value = c.id;
-                        opt.textContent = `${c.room_name} (${c.room_code || 'No Code'})`;
-                        if (data.nearest_extinguisher_room_id == c.id) opt.selected = true;
+                        opt.textContent = `${c.room_code || ('Room #' + c.id)}`;
+                        if (data.host_room_id == c.id) opt.selected = true;
                         select.appendChild(opt);
                     });
                 }
@@ -1894,35 +2221,7 @@ Smoke Detector
             openUpdateRoomModal(roomId);
         }
 
-        // Initialize card states and building accordion persistence
-        document.addEventListener('DOMContentLoaded', function() {
-            const cardStates = JSON.parse(localStorage.getItem('fireSafetyExtCardStates') || '{}');
-            Object.keys(cardStates).forEach(cardId => {
-                const card = document.getElementById(cardId);
-                // We use a general check or specifically look for our cards
-                if (card && cardStates[cardId] === 'collapsed') {
-                    card.classList.add('card-collapsed');
-                }
-            });
 
-            // Persist building accordion state (manually applied)
-            initBuildingAccordionPersistence();
-            // Attach manual toggles for building headers
-            document.querySelectorAll('.accordion-button[data-bs-target]').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                });
-            });
-
-            // kick off status carousel after DOM load
-            initStatusCarousel();
-
-            // Initial load of inspections for the currently active tab
-            const activeTab = document.querySelector('.tab-pane.show.active');
-            if (activeTab) {
-                const sId = activeTab.id.replace('school-', '');
-                loadRecentInspections(sId);
-            }
-        });
 
         // Toggle division function
         function toggleDivision(icon, cardId) {
@@ -1985,6 +2284,72 @@ Smoke Detector
                 current = (current + 1) % slides.length;
                 slides[current].classList.add('active');
             }, 3000);
+        }
+
+        document.getElementById('addRoomModal').addEventListener('hidden.bs.modal', function () {
+            const bSelect = document.getElementById('roomBuildingSelect');
+            if (bSelect) {
+                bSelect.disabled = false;
+                bSelect.options[0].text = 'Select Building';
+                bSelect.value = "";
+                document.getElementById('roomSchoolId').value = "";
+            }
+        });
+
+        document.getElementById('addExtModal').addEventListener('hidden.bs.modal', function () {
+            const bSelect = document.getElementById('extBuildingSelect');
+            if (bSelect) {
+                bSelect.disabled = false;
+                bSelect.options[0].text = 'Select Building';
+                bSelect.value = "";
+                document.getElementById('extSchoolId').value = "";
+            }
+        });
+
+        async function openAddRoomForBuilding(schoolId, buildingId, buildingName) {
+            console.log("Opening Add Room Modal for Building:", buildingId);
+            
+            // Set values
+            const schoolIdInput = document.getElementById('roomSchoolId');
+            if (schoolIdInput) schoolIdInput.value = schoolId;
+            
+            // Clean buildingName (remove extra info if already has "(Locked)")
+            const cleanName = buildingName.replace(' (Locked)', '').replace('Building: ', '');
+            
+            // Populate buildings and pre-select/lock the target one
+            populateBuildingsForSchool(schoolId, buildingId, cleanName);
+            
+            const bSelect = document.getElementById('roomBuildingSelect');
+            bSelect.value = buildingId;
+            bSelect.disabled = true;
+
+            // Load floors for this building
+            await updateRoomFloors(buildingId);
+            
+            const modalEl = document.getElementById('addRoomModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+        }
+
+        async function openAddExtinguisherForBuilding(schoolId, buildingId, buildingName) {
+            console.log("Opening Add Extinguisher Modal for Building:", buildingId);
+            
+            const schoolIdInput = document.getElementById('extSchoolId');
+            if (schoolIdInput) schoolIdInput.value = schoolId;
+
+            const cleanName = buildingName.replace(' (Locked)', '').replace('Building: ', '');
+            populateBuildingsForSchool(schoolId, buildingId, cleanName);
+            
+            const bSelect = document.getElementById('extBuildingSelect');
+            bSelect.value = buildingId;
+            bSelect.disabled = true;
+
+            // Trigger floor and room population for extinguisher
+            await handleExtBuildingChange();
+            
+            const modalEl = document.getElementById('addExtModal');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
         }
     </script>
 @endsection

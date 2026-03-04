@@ -165,6 +165,7 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     Route::get('/extinguisher/history/{schoolId}', [FireSafetyController::class, 'getExtinguisherHistory'])->name('fire-safety.extinguisher.history');
     Route::get('/extinguisher/inspections/{schoolId}', [FireSafetyController::class, 'getRecentExtinguisherInspections'])->name('fire-safety.extinguisher.inspections');
     Route::get('/building/{buildingId}/rooms-with-coverage', [FireSafetyController::class, 'getBuildingRoomsWithCoverage'])->name('fire-safety.building.rooms-with-coverage');
+    Route::get('/recent-room-updates/{schoolId}', [FireSafetyController::class, 'getRecentRoomUpdates']);
 });
 
 
@@ -215,7 +216,9 @@ Route::middleware(['auth', 'module.access:incident_checklist'])->group(function 
     Route::get('/incidents/export', [IncidentController::class, 'export'])->name('incidents.export')->middleware('role:admin');
     Route::post('/incidents/import', [IncidentController::class, 'import'])->name('incidents.import')->middleware('role:admin');
     Route::post('/incidents/types', [IncidentController::class, 'storeIncidentType'])->name('incidents.types.store')->middleware('role:admin');
+    Route::put('/incidents/types/{id}', [IncidentController::class, 'updateIncidentType'])->name('incidents.types.update')->middleware('role:admin');
     Route::post('/incidents/statuses', [IncidentController::class, 'storeIncidentStatus'])->name('incidents.statuses.store')->middleware('role:admin');
+    Route::put('/incidents/statuses/{id}', [IncidentController::class, 'updateIncidentStatus'])->name('incidents.statuses.update')->middleware('role:admin');
     // Checklist APIs (view/update only for assigned users)
     Route::get('/incidents/checklist', [IncidentController::class, 'getChecklist'])->name('incidents.checklist.index');
     Route::post('/incidents/checklist', [IncidentController::class, 'storeChecklistItem'])->name('incidents.checklist.store');

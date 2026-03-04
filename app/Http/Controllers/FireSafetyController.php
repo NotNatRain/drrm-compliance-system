@@ -300,7 +300,7 @@ class FireSafetyController extends Controller
     public function getAlarm($id)
     {
         try {
-            $alarm = FireSafetyAlarmSystem::with(['building', 'school'])->findOrFail($id);
+            $alarm = FireSafetyAlarmSystem::with(['building', 'school', 'buildings'])->findOrFail($id);
             return response()->json($alarm);
 
         } catch (\Exception $e) {
@@ -537,6 +537,24 @@ class FireSafetyController extends Controller
         }
 
         $schools = $query->get();
+        
+        // Pre-load recent updates for each school to avoid "Loading..." state on page load
+        foreach ($schools as $school) {
+            $school->recent_inspections_data = FireSafetyExtinguisherInspection::whereHas('extinguisher', function($q) use ($school) {
+                    $q->where('school_id', $school->id);
+                })
+                ->with(['extinguisher', 'extinguisher.building', 'extinguisher.centerRoom', 'inspector'])
+                ->latest('inspection_date')
+                ->take(10)
+                ->get();
+
+            $school->recent_room_updates_data = FireSafetyRoom::where('school_id', $school->id)
+                ->with(['building', 'nearestExtinguisherRoom', 'hostedExtinguisher'])
+                ->latest('updated_at')
+                ->take(10)
+                ->get();
+        }
+
         $activeSchool = $this->getActiveSchool($schools);
 
         $calculatedPriorities = SystemConfiguration::where('config_type', 'calculated_priority')
@@ -558,9 +576,18 @@ class FireSafetyController extends Controller
     public function getRooms($buildingId)
     {
         $rooms = FireSafetyRoom::where('building_id', $buildingId)
+            ->with(['roomTypeConfig.parent'])
             ->orderBy('floor_no')
             ->orderBy('room_name')
             ->get();
+
+        $rooms->map(function($r) {
+            $priority = $r->roomTypeConfig?->parent;
+            $r->max_rooms = ($priority && $priority->config_type === 'calculated_priority') 
+                ? (int)($priority->max_rooms_covered ?? 3) 
+                : (in_array(strtolower($r->room_type), ['classroom', 'department', 'library']) ? 3 : 2);
+            return $r;
+        });
 
         return response()->json($rooms);
     }
@@ -585,7 +612,8 @@ class FireSafetyController extends Controller
             ],
             'room_name' => 'nullable|string',
             'nearest_extinguisher_room_id' => 'nullable|exists:fire_safety_rooms,id',
-            'has_smoke_detector' => 'boolean'
+            'has_smoke_detector' => 'boolean',
+            'remarks' => 'nullable|string'
         ]);
 
         if (!isset($validated['has_smoke_detector'])) {
@@ -604,6 +632,26 @@ class FireSafetyController extends Controller
             // Find the extinguisher that has this nearest room as its CENTER room
             $ext = FireSafetyExtinguisher::where('room_id', $validated['nearest_extinguisher_room_id'])->first();
             if ($ext) {
+                // CAPACITY VALIDATION
+                $hostRoom = FireSafetyRoom::with(['roomTypeConfig.parent'])->find($ext->room_id);
+                $priority = $hostRoom->roomTypeConfig?->parent;
+                $maxLimit = 3;
+                if ($priority && $priority->config_type === 'calculated_priority') {
+                    $maxLimit = (int) ($priority->max_rooms_covered ?? 3);
+                } else {
+                    $maxLimit = in_array(strtolower($hostRoom->room_type), ['classroom', 'department', 'library']) ? 3 : 2;
+                }
+
+                $currentCount = $ext->coveredRooms()->count();
+                $isAlreadyCoveredByThis = $ext->coveredRooms()->where('room_id', $id)->exists();
+
+                if (!$isAlreadyCoveredByThis && $currentCount >= $maxLimit) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "The selected extinguisher (in {$hostRoom->room_code}) is already covering its maximum limit of $maxLimit rooms."
+                    ], 422);
+                }
+
                 // Remove existing coverage for this room first
                 DB::table('fire_safety_extinguisher_room_coverage')->where('room_id', $id)->delete();
                 // Attach to the selected extinguisher
@@ -640,17 +688,21 @@ class FireSafetyController extends Controller
             $count = $ext->coveredRooms->count();
             $centerRoomType = $ext->centerRoom->room_type;
 
-            // Capacity limit is snapshotted per room (coverage_limit) to avoid retroactive changes when config changes.
-            // Fallback to legacy rules when not set.
+            // Capacity limit from prioritized configuration
+            $ext->centerRoom->load(['roomTypeConfig.parent']);
             $limit = (int) ($ext->centerRoom->coverage_limit ?? 0);
             if ($limit <= 0) {
-                // Legacy default:
-                // Shared Coverage (Classrooms, Departments, Libraries) = 3 total
-                // Dedicated / Limited Shared (everything else) = 2 total
-                if (in_array($centerRoomType, ['classroom', 'department', 'library'])) {
-                    $limit = 3;
+                // Try to get from Room Type priority
+                $priority = $ext->centerRoom->roomTypeConfig?->parent;
+                if ($priority && $priority->config_type === 'calculated_priority') {
+                    $limit = (int) ($priority->max_rooms_covered ?? 3);
                 } else {
-                    $limit = 2;
+                    // Final legacy fallback
+                    if (in_array(strtolower($centerRoomType), ['classroom', 'department', 'library'])) {
+                        $limit = 3;
+                    } else {
+                        $limit = 2;
+                    }
                 }
             }
 
@@ -681,7 +733,8 @@ public function storeRoom(Request $request)
         'room_name' => 'nullable|string|max:100',
         'room_type_config_id' => 'required|exists:system_configurations,id',
         'floor_no' => 'required|integer|min:1|max:50',
-        'has_smoke_detector' => 'boolean'
+        'has_smoke_detector' => 'boolean',
+        'remarks' => 'nullable|string'
     ]);
 
     if (!isset($validated['has_smoke_detector'])) {
@@ -775,37 +828,48 @@ public function storeRoom(Request $request)
     ]);
 }
     // Get room details with extinguisher info
-public function getRoom($id)
-{
-    $room = FireSafetyRoom::with(['building', 'extinguishersCoveringThisRoom'])->findOrFail($id);
+    public function getRoom($id)
+    {
+        $room = FireSafetyRoom::with(['building', 'extinguishersCoveringThisRoom.room'])->findOrFail($id);
 
-    $room->is_center_room = FireSafetyExtinguisher::where('room_id', $id)->exists();
+        // Is this room the host (center) of ANY extinguisher?
+        $hostedExtinguisher = FireSafetyExtinguisher::where('room_id', $id)->first();
+        $isCenterRoom = !is_null($hostedExtinguisher);
 
-    // Find the extinguisher that covers this room
-    $extinguisher = null;
-    if ($room->extinguishersCoveringThisRoom->count() > 0) {
-        $ext = $room->extinguishersCoveringThisRoom->first();
-        $extinguisher = [
-            'id' => $ext->id,
-            'code' => $ext->code,
-            'type' => $ext->type,
-            'status' => $ext->status,
-            'pressure_level' => $ext->pressure_level,
-            'date_checked' => $ext->date_checked
-        ];
+        // Which extinguisher covers this room?
+        $extinguisher = null;
+        $hostRoomCode = null;
+        $hostRoomId = null;
+
+        if ($room->extinguishersCoveringThisRoom->count() > 0) {
+            $ext = $room->extinguishersCoveringThisRoom->first();
+            $extinguisher = [
+                'id' => $ext->id,
+                'code' => $ext->code,
+                'type' => $ext->type,
+                'status' => $ext->status,
+                'pressure_level' => $ext->pressure_level,
+                'date_checked' => $ext->date_checked
+            ];
+            $hostRoomId = $ext->room_id;
+            $hostRoomCode = $ext->room?->room_code;
+        }
+
+        return response()->json([
+            'id' => $room->id,
+            'room_code' => $room->room_code,
+            'room_name' => $room->room_name,
+            'room_type' => $room->room_type,
+            'floor_no' => $room->floor_no,
+            'remarks' => $room->remarks,
+            'has_smoke_detector' => $room->has_smoke_detector,
+            'is_center_room' => $isCenterRoom,
+            'host_room_id' => $hostRoomId,
+            'host_room_code' => $hostRoomCode,
+            'building' => $room->building->building_no ?? 'N/A',
+            'extinguisher' => $extinguisher
+        ]);
     }
-
-    return response()->json([
-        'id' => $room->id,
-        'room_code' => $room->room_code,
-        'room_name' => $room->room_name,
-        'room_type' => $room->room_type,
-        'floor_no' => $room->floor_no,
-        'nearest_extinguisher_room_id' => $room->nearest_extinguisher_room_id,
-        'building' => $room->building->building_no ?? 'N/A',
-        'extinguisher' => $extinguisher
-    ]);
-}
     // Store extinguisher (AJAX) - room-based coverage rules enforced here
     public function storeExtinguisher(Request $request)
     {
@@ -823,8 +887,8 @@ public function getRoom($id)
             'pressure_level' => 'required|integer|min:0|max:100',
             'date_checked' => 'nullable|date',
             'evaluation_result' => 'nullable|string|max:255',
-            'room_id' => 'nullable|exists:fire_safety_rooms,id', // center room optional
-            'covered_room_ids' => 'nullable|array|max:3',
+            'room_id' => 'required|exists:fire_safety_rooms,id', // center room required
+            'covered_room_ids' => 'nullable|array|max:5', // limit in browser but backend checks priority
             'covered_room_ids.*' => 'integer|exists:fire_safety_rooms,id',
             'remarks' => 'nullable|string',
         ]);
@@ -882,21 +946,24 @@ public function getRoom($id)
             ], 422);
         }
 
-        // Laboratory rule: lab can only share with ONE clinic room (total 2 rooms)
-        if ($centerRoom && $centerRoom->room_type === 'laboratory' && count($coveredRoomIds) > 2) {
+        // PRIORITY-BASED COVERAGE LIMIT
+        $centerRoom->load(['roomTypeConfig.parent']);
+        $priority = $centerRoom->roomTypeConfig?->parent;
+        $maxLimit = 3; // Default fallback
+        if ($priority && $priority->config_type === 'calculated_priority') {
+            $maxLimit = (int) ($priority->max_rooms_covered ?? 3);
+        } else {
+            // Legacy fallback if priority config is missing
+            $maxLimit = in_array(strtolower($centerRoom->room_type), ['classroom', 'department', 'library']) ? 3 : 2;
+        }
+
+        if (count($coveredRoomIds) > $maxLimit) {
+            $typeName = $centerRoom->roomTypeConfig?->name ?? $centerRoom->room_type;
+            $priorityName = $priority ? $priority->name : "Standard";
             return response()->json([
                 'success' => false,
-                'message' => 'Laboratory center room can cover only itself, or itself + 1 clinic/auxiliary room.'
+                'message' => "Room type ($typeName) with priority '$priorityName' can only cover up to $maxLimit rooms."
             ], 422);
-        }
-        if ($centerRoom && $centerRoom->room_type === 'laboratory' && count($coveredRoomIds) === 2) {
-            $otherRoom = $coveredRooms->firstWhere('id', '!=', $centerRoom->id);
-            if (!$otherRoom || !in_array($otherRoom->room_type, ['clinic', 'auxiliary'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Laboratory can only share with a clinic or auxiliary room.'
-                ], 422);
-            }
         }
 
         // Enforce "1 extinguisher per room" coverage (no duplicate coverage)
@@ -1048,7 +1115,8 @@ public function getRoom($id)
     public function getBuildingRoomsWithCoverage($buildingId)
     {
         try {
-            $building = FireSafetyBuilding::with(['actualRooms'])->findOrFail($buildingId);
+            $building = FireSafetyBuilding::findOrFail($buildingId);
+            $building->load(['actualRooms.roomTypeConfig.parent']);
 
             // Get all extinguishers in this building with their covered rooms
             $extinguishers = FireSafetyExtinguisher::where('building_id', $buildingId)
@@ -1064,12 +1132,18 @@ public function getRoom($id)
 
             // Get room details with coverage status
             $rooms = $building->actualRooms->map(function($room) use ($coveredRoomIds) {
+                $priority = $room->roomTypeConfig?->parent;
+                $maxLimit = ($priority && $priority->config_type === 'calculated_priority') 
+                    ? (int)($priority->max_rooms_covered ?? 3) 
+                    : (in_array(strtolower($room->room_type), ['classroom', 'department', 'library']) ? 3 : 2);
+
                 return [
                     'id' => $room->id,
                     'room_code' => $room->room_code,
                     'room_name' => $room->room_name,
                     'floor_no' => $room->floor_no,
                     'room_type' => $room->room_type,
+                    'max_rooms' => $maxLimit,
                     'is_covered' => in_array($room->id, $coveredRoomIds),
                     'covering_extinguisher_id' => $this->getCoveringExtinguisherId($room->id)
                 ];
@@ -1107,7 +1181,7 @@ public function getRoom($id)
             'status' => 'required|in:active,expired,maintenance,missing,purchase,decommissioned',
             'pressure_level' => 'required|integer|min:0|max:100',
             'notes' => 'nullable|string',
-            'room_id' => 'nullable|integer|exists:fire_safety_rooms,id',
+            'room_id' => 'required|integer|exists:fire_safety_rooms,id',
             'covered_room_ids' => 'nullable|array',
             'covered_room_ids.*' => 'integer|exists:fire_safety_rooms,id'
         ]);
@@ -1149,6 +1223,25 @@ public function getRoom($id)
                 // Ensure center room is included in covered rooms
                 if ($request->room_id && !in_array($request->room_id, $coveredRoomIds)) {
                     $coveredRoomIds[] = $request->room_id;
+                }
+
+                // PRIORITY-BASED COVERAGE LIMIT VALIDATION
+                $centerRoom = FireSafetyRoom::with(['roomTypeConfig.parent'])->find($request->room_id);
+                $priority = $centerRoom->roomTypeConfig?->parent;
+                $maxLimit = 3;
+                if ($priority && $priority->config_type === 'calculated_priority') {
+                    $maxLimit = (int) ($priority->max_rooms_covered ?? 3);
+                } else {
+                    $maxLimit = in_array(strtolower($centerRoom->room_type), ['classroom', 'department', 'library']) ? 3 : 2;
+                }
+
+                if (count($coveredRoomIds) > $maxLimit) {
+                    $typeName = $centerRoom->roomTypeConfig?->name ?? $centerRoom->room_type;
+                    $priorityName = $priority ? $priority->name : "Standard";
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Room type ($typeName) with priority '$priorityName' can only cover up to $maxLimit rooms."
+                    ], 422);
                 }
 
                 $ext->coveredRooms()->sync($coveredRoomIds);
@@ -1263,6 +1356,41 @@ public function getRoom($id)
         return response()->json($inspections);
     }
 
+    public function getRecentRoomUpdates($schoolId)
+    {
+        $user = auth()->user();
+        if ($user->role !== 'admin' && (int)$user->school_id !== (int)$schoolId) {
+            return response()->json(['error' => 'Unauthorized access'], 403);
+        }
+
+        $updates = FireSafetyRoom::where('school_id', $schoolId)
+            ->with(['building', 'nearestExtinguisherRoom', 'hostedExtinguisher'])
+            ->latest('updated_at')
+            ->take(10)
+            ->get()
+            ->map(function($r) {
+                $nearest = 'None / Uncovered';
+                if ($r->hostedExtinguisher) {
+                    $nearest = 'HOST ROOM';
+                } elseif ($r->nearestExtinguisherRoom) {
+                    $nearest = $r->nearestExtinguisherRoom->room_code;
+                }
+
+                return [
+                    'room_id' => $r->id,
+                    'room_code' => $r->room_code,
+                    'room_name' => $r->room_name,
+                    'floor_level' => $r->floor_label,
+                    'building_code' => $r->building->building_no ?? '?',
+                    'nearest_extinguisher' => $nearest,
+                    'remarks' => $r->remarks,
+                    'last_updated' => $r->updated_at->format('Y-m-d H:i')
+                ];
+            });
+
+        return response()->json($updates);
+    }
+
     public function buildings()
     {
         $query = FireSafetySchool::with(['buildings', 'buildings.alarmSystems', 'buildings.fireExtinguishers']);
@@ -1301,8 +1429,43 @@ public function getRoom($id)
 
     public static function calculateBuildingCompliance($building)
     {
-        // Use the model's defined safety score logic
-        return $building->safety_score;
+        // Start from the model's computed safety score (0–100)
+        $score = $building->safety_score;
+
+        // Requirement 1: Building must have at least one active alarm covering it
+        // "Installed Here" (building_id) OR listed as "Covering" via the pivot table
+        $activeAlarmStatuses = ['active', 'functional', 'online'];
+
+        $directAlarmIds = $building->alarmSystems()
+            ->whereIn('status', $activeAlarmStatuses)
+            ->pluck('firesafety_alarm_systems.id')
+            ->toArray();
+
+        $coveredAlarmIds = $building->alarmSystemsMany()
+            ->whereIn('status', $activeAlarmStatuses)
+            ->pluck('firesafety_alarm_systems.id')
+            ->toArray();
+
+        $hasCoveringAlarm = count(array_unique(array_merge($directAlarmIds, $coveredAlarmIds))) > 0;
+
+        // Requirement 2: All rooms must exist and be covered by a fire extinguisher
+        $totalRooms = (int) ($building->rooms ?? 0);
+        $actualRoomsCount = $building->actualRooms()->count();
+        $coveredRoomsCount = $building->actualRooms()
+            ->whereHas('extinguishersCoveringThisRoom')
+            ->count();
+
+        $roomsFullyCovered = $totalRooms === 0
+            ? true
+            : ($actualRoomsCount >= $totalRooms && $coveredRoomsCount >= $totalRooms);
+
+        // Enforce that a building cannot be "Compliant" (>= 80)
+        // unless it has both an alarm covering it and full room coverage.
+        if (!$hasCoveringAlarm || !$roomsFullyCovered) {
+            $score = min($score, 75);
+        }
+
+        return $score;
     }
 
     // Store new building
@@ -1609,6 +1772,13 @@ public function getRoom($id)
 
             // Merge direct alarms and covered alarms
             $allAlarms = $building->alarmSystems->merge($building->alarmSystemsMany)->unique('id')->values();
+            foreach ($allAlarms as $alarm) {
+                // If floor_id is stored in a different field, map it here
+                // For example, if it's stored in 'floor' or 'floor_no'
+                if (!isset($alarm->floor_id) && isset($alarm->floor)) {
+                    $alarm->floor_id = $alarm->floor;
+                }
+            }
             $building->setRelation('alarmSystems', $allAlarms);
             Log::info('Building found: ' . $building->id);
 
@@ -3136,6 +3306,7 @@ public function getRoom($id)
         $school = FireSafetySchool::with([
             'buildings.actualRooms.roomTypeConfig',
             'buildings.alarmSystems',
+            'buildings.alarmSystemsMany',
             'buildings.fireExtinguishers',
             'buildings.evacuationPlan'
         ])->findOrFail($schoolId);

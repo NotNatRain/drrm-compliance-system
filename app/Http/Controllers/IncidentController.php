@@ -116,6 +116,26 @@ class IncidentController extends Controller
     }
 
     /**
+     * Update an incident type.
+     */
+    public function updateIncidentType(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        $type = IncidentType::findOrFail($id);
+        $type->update([
+            'name' => $validated['name'],
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'type' => $type,
+        ]);
+    }
+
+    /**
      * Create a new incident status / event (for legend & dropdown).
      */
     public function storeIncidentStatus(Request $request)
@@ -129,6 +149,26 @@ class IncidentController extends Controller
             'color_class' => 'status-no-suspension',
             'short_code' => null,
             'is_compliance' => true,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'status' => $status,
+        ]);
+    }
+
+    /**
+     * Update an incident status / event.
+     */
+    public function updateIncidentStatus(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+        ]);
+
+        $status = IncidentStatus::findOrFail($id);
+        $status->update([
+            'name' => $validated['name'],
         ]);
 
         return response()->json([

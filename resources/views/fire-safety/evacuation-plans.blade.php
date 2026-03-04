@@ -264,7 +264,13 @@
                                                 <div class="mb-3">
                                                     <div class="row text-center">
                                                         <div class="col-4">
-                                                            <h6 class="mb-0">{{ $building->emergency_exits ?? 0 }}</h6>
+                                                            @php
+                                                                $secExitStatus = 'N/A';
+                                                                if (($building->floors ?? 1) > 1) {
+                                                                    $secExitStatus = ($building->emergency_exits ?? 0) >= 2 ? 'Yes' : 'No';
+                                                                }
+                                                            @endphp
+                                                            <h6 class="mb-0">{{ $secExitStatus }}</h6>
                                                             <small>Exits</small>
                                                         </div>
                                                         <div class="col-4">
@@ -1513,10 +1519,11 @@
                 // total building height = header (30px) + gaps + floors*floorHeight
                 const buildingHeight = 30 + floorGap * (floors + 1) + floors * floorHeight;
 
-                // Use saved coordinates if available
-                if (school.map_layout && school.map_layout[buildingContainerDiv.dataset.id]) {
-                    buildingContainerDiv.style.left = school.map_layout[buildingContainerDiv.dataset.id].x + 'px';
-                    buildingContainerDiv.style.top = school.map_layout[buildingContainerDiv.dataset.id].y + 'px';
+                // Use saved coordinates/rotation if available (stored in DB JSON `evacuation_map_layout`)
+                const savedLayout = school.evacuation_map_layout || school.map_layout || {};
+                if (savedLayout && savedLayout[buildingContainerDiv.dataset.id]) {
+                    buildingContainerDiv.style.left = savedLayout[buildingContainerDiv.dataset.id].x + 'px';
+                    buildingContainerDiv.style.top = savedLayout[buildingContainerDiv.dataset.id].y + 'px';
                 } else {
                     buildingContainerDiv.style.left = x + 'px';
                     buildingContainerDiv.style.top = y + 'px';
@@ -1534,6 +1541,18 @@
                 buildingContainerDiv.style.cursor = 'default';
                 buildingContainerDiv.style.overflow = 'hidden';
                 buildingContainerDiv.style.padding = '0px';
+
+                // Apply saved rotation (0/90/180/270)
+                const savedRotation = (savedLayout && savedLayout[buildingContainerDiv.dataset.id] && savedLayout[buildingContainerDiv.dataset.id].rotation)
+                    ? Number(savedLayout[buildingContainerDiv.dataset.id].rotation)
+                    : 0;
+                buildingContainerDiv.dataset.rotation = String(savedRotation);
+                buildingContainerDiv.dataset.baseWidth = String(buildingWidth);
+                buildingContainerDiv.dataset.baseHeight = String(buildingHeight);
+                if (savedRotation) {
+                    buildingContainerDiv.style.transformOrigin = 'top left';
+                    buildingContainerDiv.style.transform = `rotate(${savedRotation}deg)`;
+                }
 
                 // Create building header
                 const headerDiv = document.createElement('div');
@@ -1554,8 +1573,15 @@
                 headerDiv.innerHTML = `
                     <span>${building.building_no}</span>
                     <span style="font-size: 10px;">${building.building_name || ''}</span>
-                    <span style="background: ${hasPlan ? 'green' : 'red'}; padding: 2px 6px; border-radius: 3px; font-size: 9px;">
-                        ${hasPlan ? 'Plan OK' : 'No Plan'}
+                    <span style="display:flex; align-items:center; gap:6px;">
+                        <span style="background: ${hasPlan ? 'green' : 'red'}; padding: 2px 6px; border-radius: 3px; font-size: 9px;">
+                            ${hasPlan ? 'Plan OK' : 'No Plan'}
+                        </span>
+                        <button type="button" class="btn btn-sm btn-light p-0 px-1" title="Rotate building" style="line-height:1;"
+                            onmousedown="event.stopPropagation();"
+                            onclick="rotateMapBuilding('${buildingContainerDiv.id}', ${schoolId}); event.stopPropagation();">
+                            <i class="fas fa-rotate-right"></i>
+                        </button>
                     </span>
                 `;
                 buildingContainerDiv.appendChild(headerDiv);
@@ -1570,6 +1596,15 @@
                 // floorHeight and roomWidth already computed above for square rooms
                 // const floorHeight = (buildingHeight - 30 - floorGap * (floors + 1)) / floors;
                 // const roomWidth = (buildingWidth - roomGap * (roomsPerFloor + 1)) / roomsPerFloor;
+
+                // Collect alarms for this building (supports both API shapes)
+                const directAlarms = building.alarm_systems || building.alarmSystems || [];
+                const coveredAlarms = building.alarm_systems_many || building.alarmSystemsMany || [];
+                const alarms = [...directAlarms, ...coveredAlarms].filter((a, idx, arr) => {
+                    const id = a && a.id ? a.id : null;
+                    if (id === null) return true;
+                    return arr.findIndex(x => x && x.id === id) === idx;
+                });
 
                 // Draw floors and rooms
                 for (let floorIdx = 0; floorIdx < floors; floorIdx++) {
@@ -1632,6 +1667,7 @@
                             roomRect.style.cursor = 'pointer';
                             roomRect.addEventListener('click', e => {
                                 e.stopPropagation();
+                                if (isMapEditable[schoolId]) return;
                                 // navigate to extinguisher list for this room
                                 openRoomExtinguishers(building.id, room.id, schoolId);
                             });
@@ -1663,6 +1699,7 @@
                                 extIcon.style.cursor = 'pointer';
                                 extIcon.onclick = e => {
                                     e.stopPropagation();
+                                    if (isMapEditable[schoolId]) return;
                                     openRoomExtinguishers(building.id, room.id, schoolId);
                                 };
                                 svg.appendChild(extIcon);
@@ -1686,13 +1723,40 @@
                     }
                     // place alarms icons on this floor, if any
                     const thisFloor = floorIdx + 1;
-                    const floorAlarms = alarms.filter(a => Number(a.floor_id) === thisFloor);
+
+                    // Floor-specific alarms (exact floor match)
+                    const floorAlarms = alarms.filter(a =>
+                        a.floor_id &&
+                        a.floor_id !== 'all' &&
+                        Number(a.floor_id) === thisFloor
+                    );
                     floorAlarms.forEach((a, idx) => {
                         const alarmIcon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        // place near left, inside this floor band
                         alarmIcon.setAttribute('x', roomGap + (idx * 18) + 5);
-                        alarmIcon.setAttribute('y', floorY + 14);
+                        alarmIcon.setAttribute('y', floorY + floorHeight / 2);
                         alarmIcon.setAttribute('font-size', '16px');
                         alarmIcon.setAttribute('title', `Alarm: ${a.code}`);
+                        alarmIcon.textContent = '🔔';
+                        svg.appendChild(alarmIcon);
+                    });
+
+                }
+
+                // All-floor / entire-building alarms: show once at the divider above the bottom floor (or top padding if 1 floor)
+                const allFloorAlarms = alarms.filter(a => {
+                    const v = (a && a.floor_id != null) ? String(a.floor_id).toLowerCase() : '';
+                    return !v || v === 'all' || v.includes('all');
+                });
+                if (allFloorAlarms.length > 0) {
+                    const dividerY = floorGap; // top of bottom floor band
+                    allFloorAlarms.forEach((a, idx) => {
+                        const alarmIcon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        // centered horizontally, on the divider between floors
+                        alarmIcon.setAttribute('x', buildingWidth / 2 + idx * 18);
+                        alarmIcon.setAttribute('y', dividerY);
+                        alarmIcon.setAttribute('font-size', '16px');
+                        alarmIcon.setAttribute('title', `Alarm (All Floors): ${a.code}`);
                         alarmIcon.textContent = '🔔';
                         svg.appendChild(alarmIcon);
                     });
@@ -1738,6 +1802,88 @@
 
                 makeDraggable(buildingContainerDiv, schoolId);
             });
+
+            // When locked, auto-fit all buildings to the visible canvas area
+            applyMapFit(schoolId);
+        }
+
+        function applyMapFit(schoolId) {
+            const canvas = document.getElementById(`school-map-canvas-${schoolId}`);
+            if (!canvas) return;
+
+            // Don't fit while editing (keeps dragging intuitive)
+            if (isMapEditable[schoolId]) {
+                canvas.style.transform = '';
+                canvas.style.transformOrigin = '';
+                return;
+            }
+
+            const container = canvas.parentElement;
+            if (!container) return;
+
+            const els = Array.from(canvas.querySelectorAll('.building-element'));
+            if (els.length === 0) return;
+
+            const pad = 20;
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+
+            els.forEach(el => {
+                const left = el.offsetLeft;
+                const top = el.offsetTop;
+                const bw = Number(el.dataset.baseWidth || el.offsetWidth || 0);
+                const bh = Number(el.dataset.baseHeight || el.offsetHeight || 0);
+                const rot = (Number(el.dataset.rotation || 0) % 180 === 90);
+                const w = rot ? bh : bw;
+                const h = rot ? bw : bh;
+
+                minX = Math.min(minX, left);
+                minY = Math.min(minY, top);
+                maxX = Math.max(maxX, left + w);
+                maxY = Math.max(maxY, top + h);
+            });
+
+            const boundsW = Math.max(1, maxX - minX);
+            const boundsH = Math.max(1, maxY - minY);
+            const availW = Math.max(1, container.clientWidth - pad * 2);
+            const availH = Math.max(1, container.clientHeight - pad * 2);
+            const scale = Math.min(1, availW / boundsW, availH / boundsH);
+
+            const tx = pad - minX * scale;
+            const ty = pad - minY * scale;
+            canvas.style.transformOrigin = 'top left';
+            canvas.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+        }
+
+        function rotateMapBuilding(elementId, schoolId) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            if (!isMapEditable[schoolId]) return;
+            const current = Number(el.dataset.rotation || 0);
+            const next = (current + 90) % 360;
+            el.dataset.rotation = String(next);
+            el.style.transformOrigin = 'top left';
+            el.style.transform = `rotate(${next}deg)`;
+            clampMapElementToCanvas(el, schoolId);
+        }
+
+        function clampMapElementToCanvas(element, schoolId) {
+            const canvas = document.getElementById(`school-map-canvas-${schoolId}`);
+            if (!canvas) return;
+
+            const bw = Number(element.dataset.baseWidth || element.offsetWidth || 0);
+            const bh = Number(element.dataset.baseHeight || element.offsetHeight || 0);
+            const rot = (Number(element.dataset.rotation || 0) % 180 === 90);
+            const w = rot ? bh : bw;
+            const h = rot ? bw : bh;
+
+            const maxLeft = Math.max(0, canvas.clientWidth - w);
+            const maxTop = Math.max(0, canvas.clientHeight - h);
+
+            const left = Math.min(Math.max(0, element.offsetLeft), maxLeft);
+            const top = Math.min(Math.max(0, element.offsetTop), maxTop);
+
+            element.style.left = left + 'px';
+            element.style.top = top + 'px';
         }
 
         function showBuildingOptions(buildingId, buildingNo, schoolId) {
@@ -1875,6 +2021,8 @@
                     el.style.cursor = 'move';
                     el.style.borderColor = '#ffc107';
                 });
+                // remove fit while editing
+                applyMapFit(schoolId);
             } else {
                 btn.innerHTML = '<i class="fas fa-arrows-alt me-2"></i> Edit Placement';
                 btn.classList.replace('btn-warning', 'btn-outline-primary');
@@ -1884,6 +2032,8 @@
                     el.style.cursor = 'default';
                     el.style.borderColor = 'black';
                 });
+                // re-fit when locked
+                applyMapFit(schoolId);
             }
         }
 
@@ -1910,6 +2060,7 @@
                 pos4 = e.clientY;
                 element.style.top = (element.offsetTop - pos2) + "px";
                 element.style.left = (element.offsetLeft - pos1) + "px";
+                clampMapElementToCanvas(element, schoolId);
             }
 
             function closeDragElement() {
@@ -1926,7 +2077,8 @@
             elements.forEach(el => {
                 layout[el.dataset.id] = {
                     x: el.offsetLeft,
-                    y: el.offsetTop
+                    y: el.offsetTop,
+                    rotation: Number(el.dataset.rotation || 0)
                 };
             });
 

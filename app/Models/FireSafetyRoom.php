@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class FireSafetyRoom extends Model
 {
@@ -20,7 +21,9 @@ class FireSafetyRoom extends Model
         'calculated_priority_label',
         'coverage_limit',
         'floor_no',
-        'nearest_extinguisher_room_id'
+        'nearest_extinguisher_room_id',
+        'remarks',
+        'has_smoke_detector'
     ];
 
     protected $casts = [
@@ -55,6 +58,11 @@ class FireSafetyRoom extends Model
             'room_id',
             'extinguisher_id'
         )->withTimestamps();
+    }
+
+    public function hostedExtinguisher(): HasOne
+    {
+        return $this->hasOne(FireSafetyExtinguisher::class, 'room_id');
     }
     
     // Helper methods

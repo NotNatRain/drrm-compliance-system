@@ -218,11 +218,13 @@
                     $secExitContent = 'N/A';
                     
                     if ($building->floors >= 2 && $building->floors <= 4) {
-                        if ($building->emergency_exits >= 2) {
-                            $secExitContent = 'Compliant';
+                        // Interpret emergency_exits status:
+                        // 0 = N/A, 1 = No, 2+ = Yes
+                        if (($building->emergency_exits ?? 0) >= 2) {
+                            $secExitContent = 'Yes';
                             $secExitBg = '#90EE90'; 
                         } else {
-                            $secExitContent = 'Non Compliant';
+                            $secExitContent = 'No';
                             $secExitBg = '#e20707'; 
                         }
                     }

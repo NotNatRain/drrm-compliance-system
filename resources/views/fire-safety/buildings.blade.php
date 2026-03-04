@@ -1,4 +1,4 @@
-﻿@extends('layouts.fire-safety')
+@extends('layouts.fire-safety')
 
 @section('title', 'Buildings - Fire Safety')
 @section('page_title', 'Buildings & Alarms')
@@ -314,7 +314,7 @@
                                                     <div class="mb-3 p-3 bg-light rounded">
                                                         <div class="mb-2">
                                                             @php
-                                                                // Fix 5: Merge single and multi-building alarms
+                                                                // Merge single-building and multi-building alarms
                                                                 $alarms = $building->alarmSystems->merge($building->alarmSystemsMany)->unique('id');
                                                                 $alarmCount = $alarms->count();
                                                                 $extinguisherCount = $building->fireExtinguishers->count();
@@ -322,8 +322,19 @@
                                                             <div class="small fw-bold mb-1"><i class="fas fa-bell text-info me-1"></i> Alarms:</div>
                                                             <div class="d-flex flex-wrap gap-1">
                                                                 @forelse($alarms as $alarm)
+                                                                    @php
+                                                                        $locationLabel = null;
+                                                                        if ((int) $alarm->building_id === (int) $building->id) {
+                                                                            $locationLabel = 'Installed Here';
+                                                                        } elseif ($alarm->buildings && $alarm->buildings->contains('id', $building->id)) {
+                                                                            $locationLabel = 'Covering';
+                                                                        }
+                                                                    @endphp
                                                                     <span class="badge bg-white text-dark border small" style="font-size: 0.7rem;">
                                                                         {{ $alarm->code }} - {{ $alarm->alarm_type }} ({{ ucfirst($alarm->status) }})
+                                                                        @if($locationLabel)
+                                                                            <span class="badge bg-success ms-1">{{ $locationLabel }}</span>
+                                                                        @endif
                                                                     </span>
                                                                 @empty
                                                                     <span class="text-muted small">None</span>
@@ -488,9 +499,13 @@
                                     <input type="text" class="form-control border-left-primary" name="building_no" id="building_no" placeholder="e.g., BLDG-001" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">No. of Secondary Exits *</label>
-                                    <input type="number" class="form-control" name="emergency_exits" min="0" value="0" required>
-                                    <small class="text-muted">Emergency/Fire Exits</small>
+                                    <label class="form-label fw-bold">Secondary Exits Available (2–4 Storey Buildings) *</label>
+                                    <select class="form-control" name="emergency_exits" required>
+                                        <option value="0" selected>N/A (1 floor only)</option>
+                                        <option value="1">No</option>
+                                        <option value="2">Yes</option>
+                                    </select>
+                                    <small class="text-muted">For buildings with more than 1 floor, choose Yes or No. Single-storey defaults to N/A.</small>
                                 </div>
                             </div>
 
@@ -1033,13 +1048,6 @@
                         <input type="hidden" id="updateSchoolId" name="school_id">
                         <input type="hidden" id="originalAlarmCode">
 
-                        <!-- Building Context for Update -->
-                        <div class="alert alert-light border mb-3">
-                            <i class="fas fa-building me-2 text-primary"></i>
-                            Updating alarm for: <strong id="updateAlarmBuildingNameDisplay">...</strong>
-                            <input type="hidden" name="building_id" id="updateAlarmBuildingId">
-                        </div>
-
                         <!-- Multi-Building Option (Shared System) -->
                         <div class="mb-3">
                             <div class="form-check">
@@ -1049,7 +1057,11 @@
                                 </label>
                             </div>
                             <div id="updateMultiBuildingSelectContainer" style="display:none;" class="mt-3 p-3 bg-light border rounded">
-                                <label class="form-label small fw-bold">Currently Assigned Buildings:</label>
+                                <label class="form-label small fw-bold">
+                                    Currently Assigned Buildings:
+                                    <span id="updateAlarmBuildingNameDisplay" class="ms-1 text-primary"></span>
+                                    <input type="hidden" name="building_id" id="updateAlarmBuildingId">
+                                </label>
                                 <div id="updateCurrentBuildingsList" class="mb-3 small">
                                     <!-- List of currently assigned buildings -->
                                 </div>
@@ -1338,16 +1350,18 @@
 
         // helper to convert floor identifier into human-readable label
         function formatFloorLabel(floor) {
-            if (!floor) return '-';
-            if (floor === 'all' || floor === 'ALL') return 'Entire Building';
+            if (!floor || floor === 'N/A') return '-';
+            if (floor === 'all' || floor === 'ALL' || floor === '0') return 'Entire Building';
+            
             const num = Number(floor);
             if (isNaN(num)) return floor;
-            const j = num % 10, k = num % 100;
-            let suffix = 'th';
-            if (j === 1 && k !== 11) suffix = 'st';
-            else if (j === 2 && k !== 12) suffix = 'nd';
-            else if (j === 3 && k !== 13) suffix = 'rd';
-            return num + suffix;
+            
+            const j = num % 10,
+                k = num % 100;
+            if (j === 1 && k !== 11) return num + "st Floor";
+            if (j === 2 && k !== 12) return num + "nd Floor";
+            if (j === 3 && k !== 13) return num + "rd Floor";
+            return num + "th Floor";
         }
 
         // Store current school ID (already initialized above)
@@ -2745,6 +2759,8 @@
                 return;
             }
             const building = await response.json();
+            // Store current building context for update-alarm modal display
+            window.currentAlarmModalBuildingId = buildingId;
 
             // Set context for Add Modal
             document.getElementById('addAlarmBuildingId').value = buildingId;
@@ -2821,7 +2837,7 @@
                                     <td>${alarm.alarm_type}</td>  <!-- Type -->
                                     <td>${alarm.location || '-'}</td>  <!-- Location (if you have location data) -->
                                     <td><span class="badge ${getAlarmStatusBadge(alarm.status)}">${formatStatus(alarm.status)}</span></td>  <!-- Status -->
-                                    <td>${formatFloorLabel(alarm.floor_id)}</td>  <!-- Floor (now after Last Test) -->
+                                    <td>${formatFloorLabel(alarm.floor || alarm.floor_no || alarm.floor_id || 'N/A')}</td>
                                     <td>${alarm.last_test ? formatDate(alarm.last_test) : '<span class="text-warning">Never</span>'}</td>  <!-- Last Test (moved up) -->
                                     <td>${alarm.next_test_due ? formatDate(alarm.next_test_due) : '-'}</td>  <!-- Next Test Due (after Floor) -->
                                     <td>  <!-- Actions -->
@@ -2829,7 +2845,7 @@
                                             <button class="btn btn-outline-success" onclick="testAlarm(${alarm.id})" title="Test Now">
                                                 <i class="fas fa-check-circle"></i>
                                             </button>
-                                            <button class="btn btn-outline-primary" onclick="openUpdateAlarmModal(${alarm.id})" title="Update">
+                                            <button class="btn btn-outline-primary" onclick="openUpdateAlarmModal(${alarm.id}, ${buildingId})" title="Update">
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                             <button class="btn btn-outline-danger" onclick="deleteAlarmSystem(${alarm.id})" title="Remove">
@@ -2916,17 +2932,21 @@
             } catch(e) { console.error('Error fetching upcoming tests:', e); }
         }
 
-        async function loadMultiBuildingOptions(schoolId, excludeBuildingId, selectId = 'addMultiBuildingSelect') {
+        async function loadMultiBuildingOptions(schoolId, excludeBuildingIds, selectId = 'addMultiBuildingSelect') {
             const select = document.getElementById(selectId);
             if (!select) return;
-            select.innerHTML = ''; // Requesting...
+            select.innerHTML = '';
+
+            const excluded = Array.isArray(excludeBuildingIds)
+                ? excludeBuildingIds.map(id => String(id))
+                : [String(excludeBuildingIds)];
 
             try {
                 const response = await fetch(`/fire-safety/buildings-list/${schoolId}`);
                 const buildings = await response.json();
 
                 buildings.forEach(b => {
-                    if (b.id != excludeBuildingId) {
+                    if (!excluded.includes(String(b.id))) {
                         const opt = document.createElement('option');
                         opt.value = b.id;
                         opt.textContent = `${b.building_no} - ${b.building_name || 'No Name'}`;
@@ -3013,7 +3033,7 @@
         }
 
         // Open Update Modal
-        async function openUpdateAlarmModal(alarmId) {
+        async function openUpdateAlarmModal(alarmId, contextBuildingId = null) {
              try {
                 const response = await fetch(`/fire-safety/alarm/${alarmId}`);
                 const alarm = await response.json();
@@ -3027,42 +3047,49 @@
                 document.getElementById('updateSchoolId').value = alarm.school_id;
                 document.getElementById('originalAlarmCode').value = alarm.code;
 
-                // building context
+                // building context (for display = the building user is currently managing)
                 document.getElementById('updateAlarmBuildingId').value = alarm.building_id;
                 try {
-                    const bresp = await fetch(`/fire-safety/building/${alarm.building_id}`);
+                    const ctxId = contextBuildingId || window.currentAlarmModalBuildingId || alarm.building_id;
+                    const bresp = await fetch(`/fire-safety/building/${ctxId}`);
                     const building = await bresp.json();
-                    document.getElementById('updateAlarmBuildingNameDisplay').textContent = building.building_no + (building.building_name ? ` (${building.building_name})` : '');
+                    const labelCode = building.building_no || building.building_name || 'Unknown';
+                    document.getElementById('updateAlarmBuildingNameDisplay').textContent =
+                        `${labelCode} (Current Building)`;
                 } catch(e) {
                     console.error('Failed to load building for update modal', e);
+                    document.getElementById('updateAlarmBuildingNameDisplay').textContent = 'Unknown (Current Building)';
                 }
 
-                // load multi-building options for update
-                await loadMultiBuildingOptions(alarm.school_id, alarm.building_id, 'updateMultiBuildingSelect');
+                // determine already assigned buildings (excluding primary location)
+                const assignedIds = alarm.buildings ? alarm.buildings.map(b => b.id) : [];
 
-                // determine multi status and pre-select
-                const isMulti = alarm.buildings && alarm.buildings.length > 1;
+                // load multi-building options for update, excluding primary + already assigned
+                await loadMultiBuildingOptions(
+                    alarm.school_id,
+                    [alarm.building_id, ...assignedIds],
+                    'updateMultiBuildingSelect'
+                );
+
+                // determine multi status and show current list
+                const isMulti = assignedIds.length > 0;
                 const updateCheck = document.getElementById('updateCoversMultiple');
-                if(updateCheck) updateCheck.checked = isMulti;
+                if (updateCheck) updateCheck.checked = isMulti;
                 const multiContainer = document.getElementById('updateMultiBuildingSelectContainer');
                 const currentBuildingsList = document.getElementById('updateCurrentBuildingsList');
 
-                if(isMulti) {
-                    if(multiContainer) multiContainer.style.display = 'block';
+                if (isMulti) {
+                    if (multiContainer) multiContainer.style.display = 'block';
                     // Display currently assigned buildings
-                    if(currentBuildingsList && alarm.buildings) {
-                        const buildingText = alarm.buildings.map(b => `<span class="badge bg-primary me-2">${b.building_no}${b.building_name ? ' - ' + b.building_name : ''}</span>`).join('');
+                    if (currentBuildingsList && alarm.buildings) {
+                        const buildingText = alarm.buildings
+                            .map(b => `<span class="badge bg-primary me-2">${b.building_no}${b.building_name ? ' - ' + b.building_name : ''}</span>`)
+                            .join('');
                         currentBuildingsList.innerHTML = `<div class="mb-2">${buildingText}</div>`;
                     }
-                    // pre-select additional buildings
-                    const assignedIds = alarm.buildings.map(b => b.id).filter(id => id != alarm.building_id);
-                    assignedIds.forEach(id => {
-                        const opt = document.querySelector(`#updateMultiBuildingSelect option[value="${id}"]`);
-                        if(opt) opt.selected = true;
-                    });
                 } else {
-                    if(multiContainer) multiContainer.style.display = 'none';
-                    if(currentBuildingsList) currentBuildingsList.innerHTML = '';
+                    if (multiContainer) multiContainer.style.display = 'none';
+                    if (currentBuildingsList) currentBuildingsList.innerHTML = '';
                 }
 
                 document.getElementById('updateAlarmCode').value = alarm.code;
@@ -3077,9 +3104,10 @@
                 // Populate Floor Select for Update Modal
                 const floorSelect = document.getElementById('updateFloorSelect');
                 try {
-                    const building = await fetch(`/fire-safety/building/${alarm.building_id}`).then(r => r.json());
+                    const b = alarm.building || (await fetch(`/fire-safety/building/${alarm.building_id}`).then(r => r.json()));
                     floorSelect.innerHTML = '<option value="">Select Floor</option><option value="all">All Floors</option>';
-                    for (let i = 1; i <= building.floors; i++) {
+                    const floors = b.floors || 1;
+                    for (let i = 1; i <= floors; i++) {
                         const opt = document.createElement('option');
                         opt.value = i;
                         opt.textContent = `Floor ${i}`;
