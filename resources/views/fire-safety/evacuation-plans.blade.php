@@ -4,6 +4,40 @@
 @section('page_title', 'Evacuation Plans')
 @section('content')
     <div class="container-fluid">
+        <style>
+            .school-map-canvas-container {
+                cursor: grab;
+                transition: transform 0.1s ease-out;
+            }
+            .school-map-canvas-container:active { cursor: grabbing; }
+            .map-element { transition: border-color 0.2s; }
+            .map-element.building-element { box-shadow: 4px 4px 10px rgba(0,0,0,0.2) !important; }
+            
+            @media print {
+                .no-print { display: none !important; }
+                html, body { margin: 0; padding: 0; background: white; overflow: hidden !important; height: 100% !important; }
+                .card { border: none !important; box-shadow: none !important; }
+                @page { size: landscape; margin: 0; }
+                header, .top-nav, .sidebar, .breadcrumb, .school-tabs, .card-header, .card-footer, .no-print, .btn, .mt-3.p-3.bg-white { display: none !important; }
+                .container-fluid, .row, .col-12, .card, .card-body, .tab-content, .tab-pane { 
+                    margin: 0 !important; 
+                    padding: 0 !important; 
+                    overflow: hidden !important;
+                    background: white !important;
+                }
+                .school-map-canvas-container { 
+                    width: 100vw !important; 
+                    height: 100vh !important;
+                    border: none !important;
+                    box-shadow: none !important;
+                    position: fixed !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    z-index: 9999 !important;
+                }
+            }
+            .facility-element { border-radius: 4px; display: flex; align-items: center; justify-content: center; text-align: center; color: white; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); border: 2px solid rgba(0,0,0,0.2); }
+        </style>
 
         @if(!$activeSchool)
             <div class="alert alert-info">
@@ -128,47 +162,106 @@
                                 <div class="tab-content" id="evacuationTabsContent-{{ $school->id }}">
                                     <!-- TAB 1: PLANS LIST -->
                                     <div class="tab-pane fade show active" id="plans-content-{{ $school->id }}" role="tabpanel" aria-labelledby="plans-tab-{{ $school->id }}">
-                                        <div class="d-flex justify-content-between align-items-center mb-4">
+                                        <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
                                             <h6 class="m-0 fw-bold text-primary">
-                                                {{ $school->school_name }} - Plans Overview
+                                                <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'recent-inspections-card-{{ $school->id }}')"></i>
+                                                Plans Overview
                                             </h6>
                                              <div>
                                                 @php
                                                     $schoolPlan = $school->schoolEvacuationPlan;
                                                 @endphp
 
-                                                @if(auth()->user()->role !== 'viewer')
-                                                    @if(!$schoolPlan)
-                                                        <button class="btn btn-primary btn-sm me-2"
-                                                                data-bs-toggle="modal"
-                                                                data-bs-target="#addSchoolPlanModal"
-                                                                data-school-id="{{ $school->id }}">
-                                                            <i class="fas fa-plus me-2"></i> Add School Plan
-                                                        </button>
-                                                    @else
-                                                        <button class="btn btn-info btn-sm me-2 edit-school-plan-btn"
-                                                                data-plan-id="{{ $schoolPlan->id }}"
-                                                                data-bs-toggle="modal"
-                                                                data-bs-target="#editSchoolPlanModal"
-                                                                style="color: white;">
-                                                            <i class="fas fa-edit me-2"></i> Edit School Plan
-                                                        </button>
-                                                    @endif
+                                                 @if(auth()->user()->role !== 'viewer')
+                                                     @if(!$schoolPlan)
+                                                         <button class="btn btn-primary btn-sm me-2 text-white"
+                                                                 data-bs-toggle="modal"
+                                                                 data-bs-target="#addSchoolPlanModal"
+                                                                 data-school-id="{{ $school->id }}">
+                                                             <i class="fas fa-plus me-2"></i> Add School Plan
+                                                         </button>
+                                                     @endif
 
-                                                    <button class="btn btn-success btn-sm me-2"
-                                                            onclick="openScheduleDrillModal({{ $school->id }})">
-                                                        <i class="fas fa-bullhorn me-2"></i> Schedule Drill
-                                                    </button>
+                                                     <button class="btn btn-success btn-sm me-2"
+                                                             onclick="openScheduleDrillModal({{ $school->id }})">
+                                                         <i class="fas fa-bullhorn me-2"></i> Schedule Drill
+                                                     </button>
 
-                                                    <button class="btn btn-sm me-2" style="background-color: #e9ecef; border: 1px solid #ced4da; color: black; font-size: 0.75rem;" onclick="printAllPlans({{ $school->id }})">
-                                                        <i class="fas fa-print me-1"></i> Print Plans Report
-                                                    </button>
-                                                @endif
+                                                     <button class="btn btn-sm me-2" style="background-color: #e9ecef; border: 1px solid #ced4da; color: black; font-size: 0.75rem;" onclick="printAllPlans({{ $school->id }})">
+                                                         <i class="fas fa-print me-1"></i> Print Plans Report
+                                                     </button>
+
+                                                     <div class="btn-group btn-group-sm no-print" role="group">
+                                                         <input type="radio" class="btn-check" name="planViewMode-{{ $school->id }}" id="schoolView-{{ $school->id }}" autocomplete="off" checked onclick="togglePlanView('school', {{ $school->id }})">
+                                                         <label class="btn btn-outline-primary" for="schoolView-{{ $school->id }}">School Plan</label>
+                                                         <input type="radio" class="btn-check" name="planViewMode-{{ $school->id }}" id="buildingView-{{ $school->id }}" autocomplete="off" onclick="togglePlanView('building', {{ $school->id }})">
+                                                         <label class="btn btn-outline-primary" for="buildingView-{{ $school->id }}">Buildings</label>
+                                                     </div>
+                                                 @endif
+                                             </div>
+                                         </div>
+
+                                 <div id="school-plan-view-{{ $school->id }}">
+                                     @if($schoolPlan)
+                                        <div class="card mb-2 border-0 shadow-sm" style="background: white; border-radius: 12px; overflow: hidden; border: 1px solid #e3e6f0 !important;">
+                                            <div class="row g-0">
+                                                <div class="col-lg-4 bg-primary text-white d-flex flex-column align-items-center justify-content-center p-4">
+                                                    <i class="fas fa-school fa-4x mb-3"></i>
+                                                    <h3 class="fw-bold">{{ $schoolPlan->plan_no }}</h3>
+                                                    <span class="badge bg-white text-primary px-3">Active Campus Plan</span>
+                                                </div>
+                                                <div class="col-lg-8 p-4">
+                                                    <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                                                        <span class="text-muted small"><i class="fas fa-info-circle me-1"></i> Strategy for entire campus and outdoor areas.</span>
+                                                        <button class="btn btn-sm btn-primary" data-plan-id="{{ $schoolPlan->id }}" data-bs-toggle="modal" data-bs-target="#viewPlanModal">
+                                                            <i class="fas fa-expand me-1"></i> View Plan
+                                                        </button>
+                                                    </div>
+                                                    <div class="row mb-3">
+                                                        <div class="col-md-6">
+                                                            <div class="p-3 border rounded bg-light mb-2 h-100">
+                                                                <small class="text-muted d-block fw-bold text-uppercase" style="font-size: 0.65rem;">Primary Assembly Area</small>
+                                                                <div class="fw-bold">{{ $schoolPlan->primary_assembly_area ?? 'Not set' }}</div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="p-3 border rounded bg-light h-100">
+                                                                <small class="text-muted d-block fw-bold text-uppercase" style="font-size: 0.65rem;">Assembly Capacity</small>
+                                                                <div class="fw-bold">{{ $schoolPlan->assembly_capacity ?? 'N/A' }} Persons</div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <small class="text-muted d-block fw-bold text-uppercase mb-1" style="font-size: 0.65rem;">Special Instructions</small>
+                                                        <div class="small bg-light p-2 rounded border-start border-3 border-warning">{{ $schoolPlan->special_instructions ?? 'None' }}</div>
+                                                    </div>
+                                                    <div class="d-flex gap-2">
+                                                        <button class="btn btn-sm btn-warning text-white edit-school-plan-btn" data-plan-id="{{ $schoolPlan->id }}" data-bs-toggle="modal" data-bs-target="#editSchoolPlanModal">
+                                                            <i class="fas fa-edit me-1"></i> Edit Plan
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-secondary" onclick="window.open('/fire-safety/reports/evacuation-plans/{{ $school->id }}', '_blank')">
+                                                            <i class="fas fa-print me-1"></i> Print
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                @if($school->buildings->count() > 0)
-                                <div class="row px-1 px-md-3">
-                                    @foreach($school->buildings as $building)
+                                     @else
+                                        <div class="text-center py-5 border rounded bg-light mb-2 border-dashed" style="border-width: 2px !important; border-color: #dee2e6 !important;">
+                                            <i class="fas fa-school fa-3x text-muted mb-3"></i>
+                                            <h5>No School Plan Created</h5>
+                                            <p class="text-muted small mb-3">Establish a comprehensive evacuation plan for the entire campus.</p>
+                                            <button class="btn btn-primary btn-sm mt-1" data-bs-toggle="modal" data-bs-target="#addSchoolPlanModal" data-school-id="{{ $school->id }}">
+                                                <i class="fas fa-plus me-1"></i> Create School Plan
+                                            </button>
+                                        </div>
+                                     @endif
+                                 </div>
+
+                                 <div id="building-plans-view-{{ $school->id }}" style="display: none;">
+                                 @if($school->buildings->count() > 0)
+                                 <div class="row px-1 px-md-3">
+                                     @foreach($school->buildings as $building)
                                     @php
                                         $plan = $building->evacuationPlan;
                                         $safetyScore = $building->safety_score;
@@ -260,30 +353,6 @@
                                                     </div>
                                                 </div>
 
-                                                <!-- Quick Info -->
-                                                <div class="mb-3">
-                                                    <div class="row text-center">
-                                                        <div class="col-4">
-                                                            @php
-                                                                $secExitStatus = 'N/A';
-                                                                if (($building->floors ?? 1) > 1) {
-                                                                    $secExitStatus = ($building->emergency_exits ?? 0) >= 2 ? 'Yes' : 'No';
-                                                                }
-                                                            @endphp
-                                                            <h6 class="mb-0">{{ $secExitStatus }}</h6>
-                                                            <small>Exits</small>
-                                                        </div>
-                                                        <div class="col-4">
-                                                            <h6 class="mb-0">{{ $building->alarmSystems->count() }}</h6>
-                                                            <small>Alarms</small>
-                                                        </div>
-                                                        <div class="col-4">
-                                                            <h6 class="mb-0">{{ $building->fireExtinguishers->count() }}</h6>
-                                                            <small>Extinguishers</small>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
                                                 @if($plan)
                                                 <!-- Assembly Area -->
                                                 <div class="assembly-area">
@@ -346,6 +415,7 @@
                                     </a>
                                 </div>
                                 @endif
+                                </div> <!-- End building-plans-view -->
                                 </div> <!-- End Tab 1 -->
 
                                 <!-- TAB 2: EVACUATION MAP -->
@@ -355,13 +425,19 @@
                                             <h6 class="fw-bold text-primary mb-1">Visual Evacuation Map - {{ $school->school_name }}</h6>
                                             <small class="text-muted"><i class="fas fa-info-circle me-1"></i>Drag buildings to arrange layout. Click 'Edit Placement' to unlock.</small>
                                         </div>
-                                        <div>
+                                         <div>
                                             @if(auth()->user()->role !== 'viewer')
-                                            <button class="btn btn-outline-primary btn-sm me-2" id="edit-placement-btn-{{ $school->id }}" onclick="toggleMapEdit({{ $school->id }})">
-                                                <i class="fas fa-arrows-alt me-2"></i> Edit Placement
+                                            <button class="btn btn-outline-success btn-sm me-2 no-print" onclick="openAddFacilityModal({{ $school->id }})">
+                                                <i class="fas fa-plus me-2"></i> Add Facility
                                             </button>
-                                            <button class="btn btn-primary btn-sm" id="save-placement-btn-{{ $school->id }}" onclick="saveMapLayout({{ $school->id }})" disabled>
+                                            <button class="btn btn-outline-secondary btn-sm me-2 no-print" onclick="printEvacuationMap({{ $school->id }})">
+                                                <i class="fas fa-print me-2"></i> Print Map
+                                            </button>
+                                            <button class="btn btn-primary btn-sm no-print" id="save-placement-btn-{{ $school->id }}" onclick="saveMapLayout({{ $school->id }})" disabled>
                                                 <i class="fas fa-save me-2"></i> Save Layout
+                                            </button>
+                                            <button class="btn btn-outline-primary btn-sm me-2 no-print" id="edit-placement-btn-{{ $school->id }}" onclick="toggleMapEdit({{ $school->id }})">
+                                                <i class="fas fa-arrows-alt me-2"></i> Edit Placement
                                             </button>
                                             @endif
                                         </div>
@@ -385,6 +461,7 @@
                                             <div class="d-flex align-items-center"><span style="font-size: 16px; margin-right: 8px;">🔔</span> <strong>Alarm System</strong></div>
                                             <div class="d-flex align-items-center"><span style="font-size: 14px; margin-right: 8px;">⚪</span> <strong>Smoke Detector</strong></div>
                                             <div class="d-flex align-items-center"><span style="background: green; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-right: 8px;">Plan OK</span> <strong>Evacuation Plan</strong></div>
+                                            <div class="d-flex align-items-center"><span style="width: 20px; height: 10px; background: #28a745; border: 1px solid rgba(0,0,0,0.2); margin-right: 8px; display:inline-block;"></span> <strong>Campus Facility</strong></div>
                                         </div>
                                     </div>
                                 </div>
@@ -485,12 +562,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold text-muted">Emergency Exits</label>
-                                <input type="number" class="form-control bg-light display-exits" readonly disabled>
-                                <input type="hidden" name="exits" class="hidden-exits">
-                            </div>
-                            <div class="col-md-8 mb-3">
+                            <div class="col-md-12 mb-3">
                                 <label class="form-label fw-bold text-muted">Safety Features Installed</label>
                                 <input type="text" class="form-control bg-light display-features" readonly disabled>
                                 <input type="hidden" name="safety_features_installed" class="hidden-features">
@@ -622,11 +694,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Emergency Exits</label>
-                                <input type="number" class="form-control" name="exits" id="editBuildExits">
-                            </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">Plan Status *</label>
                                 <select class="form-control" name="status" id="editBuildStatus" required>
                                     <option value="active">Active</option>
@@ -635,7 +703,7 @@
                                     <option value="inactive">Inactive</option>
                                 </select>
                             </div>
-                            <div class="col-md-4 mb-3">
+                            <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">Safety Features</label>
                                 <input type="text" class="form-control" name="safety_features_installed" id="editBuildFeatures">
                             </div>
@@ -870,6 +938,92 @@
                         <i class="fas fa-calendar-check me-2"></i> Confirm Schedule
                     </button>
                     @endif
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Facility Modals -->
+    <div class="modal fade" id="addFacilityModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title"><i class="fas fa-plus me-2"></i> Add Facility</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addFacilityForm">
+                        <input type="hidden" name="school_id" id="addFacilitySchoolId">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Facility Kind *</label>
+                            <input type="text" class="form-control" name="name" placeholder="e.g., Covered Court, Parking" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Description</label>
+                            <textarea class="form-control" name="description" rows="2" placeholder="Small description..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Color / Legend *</label>
+                            <div class="d-flex flex-wrap gap-2">
+                                <label class="color-option"><input type="radio" name="color" value="#28a745" checked><span style="background:#28a745;"></span></label>
+                                <label class="color-option"><input type="radio" name="color" value="#007bff"><span style="background:#007bff;"></span></label>
+                                <label class="color-option"><input type="radio" name="color" value="#6f42c1"><span style="background:#6f42c1;"></span></label>
+                                <label class="color-option"><input type="radio" name="color" value="#e83e8c"><span style="background:#e83e8c;"></span></label>
+                                <label class="color-option"><input type="radio" name="color" value="#fd7e14"><span style="background:#fd7e14;"></span></label>
+                                <label class="color-option"><input type="radio" name="color" value="#20c997"><span style="background:#20c997;"></span></label>
+                                <label class="color-option"><input type="radio" name="color" value="#6c757d"><span style="background:#6c757d;"></span></label>
+                                <style>.color-option input{display:none;} .color-option span{display:block;width:30px;height:30px;border-radius:4px;cursor:pointer;border:2px solid transparent;} .color-option input:checked+span{border-color:black;transform:scale(1.1);}</style>
+                            </div>
+                            <div class="invalid-feedback" id="addFacilityColorError"></div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" id="confirmCreateFacilityBtn" onclick="createNewFacility()">Create Facility</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editFacilityModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title"><i class="fas fa-edit me-2"></i> Update Facility</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editFacilityForm">
+                        <input type="hidden" id="editFacilityId">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Facility Kind *</label>
+                            <input type="text" class="form-control" name="name" id="editFacilityName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Description</label>
+                            <textarea class="form-control" name="description" id="editFacilityDesc" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Color / Legend *</label>
+                            <div class="d-flex flex-wrap gap-2" id="editFacilityColorOptions">
+                                <label class="color-option"><input type="radio" name="color" value="#28a745"><span style="background:#28a745;"></span></label>
+                                <label class="color-option"><input type="radio" name="color" value="#007bff"><span style="background:#007bff;"></span></label>
+                                <label class="color-option"><input type="radio" name="color" value="#6f42c1"><span style="background:#6f42c1;"></span></label>
+                                <label class="color-option"><input type="radio" name="color" value="#e83e8c"><span style="background:#e83e8c;"></span></label>
+                                <label class="color-option"><input type="radio" name="color" value="#fd7e14"><span style="background:#fd7e14;"></span></label>
+                                <label class="color-option"><input type="radio" name="color" value="#20c997"><span style="background:#20c997;"></span></label>
+                                <label class="color-option"><input type="radio" name="color" value="#6c757d"><span style="background:#6c757d;"></span></label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer d-flex justify-content-between">
+                    <button type="button" class="btn btn-danger" onclick="deleteFacility()">Delete</button>
+                    <div>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" onclick="updateFacilityAction()">Update Facility</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1472,6 +1626,18 @@
                 const school = await response.json();
                 mapDataArr[schoolId] = school;
 
+                // Sync facilities from layout to mapDataArr
+                const savedLayout = school.evacuation_map_layout || {};
+                school.facilities = [];
+                Object.keys(savedLayout).forEach(id => {
+                    if (id && String(id).startsWith('facility_')) {
+                        school.facilities.push({
+                            id: id,
+                            ...savedLayout[id]
+                        });
+                    }
+                });
+
                 renderSchoolMap(school, schoolId);
                 canvasContainer.dataset.loaded = 'true';
             } catch (error) {
@@ -1492,7 +1658,14 @@
             canvas.innerHTML = '';
 
             const buildings = school.buildings || [];
-            let x = 50, y = 50;
+            const facilities = school.facilities || [];
+            
+            // Fixed virtual size for consistent coordinates across devices
+            canvas.style.width = '2400px'; 
+            canvas.style.height = '1400px'; // Slightly reduced height to prevent excessive bottom space
+
+            let x = 100, y = 100;
+            const savedLayout = school.evacuation_map_layout || {};
 
             buildings.forEach((building, index) => {
                 const buildingContainerDiv = document.createElement('div');
@@ -1803,38 +1976,78 @@
                 makeDraggable(buildingContainerDiv, schoolId);
             });
 
+            // Render Facilities
+            facilities.forEach(facility => {
+                renderFacility(facility, schoolId, savedLayout);
+            });
+
             // When locked, auto-fit all buildings to the visible canvas area
             applyMapFit(schoolId);
+        }
+
+        function renderFacility(facility, schoolId, savedLayout) {
+            const canvas = document.getElementById(`school-map-canvas-${schoolId}`);
+            if (!canvas) {
+                console.error('Canvas not found for school:', schoolId);
+                return;
+            }
+            
+            const facilityDiv = document.createElement('div');
+            facilityDiv.className = 'map-element facility-element';
+            facilityDiv.id = facility.id;
+            facilityDiv.dataset.id = facility.id;
+            facilityDiv.dataset.type = 'facility';
+            facilityDiv.dataset.schoolId = schoolId;
+            facilityDiv.dataset.name = facility.name;
+            facilityDiv.dataset.description = facility.description || '';
+            facilityDiv.dataset.color = facility.color;
+            
+            facilityDiv.style.position = 'absolute';
+            facilityDiv.style.width = '200px';
+            facilityDiv.style.height = '100px';
+            facilityDiv.style.backgroundColor = facility.color;
+            facilityDiv.style.left = (facility.x || 300) + 'px';
+            facilityDiv.style.top = (facility.y || 300) + 'px';
+            facilityDiv.textContent = facility.name;
+            
+            facilityDiv.onclick = (e) => {
+                if (isMapEditable[schoolId]) return;
+                openEditFacilityModal(facility, schoolId);
+            };
+
+            canvas.appendChild(facilityDiv);
+            makeDraggable(facilityDiv, schoolId);
         }
 
         function applyMapFit(schoolId) {
             const canvas = document.getElementById(`school-map-canvas-${schoolId}`);
             if (!canvas) return;
 
-            // Don't fit while editing (keeps dragging intuitive)
-            if (isMapEditable[schoolId]) {
-                canvas.style.transform = '';
-                canvas.style.transformOrigin = '';
-                return;
-            }
-
             const container = canvas.parentElement;
             if (!container) return;
 
-            const els = Array.from(canvas.querySelectorAll('.building-element'));
-            if (els.length === 0) return;
+            const els = Array.from(canvas.querySelectorAll('.map-element'));
+            if (els.length === 0) {
+                 const scale = container.clientWidth / parseFloat(canvas.style.width || 2400);
+                 canvas.style.transformOrigin = 'top left';
+                 canvas.style.transform = `scale(${scale})`;
+                 return;
+            }
 
-            const pad = 20;
+            const pad = 40;
             let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
 
             els.forEach(el => {
-                const left = el.offsetLeft;
-                const top = el.offsetTop;
-                const bw = Number(el.dataset.baseWidth || el.offsetWidth || 0);
-                const bh = Number(el.dataset.baseHeight || el.offsetHeight || 0);
-                const rot = (Number(el.dataset.rotation || 0) % 180 === 90);
-                const w = rot ? bh : bw;
-                const h = rot ? bw : bh;
+                const left = parseFloat(el.style.left);
+                const top = parseFloat(el.style.top);
+                const isFacility = el.classList.contains('facility-element');
+                const bw = isFacility ? 200 : parseFloat(el.dataset.baseWidth || 300);
+                const bh = isFacility ? 100 : parseFloat(el.dataset.baseHeight || 150);
+                const rotation = parseInt(el.dataset.rotation || 0);
+                
+                const isRotated = (rotation % 180 !== 0);
+                const w = isRotated ? bh : bw;
+                const h = isRotated ? bw : bh;
 
                 minX = Math.min(minX, left);
                 minY = Math.min(minY, top);
@@ -1842,27 +2055,62 @@
                 maxY = Math.max(maxY, top + h);
             });
 
-            const boundsW = Math.max(1, maxX - minX);
-            const boundsH = Math.max(1, maxY - minY);
-            const availW = Math.max(1, container.clientWidth - pad * 2);
-            const availH = Math.max(1, container.clientHeight - pad * 2);
-            const scale = Math.min(1, availW / boundsW, availH / boundsH);
+            const boundsW = Math.max(400, maxX - minX);
+            const boundsH = Math.max(300, maxY - minY);
+            const availW = container.clientWidth - pad * 2;
+            const availH = container.clientHeight - pad * 2;
+            
+            let scale = Math.min(availW / boundsW, availH / boundsH);
+            if (window.innerWidth < 768) scale = Math.max(scale, 0.4);
+            
+            const tx = (container.clientWidth - boundsW * scale) / 2 - minX * scale;
+            let ty = (container.clientHeight - boundsH * scale) / 2 - minY * scale;
+            
+            // Adjust centering to allow placement at the top without forced empty space
+            if (ty > pad && minY < 200) {
+                ty = pad - minY * scale;
+            }
 
-            const tx = pad - minX * scale;
-            const ty = pad - minY * scale;
             canvas.style.transformOrigin = 'top left';
             canvas.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
         }
+         // Toggle division function
+        function toggleDivision(icon, cardId) {
+            const card = icon.closest('.card');
+            card.id = cardId;
+            card.classList.toggle('card-collapsed');
 
+            const cardStates = JSON.parse(localStorage.getItem('fireSafetyExtCardStates') || '{}');
+            cardStates[cardId] = card.classList.contains('card-collapsed') ? 'collapsed' : 'expanded';
+            localStorage.setItem('fireSafetyExtCardStates', JSON.stringify(cardStates));
+        }
         function rotateMapBuilding(elementId, schoolId) {
             const el = document.getElementById(elementId);
             if (!el) return;
             if (!isMapEditable[schoolId]) return;
+            
+            const bw = parseFloat(el.dataset.baseWidth || 300);
+            const bh = parseFloat(el.dataset.baseHeight || 150);
             const current = Number(el.dataset.rotation || 0);
             const next = (current + 90) % 360;
+            
+            // Adjust position slightly to prevent building from flying off-canvas
+            // 90deg rotation around top-left (0,0) moves (w,0) to (0,w) and (w,h) to (-h,w)
+            // So if we rotate 90deg, the building's new bounding box starts H units to the left of the original.
+            let x = parseFloat(el.style.left);
+            let y = parseFloat(el.style.top);
+
+            if (next === 90) x += bh;
+            else if (next === 180) y += bh;
+            else if (next === 270) x -= bh;
+            else if (next === 0) y -= bh;
+
             el.dataset.rotation = String(next);
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
             el.style.transformOrigin = 'top left';
             el.style.transform = `rotate(${next}deg)`;
+            
             clampMapElementToCanvas(el, schoolId);
         }
 
@@ -1870,14 +2118,19 @@
             const canvas = document.getElementById(`school-map-canvas-${schoolId}`);
             if (!canvas) return;
 
-            const bw = Number(element.dataset.baseWidth || element.offsetWidth || 0);
-            const bh = Number(element.dataset.baseHeight || element.offsetHeight || 0);
-            const rot = (Number(element.dataset.rotation || 0) % 180 === 90);
-            const w = rot ? bh : bw;
-            const h = rot ? bw : bh;
+            const isFacility = element.classList.contains('facility-element');
+            const bw = isFacility ? 200 : parseFloat(element.dataset.baseWidth || 300);
+            const bh = isFacility ? 100 : parseFloat(element.dataset.baseHeight || 150);
+            const rotation = parseInt(element.dataset.rotation || 0);
+            const isRotated = (rotation % 180 !== 0);
+            const w = isRotated ? bh : bw;
+            const h = isRotated ? bw : bh;
 
-            const maxLeft = Math.max(0, canvas.clientWidth - w);
-            const maxTop = Math.max(0, canvas.clientHeight - h);
+            const virtualW = parseFloat(canvas.style.width) || 2400;
+            const virtualH = parseFloat(canvas.style.height) || 1400;
+
+            const maxLeft = Math.max(0, virtualW - w);
+            const maxTop = Math.max(0, virtualH - h);
 
             const left = Math.min(Math.max(0, element.offsetLeft), maxLeft);
             const top = Math.min(Math.max(0, element.offsetTop), maxTop);
@@ -2054,10 +2307,18 @@
 
             function elementDrag(e) {
                 e.preventDefault();
-                pos1 = pos3 - e.clientX;
-                pos2 = pos4 - e.clientY;
+                
+                // Account for canvas scale during drag
+                const canvas = document.getElementById(`school-map-canvas-${schoolId}`);
+                const transform = canvas.style.transform;
+                const scaleMatch = transform.match(/scale\(([^)]+)\)/);
+                const scale = scaleMatch ? parseFloat(scaleMatch[1]) : 1;
+
+                pos1 = (pos3 - e.clientX) / scale;
+                pos2 = (pos4 - e.clientY) / scale;
                 pos3 = e.clientX;
                 pos4 = e.clientY;
+                
                 element.style.top = (element.offsetTop - pos2) + "px";
                 element.style.left = (element.offsetLeft - pos1) + "px";
                 clampMapElementToCanvas(element, schoolId);
@@ -2069,17 +2330,37 @@
             }
         }
 
+        function printEvacuationMap(schoolId) {
+            // Force fit one last time before printing
+            applyMapFit(schoolId);
+            setTimeout(() => {
+                window.print();
+            }, 500);
+        }
+
         async function saveMapLayout(schoolId) {
             const canvas = document.getElementById(`school-map-canvas-${schoolId}`);
             const elements = canvas.querySelectorAll('.map-element');
             const layout = {};
 
             elements.forEach(el => {
-                layout[el.dataset.id] = {
-                    x: el.offsetLeft,
-                    y: el.offsetTop,
-                    rotation: Number(el.dataset.rotation || 0)
-                };
+                const id = el.dataset.id;
+                if (el.classList.contains('facility-element')) {
+                    layout[id] = {
+                        type: 'facility',
+                        name: el.dataset.name,
+                        description: el.dataset.description,
+                        color: el.dataset.color,
+                        x: parseFloat(el.style.left),
+                        y: parseFloat(el.style.top)
+                    };
+                } else {
+                    layout[id] = {
+                        x: parseFloat(el.style.left),
+                        y: parseFloat(el.style.top),
+                        rotation: Number(el.dataset.rotation || 0)
+                    };
+                }
             });
 
             try {
@@ -2096,7 +2377,10 @@
 
                 const result = await response.json();
                 if (result.success) {
-                    successSwal('Map layout saved successfully!', () => toggleMapEdit(schoolId));
+                    successSwal('Map layout saved successfully!', () => {
+                        if (isMapEditable[schoolId]) toggleMapEdit(schoolId);
+                        location.reload(); 
+                    });
                 } else {
                     errorSwal(result.message || 'Failed to save layout');
                 }
@@ -2104,6 +2388,158 @@
                 console.error('Error saving map:', error);
                 errorSwal('Error connecting to server.');
             }
+        }
+
+        // Facility Actions
+        function openAddFacilityModal(schoolId) {
+            currentSchoolId = schoolId;
+            const input = document.getElementById('addFacilitySchoolId');
+            if (input) input.value = schoolId;
+            
+            const modalEl = document.getElementById('addFacilityModal');
+            let modal = bootstrap.Modal.getInstance(modalEl);
+            if (!modal) modal = new bootstrap.Modal(modalEl);
+            modal.show();
+        }
+
+        function createNewFacility() {
+            try {
+                // 1. Get the form and verify it exists
+                const form = document.getElementById('addFacilityForm');
+                if (!form) {
+                    alert('Debug: addFacilityForm not found');
+                    return;
+                }
+                
+                // 2. Extract values safely
+                const nameInput = form.querySelector('[name="name"]');
+                const descInput = form.querySelector('[name="description"]');
+                const colorInput = form.querySelector('[name="color"]:checked');
+                const schoolIdInput = document.getElementById('addFacilitySchoolId');
+                
+                const name = nameInput ? nameInput.value.trim() : "";
+                const description = descInput ? descInput.value.trim() : "";
+                const color = colorInput ? colorInput.value : "#28a745";
+                const sId = schoolIdInput ? schoolIdInput.value : currentSchoolId;
+
+                if (!name) {
+                    Swal.fire('Required', 'Please enter a facility name.', 'warning');
+                    return;
+                }
+
+                if (!sId) {
+                    console.error('School ID missing', { formSId: schoolIdInput ? schoolIdInput.value : null, globalSId: currentSchoolId });
+                    Swal.fire('Error', 'Unable to determine target school. Please close and reopen the modal.', 'error');
+                    return;
+                }
+
+                // 3. Create facility object
+                const facilityId = 'facility_' + Date.now();
+                const facility = {
+                    id: facilityId,
+                    name: name,
+                    description: description,
+                    color: color,
+                    x: 800, // Central-ish on the 2400 width
+                    y: 600
+                };
+                
+                // 4. Update data structure
+                if (typeof mapDataArr === 'undefined') window.mapDataArr = {};
+                if (!mapDataArr[sId]) mapDataArr[sId] = { buildings: [], facilities: [] };
+                if (!mapDataArr[sId].facilities) mapDataArr[sId].facilities = [];
+                mapDataArr[sId].facilities.push(facility);
+                
+                // 5. Render it
+                renderFacility(facility, sId, {});
+                
+                // 6. UI Updates
+                const modalEl = document.getElementById('addFacilityModal');
+                if (window.bootstrap && bootstrap.Modal) {
+                    const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                    if (modal && typeof modal.hide === 'function') modal.hide();
+                } else {
+                    // Fallback hide
+                    $(modalEl).modal('hide'); 
+                }
+                
+                // Enable save button
+                const saveBtn = document.getElementById(`save-placement-btn-${sId}`);
+                if (saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.classList.remove('btn-secondary');
+                    saveBtn.classList.add('btn-primary');
+                }
+                
+                // Unlock map for positioning
+                if (!isMapEditable[sId]) toggleMapEdit(sId);
+                
+                form.reset();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Facility Saved to Map',
+                    text: 'Now drag the rectangle to its correct location and click "Save Layout".',
+                    timer: 3000
+                });
+            } catch (err) {
+                console.error('Internal Error in createNewFacility:', err);
+                alert('An error occurred. Check browser console or contact support: ' + err.message);
+            }
+        }
+
+        function openEditFacilityModal(facility, schoolId) {
+            document.getElementById('editFacilityId').value = facility.id;
+            document.getElementById('editFacilityName').value = facility.name;
+            document.getElementById('editFacilityDesc').value = facility.description || '';
+            
+            const colorOption = document.querySelector(`#editFacilityColorOptions input[value="${facility.color}"]`);
+            if (colorOption) colorOption.checked = true;
+
+            const modal = new bootstrap.Modal(document.getElementById('editFacilityModal'));
+            modal.show();
+        }
+
+        function updateFacilityAction() {
+            const id = document.getElementById('editFacilityId').value;
+            const el = document.getElementById(id);
+            if (!el) return;
+
+            const name = document.getElementById('editFacilityName').value;
+            const desc = document.getElementById('editFacilityDesc').value;
+            const color = document.querySelector('#editFacilityColorOptions input:checked').value;
+
+            el.dataset.name = name;
+            el.dataset.description = desc;
+            el.dataset.color = color;
+            el.style.backgroundColor = color;
+            el.textContent = name;
+
+            bootstrap.Modal.getInstance(document.getElementById('editFacilityModal')).hide();
+            const saveBtn = document.getElementById(`save-placement-btn-${currentSchoolId}`);
+            if (saveBtn) saveBtn.disabled = false;
+        }
+
+        function togglePlanView(mode, schoolId) {
+            const schoolView = document.getElementById(`school-plan-view-${schoolId}`);
+            const buildingView = document.getElementById(`building-plans-view-${schoolId}`);
+            
+            if (mode === 'school') {
+                schoolView.style.display = 'block';
+                buildingView.style.display = 'none';
+            } else {
+                schoolView.style.display = 'none';
+                buildingView.style.display = 'block';
+            }
+        }
+
+        function deleteFacility() {
+            const id = document.getElementById('editFacilityId').value;
+            const el = document.getElementById(id);
+            if (el) el.remove();
+            
+            bootstrap.Modal.getInstance(document.getElementById('editFacilityModal')).hide();
+            const saveBtn = document.getElementById(`save-placement-btn-${currentSchoolId}`);
+            if (saveBtn) saveBtn.disabled = false;
         }
     </script>
 @endsection

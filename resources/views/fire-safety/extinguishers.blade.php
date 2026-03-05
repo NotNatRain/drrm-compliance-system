@@ -200,7 +200,7 @@
                                     <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                         <h6 class="m-0 fw-bold text-primary">
                                             <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'room-ext-card-{{ $school->id }}')"></i>
-                                            <i class="fas fa-list me-2"></i> Room-Based Extinguishers - {{ $school->school_name }}
+                                            <i class="fas fa-list me-2"></i> Room-Based Extinguishers
                                         </h6>
                                         <div>
                                             @if(auth()->user()->role !== 'viewer')
@@ -537,6 +537,7 @@
                                                             <th>Floor Level</th>
                                                             <th>Building Code</th>
                                                             <th>Nearest Extinguisher Room</th>
+                                                            <th>Inspector</th>
                                                             <th>Remarks</th>
                                                             <th class="text-end">Action</th>
                                                         </tr>
@@ -550,6 +551,15 @@
                                                                 } elseif ($item->nearestExtinguisherRoom) {
                                                                     $nearest = $item->nearestExtinguisherRoom->room_code;
                                                                 }
+
+                                                                $remarks = $item->remarks ?? '-';
+                                                                if ($item->approval_status === 'pending') {
+                                                                    $remarks .= ' <span class="badge bg-warning text-dark">(Pending)</span>';
+                                                                } elseif ($item->approval_status === 'approved' && $item->lastInspector && $item->lastInspector->role === 'contributor') {
+                                                                    $remarks .= ' <span class="badge bg-success text-white">(Approve)</span>';
+                                                                } elseif ($item->approval_status === 'rejected') {
+                                                                    $remarks .= ' <span class="badge bg-danger text-white">(Not Approve)</span>';
+                                                                }
                                                             @endphp
                                                             <tr>
                                                                 <td class="fw-bold">{{ $item->room_code ?? 'N/A' }}</td>
@@ -557,7 +567,8 @@
                                                                 <td>{{ $item->floor_label }}</td>
                                                                 <td>{{ $item->building->building_no ?? '?' }}</td>
                                                                 <td>{{ $nearest }}</td>
-                                                                <td>{{ $item->remarks ?? '-' }}</td>
+                                                                <td>{{ $item->lastInspector->name ?? 'Unknown' }}</td>
+                                                                <td>{!! $remarks !!}</td>
                                                                 <td class="text-end">
                                                                     <button class="btn btn-sm btn-outline-primary" onclick="openUpdateRoomModal({{ $item->id }})">
                                                                         <i class="fas fa-search"></i> Inspect
@@ -565,7 +576,7 @@
                                                                 </td>
                                                             </tr>
                                                         @empty
-                                                            <tr><td colspan="7" class="text-center text-muted">No recent room updates found.</td></tr>
+                                                            <tr><td colspan="8" class="text-center text-muted">No recent room updates found.</td></tr>
                                                         @endforelse
                                                     </tbody>
                                                 </table>
@@ -721,12 +732,32 @@
                                 </label>
                             </div>
                         </div>
+
+                        <!-- Approval Section (Admin only) -->
+                        <div id="roomApprovalSection" class="d-none border-top pt-3 mt-3">
+                            <h6 class="fw-bold text-danger mb-2"><i class="fas fa-user-shield me-2"></i>Approval Action</h6>
+                            <p class="small text-muted mb-2">This update was submitted by a <strong id="roomInspectorRole">Contributor</strong> and requires your approval.</p>
+                            
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold">Rejection Reason (if applicable)</label>
+                                <textarea class="form-control form-control-sm" id="roomRejectionReason" rows="2" placeholder="State reason for rejection..."></textarea>
+                            </div>
+
+                            <div class="d-flex gap-2">
+                                <button type="button" class="btn btn-success btn-sm w-100" onclick="approveRoomAction()">
+                                    <i class="fas fa-check-circle me-1"></i> Approve
+                                </button>
+                                <button type="button" class="btn btn-danger btn-sm w-100" onclick="rejectRoomAction()">
+                                    <i class="fas fa-times-circle me-1"></i> Not Approve
+                                </button>
+                            </div>
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     @if(auth()->user()->role !== 'viewer')
-                    <button type="button" class="btn btn-primary" onclick="saveRoomUpdate()">
+                    <button type="button" class="btn btn-primary" onclick="saveRoomUpdate()" id="saveRoomUpdateBtn">
                         <i class="fas fa-save me-2"></i>Save Changes
                     </button>
                     @endif
@@ -2032,7 +2063,7 @@
                 const data = await resp.json();
 
                 if (data.length === 0) {
-                    tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No recent room updates found.</td></tr>';
+                    tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No recent room updates found.</td></tr>';
                     return;
                 }
 
@@ -2045,6 +2076,7 @@
                             <td>${item.floor_level}</td>
                             <td>${item.building_code}</td>
                             <td>${item.nearest_extinguisher}</td>
+                            <td>${item.inspector || 'Unknown'}</td>
                             <td>${item.remarks || '-'}</td>
                             <td class="text-end">
                                 <button class="btn btn-sm btn-outline-primary" onclick="openUpdateRoomModal(${item.room_id})">
@@ -2172,6 +2204,20 @@
                 const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
                 modal.show();
 
+                // Approval Section Visibility (Admin only)
+                const approvalSection = document.getElementById('roomApprovalSection');
+                const saveBtn = document.getElementById('saveRoomUpdateBtn');
+                
+                if (approvalSection) {
+                    if (userRole === 'admin' && data.approval_status === 'pending' && data.last_inspector_role === 'contributor') {
+                        approvalSection.classList.remove('d-none');
+                        if (saveBtn) saveBtn.classList.add('d-none'); // Hide save changes during approval flow
+                    } else {
+                        approvalSection.classList.add('d-none');
+                        if (saveBtn) saveBtn.classList.remove('d-none');
+                    }
+                }
+
                 // Enforce viewer role restrictions
                 checkViewerAccess('updateRoomForm');
 
@@ -2214,6 +2260,63 @@
             } catch (e) {
                 console.error(e);
                 Swal.fire('Error', 'Network error during room update.', 'error');
+            }
+        }
+
+        async function approveRoomAction() {
+            const id = document.getElementById('updateRoomId').value;
+            try {
+                const resp = await fetch(`/fire-safety/room/${id}/approve`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken(),
+                        'Accept': 'application/json',
+                    }
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    Swal.fire('Approved', 'Room update approved successfully!', 'success').then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Error', data.message || 'Failed to approve', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                Swal.fire('Error', 'Network error during approval.', 'error');
+            }
+        }
+
+        async function rejectRoomAction() {
+            const id = document.getElementById('updateRoomId').value;
+            const reason = document.getElementById('roomRejectionReason').value;
+            
+            if (!reason) {
+                Swal.fire('Required', 'Please provide a reason for rejection.', 'warning');
+                return;
+            }
+
+            try {
+                const resp = await fetch(`/fire-safety/room/${id}/reject`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken(),
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ reason: reason })
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    Swal.fire('Rejected', 'Room update has been rejected.', 'info').then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Error', data.message || 'Failed to reject', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                Swal.fire('Error', 'Network error during rejection.', 'error');
             }
         }
 

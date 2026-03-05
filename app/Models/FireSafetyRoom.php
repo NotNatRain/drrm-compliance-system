@@ -23,7 +23,10 @@ class FireSafetyRoom extends Model
         'floor_no',
         'nearest_extinguisher_room_id',
         'remarks',
-        'has_smoke_detector'
+        'has_smoke_detector',
+        'last_inspector_id',
+        'approval_status',
+        'approval_message'
     ];
 
     protected $casts = [
@@ -63,6 +66,11 @@ class FireSafetyRoom extends Model
     public function hostedExtinguisher(): HasOne
     {
         return $this->hasOne(FireSafetyExtinguisher::class, 'room_id');
+    }
+
+    public function lastInspector(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'last_inspector_id');
     }
     
     // Helper methods

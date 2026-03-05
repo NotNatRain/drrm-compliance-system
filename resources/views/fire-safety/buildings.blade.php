@@ -1,4 +1,4 @@
-@extends('layouts.fire-safety')
+﻿@extends('layouts.fire-safety')
 
 @section('title', 'Buildings - Fire Safety')
 @section('page_title', 'Buildings & Alarms')
@@ -233,7 +233,7 @@
                         <div class="card dashboard-card">
                             <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                 <h6 class="m-0 fw-bold text-primary">
-                                    <i class="fas fa-building me-2"></i> Buildings - {{ $school->school_name }}
+                                    <i class="fas fa-building me-2"></i> Buildings
                                 </h6>
                                 <div class="d-flex align-items-center flex-wrap gap-1">
                                     <!-- Filter Dropdown -->

@@ -549,7 +549,7 @@ class FireSafetyController extends Controller
                 ->get();
 
             $school->recent_room_updates_data = FireSafetyRoom::where('school_id', $school->id)
-                ->with(['building', 'nearestExtinguisherRoom', 'hostedExtinguisher'])
+                ->with(['building', 'nearestExtinguisherRoom', 'hostedExtinguisher', 'lastInspector'])
                 ->latest('updated_at')
                 ->take(10)
                 ->get();
@@ -625,6 +625,30 @@ class FireSafetyController extends Controller
             unset($validated['room_name']);
         }
 
+        $user = auth()->user();
+        $validated['last_inspector_id'] = $user->id;
+
+        if ($user->role === 'contributor') {
+            $validated['approval_status'] = 'pending';
+
+            // Notify Admins
+            $school = FireSafetySchool::find($room->school_id);
+            if ($school) {
+                $alerts = $school->alerts ?? [];
+                $alerts[] = [
+                    'id' => uniqid(),
+                    'title' => 'Room Update Pending Approval',
+                    'description' => "Contributor {$user->name} updated room {$room->room_code} and it requires administrator approval.",
+                    'type' => 'warning',
+                    'created_at' => now()->toDateTimeString()
+                ];
+                $school->alerts = $alerts;
+                $school->save();
+            }
+        } else {
+            $validated['approval_status'] = 'approved';
+        }
+
         $room->update($validated);
 
         // Sync Coverage Pivot Table
@@ -663,6 +687,70 @@ class FireSafetyController extends Controller
             $isCenter = FireSafetyExtinguisher::where('room_id', $id)->exists();
             if (!$isCenter) {
                 DB::table('fire_safety_extinguisher_room_coverage')->where('room_id', $id)->delete();
+            }
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    public function approveRoom($id)
+    {
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Only administrators can approve room updates.'], 403);
+        }
+
+        $room = FireSafetyRoom::findOrFail($id);
+        $room->update([
+            'approval_status' => 'approved',
+            'approval_message' => 'Approved by ' . auth()->user()->name
+        ]);
+
+        // Notify Contributor
+        if ($room->lastInspector && $room->lastInspector->role === 'contributor') {
+            $school = FireSafetySchool::find($room->school_id);
+            if ($school) {
+                $alerts = $school->alerts ?? [];
+                $alerts[] = [
+                    'id' => uniqid(),
+                    'title' => 'Room Update Approved',
+                    'description' => "Your update for room {$room->room_code} has been approved by the administrator.",
+                    'type' => 'success',
+                    'created_at' => now()->toDateTimeString()
+                ];
+                $school->alerts = $alerts;
+                $school->save();
+            }
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    public function rejectRoom(Request $request, $id)
+    {
+        if (auth()->user()->role !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Only administrators can reject room updates.'], 403);
+        }
+
+        $room = FireSafetyRoom::findOrFail($id);
+        $room->update([
+            'approval_status' => 'rejected',
+            'approval_message' => $request->input('reason', 'Rejected by ' . auth()->user()->name)
+        ]);
+
+        // Notify Contributor
+        if ($room->lastInspector && $room->lastInspector->role === 'contributor') {
+            $school = FireSafetySchool::find($room->school_id);
+            if ($school) {
+                $alerts = $school->alerts ?? [];
+                $alerts[] = [
+                    'id' => uniqid(),
+                    'title' => 'Room Update Rejected',
+                    'description' => "Your update for room {$room->room_code} has been rejected. Reason: " . ($request->input('reason') ?? 'No reason provided.'),
+                    'type' => 'danger',
+                    'created_at' => now()->toDateTimeString()
+                ];
+                $school->alerts = $alerts;
+                $school->save();
             }
         }
 
@@ -819,6 +907,30 @@ public function storeRoom(Request $request)
         }
     }
 
+    $user = auth()->user();
+    $validated['last_inspector_id'] = $user->id;
+
+    if ($user->role === 'contributor') {
+        $validated['approval_status'] = 'pending';
+
+        // Notify Admins
+        $school = FireSafetySchool::find($validated['school_id']);
+        if ($school) {
+            $alerts = $school->alerts ?? [];
+            $alerts[] = [
+                'id' => uniqid(),
+                'title' => 'New Room Created (Pending Approval)',
+                'description' => "Contributor {$user->name} created a new room and it requires administrator approval.",
+                'type' => 'warning',
+                'created_at' => now()->toDateTimeString()
+            ];
+            $school->alerts = $alerts;
+            $school->save();
+        }
+    } else {
+        $validated['approval_status'] = 'approved';
+    }
+
     $room = FireSafetyRoom::create($validated);
 
     return response()->json([
@@ -867,7 +979,10 @@ public function storeRoom(Request $request)
             'host_room_id' => $hostRoomId,
             'host_room_code' => $hostRoomCode,
             'building' => $room->building->building_no ?? 'N/A',
-            'extinguisher' => $extinguisher
+            'extinguisher' => $extinguisher,
+            'approval_status' => $room->approval_status,
+            'last_inspector_id' => $room->last_inspector_id,
+            'last_inspector_role' => $room->lastInspector->role ?? 'admin'
         ]);
     }
     // Store extinguisher (AJAX) - room-based coverage rules enforced here
@@ -1364,7 +1479,7 @@ public function storeRoom(Request $request)
         }
 
         $updates = FireSafetyRoom::where('school_id', $schoolId)
-            ->with(['building', 'nearestExtinguisherRoom', 'hostedExtinguisher'])
+            ->with(['building', 'nearestExtinguisherRoom', 'hostedExtinguisher', 'lastInspector'])
             ->latest('updated_at')
             ->take(10)
             ->get()
@@ -1376,6 +1491,15 @@ public function storeRoom(Request $request)
                     $nearest = $r->nearestExtinguisherRoom->room_code;
                 }
 
+                $remarks = $r->remarks ?? '-';
+                if ($r->approval_status === 'pending') {
+                    $remarks .= ' (Pending Approval)';
+                } elseif ($r->approval_status === 'approved' && $r->lastInspector && $r->lastInspector->role === 'contributor') {
+                    $remarks .= ' (Approve)';
+                } elseif ($r->approval_status === 'rejected') {
+                    $remarks .= ' (Not Approve)';
+                }
+
                 return [
                     'room_id' => $r->id,
                     'room_code' => $r->room_code,
@@ -1383,8 +1507,10 @@ public function storeRoom(Request $request)
                     'floor_level' => $r->floor_label,
                     'building_code' => $r->building->building_no ?? '?',
                     'nearest_extinguisher' => $nearest,
-                    'remarks' => $r->remarks,
-                    'last_updated' => $r->updated_at->format('Y-m-d H:i')
+                    'inspector' => $r->lastInspector->name ?? 'Unknown',
+                    'remarks' => $remarks,
+                    'last_updated' => $r->updated_at->format('Y-m-d H:i'),
+                    'approval_status' => $r->approval_status
                 ];
             });
 
