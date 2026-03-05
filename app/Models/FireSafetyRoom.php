@@ -24,6 +24,8 @@ class FireSafetyRoom extends Model
         'nearest_extinguisher_room_id',
         'remarks',
         'has_smoke_detector',
+        'has_secondary_exit',
+        'secondary_exit_remarks',
         'last_inspector_id',
         'approval_status',
         'approval_message'

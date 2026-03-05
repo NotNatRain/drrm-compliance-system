@@ -37,6 +37,19 @@
                 }
             }
             .facility-element { border-radius: 4px; display: flex; align-items: center; justify-content: center; text-align: center; color: white; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); border: 2px solid rgba(0,0,0,0.2); }
+            
+            /* Toggle Division Styles */
+            .toggle-icon {
+                cursor: pointer;
+                transition: transform 0.3s ease;
+                margin-right: 8px;
+            }
+            .card-collapsed .card-body {
+                display: none;
+            }
+            .card-collapsed .toggle-icon {
+                transform: rotate(-90deg);
+            }
         </style>
 
         @if(!$activeSchool)
@@ -143,9 +156,10 @@
                 <!-- Evacuation Plans Grid -->
                 <div class="row">
                     <div class="col-12 mb-4">
-                        <div class="card dashboard-card">
-                            <div class="card-header p-0">
-                                <div class="school-tabs">
+                        <div class="card dashboard-card" id="recent-inspections-card-{{ $school->id }}">
+                            <div class="card-header py-2 px-3 d-flex align-items-center bg-light">
+                                <i class="fas fa-chevron-down toggle-icon me-3" onclick="toggleDivision(this, 'recent-inspections-card-{{ $school->id }}')"></i>
+                                <div class="school-tabs overflow-hidden">
                                     <nav>
                                         <div class="nav nav-tabs border-0" id="evacuationTabs-{{ $school->id }}" role="tablist">
                                             <button class="nav-link school-tab-btn active" id="plans-tab-{{ $school->id }}" data-bs-toggle="tab" data-bs-target="#plans-content-{{ $school->id }}" type="button" role="tab" aria-controls="plans-content-{{ $school->id }}" aria-selected="true">
@@ -164,7 +178,7 @@
                                     <div class="tab-pane fade show active" id="plans-content-{{ $school->id }}" role="tabpanel" aria-labelledby="plans-tab-{{ $school->id }}">
                                         <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
                                             <h6 class="m-0 fw-bold text-primary">
-                                                <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'recent-inspections-card-{{ $school->id }}')"></i>
+                                                
                                                 Plans Overview
                                             </h6>
                                              <div>
@@ -422,7 +436,10 @@
                                 <div class="tab-pane fade" id="map-content-{{ $school->id }}" role="tabpanel" aria-labelledby="map-tab-{{ $school->id }}">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div>
-                                            <h6 class="fw-bold text-primary mb-1">Visual Evacuation Map - {{ $school->school_name }}</h6>
+                                            <h6 class="fw-bold text-primary mb-1">
+                                                
+                                                Visual Evacuation Map
+                                            </h6>
                                             <small class="text-muted"><i class="fas fa-info-circle me-1"></i>Drag buildings to arrange layout. Click 'Edit Placement' to unlock.</small>
                                         </div>
                                          <div>
@@ -2541,5 +2558,14 @@
             const saveBtn = document.getElementById(`save-placement-btn-${currentSchoolId}`);
             if (saveBtn) saveBtn.disabled = false;
         }
+        // Apply card states on load
+        document.addEventListener('DOMContentLoaded', function() {
+            const cardStates = JSON.parse(localStorage.getItem('fireSafetyExtCardStates') || '{}');
+            const cardId = 'recent-inspections-card-{{ $school->id }}';
+            const card = document.getElementById(cardId);
+            if (card && cardStates[cardId] === 'collapsed') {
+                card.classList.add('card-collapsed');
+            }
+        });
     </script>
 @endsection

@@ -29,7 +29,8 @@
 @section('page_title', 'Dashboard')
 
 @section('content')
-        <!-- Summary Cards -->
+        @if(auth()->user()->role === 'admin')
+        <!-- Summary Cards (Admin Only) -->
         <div class="row mb-4">
             <div class="col-xl-3 col-md-6 mb-4">
                 <div class="card dashboard-card stat-card border-left-success h-100">
@@ -95,6 +96,7 @@
                 </div>
             </div>
         </div>
+        @endif
 
         <!-- School Safety Status Section -->
         <div class="row">
@@ -103,18 +105,21 @@
                     <div class="card-header py-3 d-flex justify-content-between align-items-center">
                         <h6 class="m-0 fw-bold text-primary">School Safety Status</h6>
                         <div class="d-flex gap-2 align-items-center">
-                            <select id="statusFilter" class="form-select form-select-sm" style="width: auto;">
-                                <option value="all">All Status</option>
-                                <option value="passed">Passed</option>
-                                <option value="warning">Ongoing Improvement</option>
-                                <option value="unconfigured">Unconfigured</option>
-                            </select>
-                            <select id="sortFilter" class="form-select form-select-sm" style="width: auto;">
-                                <option value="name_asc">School Name (A-Z)</option>
-                                <option value="name_desc">School Name (Z-A)</option>
-                                <option value="inspection_asc">Last Inspection (Oldest)</option>
-                                <option value="inspection_desc">Last Inspection (Newest)</option>
-                            </select>
+                            @if(auth()->user()->role === 'admin')
+                                <select id="statusFilter" class="form-select form-select-sm" style="width: auto;">
+                                    <option value="all">All Status</option>
+                                    <option value="passed">Passed</option>
+                                    <option value="warning">Ongoing Improvement</option>
+                                    <option value="unconfigured">Unconfigured</option>
+                                </select>
+                                <select id="sortFilter" class="form-select form-select-sm" style="width: auto;">
+                                    <option value="name_asc">School Name (A-Z)</option>
+                                    <option value="name_desc">School Name (Z-A)</option>
+                                    <option value="inspection_asc">Last Inspection (Oldest)</option>
+                                    <option value="inspection_desc">Last Inspection (Newest)</option>
+                                </select>
+                            @endif
+
                             @if(auth()->user()->role === 'admin' || (auth()->user()->role === 'contributor' && !auth()->user()->school_id))
                                 <button class="btn btn-outline-primary flex-grow-1 flex-md-grow-0" data-bs-toggle="modal" data-bs-target="#addInspectionModal">
                                     <i class="fas fa-plus-circle me-1"></i> Add School
@@ -131,88 +136,245 @@
                     <div class="card-body">
                         <div class="row">
                             <div class="col-lg-8">
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead class="table-light">
-                                            <tr>
-                                                <th>School</th>
-                                                <th>Status</th>
-                                                <th>Issues</th>
-                                                <th>Last Inspection</th>
-                                                <th>Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="schoolsTableBody">
-                                            @forelse($schools as $school)
-                                                <tr data-status="{{ $school->status }}"
-                                                    data-school-name="{{ $school->school_name }}"
-                                                    data-inspection-date="{{ $school->last_inspection_date ? \Carbon\Carbon::parse($school->last_inspection_date)->format('Y-m-d') : '1900-01-01' }}">
-                                                    <td>
-                                                        <strong>{{ $school->school_name }}</strong>
-                                                        <div class="text-muted small">ID: {{ $school->school_id }}</div>
-                                                    </td>
-                                                    <td>
-                                                        @if($school->status === 'passed')
-                                                            <span class="status-badge bg-success" style="font-size: 0.7rem;">PASSED</span>
-                                                        @elseif($school->status === 'unconfigured')
-                                                            <span class="status-badge bg-secondary" style="font-size: 0.7rem;">UNCONFIGURED</span>
-                                                        @else
-                                                            <span class="status-badge bg-warning text-dark" style="font-size: 0.7rem;">ONGOING IMPROVEMENT</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>
-                                                        <div style="font-size: 0.85rem; max-width: 250px;">
-                                                            @if($school->status === 'unconfigured')
-                                                                <span class="text-primary fw-bold">Setup Needed</span>
-                                                            @elseif ($school->status === 'passed')
-                                                                <span class="text-success">None</span>
+                                @if(auth()->user()->role === 'admin')
+                                    <!-- Table View for Admins -->
+                                    <div class="table-responsive">
+                                        <table class="table table-hover">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th>School</th>
+                                                    <th>Status</th>
+                                                    <th>Issues</th>
+                                                    <th>Last Inspection</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="schoolsTableBody">
+                                                @forelse($schools as $school)
+                                                    <tr data-status="{{ $school->status }}"
+                                                        data-school-name="{{ $school->school_name }}"
+                                                        data-inspection-date="{{ $school->last_inspection_date ? \Carbon\Carbon::parse($school->last_inspection_date)->format('Y-m-d') : '1900-01-01' }}">
+                                                        <td>
+                                                            <strong>{{ $school->school_name }}</strong>
+                                                            <div class="text-muted small">ID: {{ $school->school_id }}</div>
+                                                        </td>
+                                                        <td>
+                                                            @if($school->status === 'passed')
+                                                                <span class="status-badge bg-success" style="font-size: 0.7rem;">PASSED</span>
+                                                            @elseif($school->status === 'unconfigured')
+                                                                <span class="status-badge bg-secondary" style="font-size: 0.7rem;">UNCONFIGURED</span>
                                                             @else
-                                                                <div class="d-flex flex-wrap gap-1">
-                                                                    @php $fontSize = count($school->issues_list) > 3 ? '0.7rem' : '0.8rem'; @endphp
-                                                                    @foreach($school->issues_list as $issue)
-                                                                        <span class="badge bg-light text-danger border" style="font-size: {{ $fontSize }};">{{ $issue }}</span>
-                                                                    @endforeach
-                                                                </div>
+                                                                <span class="status-badge bg-warning text-dark" style="font-size: 0.7rem;">ONGOING IMPROVEMENT</span>
+                                                            @endif
+                                                        </td>
+                                                        <td>
+                                                            <div style="font-size: 0.85rem; max-width: 250px;">
+                                                                @if($school->status === 'unconfigured')
+                                                                    <span class="text-primary fw-bold">Setup Needed</span>
+                                                                @elseif ($school->status === 'passed')
+                                                                    <span class="text-success">None</span>
+                                                                @else
+                                                                    <div class="d-flex flex-wrap gap-1">
+                                                                        @php $fontSize = count($school->issues_list) > 3 ? '0.7rem' : '0.8rem'; @endphp
+                                                                        @foreach($school->issues_list as $issue)
+                                                                            <span class="badge bg-light text-danger border" style="font-size: {{ $fontSize }};">{{ $issue }}</span>
+                                                                        @endforeach
+                                                                    </div>
+                                                                @endif
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            @if($school->last_inspection_date)
+                                                                <div class="small">{{ \Carbon\Carbon::parse($school->last_inspection_date)->format('M d, Y') }}</div>
+                                                                <div class="text-muted" style="font-size: 0.7rem;">{{ \Carbon\Carbon::parse($school->last_inspection_date)->diffForHumans() }}</div>
+                                                            @else
+                                                                <span class="text-muted small">No Activity</span>
+                                                            @endif
+                                                        </td>
+                                                        <td>
+                                                            @if($school->status === 'passed')
+                                                                <button class="btn btn-sm btn-outline-success view-passed-btn"
+                                                                        data-school-json="{{ json_encode($school) }}"
+                                                                        data-bs-toggle="modal"
+                                                                        data-bs-target="#passedDetailsModal">
+                                                                    <i class="fas fa-certificate me-1"></i> Success
+                                                                </button>
+                                                            @else
+                                                                <button class="btn btn-sm btn-outline-primary details-btn"
+                                                                        data-school-json="{{ json_encode($school) }}"
+                                                                        data-bs-toggle="modal"
+                                                                        data-bs-target="#issuesModal">
+                                                                    <i class="fas fa-tasks me-1"></i> Details
+                                                                </button>
+                                                            @endif
+                                                        </td>
+                                                    </tr>
+                                                @empty
+                                                    <tr>
+                                                        <td colspan="5" class="text-center text-muted py-4">
+                                                            No schools found.
+                                                        </td>
+                                                    </tr>
+                                                @endforelse
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @else
+                                    <!-- Management View for Contributors -->
+                                    @php $school = $schools->first(); @endphp
+                                    @if($school)
+                                        <div class="school-profile mb-4">
+                                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                                <div>
+                                                    <h3 class="fw-bold text-dark mb-1">{{ $school->school_name }}</h3>
+                                                    <p class="text-muted mb-0"><i class="fas fa-map-marker-alt me-2"></i>{{ $school->address ?? 'Address not set' }}</p>
+                                                </div>
+                                                <div class="text-end">
+                                                    @if($school->status === 'passed')
+                                                        <div class="badge bg-success p-2 px-3 fs-6"><i class="fas fa-check-circle me-2"></i>STATUS: PASSED</div>
+                                                    @elseif($school->status === 'unconfigured')
+                                                        <div class="badge bg-secondary p-2 px-3 fs-6"><i class="fas fa-cog fa-spin me-2"></i>STATUS: UNCONFIGURED</div>
+                                                    @else
+                                                        <div class="badge bg-warning text-dark p-2 px-3 fs-6"><i class="fas fa-tools me-2"></i>STATUS: ONGOING IMPROVEMENT</div>
+                                                    @endif
+                                                </div>
+                                            </div>
+
+                                            <div class="row g-4 mb-4">
+                                                <div class="col-md-6">
+                                                    <div class="card h-100 bg-light border-0">
+                                                        <div class="card-body">
+                                                            <h6 class="fw-bold text-primary mb-3"><i class="fas fa-user-tie me-2"></i>Leadership</h6>
+                                                            <p class="mb-2"><strong>School Head:</strong> {{ $school->school_head ?? 'Not recorded' }}</p>
+                                                            <p class="mb-0"><strong>DRRM Coordinator:</strong> {{ $school->school_drrm_coordinator ?? 'Not recorded' }}</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="card h-100 bg-light border-0">
+                                                        <div class="card-body">
+                                                            <h6 class="fw-bold text-primary mb-3"><i class="fas fa-history me-2"></i>Recent Activity</h6>
+                                                            @if($school->last_inspection_date)
+                                                                <p class="mb-1"><strong>Last Updated:</strong> {{ \Carbon\Carbon::parse($school->last_inspection_date)->format('M d, Y') }}</p>
+                                                                <p class="mb-0 text-muted small">{{ \Carbon\Carbon::parse($school->last_inspection_date)->diffForHumans() }}</p>
+                                                            @else
+                                                                <p class="mb-0 text-muted">No inspection activity recorded yet.</p>
                                                             @endif
                                                         </div>
-                                                    </td>
-                                                    <td>
-                                                        @if($school->last_inspection_date)
-                                                            <div class="small">{{ \Carbon\Carbon::parse($school->last_inspection_date)->format('M d, Y') }}</div>
-                                                            <div class="text-muted" style="font-size: 0.7rem;">{{ \Carbon\Carbon::parse($school->last_inspection_date)->diffForHumans() }}</div>
-                                                        @else
-                                                            <span class="text-muted small">No Activity</span>
-                                                        @endif
-                                                    </td>
-                                                    <td>
-                                                        @if($school->status === 'passed')
-                                                            <button class="btn btn-sm btn-outline-success view-passed-btn"
-                                                                    data-school-json="{{ json_encode($school) }}"
-                                                                    data-bs-toggle="modal"
-                                                                    data-bs-target="#passedDetailsModal">
-                                                                <i class="fas fa-certificate me-1"></i> Success
-                                                            </button>
-                                                        @else
-                                                            <button class="btn btn-sm btn-outline-primary details-btn"
-                                                                    data-school-json="{{ json_encode($school) }}"
-                                                                    data-bs-toggle="modal"
-                                                                    data-bs-target="#issuesModal">
-                                                                <i class="fas fa-tasks me-1"></i> Details
-                                                            </button>
-                                                        @endif
-                                                    </td>
-                                                </tr>
-                                            @empty
-                                                <tr>
-                                                    <td colspan="5" class="text-center text-muted py-4">
-                                                        No schools found.
-                                                    </td>
-                                                </tr>
-                                            @endforelse
-                                        </tbody>
-                                    </table>
-                                </div>
+                                                    </div>
+                                                </div>
+                                            </div>
 
+                                            <!-- Dynamic Issues/Setup Checklist -->
+                                            <div class="card border-0 shadow-sm">
+                                                <div class="card-body">
+                                                    @if($school->status === 'passed')
+                                                        <div class="text-center py-4">
+                                                            <div class="rounded-circle bg-success d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                                                <i class="fas fa-check fa-2x text-white"></i>
+                                                            </div>
+                                                            <h4 class="fw-bold text-success">Compliant & Secure</h4>
+                                                            <p class="text-muted">Your school has fulfilled all fire safety requirements. Keep up the good work!</p>
+                                                            <div class="d-flex justify-content-center gap-3 mt-3">
+                                                                <div class="text-center px-3 border-end">
+                                                                    <div class="h5 mb-0 fw-bold">100%</div>
+                                                                    <small class="text-muted text-uppercase" style="font-size: 0.6rem;">Configuration</small>
+                                                                </div>
+                                                                <div class="text-center px-3 border-end">
+                                                                    <div class="h5 mb-0 fw-bold">0</div>
+                                                                    <small class="text-muted text-uppercase" style="font-size: 0.6rem;">Active Issues</small>
+                                                                </div>
+                                                                <div class="text-center px-3">
+                                                                    <div class="h5 mb-0 fw-bold text-success">Passed</div>
+                                                                    <small class="text-muted text-uppercase" style="font-size: 0.6rem;">Final Rating</small>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    @elseif($school->status === 'unconfigured')
+                                                        <h6 class="text-muted text-uppercase small fw-bold mb-3"><i class="fas fa-list-check me-2"></i>Required Setup Checklist</h6>
+                                                        <div class="row g-3">
+                                                            @php
+                                                                $config = $school->config_status;
+                                                                $modules = [
+                                                                    ['id' => 'Building', 'key' => 'has_buildings', 'label' => 'Buildings & Alarms', 'icon' => 'fa-building', 'route' => 'fire-safety.buildings'],
+                                                                    ['id' => 'Room', 'key' => 'has_rooms', 'label' => 'Room Setup', 'icon' => 'fa-door-open', 'route' => 'fire-safety.extinguishers'],
+                                                                    ['id' => 'Extinguisher', 'key' => 'has_extinguishers', 'label' => 'Fire Extinguishers', 'icon' => 'fa-fire-extinguisher', 'route' => 'fire-safety.extinguishers'],
+                                                                    ['id' => 'Plan', 'key' => 'has_plans', 'label' => 'Evacuation Plans', 'icon' => 'fa-map-signs', 'route' => 'fire-safety.evacuation-plans'],
+                                                                ];
+                                                            @endphp
+                                                            @foreach($modules as $m)
+                                                                @php $isDone = $config[$m['key']]; @endphp
+                                                                <div class="col-md-6 col-lg-3">
+                                                                    <div class="card h-100 text-center p-3 border-2 {{ $isDone ? 'border-success bg-success-subtle' : 'border-secondary bg-light' }}">
+                                                                        <i class="fas {{ $m['icon'] }} fa-2x mb-2 {{ $isDone ? 'text-success' : 'text-secondary' }}"></i>
+                                                                        <h6 class="small fw-bold">{{ $m['label'] }}</h6>
+                                                                        <div class="mb-2">
+                                                                            @if($isDone)
+                                                                                <span class="badge bg-success"><i class="fas fa-check-circle"></i> Done</span>
+                                                                            @else
+                                                                                <span class="badge bg-secondary">Pending</span>
+                                                                            @endif
+                                                                        </div>
+                                                                        <a href="{{ route($m['route']) }}" class="btn btn-sm w-100 {{ $isDone ? 'btn-success' : 'btn-outline-dark' }}">
+                                                                            <i class="fas {{ $isDone ? 'fa-edit' : 'fa-plus' }} me-1"></i> {{ $isDone ? 'Update' : 'Setup Now' }}
+                                                                        </a>
+                                                                    </div>
+                                                                </div>
+                                                            @endforeach
+                                                        </div>
+                                                    @else
+                                                        <h6 class="text-muted text-uppercase small fw-bold mb-3"><i class="fas fa-exclamation-triangle me-2"></i>Identified Issues per Module</h6>
+                                                        <div class="table-responsive">
+                                                            <table class="table table-sm align-middle">
+                                                                <thead class="table-light">
+                                                                    <tr>
+                                                                        <th>Module</th>
+                                                                        <th>Identified Issues / Locations</th>
+                                                                        <th class="text-center">Action</th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @php
+                                                                        $issues = $school->module_issues;
+                                                                        $moduleMap = [
+                                                                            ['key' => 'buildings', 'label' => 'Buildings', 'icon' => 'fa-building', 'color' => 'primary', 'route' => 'fire-safety.buildings'],
+                                                                            ['key' => 'alarms', 'label' => 'Alarm System', 'icon' => 'fa-bell', 'color' => 'info', 'route' => 'fire-safety.alarm-systems'],
+                                                                            ['key' => 'rooms', 'label' => 'Room Config', 'icon' => 'fa-door-open', 'color' => 'warning', 'route' => 'fire-safety.extinguishers'],
+                                                                            ['key' => 'extinguishers', 'label' => 'Extinguishers', 'icon' => 'fa-fire-extinguisher', 'color' => 'danger', 'route' => 'fire-safety.extinguishers'],
+                                                                            ['key' => 'plans', 'label' => 'Evac Plans', 'icon' => 'fa-map-signs', 'color' => 'success', 'route' => 'fire-safety.evacuation-plans']
+                                                                        ];
+                                                                    @endphp
+                                                                    @foreach($moduleMap as $m)
+                                                                        @if(isset($issues[$m['key']]) && count($issues[$m['key']]) > 0)
+                                                                            <tr>
+                                                                                <td>
+                                                                                    <div class="d-flex align-items-center">
+                                                                                        <i class="fas {{ $m['icon'] }} text-{{ $m['color'] }} me-2"></i>
+                                                                                        <span class="fw-bold small">{{ $m['label'] }}</span>
+                                                                                    </div>
+                                                                                </td>
+                                                                                <td>
+                                                                                    @foreach($issues[$m['key']] as $issue)
+                                                                                        <span class="badge bg-light text-danger border small mb-1">{{ $issue }}</span>
+                                                                                    @endforeach
+                                                                                </td>
+                                                                                <td class="text-center">
+                                                                                    <a href="{{ route($m['route']) }}" class="btn btn-sm btn-outline-{{ $m['color'] }}">
+                                                                                        <i class="fas fa-arrow-right"></i>
+                                                                                    </a>
+                                                                                </td>
+                                                                            </tr>
+                                                                        @endif
+                                                                    @endforeach
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+                                @endif
                             </div>
                             <div class="col-lg-4">
                                 <!-- Alerts for All Schools -->

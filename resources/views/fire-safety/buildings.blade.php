@@ -75,6 +75,13 @@
         .dashboard-card.mb-4 {
             margin-bottom: 0.5rem !important;
         }
+        .collapse-icon {
+            transition: transform 0.2s ease;
+        }
+
+        button[aria-expanded="true"] .collapse-icon {
+            transform: rotate(90deg);
+        }
     </style>
 @endsection
 
@@ -231,11 +238,17 @@
                 <div class="row">
                     <div class="col-12 mb-4">
                         <div class="card dashboard-card">
-                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                            <div class="card-header py-3 d-flex align-items-center">
+                                <button class="border-0 bg-transparent p-0 me-1 text-primary"
+                                        data-bs-toggle="collapse"
+                                        data-bs-target="#buildingsGridContent"
+                                        aria-expanded="false">
+                                    <i class="fas fa-chevron-right collapse-icon"></i>
+                                </button>
                                 <h6 class="m-0 fw-bold text-primary">
-                                    <i class="fas fa-building me-2"></i> Buildings
+                                    <i class="fas fa-building me-1"></i> Buildings
                                 </h6>
-                                <div class="d-flex align-items-center flex-wrap gap-1">
+                                <div class="d-flex align-items-center flex-wrap gap-1 ms-auto">
                                     <!-- Filter Dropdown -->
                                     <div class="dropdown">
                                         <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="buildingFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
@@ -273,10 +286,6 @@
                                         <i class="fas fa-history me-1"></i> History
                                     </button>
                                     @endif
-
-                                    <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#buildingsGridContent">
-                                        <i class="fas fa-chevron-down"></i>
-                                    </button>
                                 </div>
                             </div>
                             <div class="collapse show" id="buildingsGridContent">

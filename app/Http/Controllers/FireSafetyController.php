@@ -604,20 +604,40 @@ class FireSafetyController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized access to this room.'], 403);
         }
         $validated = $request->validate([
-            'room_code' => [
-                'nullable', 'string',
-                \Illuminate\Validation\Rule::unique('fire_safety_rooms')->where(function ($query) use ($room) {
-                     return $query->where('school_id', $room->school_id);
-                })->ignore($id)
-            ],
+            'room_code' => 'nullable|string|max:50',
             'room_name' => 'nullable|string',
+            'room_type_config_id' => 'nullable|exists:system_configurations,id',
             'nearest_extinguisher_room_id' => 'nullable|exists:fire_safety_rooms,id',
             'has_smoke_detector' => 'boolean',
+            'has_secondary_exit' => 'boolean',
+            'secondary_exit_remarks' => 'nullable|string',
             'remarks' => 'nullable|string'
         ]);
 
         if (!isset($validated['has_smoke_detector'])) {
             $validated['has_smoke_detector'] = false;
+        }
+
+        if (!isset($validated['has_secondary_exit'])) {
+            $validated['has_secondary_exit'] = false;
+        }
+
+        // If room type changed, update the snapshot fields and clear all extinguisher coverage for this room
+        $roomTypeChanged = false;
+        if (!empty($validated['room_type_config_id']) && $validated['room_type_config_id'] != $room->room_type_config_id) {
+            $roomTypeChanged = true;
+            $newTypeConfig = \App\Models\SystemConfiguration::find($validated['room_type_config_id']);
+            if ($newTypeConfig) {
+                $validated['room_type'] = $newTypeConfig->name;
+                $priorityConfig = $newTypeConfig->parent_id
+                    ? \App\Models\SystemConfiguration::find($newTypeConfig->parent_id)
+                    : null;
+                $validated['calculated_priority_label'] = $priorityConfig->name ?? null;
+                $limit = (int) ($priorityConfig->max_rooms_covered ?? 2);
+                $validated['coverage_limit'] = max(1, min(5, $limit));
+            }
+        } else {
+            unset($validated['room_type_config_id']);
         }
 
         // Only update room_name if it was actually provided
@@ -650,6 +670,26 @@ class FireSafetyController extends Controller
         }
 
         $room->update($validated);
+
+        // If room type changed, clear all extinguisher coverage for this room
+        if ($roomTypeChanged) {
+            // If this room WAS a center room of an extinguisher, clear that extinguisher's
+            // ENTIRE coverage (all rooms it was covering), then unlink the center room.
+            $hostedExt = FireSafetyExtinguisher::where('room_id', $id)->first();
+            if ($hostedExt) {
+                // Remove ALL rooms from this extinguisher's coverage pivot
+                DB::table('fire_safety_extinguisher_room_coverage')
+                    ->where('extinguisher_id', $hostedExt->id)
+                    ->delete();
+                // Unlink center room
+                $hostedExt->room_id = null;
+                $hostedExt->save();
+            } else {
+                // Not a center room — just remove this room from any coverage pivot
+                DB::table('fire_safety_extinguisher_room_coverage')->where('room_id', $id)->delete();
+            }
+            return response()->json(['success' => true, 'type_changed' => true]);
+        }
 
         // Sync Coverage Pivot Table
         if ($request->filled('nearest_extinguisher_room_id')) {
@@ -822,11 +862,17 @@ public function storeRoom(Request $request)
         'room_type_config_id' => 'required|exists:system_configurations,id',
         'floor_no' => 'required|integer|min:1|max:50',
         'has_smoke_detector' => 'boolean',
+        'has_secondary_exit' => 'boolean',
+        'secondary_exit_remarks' => 'nullable|string',
         'remarks' => 'nullable|string'
     ]);
 
     if (!isset($validated['has_smoke_detector'])) {
         $validated['has_smoke_detector'] = false;
+    }
+
+    if (!isset($validated['has_secondary_exit'])) {
+        $validated['has_secondary_exit'] = false;
     }
 
     // ensure room_name is not null since database column is non-nullable
@@ -894,18 +940,7 @@ public function storeRoom(Request $request)
         ], 422);
     }
 
-    // Unique Room Code Check (Per School)
-    if (!empty($validated['room_code'])) {
-        $exists = FireSafetyRoom::where('school_id', $validated['school_id'])
-            ->where('room_code', $validated['room_code'])
-            ->exists();
-        if ($exists) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Room code already exists in this school.'
-            ], 422);
-        }
-    }
+    // Unique Room Code Check Removed per request
 
     $user = auth()->user();
     $validated['last_inspector_id'] = $user->id;
@@ -972,9 +1007,12 @@ public function storeRoom(Request $request)
             'room_code' => $room->room_code,
             'room_name' => $room->room_name,
             'room_type' => $room->room_type,
+            'room_type_config_id' => $room->room_type_config_id,
             'floor_no' => $room->floor_no,
             'remarks' => $room->remarks,
             'has_smoke_detector' => $room->has_smoke_detector,
+            'has_secondary_exit' => $room->has_secondary_exit,
+            'secondary_exit_remarks' => $room->secondary_exit_remarks,
             'is_center_room' => $isCenterRoom,
             'host_room_id' => $hostRoomId,
             'host_room_code' => $hostRoomCode,
@@ -1380,6 +1418,34 @@ public function storeRoom(Request $request)
             DB::rollBack();
             Log::error('Error updating extinguisher: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Failed to update extinguisher.'], 500);
+        }
+    }
+
+    public function unassignExtinguisher(Request $request, $id)
+    {
+        if (auth()->user()->role === 'viewer') {
+            return response()->json(['success' => false, 'message' => 'Viewers cannot modify extinguishers.'], 403);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $ext = FireSafetyExtinguisher::findOrFail($id);
+
+            // Remove all room coverage
+            DB::table('fire_safety_extinguisher_room_coverage')->where('extinguisher_id', $id)->delete();
+
+            // Unlink center room
+            $ext->room_id = null;
+            $ext->save();
+
+            DB::commit();
+
+            return response()->json(['success' => true, 'message' => 'Extinguisher assignment removed.']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error unassigning extinguisher: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to remove assignment.'], 500);
         }
     }
 
@@ -2597,12 +2663,14 @@ public function storeRoom(Request $request)
         }
     }
 
-    public function updateSchool(Request $request, $id)
+    public function updateSchool(Request $request, $id = null)
     {
         $user = auth()->user();
 
-        // Use route parameter (numeric id) so we never look up by school_id string (e.g. SCH-0451)
-        $schoolId = (int) $id;
+        // Use route parameter or user's school_id
+        $finalId = $id ?? $user->school_id;
+        $schoolId = (int) $finalId;
+
         if ($schoolId <= 0) {
             return response()->json(['success' => false, 'message' => 'Invalid school.'], 422);
         }

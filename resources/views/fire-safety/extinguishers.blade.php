@@ -711,6 +711,31 @@
                             </div>
                         </div>
 
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Room Type</label>
+                                <select class="form-control" name="room_type_config_id" id="updateRoomTypeSelect" onchange="onUpdateRoomTypeChange()">
+                                    <option value="">— Unchanged —</option>
+                                    @foreach(($roomTypes ?? collect()) as $rt)
+                                        @php $p = ($calculatedPriorities ?? collect())->firstWhere('id', $rt->parent_id); @endphp
+                                        <option value="{{ $rt->id }}"
+                                                data-priority-label="{{ $p->name ?? '' }}"
+                                                data-max-rooms="{{ $p->max_rooms_covered ?? '' }}">
+                                            {{ $rt->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold text-muted">Calculated Priority</label>
+                                <input type="text" class="form-control bg-light" id="update_room_priority" readonly>
+                            </div>
+                        </div>
+                        <div class="alert alert-warning d-none py-2 px-3 small" id="roomTypeChangeWarning">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            Changing the room type will <strong>clear all extinguisher assignments</strong> for this room. You will need to re-assign them.
+                        </div>
+
                         <div class="mb-3">
                             <label class="form-label fw-bold">Nearest Extinguisher Room</label>
                             <select class="form-control" name="nearest_extinguisher_room_id" id="updateRoomNearest">
@@ -724,13 +749,28 @@
                             <textarea class="form-control" name="remarks" id="updateRoomRemarks" rows="2" placeholder="Room remarks..."></textarea>
                         </div>
 
-                        <div class="mb-3 d-none" id="updateRoomSmokeDetectorRow">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="has_smoke_detector" id="updateRoomSmokeDetector" value="1">
-                                <label class="form-check-label fw-bold" for="updateRoomSmokeDetector">
-                                    Has Smoke Detector?
-                                </label>
+                        <div class="row">
+                            <div class="col-md-6 mb-3" id="updateRoomSmokeDetectorRow">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="has_smoke_detector" id="updateRoomSmokeDetector" value="1">
+                                    <label class="form-check-label fw-bold" for="updateRoomSmokeDetector">
+                                        Has Smoke Detector?
+                                    </label>
+                                </div>
                             </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="has_secondary_exit" id="updateRoomSecondaryExit" value="1">
+                                    <label class="form-check-label fw-bold" for="updateRoomSecondaryExit">
+                                        Has Secondary Exit?
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold" id="updateSecondaryExitRemarksLabel">Secondary Exit Remarks</label>
+                            <textarea class="form-control" name="secondary_exit_remarks" id="updateSecondaryExitRemarks" rows="2" placeholder="Enter remarks..."></textarea>
                         </div>
 
                         <!-- Approval Section (Admin only) -->
@@ -832,13 +872,28 @@
                             <textarea class="form-control" name="remarks" id="addRoomRemarks" rows="2" placeholder="Enter room remarks..."></textarea>
                         </div>
 
-                        <div class="mb-3 d-none" id="addRoomSmokeDetectorRow">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="has_smoke_detector" id="addRoomSmokeDetector" value="1">
-                                <label class="form-check-label fw-bold" for="addRoomSmokeDetector">
-                                    Has Smoke Detector?
-                                </label>
+                        <div class="row">
+                            <div class="col-md-6 mb-3 d-none" id="addRoomSmokeDetectorRow">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="has_smoke_detector" id="addRoomSmokeDetector" value="1">
+                                    <label class="form-check-label fw-bold" for="addRoomSmokeDetector">
+                                        Has Smoke Detector?
+                                    </label>
+                                </div>
                             </div>
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="has_secondary_exit" id="addRoomSecondaryExit" value="1">
+                                    <label class="form-check-label fw-bold" for="addRoomSecondaryExit">
+                                        Has Secondary Exit?
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold" id="addSecondaryExitRemarksLabel">Secondary Exit Remarks</label>
+                            <textarea class="form-control" name="secondary_exit_remarks" id="addSecondaryExitRemarks" rows="2" placeholder="Enter remarks..."></textarea>
                         </div>
                     </form>
                 </div>
@@ -926,7 +981,7 @@
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label class="form-label fw-bold">Center Room *</label>
-                                <select class="form-control" name="room_id" id="centerRoomSelect" onchange="handleCenterRoomChange()" required>
+                                <select class="form-control" name="room_id" id="centerRoomSelect" onchange="handleCenterRoomChange()">
                                     <option value="">Select Center Room</option>
                                 </select>
                             </div>
@@ -1095,7 +1150,7 @@
             const createOption = (b, isLocked = false) => {
                 const opt = document.createElement('option');
                 opt.value = b.id;
-                opt.textContent = isLocked ? `Building: ${preSelectedText} (Locked)` : b.building_no + (b.building_name ? ` (${b.building_name})` : '');
+                opt.textContent = isLocked ? `Building: ${preSelectedText} (Already Selected)` : b.building_no + (b.building_name ? ` (${b.building_name})` : '');
                 opt.dataset.floors = b.floors || 0;
                 opt.dataset.type = b.building_type || '';
                 opt.dataset.rooms_limit = b.rooms || 0;
@@ -1725,6 +1780,13 @@
 
                 // Populate selects
                 centerSelect.innerHTML = '<option value="">Select Center Room</option>';
+                // Always include Remove Assignment at the top
+                const removeOpt = document.createElement('option');
+                removeOpt.value = '__remove__';
+                removeOpt.textContent = '⛔ Remove Assignment (Unlink all rooms)';
+                removeOpt.style.color = '#dc3545';
+                removeOpt.style.fontWeight = 'bold';
+                centerSelect.appendChild(removeOpt);
                 coveredSelect.innerHTML = '';
 
                 availableRooms.forEach(r => {
@@ -1755,7 +1817,12 @@
 
                 // If no rooms available on the same floor, show message
                 if (availableRooms.length === 0) {
-                    centerSelect.innerHTML = '<option value="">No available rooms on this floor</option>';
+                    // Keep the Remove Assignment option, just add a disabled info option
+                    const noRoomsOpt = document.createElement('option');
+                    noRoomsOpt.value = '';
+                    noRoomsOpt.textContent = 'No available rooms on this floor';
+                    noRoomsOpt.disabled = true;
+                    centerSelect.insertBefore(noRoomsOpt, centerSelect.querySelector('option[value="__remove__"]'));
                     coveredSelect.innerHTML = '<option value="">No available rooms on this floor</option>';
                 }
 
@@ -1961,12 +2028,49 @@
         async function saveExtinguisherStatus() {
             const id = document.getElementById('updateExtId').value;
             const form = document.getElementById('updateExtForm');
+
+            const centerId = document.getElementById('updateCenterRoomSelect').value;
+
+            // Handle "Remove Assignment" option
+            if (centerId === '__remove__') {
+                const confirm = await Swal.fire({
+                    title: 'Remove Assignment?',
+                    text: 'This will unlink all rooms from this extinguisher. The extinguisher will no longer cover any rooms.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    confirmButtonText: 'Yes, Remove'
+                });
+                if (!confirm.isConfirmed) return;
+
+                try {
+                    const resp = await fetch(`/fire-safety/extinguisher/${id}/unassign`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken(),
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({})
+                    });
+                    const data = await resp.json();
+                    if (data.success) {
+                        Swal.fire('Done', 'Extinguisher assignment removed.', 'success').then(() => location.reload());
+                    } else {
+                        Swal.fire('Error', data.message || 'Failed to remove assignment.', 'error');
+                    }
+                } catch (e) {
+                    console.error(e);
+                    Swal.fire('Error', 'Network error.', 'error');
+                }
+                return;
+            }
+
             if (!form.checkValidity()) {
                 form.reportValidity();
                 return;
             }
 
-            const centerId = document.getElementById('updateCenterRoomSelect').value;
             const covered = Array.from(document.getElementById('updateCoveredRoomsSelect').selectedOptions).map(o => o.value);
             const centerOpt = document.getElementById('updateCenterRoomSelect').selectedOptions[0];
             const maxLimit = centerOpt ? parseInt(centerOpt.dataset.maxRooms) : 3;
@@ -2129,8 +2233,48 @@
                     refreshRecentData(sId);
                 });
             });
+
+            // Secondary Exit Checkbox logic
+            const addSecondaryCheck = document.getElementById('addRoomSecondaryExit');
+            if (addSecondaryCheck) {
+                addSecondaryCheck.addEventListener('change', function() {
+                    const label = document.getElementById('addSecondaryExitRemarksLabel');
+                    if (label) label.textContent = this.checked ? 'Secondary Exit Details' : 'Remarks for No Secondary Exit';
+                });
+            }
+
+            const updateSecondaryCheck = document.getElementById('updateRoomSecondaryExit');
+            if (updateSecondaryCheck) {
+                updateSecondaryCheck.addEventListener('change', function() {
+                    const label = document.getElementById('updateSecondaryExitRemarksLabel');
+                    if (label) label.textContent = this.checked ? 'Secondary Exit Details' : 'Remarks for No Secondary Exit';
+                });
+            }
         });
 
+
+        function onUpdateRoomTypeChange() {
+            const sel = document.getElementById('updateRoomTypeSelect');
+            const priorityInput = document.getElementById('update_room_priority');
+            const warning = document.getElementById('roomTypeChangeWarning');
+            const opt = sel.selectedOptions[0];
+
+            if (opt && opt.value !== '') {
+                const lbl = opt.dataset.priorityLabel;
+                const max = opt.dataset.maxRooms;
+                priorityInput.value = lbl ? `${lbl} (Up to ${max} rooms)` : '';
+
+                // Show warning only if the type actually changed from original
+                if (opt.value !== (sel.dataset.original || '')) {
+                    warning.classList.remove('d-none');
+                } else {
+                    warning.classList.add('d-none');
+                }
+            } else {
+                priorityInput.value = '';
+                warning.classList.add('d-none');
+            }
+        }
 
         async function openUpdateRoomModal(roomId) {
             try {
@@ -2143,6 +2287,28 @@
                 document.getElementById('updateRoomName').value = data.room_name || '';
                 document.getElementById('updateRoomFloor').value = data.floor_no + " Floor";
                 document.getElementById('updateRoomRemarks').value = data.remarks || '';
+
+                // Populate room type
+                const updateTypeSelect = document.getElementById('updateRoomTypeSelect');
+                const updatePriorityInput = document.getElementById('update_room_priority');
+                updateTypeSelect.value = data.room_type_config_id || '';
+                // find the selected option's priority label
+                const selOpt = updateTypeSelect.querySelector(`option[value="${data.room_type_config_id}"]`);
+                if (selOpt) {
+                    const lbl = selOpt.dataset.priorityLabel;
+                    const max = selOpt.dataset.maxRooms;
+                    updatePriorityInput.value = lbl ? `${lbl} (Up to ${max} rooms)` : '';
+                } else {
+                    updatePriorityInput.value = '';
+                }
+                // Store original type id for comparison
+                updateTypeSelect.dataset.original = data.room_type_config_id || '';
+                document.getElementById('roomTypeChangeWarning').classList.add('d-none');
+
+                const hasSecondary = !!data.has_secondary_exit;
+                document.getElementById('updateRoomSecondaryExit').checked = hasSecondary;
+                document.getElementById('updateSecondaryExitRemarks').value = data.secondary_exit_remarks || '';
+                document.getElementById('updateSecondaryExitRemarksLabel').textContent = hasSecondary ? 'Secondary Exit Details' : 'Remarks for No Secondary Exit';
 
                 // Populate candidates for nearest extinguisher
                 const candidatesResp = await fetch(`/fire-safety/room/${roomId}/candidates`);
@@ -2197,7 +2363,7 @@
                     smokeDetectorRow.classList.remove('d-none');
                     smokeDetectorInput.checked = !!data.has_smoke_detector;
                 } else {
-                    smokeDetectorRow.classList.add('d-none');
+                    smokeDetectorInput.checked = !!data.has_smoke_detector;
                 }
 
                 const modalEl = document.getElementById('updateRoomModal');
@@ -2251,9 +2417,17 @@
 
                 const data = await resp.json();
                 if (data.success) {
-                    Swal.fire('Updated', 'Room details updated successfully!', 'success').then(() => {
-                        location.reload();
-                    });
+                    if (data.type_changed) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Room Type Changed',
+                            text: 'Room updated successfully. All extinguisher assignments for this room have been cleared. Please re-assign them via Update Extinguisher.',
+                        }).then(() => location.reload());
+                    } else {
+                        Swal.fire('Updated', 'Room details updated successfully!', 'success').then(() => {
+                            location.reload();
+                        });
+                    }
                 } else {
                     Swal.fire('Error', data.message || 'Failed to update room', 'error');
                 }
