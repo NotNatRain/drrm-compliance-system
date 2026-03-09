@@ -3,9 +3,10 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Symfony\Component\Mime\Email;
+use Symfony\Component\Mime\Part\DataPart;
 
 class VerifyCodeNotification extends Notification
 {
@@ -26,7 +27,7 @@ class VerifyCodeNotification extends Notification
      *
      * @return array<int, string>
      */
-    public function channels(Notification $notifiable): array
+    public function via(object $notifiable): array
     {
         return ['mail'];
     }
@@ -36,15 +37,35 @@ class VerifyCodeNotification extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
+        $drrmLogoPath = public_path('images/drrmis-logo-2.png');
+        $depedLogoPath = public_path('images/What-Is-the-Difference-Between-DepEd-Seal-and-DepEd-Logo.png');
+        $drrmLogoCid = 'drrm-logo@drrm-compliance';
+        $depedLogoCid = 'deped-logo@drrm-compliance';
+
         return (new MailMessage)
-                    ->subject('DRRM Compliance - Password Reset Verification Code')
-                    ->greeting('Hello!')
-                    ->line('You are receiving this email because we received a password reset request for your account.')
-                    ->line('Your verification code is:')
-                    ->line('**' . $this->code . '**')
-                    ->line('This code will expire in 60 minutes.')
-                    ->line('If you did not request a password reset, no further action is required.')
-                    ->salutation('Thanks, DRRM Compliance Team');
+            ->subject('User verification — Password reset code')
+            ->view('mail.user-verification-code-html', [
+                'code' => (string) $this->code,
+                'recipientEmail' => $notifiable->email,
+                'verifyUrl' => route('password.verify-form', ['email' => $notifiable->email]),
+                'drrmLogoCid' => $drrmLogoCid,
+                'depedLogoCid' => $depedLogoCid,
+            ])
+            ->withSymfonyMessage(function (Email $message) use ($drrmLogoPath, $depedLogoPath, $drrmLogoCid, $depedLogoCid) {
+                if (is_file($drrmLogoPath)) {
+                    $part = DataPart::fromPath($drrmLogoPath, 'drrmis-logo-2.png')
+                        ->asInline()
+                        ->setContentId($drrmLogoCid);
+                    $message->addPart($part);
+                }
+
+                if (is_file($depedLogoPath)) {
+                    $part = DataPart::fromPath($depedLogoPath, 'deped-logo.png')
+                        ->asInline()
+                        ->setContentId($depedLogoCid);
+                    $message->addPart($part);
+                }
+            });
     }
 
     /**

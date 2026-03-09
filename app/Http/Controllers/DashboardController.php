@@ -35,27 +35,30 @@ class DashboardController extends Controller
 
     public function getUsers(Request $request)
     {
-        if (auth()->user()->role !== 'admin') {
-            return redirect()->route('dashboard')->with('error', 'Unauthorized access.');
-        }
+        $isAdmin = auth()->user()->role === 'admin';
 
-        $query = User::with('school');
+        if ($isAdmin) {
+            $query = User::with('school');
 
-        // Filters
-        if ($request->filled('role')) {
-            $query->where('role', $request->role);
-        }
+            // Filters
+            if ($request->filled('role')) {
+                $query->where('role', $request->role);
+            }
 
-        $sort = $request->get('sort', 'name');
-        $order = $request->get('order', 'asc');
-        
-        if ($sort === 'created_at') {
-            $query->orderBy('created_at', $order);
+            $sort = $request->get('sort', 'name');
+            $order = $request->get('order', 'asc');
+
+            if ($sort === 'created_at') {
+                $query->orderBy('created_at', $order);
+            } else {
+                $query->orderBy('name', $order);
+            }
+
+            $users = $query->get();
         } else {
-            $query->orderBy('name', $order);
+            $users = User::with('school')->whereKey(auth()->id())->get();
         }
 
-        $users = $query->get();
         $schools = FireSafetySchool::all();
         $adminCount = User::where('role', 'admin')->count();
 
@@ -63,7 +66,7 @@ class DashboardController extends Controller
             return response()->json($users);
         }
 
-        return view('users.index', compact('users', 'schools', 'adminCount'));
+        return view('users.index', compact('users', 'schools', 'adminCount', 'isAdmin'));
     }
 
     public function storeUser(Request $request)
@@ -107,7 +110,8 @@ class DashboardController extends Controller
 
     public function getUser($id)
     {
-        if (auth()->user()->role !== 'admin') {
+        $isAdmin = auth()->user()->role === 'admin';
+        if (!$isAdmin && (int) $id !== (int) auth()->id()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -117,18 +121,24 @@ class DashboardController extends Controller
 
     public function updateUser(Request $request, $id)
     {
-        if (auth()->user()->role !== 'admin') {
+        $isAdmin = auth()->user()->role === 'admin';
+        if (!$isAdmin && (int) $id !== (int) auth()->id()) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
         $user = User::findOrFail($id);
-        
-        $validator = Validator::make($request->all(), [
+
+        $rules = [
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $id,
-            'role' => 'required|string|in:admin,contributor,viewer',
-            'password' => 'nullable|string|min:8'
-        ]);
+            'password' => 'nullable|string|min:8',
+        ];
+
+        if ($isAdmin) {
+            $rules['role'] = 'required|string|in:admin,contributor,viewer';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
@@ -136,7 +146,10 @@ class DashboardController extends Controller
 
         $user->name = $request->name;
         $user->email = $request->email;
-        $user->role = $request->role;
+
+        if ($isAdmin) {
+            $user->role = $request->role;
+        }
         
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);

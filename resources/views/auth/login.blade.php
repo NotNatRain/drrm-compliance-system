@@ -10,16 +10,22 @@
             <div class="card shadow-lg">
                 <div class="card-header bg-primary text-white text-center">
                     <h4 class="mb-0">
-                        <i class="fas fa-shield-alt"></i> DRRM Compliance System
+                        <img src="{{ asset('images/drrmis-logo-2.png') }}" alt="DRRM" style="height: 28px; width: auto; margin-right: 8px;">
+                        DRRM Compliance System
                     </h4>
                     <small class="text-light">Disaster Risk Reduction and Management</small>
                 </div>
 
                 <div class="card-body">
                     <div class="text-center mb-4">
-                        <img src="{{ asset('images/drrm-logo.png') }}" alt="DRRM Logo" class="mb-3" style="height: 80px;">
                         <h5 class="text-secondary">Login to Access Dashboard</h5>
                     </div>
+
+                    @if (session('status'))
+                        <div class="alert alert-success" role="alert">
+                            {{ session('status') }}
+                        </div>
+                    @endif
 
                     <form method="POST" action="{{ route('login') }}">
                         @csrf
@@ -44,10 +50,16 @@
                             <label for="password" class="form-label">
                                 <i class="fas fa-lock"></i> Password
                             </label>
-                            <input id="password" type="password"
-                                   class="form-control @error('password') is-invalid @enderror"
-                                   name="password" required autocomplete="current-password"
-                                   placeholder="Enter your password">
+                            <div class="input-group">
+                                <input id="password" type="password"
+                                       class="form-control @error('password') is-invalid @enderror"
+                                       name="password" required autocomplete="current-password"
+                                       placeholder="Enter your password">
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword"
+                                        aria-label="Show password" aria-pressed="false">
+                                    <i class="fas fa-eye" aria-hidden="true"></i>
+                                </button>
+                            </div>
                             @error('password')
                                 <span class="invalid-feedback" role="alert">
                                     <strong>{{ $message }}</strong>
@@ -85,3 +97,26 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    (function () {
+        const input = document.getElementById('password');
+        const btn = document.getElementById('togglePassword');
+        if (!input || !btn) return;
+
+        btn.addEventListener('click', function () {
+            const isHidden = input.getAttribute('type') === 'password';
+            input.setAttribute('type', isHidden ? 'text' : 'password');
+
+            const icon = btn.querySelector('i');
+            if (icon) {
+                icon.classList.toggle('fa-eye', !isHidden);
+                icon.classList.toggle('fa-eye-slash', isHidden);
+            }
+            btn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+            btn.setAttribute('aria-pressed', isHidden ? 'true' : 'false');
+        });
+    })();
+</script>
+@endpush

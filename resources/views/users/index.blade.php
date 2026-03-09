@@ -3,55 +3,67 @@
 @section('title', 'User Accounts - DRRM Compliance')
 
 @section('content')
+@php
+    $isAdminView = $isAdmin ?? (auth()->check() && auth()->user()->role === 'admin');
+@endphp
 <div class="container-fluid">
     <div class="row mb-4">
         <div class="col-12 d-flex justify-content-between align-items-center">
             <h1 class="h3 mb-0 text-gray-800">
                 <i class="fas fa-users-cog text-primary"></i> User Management
             </h1>
-            <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addUserModal">
-                <i class="fas fa-user-plus fa-sm text-white-50"></i> Add New User
-            </button>
+            @if($isAdminView)
+                <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                    <i class="fas fa-user-plus fa-sm text-white-50"></i> Add New User
+                </button>
+            @endif
         </div>
     </div>
 
     <!-- Filters -->
-    <div class="card shadow mb-4">
-        <div class="card-header py-3 bg-light">
-            <h6 class="m-0 font-weight-bold text-primary">Filters</h6>
+    @if($isAdminView)
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 bg-light">
+                <h6 class="m-0 font-weight-bold text-primary">Filters</h6>
+            </div>
+            <div class="card-body">
+                <form id="filterForm" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">Role</label>
+                        <select class="form-select form-select-sm" name="role" id="filterRole">
+                            <option value="">All Roles</option>
+                            <option value="admin">Admin</option>
+                            <option value="contributor">Contributor</option>
+                            <option value="viewer">Viewer</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold">Sort By</label>
+                        <select class="form-select form-select-sm" name="sort" id="filterSort">
+                            <option value="name">Name</option>
+                            <option value="created_at">Date Created</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small fw-bold">Order</label>
+                        <select class="form-select form-select-sm" name="order" id="filterOrder">
+                            <option value="asc">Ascending</option>
+                            <option value="desc">Descending</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                        <button type="submit" class="btn btn-sm btn-primary me-2">Apply Filters</button>
+                        <button type="reset" class="btn btn-sm btn-outline-secondary">Reset</button>
+                    </div>
+                </form>
+            </div>
         </div>
-        <div class="card-body">
-            <form id="filterForm" class="row g-3">
-                <div class="col-md-3">
-                    <label class="form-label small fw-bold">Role</label>
-                    <select class="form-select form-select-sm" name="role" id="filterRole">
-                        <option value="">All Roles</option>
-                        <option value="admin">Admin</option>
-                        <option value="contributor">Contributor</option>
-                        <option value="viewer">Viewer</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label small fw-bold">Sort By</label>
-                    <select class="form-select form-select-sm" name="sort" id="filterSort">
-                        <option value="name">Name</option>
-                        <option value="created_at">Date Created</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label small fw-bold">Order</label>
-                    <select class="form-select form-select-sm" name="order" id="filterOrder">
-                        <option value="asc">Ascending</option>
-                        <option value="desc">Descending</option>
-                    </select>
-                </div>
-                <div class="col-md-4 d-flex align-items-end">
-                    <button type="submit" class="btn btn-sm btn-primary me-2">Apply Filters</button>
-                    <button type="reset" class="btn btn-sm btn-outline-secondary">Reset</button>
-                </div>
-            </form>
+    @else
+        <div class="alert alert-info shadow-sm">
+            <div class="fw-bold mb-1">Manage your account</div>
+            You can update your name, email address, and password here. Role and permissions are managed by the administrator.
         </div>
-    </div>
+    @endif
 
     <!-- User List Table -->
     <div class="card shadow mb-4">
@@ -119,15 +131,17 @@
                                 <button class="btn btn-sm btn-outline-primary me-1" onclick="editUser({{ $user->id }})">
                                     <i class="fas fa-edit"></i> Edit
                                 </button>
-                                <button class="btn btn-sm btn-outline-success me-1" onclick="assignAccess({{ $user->id }})" title="Assign Access">
-                                    <i class="fas fa-tasks"></i>
-                                </button>
-                                @if($user->id !== auth()->id())
-                                <button class="btn btn-sm {{ $user->is_active ? 'btn-outline-warning' : 'btn-outline-info' }}" 
-                                        onclick="toggleUserStatus({{ $user->id }}, {{ $user->is_active ? 'true' : 'false' }})" 
-                                        title="{{ $user->is_active ? 'Deactivate' : 'Activate' }}">
-                                    <i class="fas {{ $user->is_active ? 'fa-user-slash' : 'fa-user-check' }}"></i>
-                                </button>
+                                @if($isAdminView)
+                                    <button class="btn btn-sm btn-outline-success me-1" onclick="assignAccess({{ $user->id }})" title="Assign Access">
+                                        <i class="fas fa-tasks"></i>
+                                    </button>
+                                    @if($user->id !== auth()->id())
+                                    <button class="btn btn-sm {{ $user->is_active ? 'btn-outline-warning' : 'btn-outline-info' }}" 
+                                            onclick="toggleUserStatus({{ $user->id }}, {{ $user->is_active ? 'true' : 'false' }})" 
+                                            title="{{ $user->is_active ? 'Deactivate' : 'Activate' }}">
+                                        <i class="fas {{ $user->is_active ? 'fa-user-slash' : 'fa-user-check' }}"></i>
+                                    </button>
+                                    @endif
                                 @endif
                             </td>
                         </tr>
@@ -139,6 +153,7 @@
     </div>
 </div>
 
+@if($isAdminView)
 <!-- Add User Modal -->
 <div class="modal fade" id="addUserModal" tabindex="-1">
     <div class="modal-dialog">
@@ -195,6 +210,7 @@
         </div>
     </div>
 </div>
+@endif
 
 <!-- Edit User Modal -->
 <div class="modal fade" id="editUserModal" tabindex="-1">
@@ -221,14 +237,16 @@
                         <label class="form-label fw-bold">New Password (leave blank to keep current)</label>
                         <input type="password" name="password" class="form-control">
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Role</label>
-                        <select name="role" id="editUserRole" class="form-select" required>
-                            <option value="contributor">Contributor</option>
-                            <option value="viewer">Viewer</option>
-                            <option value="admin">Admin</option>
-                        </select>
-                    </div>
+                    @if($isAdminView)
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Role</label>
+                            <select name="role" id="editUserRole" class="form-select" required>
+                                <option value="contributor">Contributor</option>
+                                <option value="viewer">Viewer</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                    @endif
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -239,6 +257,7 @@
     </div>
 </div>
 
+@if($isAdminView)
 <!-- Assign Access Modal -->
 <div class="modal fade" id="assignModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -344,6 +363,7 @@
         </div>
     </div>
 </div>
+@endif
 
 <!-- Incident Confirmation Modal -->
 <div class="modal fade" id="incidentConfirmModal" tabindex="-1">
@@ -368,30 +388,39 @@
 @push('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const isAdminView = {{ $isAdminView ? 'true' : 'false' }};
+
     // Role monitoring for Admin password
-    const roleSelect = document.querySelector('#addUserForm select[name="role"]');
-    const adminConfirm = document.getElementById('adminConfirmation');
-    roleSelect.addEventListener('change', function() {
-        if (this.value === 'admin') {
-            adminConfirm.classList.remove('d-none');
-            adminConfirm.querySelector('input').setAttribute('required', 'required');
-        } else {
-            adminConfirm.classList.add('d-none');
-            adminConfirm.querySelector('input').removeAttribute('required');
+    if (isAdminView) {
+        const roleSelect = document.querySelector('#addUserForm select[name="role"]');
+        const adminConfirm = document.getElementById('adminConfirmation');
+        if (roleSelect && adminConfirm) {
+            roleSelect.addEventListener('change', function() {
+                if (this.value === 'admin') {
+                    adminConfirm.classList.remove('d-none');
+                    adminConfirm.querySelector('input').setAttribute('required', 'required');
+                } else {
+                    adminConfirm.classList.add('d-none');
+                    adminConfirm.querySelector('input').removeAttribute('required');
+                }
+            });
         }
-    });
+    }
 
     // Reset Add User Form when modal is shown
-    const addUserModalEl = document.getElementById('addUserModal');
-    if (addUserModalEl) {
-        addUserModalEl.addEventListener('show.bs.modal', function() {
-            document.getElementById('addUserForm').reset();
-            const adminConfirm = document.getElementById('adminConfirmation');
-            if (adminConfirm) {
-                adminConfirm.classList.add('d-none');
-                adminConfirm.querySelector('input').removeAttribute('required');
-            }
-        });
+    if (isAdminView) {
+        const addUserModalEl = document.getElementById('addUserModal');
+        if (addUserModalEl) {
+            addUserModalEl.addEventListener('show.bs.modal', function() {
+                const form = document.getElementById('addUserForm');
+                if (form) form.reset();
+                const adminConfirm = document.getElementById('adminConfirmation');
+                if (adminConfirm) {
+                    adminConfirm.classList.add('d-none');
+                    adminConfirm.querySelector('input').removeAttribute('required');
+                }
+            });
+        }
     }
 
     // Module checkbox monitoring
@@ -441,80 +470,93 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Form Submissions
-    document.getElementById('addUserForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-        const data = Object.fromEntries(formData.entries());
-        data.modules = []; // Initial empty modules
+    if (isAdminView) {
+        const addUserForm = document.getElementById('addUserForm');
+        if (addUserForm) {
+            addUserForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const data = Object.fromEntries(formData.entries());
+                data.modules = []; // Initial empty modules
 
-        fetch("{{ route('users.store') }}", {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(data)
-        }).then(res => res.json()).then(res => {
-            if (res.success) {
-                location.reload();
-            } else {
-                alert(res.message || 'Error occurred');
-            }
+                fetch("{{ route('users.store') }}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                }).then(res => res.json()).then(res => {
+                    if (res.success) {
+                        location.reload();
+                    } else {
+                        alert(res.message || 'Error occurred');
+                    }
+                });
+            });
+        }
+    }
+
+    const editUserForm = document.getElementById('editUserForm');
+    if (editUserForm) {
+        editUserForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const userId = document.getElementById('editUserId').value;
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+
+            fetch(`/users/${userId}`, {
+                method: 'PUT',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify(data)
+            }).then(res => res.json()).then(res => {
+                if (res.success) {
+                    location.reload();
+                } else {
+                    alert(res.message || 'Error occurred');
+                }
+            });
         });
-    });
+    }
 
-    document.getElementById('editUserForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const userId = document.getElementById('editUserId').value;
-        const formData = new FormData(this);
-        const data = Object.fromEntries(formData.entries());
+    if (isAdminView) {
+        const assignForm = document.getElementById('assignForm');
+        if (assignForm) {
+            assignForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+                const userId = document.getElementById('assignUserId').value;
+                const modules = [];
+                this.querySelectorAll('input[name="modules[]"]:checked').forEach(c => modules.push(c.value));
+                
+                const data = {
+                    modules: modules,
+                    school_id: formData.get('school_id')
+                };
 
-        fetch(`/users/${userId}`, {
-            method: 'PUT',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(data)
-        }).then(res => res.json()).then(res => {
-            if (res.success) {
-                location.reload();
-            } else {
-                alert(res.message || 'Error occurred');
-            }
-        });
-    });
-
-    document.getElementById('assignForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        const formData = new FormData(this);
-        const userId = document.getElementById('assignUserId').value;
-        const modules = [];
-        this.querySelectorAll('input[name="modules[]"]:checked').forEach(c => modules.push(c.value));
-        
-        const data = {
-            modules: modules,
-            school_id: formData.get('school_id')
-        };
-
-        fetch("{{ route('users.index') }}/" + userId + "/assign", {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(data)
-        }).then(res => res.json()).then(res => {
-            if (res.success) {
-                location.reload();
-            } else {
-                alert(res.message);
-            }
-        });
-    });
+                fetch("{{ route('users.index') }}/" + userId + "/assign", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                }).then(res => res.json()).then(res => {
+                    if (res.success) {
+                        location.reload();
+                    } else {
+                        alert(res.message);
+                    }
+                });
+            });
+        }
+    }
 });
 
 function editUser(userId) {
@@ -552,6 +594,8 @@ function editUser(userId) {
 }
 
 function assignAccess(userId) {
+    const isAdminView = {{ $isAdminView ? 'true' : 'false' }};
+    if (!isAdminView) return;
     const modalEl = document.getElementById('assignModal');
     if (!modalEl) {
         console.error('Assign modal not found');
@@ -643,6 +687,8 @@ function assignAccess(userId) {
 }
 
 function toggleUserStatus(userId, currentState) {
+    const isAdminView = {{ $isAdminView ? 'true' : 'false' }};
+    if (!isAdminView) return;
     const action = currentState ? 'deactivate' : 'activate';
     if (confirm(`Are you sure you want to ${action} this user account?`)) {
         fetch("{{ route('users.index') }}/" + userId + "/toggle-status", {

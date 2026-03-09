@@ -294,7 +294,7 @@
                                                                                     <tbody>
                                                                                         @foreach($building->actualRooms as $room)
                                                                                             @php $ext = $coverageMap[$room->id] ?? null; @endphp
-                                                                                            <tr>
+                                                                                            <tr data-room-id="{{ $room->id }}">
                                                                                                 <td>
                                                                                                     <div class="fw-semibold">{{ $room->room_code }}</div>
                                                                                                 </td>
@@ -305,26 +305,31 @@
                                                                                                 </td>
                                                                                                 <td>{{ $room->floor_no ?? 'â€”' }}</td>
                                                                                                 <td>
-                                                                                                    @if($ext)
-                                                                                                        <span class="badge bg-success">{{ $ext->code }}</span>
-                                                                                                        @if($ext->room_id === $room->id)
-                                                                                                            <span class="badge bg-primary">Center</span>
+                                                                                                    <span class="coverage-badges" data-room-id="{{ $room->id }}">
+                                                                                                        @if($ext)
+                                                                                                            <span class="badge bg-success">{{ $ext->code }}</span>
+                                                                                                            @if($ext->room_id === $room->id)
+                                                                                                                <span class="badge bg-primary">Center</span>
+                                                                                                            @endif
+                                                                                                        @else
+                                                                                                            <span class="badge bg-warning text-dark">Uncovered</span>
                                                                                                         @endif
-                                                                                                    @else
-                                                                                                        <span class="badge bg-warning text-dark">Uncovered</span>
-                                                                                                    @endif
-                                                                                                    @if(Str::contains(strtolower($room->room_type), ['administration', 'office']))
-                                                                                                        <div class="mt-1">
-                                                                                                            <span class="badge {{ $room->has_smoke_detector ? 'bg-success' : 'bg-danger' }}">
-                                                                                                            <i class="fas {{ $room->has_smoke_detector ? 'fa-check-circle' : 'fa-times-circle' }} me-1"></i>
-                                                                                                                Smoke Detector
-                                                                                                            </span>
-                                                                                                        </div>
-                                                                                                    @endif
-
+                                                                                                    </span>
                                                                                                 </td>
                                                                                                 <td>
                                                                                                     <span class="text-muted small">{{ $room->remarks ?: '—' }}</span>
+                                                                                                    <div class="mt-1 d-flex flex-wrap gap-1">
+                                                                                                        <span class="badge {{ $room->has_secondary_exit ? 'bg-success' : 'bg-danger' }}">
+                                                                                                            <i class="fas {{ $room->has_secondary_exit ? 'fa-check-circle' : 'fa-times-circle' }} me-1"></i>
+                                                                                                            Secondary Exit: {{ $room->has_secondary_exit ? 'Yes' : 'No' }}
+                                                                                                        </span>
+                                                                                                        @if(Str::contains(strtolower($room->room_type), ['administration']))
+                                                                                                            <span class="badge {{ $room->has_smoke_detector ? 'bg-success' : 'bg-danger' }}">
+                                                                                                                <i class="fas {{ $room->has_smoke_detector ? 'fa-check-circle' : 'fa-times-circle' }} me-1"></i>
+                                                                                                                Smoke Detector: {{ $room->has_smoke_detector ? 'Yes' : 'No' }}
+                                                                                                            </span>
+                                                                                                        @endif
+                                                                                                    </div>
                                                                                                 </td>
                                                                                                 <td class="text-end">
                                                                                                     <button class="btn btn-sm btn-outline-primary" onclick="openUpdateRoomModal({{ $room->id }})">
@@ -358,8 +363,15 @@
                                                                                 $compliance = \App\Http\Controllers\FireSafetyController::calculateBuildingCompliance($building);
                                                                                 $evalText = $compliance >= 80 ? 'Compliant' : 'Non‑Compliant';
                                                                                 $evalColor = $compliance >= 80 ? 'success' : 'danger';
+                                                                                $existingExts = $building->fireExtinguishers->count();
+                                                                                $neededExts = $building->requiredExtinguishersCount;
+                                                                                $hasEnoughExts = $existingExts >= $neededExts;
+                                                                                $extStatusText = $hasEnoughExts ? 'Okay' : 'Failed';
+                                                                                $extStatusColor = $hasEnoughExts ? 'success' : 'danger';
                                                                             @endphp
-                                                                            {{-- <span class="badge bg-{{ $evalColor }}">Evaluation Result: {{ $evalText }} @if($compliance < 80)(requires extinguisher, alarm, and plan)@endif</span> --}}
+                                                                            <span class="badge bg-{{ $extStatusColor }}">
+                                                                                Existing / Needed: {{ $existingExts }} / {{ $neededExts }} — {{ $extStatusText }}
+                                                                            </span>
                                                                         </div>
                                                                         @if($building->fireExtinguishers->isEmpty())
                                                                             <button class="btn btn-outline-secondary w-100 mb-0 py-4 border-dashed"
@@ -683,38 +695,47 @@
 
     <!-- Inspect & Update Room Modal -->
     <div class="modal fade" id="updateRoomModal" tabindex="-1" style="z-index: 1060;">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
+                <div class="modal-header shadow-sm" style="background-color: var(--fire-red); color: white;">
                     <h5 class="modal-title"><i class="fas fa-search-plus me-2"></i>Inspect & Update Room</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <form id="updateRoomForm">
                         @csrf
                         <input type="hidden" id="updateRoomId" name="room_id">
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Room Code/No.</label>
-                                <input type="text" class="form-control" name="room_code" id="updateRoomCode" placeholder="e.g., Rm-101">
+                        <!-- 1st row: Room Code/No., Room Name, & Floor Level -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Room Code/No.</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0"><i class="fas fa-tag text-muted"></i></span>
+                                    <input type="text" class="form-control border-start-0" name="room_code" id="updateRoomCode" placeholder="e.g., Rm-101">
+                                </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Room Name</label>
-                                <input type="text" class="form-control" name="room_name" id="updateRoomName" placeholder="e.g., Science Lab">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Room Name</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-end-0"><i class="fas fa-door-open text-muted"></i></span>
+                                    <input type="text" class="form-control border-start-0" name="room_name" id="updateRoomName" placeholder="e.g., Science Lab">
+                                </div>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12 mb-3">
-                                <label class="form-label fw-bold text-muted">Floor Level</label>
-                                <input type="text" class="form-control bg-light" id="updateRoomFloor" readonly>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Floor Level</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light border-end-0"><i class="fas fa-layer-group text-muted"></i></span>
+                                    <input type="text" class="form-control bg-light border-start-0" id="updateRoomFloor" readonly>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Room Type</label>
-                                <select class="form-control" name="room_type_config_id" id="updateRoomTypeSelect" onchange="onUpdateRoomTypeChange()">
+                        <!-- 2nd row: Room Type, Calculated Priority & Nearest Extinguisher Room -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Room Type</label>
+                                <select class="form-select" name="room_type_config_id" id="updateRoomTypeSelect" onchange="onUpdateRoomTypeChange()">
                                     <option value="">— Unchanged —</option>
                                     @foreach(($roomTypes ?? collect()) as $rt)
                                         @php $p = ($calculatedPriorities ?? collect())->firstWhere('id', $rt->parent_id); @endphp
@@ -726,51 +747,84 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold text-muted">Calculated Priority</label>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Calculated Priority</label>
                                 <input type="text" class="form-control bg-light" id="update_room_priority" readonly>
                             </div>
-                        </div>
-                        <div class="alert alert-warning d-none py-2 px-3 small" id="roomTypeChangeWarning">
-                            <i class="fas fa-exclamation-triangle me-1"></i>
-                            Changing the room type will <strong>clear all extinguisher assignments</strong> for this room. You will need to re-assign them.
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Nearest Extinguisher Room</label>
-                            <select class="form-control" name="nearest_extinguisher_room_id" id="updateRoomNearest">
-                                <option value="">None / Self-Covered</option>
-                            </select>
-                            <div class="form-text small">Select the room that houses the extinguisher covering this room. Only rooms on the same floor with coverage capacity are shown.</div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Remarks</label>
-                            <textarea class="form-control" name="remarks" id="updateRoomRemarks" rows="2" placeholder="Room remarks..."></textarea>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3" id="updateRoomSmokeDetectorRow">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="has_smoke_detector" id="updateRoomSmokeDetector" value="1">
-                                    <label class="form-check-label fw-bold" for="updateRoomSmokeDetector">
-                                        Has Smoke Detector?
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="has_secondary_exit" id="updateRoomSecondaryExit" value="1">
-                                    <label class="form-check-label fw-bold" for="updateRoomSecondaryExit">
-                                        Has Secondary Exit?
-                                    </label>
-                                </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Nearest Extinguisher</label>
+                                <select class="form-select" name="nearest_extinguisher_room_id" id="updateRoomNearest">
+                                    <option value="">None / Self-Covered</option>
+                                </select>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold" id="updateSecondaryExitRemarksLabel">Secondary Exit Remarks</label>
-                            <textarea class="form-control" name="secondary_exit_remarks" id="updateSecondaryExitRemarks" rows="2" placeholder="Enter remarks..."></textarea>
+                        <div class="alert alert-warning d-none py-2 px-3 mb-4 small shadow-sm" id="roomTypeChangeWarning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Changing the room type will <strong>clear all extinguisher assignments</strong> for this room.
+                        </div>
+
+                        <!-- 3rd row: Yes, a smoke detector required in this room & Has Secondary Exit? -->
+                        <div class="row mb-4">
+                            <div class="col-md-6" id="updateRoomSmokeDetectorRow">
+                                <div class="card bg-light border-0">
+                                    <div class="card-body py-2 px-3">
+                                        <div class="form-check form-switch mb-0">
+                                            <input class="form-check-input" type="checkbox" name="smoke_detector_required" id="updateRoomSmokeDetectorRequired" value="1">
+                                            <label class="form-check-label fw-bold text-dark mb-0" for="updateRoomSmokeDetectorRequired">
+                                                Yes, a smoke detector required in this room
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-light border-0">
+                                    <div class="card-body py-2 px-3">
+                                        <div class="form-check form-switch mb-0">
+                                            <input class="form-check-input" type="checkbox" name="has_secondary_exit" id="updateRoomSecondaryExit" value="1">
+                                            <label class="form-check-label fw-bold text-dark mb-0" for="updateRoomSecondaryExit">
+                                                Has Secondary Exit?
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Conditional 4th row: Does this have a smoke detector installed? -->
+                        <div class="row mb-4 d-none" id="smokeDetectorInstalledRow">
+                            <div class="col-12">
+                                <div class="card border-primary" style="background-color: rgba(13, 110, 253, 0.05);">
+                                    <div class="card-body py-2 px-3 d-flex align-items-center justify-content-between">
+                                        <span class="fw-bold text-primary"><i class="fas fa-info-circle me-2"></i>Does this have a smoke detector installed?</span>
+                                        <div class="d-flex gap-4">
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input smoke-installed-toggle" type="checkbox" id="updateRoomSmokeDetectorYes" value="1">
+                                                <label class="form-check-label fw-bold" for="updateRoomSmokeDetectorYes">Yes</label>
+                                            </div>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input smoke-installed-toggle" type="checkbox" id="updateRoomSmokeDetectorNo" value="0">
+                                                <label class="form-check-label fw-bold" for="updateRoomSmokeDetectorNo">No</label>
+                                            </div>
+                                        </div>
+                                        <!-- Hidden field for actual submission -->
+                                        <input type="hidden" name="has_smoke_detector" id="updateRoomSmokeDetector" value="0">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 4th row (becomes 5th): Remarks & the interchangeable Secondary Exit Details / Remarks for No Secondary Exit -->
+                        <div class="row g-3">
+                            <div class="col-md-6 px-1">
+                                <label class="form-label fw-bold small text-muted text-uppercase">General Remarks</label>
+                                <textarea class="form-control" name="remarks" id="updateRoomRemarks" rows="3" placeholder="Enter general room remarks..." style="resize: none;"></textarea>
+                            </div>
+                            <div class="col-md-6 px-1">
+                                <label class="form-label fw-bold small text-muted text-uppercase" id="updateSecondaryExitRemarksLabel">Remarks for No Secondary Exit</label>
+                                <textarea class="form-control" name="secondary_exit_remarks" id="updateSecondaryExitRemarks" rows="3" placeholder="Enter exit-related details..." style="resize: none;"></textarea>
+                            </div>
                         </div>
 
                         <!-- Approval Section (Admin only) -->
@@ -808,51 +862,49 @@
 
     <!-- Add Room Modal -->
     <div class="modal fade" id="addRoomModal" tabindex="-1" style="z-index: 1060;">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
-                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
+                <div class="modal-header shadow-sm" style="background-color: var(--fire-red); color: white;">
                     <h5 class="modal-title"><i class="fas fa-door-open me-2"></i>Add Room</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <form id="addRoomForm">
                         @csrf
                         <input type="hidden" name="school_id" id="roomSchoolId">
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Building *</label>
-                                <select class="form-control" name="building_id" id="roomBuildingSelect" required>
+                        <!-- 1st row: Building, Floor, Room Code, Room Name -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Building *</label>
+                                <select class="form-select" name="building_id" id="roomBuildingSelect" required>
                                     <option value="">Select Building</option>
                                 </select>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Floor No.</label>
-                                <select class="form-control" name="floor_no" id="roomFloorSelect" required disabled>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Floor No. *</label>
+                                <select class="form-select" name="floor_no" id="roomFloorSelect" required disabled>
                                     <option value="">Select Building First</option>
                                 </select>
                             </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Room Code</label>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Room Code</label>
                                 <input type="text" class="form-control" name="room_code" placeholder="e.g., Rm-101">
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Room Name <span class="text-muted fw-normal">(Optional)</span></label>
+                            <div class="col-md-3">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Room Name</label>
                                 <input type="text" class="form-control" name="room_name" placeholder="e.g., Science Lab">
                             </div>
                         </div>
 
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Room Type *</label>
-                                <select class="form-control" name="room_type_config_id" id="room_type_select" required onchange="updateRoomPriority()">
+                        <!-- 2nd row: Room Type, Calculated Priority -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Room Type *</label>
+                                <select class="form-select" name="room_type_config_id" id="room_type_select" required onchange="updateRoomPriority()">
                                     <option value="">Select room type</option>
                                     @foreach(($roomTypes ?? collect()) as $rt)
-                                        @php
-                                            $p = ($calculatedPriorities ?? collect())->firstWhere('id', $rt->parent_id);
-                                        @endphp
+                                        @php $p = ($calculatedPriorities ?? collect())->firstWhere('id', $rt->parent_id); @endphp
                                         <option value="{{ $rt->id }}"
                                                 data-priority-label="{{ $p->name ?? '' }}"
                                                 data-max-rooms="{{ $p->max_rooms_covered ?? '' }}">
@@ -861,39 +913,72 @@
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold text-muted">Calculated Priority</label>
-                                <input type="text" class="form-control bg-light" id="room_priority" readonly value="">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Calculated Priority</label>
+                                <input type="text" class="form-control bg-light" id="calculated_priority" readonly>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Remarks</label>
-                            <textarea class="form-control" name="remarks" id="addRoomRemarks" rows="2" placeholder="Enter room remarks..."></textarea>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3 d-none" id="addRoomSmokeDetectorRow">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="has_smoke_detector" id="addRoomSmokeDetector" value="1">
-                                    <label class="form-check-label fw-bold" for="addRoomSmokeDetector">
-                                        Has Smoke Detector?
-                                    </label>
+                        <!-- 3rd row: Yes, a smoke detector required in this room & Has Secondary Exit? -->
+                        <div class="row mb-4">
+                            <div class="col-md-6" id="addRoomSmokeDetectorRow">
+                                <div class="card bg-light border-0">
+                                    <div class="card-body py-2 px-3">
+                                        <div class="form-check form-switch mb-0">
+                                            <input class="form-check-input" type="checkbox" name="smoke_detector_required" id="addRoomSmokeDetectorRequired" value="1">
+                                            <label class="form-check-label fw-bold text-dark mb-0" for="addRoomSmokeDetectorRequired">
+                                                Yes, a smoke detector required in this room
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="col-md-6 mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="has_secondary_exit" id="addRoomSecondaryExit" value="1">
-                                    <label class="form-check-label fw-bold" for="addRoomSecondaryExit">
-                                        Has Secondary Exit?
-                                    </label>
+                            <div class="col-md-6">
+                                <div class="card bg-light border-0">
+                                    <div class="card-body py-2 px-3">
+                                        <div class="form-check form-switch mb-0">
+                                            <input class="form-check-input" type="checkbox" name="has_secondary_exit" id="addRoomSecondaryExit" value="1">
+                                            <label class="form-check-label fw-bold text-dark mb-0" for="addRoomSecondaryExit">
+                                                Has Secondary Exit?
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label fw-bold" id="addSecondaryExitRemarksLabel">Secondary Exit Remarks</label>
-                            <textarea class="form-control" name="secondary_exit_remarks" id="addSecondaryExitRemarks" rows="2" placeholder="Enter remarks..."></textarea>
+                        <!-- Conditional 4th row: Does this have a smoke detector installed? -->
+                        <div class="row mb-4 d-none" id="addSmokeDetectorInstalledRow">
+                            <div class="col-12">
+                                <div class="card border-primary" style="background-color: rgba(13, 110, 253, 0.05);">
+                                    <div class="card-body py-2 px-3 d-flex align-items-center justify-content-between">
+                                        <span class="fw-bold text-primary"><i class="fas fa-info-circle me-2"></i>Does this have a smoke detector installed?</span>
+                                        <div class="d-flex gap-4">
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input add-smoke-installed-toggle" type="checkbox" id="addRoomSmokeDetectorYes" value="1">
+                                                <label class="form-check-label fw-bold" for="addRoomSmokeDetectorYes">Yes</label>
+                                            </div>
+                                            <div class="form-check mb-0">
+                                                <input class="form-check-input add-smoke-installed-toggle" type="checkbox" id="addRoomSmokeDetectorNo" value="0">
+                                                <label class="form-check-label fw-bold" for="addRoomSmokeDetectorNo">No</label>
+                                            </div>
+                                        </div>
+                                        <!-- Hidden field for actual submission -->
+                                        <input type="hidden" name="has_smoke_detector" id="addRoomSmokeDetector" value="0">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6 px-1">
+                                <label class="form-label fw-bold small text-muted text-uppercase">General Remarks</label>
+                                <textarea class="form-control" name="remarks" id="addRoomRemarks" rows="3" placeholder="Enter general room remarks..." style="resize: none;"></textarea>
+                            </div>
+                            <div class="col-md-6 px-1">
+                                <label class="form-label fw-bold small text-muted text-uppercase" id="addSecondaryExitRemarksLabel">Remarks for No Secondary Exit</label>
+                                <textarea class="form-control" name="secondary_exit_remarks" id="addSecondaryExitRemarks" rows="3" placeholder="Enter exit-related details..." style="resize: none;"></textarea>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -986,7 +1071,9 @@
                                 </select>
                             </div>
                             <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Covered Rooms (up to 3)</label>
+                                <label class="form-label fw-bold">
+                                    Covered Rooms <span id="coveredRoomsLimitLabel" class="text-muted small">(Up to 3)</span>
+                                </label>
                                 <select class="form-control" id="coveredRoomsSelect" name="covered_room_ids[]" multiple size="5">
                                 </select>
                                 <div class="form-text small">Use Ctrl/Cmd + Click to select multiple. Laboratory rule applies.</div>
@@ -1182,7 +1269,11 @@
 
             buildings.forEach(b => {
                 if (preSelectedId && String(b.id) === String(preSelectedId)) return;
+                // Always allow adding rooms to any building in this school
                 roomBuildingSelect.appendChild(createOption(b));
+
+                // For extinguishers, we still allow adding beyond minimum required,
+                // so do NOT hide buildings here (the minimum is used as a baseline only).
                 extBuildingSelect.appendChild(createOption(b));
             });
         }
@@ -1229,7 +1320,6 @@
                     roomsByFloor[i] = existingRooms.filter(r => r.floor_no == i).length;
                 }
 
-                const emptyFloorsCount = Object.values(roomsByFloor).filter(c => c === 0).length;
                 const remainingSlots = totalRequiredRooms - currentTotalCount;
 
                 const getOrdinal = (n) => {
@@ -1239,19 +1329,31 @@
                 };
 
                 floorSelect.innerHTML = '<option value="">Select Floor</option>';
+                // Rule: every floor should have at least 1 room before adding more to the same floor.
+                const floorsWithRooms = Object.keys(roomsByFloor).filter(f => roomsByFloor[f] > 0).length;
+                const floorsWithoutRooms = totalFloors - floorsWithRooms;
+
                 for (let i = 1; i <= totalFloors; i++) {
                     const floorIsEmpty = (roomsByFloor[i] === 0 || !roomsByFloor[i]);
-                    const emptyOtherFloors = floorIsEmpty ? (emptyFloorsCount - 1) : emptyFloorsCount;
 
-                    if ((remainingSlots - 1) >= emptyOtherFloors) {
-                        const opt = document.createElement('option');
-                        opt.value = i;
-                        opt.textContent = getOrdinal(i) + " Floor" + (floorIsEmpty ? " (Empty)" : "");
-                        floorSelect.appendChild(opt);
+                    // If there are floors without any rooms yet, only show those empty floors
+                    // until each floor has at least 1 room.
+                    if (floorsWithoutRooms > 0 && !floorIsEmpty) {
+                        continue;
                     }
+
+                    // Respect overall building room limit if defined
+                    if (totalRequiredRooms > 0 && remainingSlots <= 0) {
+                        continue;
+                    }
+
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.textContent = getOrdinal(i) + " Floor" + (floorIsEmpty ? " (No Rooms yet)" : "");
+                    floorSelect.appendChild(opt);
                 }
 
-                if (floorSelect.options.length <= 1 && totalRequiredRooms > 0) {
+                if (floorSelect.options.length <= 1 && totalRequiredRooms > 0 && remainingSlots <= 0) {
                     Swal.fire('Limit Reached', 'No more rooms can be added without violating building room limit.', 'warning');
                     floorSelect.disabled = true;
                 } else {
@@ -1377,22 +1479,28 @@
 
         function updateRoomPriority() {
             const typeSelect = document.getElementById('room_type_select');
-            const priorityInput = document.getElementById('room_priority');
+            const priorityInput = document.getElementById('calculated_priority');
             const opt = typeSelect?.selectedOptions?.[0];
             const label = opt?.dataset?.priorityLabel || '';
             const maxRooms = opt?.dataset?.maxRooms || '';
 
-            const roomTypeName = opt ? opt.textContent.trim().toLowerCase() : '';
-            const smokeDetectorRow = document.getElementById('addRoomSmokeDetectorRow');
-            if (roomTypeName.includes('administration') || roomTypeName.includes('office')) {
-                smokeDetectorRow.classList.remove('d-none');
-            } else {
-                smokeDetectorRow.classList.add('d-none');
-                document.getElementById('addRoomSmokeDetector').checked = false;
-            }
-
-            if (label) {
+            if (opt && opt.value !== '') {
                 priorityInput.value = maxRooms ? `${label} (Up to ${maxRooms} rooms)` : label;
+
+                const roomTypeName = opt.textContent.trim().toLowerCase();
+                const smokeRow = document.getElementById('addRoomSmokeDetectorRow');
+                const smokeReqCb = document.getElementById('addRoomSmokeDetectorRequired');
+                const smokeInstalledRow = document.getElementById('addSmokeDetectorInstalledRow');
+
+                if (smokeRow && smokeReqCb) {
+                    if (roomTypeName.includes('administration')) {
+                        smokeRow.classList.remove('d-none');
+                    } else {
+                        smokeRow.classList.add('d-none');
+                        smokeReqCb.checked = false;
+                        if (smokeInstalledRow) smokeInstalledRow.classList.add('d-none');
+                    }
+                }
             } else {
                 priorityInput.value = '';
             }
@@ -1430,10 +1538,13 @@
 
             // Fetch and store rooms
             try {
-                const resp = await fetch(`/fire-safety/rooms/${buildingId}`, {
+                const resp = await fetch(`/fire-safety/building/${buildingId}/rooms-with-coverage`, {
                     headers: { 'Accept': 'application/json' }
                 });
-                currentBuildingRooms = await resp.json();
+                const data = await resp.json();
+                currentBuildingRooms = data.rooms || [];
+                window.currentBuildingCoveredRoomIds = data.covered_room_ids || [];
+                window.currentBuildingHostRoomIds = data.host_room_ids || [];
 
                 // If user hasn't selected a floor yet, we don't show rooms.
                 // Or should we? User request said "depending on what floor was chosen... show the rooms".
@@ -1441,6 +1552,12 @@
                 console.error(e);
                 Swal.fire('Error', 'Failed to load rooms.', 'error');
             }
+        }
+
+        function isDedicatedOrLimitedPriority(priorityLabel) {
+            const raw = (priorityLabel || '').toString().trim().toLowerCase();
+            const norm = raw.replace(/[_-]/g, ' ').replace(/\s+/g, ' ').trim();
+            return norm === 'dedicated' || norm === 'limited shared';
         }
 
         function handleExtFloorChange() {
@@ -1461,19 +1578,37 @@
             filteredRooms.forEach(r => {
                 const label = `${r.room_code || ('Room ' + r.id)} - ${r.room_type}`;
 
-                const optCenter = document.createElement('option');
-                optCenter.value = r.id;
-                optCenter.textContent = label;
-                optCenter.dataset.roomType = r.room_type;
-                optCenter.dataset.maxRooms = r.max_rooms || 2;
-                centerSelect.appendChild(optCenter);
+                const hostIds = (window.currentBuildingHostRoomIds || []);
+                const isHostRoom = hostIds.includes(Number(r.id)) || r.is_host_room === true;
+                const isCoveredByAny = (r.is_covered === true) || (window.currentBuildingCoveredRoomIds || []).includes(Number(r.id));
 
-                const optCovered = document.createElement('option');
-                optCovered.value = r.id;
-                optCovered.textContent = label;
-                optCovered.dataset.roomType = r.room_type;
-                optCovered.dataset.maxRooms = r.max_rooms || 2;
-                coveredSelect.appendChild(optCovered);
+                // Center room: allow rooms even if currently covered, but do NOT allow host rooms
+                if (!isHostRoom) {
+                    const optCenter = document.createElement('option');
+                    optCenter.value = r.id;
+                    optCenter.textContent = label;
+                    optCenter.dataset.roomType = r.room_type;
+                    // Laboratory / clinic (Dedicated / Limited) can only cover up to 2 rooms
+                    const baseMax = r.max_rooms || 3;
+                    const hardMax = isDedicatedOrLimitedPriority(r.priority_label) ? 2 : baseMax;
+                    optCenter.dataset.maxRooms = hardMax;
+                    optCenter.dataset.priorityLabel = r.priority_label || '';
+                    centerSelect.appendChild(optCenter);
+                }
+
+                // Covered rooms:
+                // - exclude host rooms
+                // - exclude Dedicated / Limited Shared rooms
+                // - exclude rooms already covered by ANY extinguisher
+                if (!isHostRoom && !isDedicatedOrLimitedPriority(r.priority_label) && !isCoveredByAny) {
+                    const optCovered = document.createElement('option');
+                    optCovered.value = r.id;
+                    optCovered.textContent = label;
+                    optCovered.dataset.roomType = r.room_type;
+                    optCovered.dataset.maxRooms = r.max_rooms || 2;
+                    optCovered.dataset.priorityLabel = r.priority_label || '';
+                    coveredSelect.appendChild(optCovered);
+                }
             });
         }
 
@@ -1493,6 +1628,13 @@
 
             floorSelect.innerHTML = '<option value="">Select Floor</option>';
             centerSelect.innerHTML = '<option value="">Select Center Room</option>';
+            // Always include Remove Assignment option
+            const removeOpt = document.createElement('option');
+            removeOpt.value = '__remove__';
+            removeOpt.textContent = 'Remove Assignment (Unlink all rooms)';
+            removeOpt.style.color = '#dc3545';
+            removeOpt.style.fontWeight = 'bold';
+            centerSelect.appendChild(removeOpt);
             coveredSelect.innerHTML = '';
             if (!buildingId) {
                 floorSelect.disabled = true;
@@ -1512,8 +1654,11 @@
 
             // fetch rooms
             try {
-                const resp = await fetch(`/fire-safety/rooms/${buildingId}`, { headers: { 'Accept': 'application/json' } });
-                currentBuildingRooms = await resp.json();
+                const resp = await fetch(`/fire-safety/building/${buildingId}/rooms-with-coverage`, { headers: { 'Accept': 'application/json' } });
+                const data = await resp.json();
+                currentBuildingRooms = data.rooms || [];
+                window.currentBuildingCoveredRoomIds = data.covered_room_ids || [];
+                window.currentBuildingHostRoomIds = data.host_room_ids || [];
             } catch (e) {
                 console.error(e);
                 Swal.fire('Error', 'Failed to load rooms.', 'error');
@@ -1527,25 +1672,45 @@
 
             const selectedFloor = floorSelect.value;
             centerSelect.innerHTML = '<option value="">Select Center Room</option>';
+            // Always include Remove Assignment option (floor changes previously removed it)
+            const removeOpt = document.createElement('option');
+            removeOpt.value = '__remove__';
+            removeOpt.textContent = 'Remove Assignment (Unlink all rooms)';
+            removeOpt.style.color = '#dc3545';
+            removeOpt.style.fontWeight = 'bold';
+            centerSelect.appendChild(removeOpt);
             coveredSelect.innerHTML = '';
             if (!selectedFloor) return;
 
             const filteredRooms = currentBuildingRooms.filter(r => String(r.floor_no) === String(selectedFloor));
             filteredRooms.forEach(r => {
                 const label = `${r.room_code || ('Room ' + r.id)} - ${r.room_type}`;
-                const optCenter = document.createElement('option');
-                optCenter.value = r.id;
-                optCenter.textContent = label;
-                optCenter.dataset.roomType = r.room_type;
-                optCenter.dataset.maxRooms = r.max_rooms || 2;
-                centerSelect.appendChild(optCenter);
 
-                const optCovered = document.createElement('option');
-                optCovered.value = r.id;
-                optCovered.textContent = label;
-                optCovered.dataset.roomType = r.room_type;
-                optCovered.dataset.maxRooms = r.max_rooms || 2;
-                coveredSelect.appendChild(optCovered);
+                const hostIds = (window.currentBuildingHostRoomIds || []);
+                const isHostRoom = hostIds.includes(Number(r.id)) || r.is_host_room === true;
+                const isCoveredByAny = (r.is_covered === true) || (window.currentBuildingCoveredRoomIds || []).includes(Number(r.id));
+
+                // Center room: allow rooms even if currently covered, but do NOT allow host rooms
+                if (!isHostRoom) {
+                    const optCenter = document.createElement('option');
+                    optCenter.value = r.id;
+                    optCenter.textContent = label;
+                    optCenter.dataset.roomType = r.room_type;
+                    optCenter.dataset.maxRooms = r.max_rooms || 2;
+                    optCenter.dataset.priorityLabel = r.priority_label || '';
+                    centerSelect.appendChild(optCenter);
+                }
+
+                // Covered rooms: exclude host rooms, Dedicated/Limited Shared priority, and already-covered rooms
+                if (!isHostRoom && !isDedicatedOrLimitedPriority(r.priority_label) && !isCoveredByAny) {
+                    const optCovered = document.createElement('option');
+                    optCovered.value = r.id;
+                    optCovered.textContent = label;
+                    optCovered.dataset.roomType = r.room_type;
+                    optCovered.dataset.maxRooms = r.max_rooms || 2;
+                    optCovered.dataset.priorityLabel = r.priority_label || '';
+                    coveredSelect.appendChild(optCovered);
+                }
             });
         }
 
@@ -1557,15 +1722,34 @@
             const centerId = centerSelect.value;
             if (!centerId) return;
 
+            let found = false;
             Array.from(coveredSelect.options).forEach(o => {
                 if (String(o.value) === String(centerId)) {
                     o.selected = true;
+                    found = true;
                 }
             });
+            if (!found) {
+                const centerOpt = centerSelect.selectedOptions[0];
+                const injected = document.createElement('option');
+                injected.value = centerId;
+                injected.textContent = (centerOpt?.textContent || `Room ${centerId}`) + ' (Center)';
+                injected.selected = true;
+                coveredSelect.appendChild(injected);
+            }
 
-            const max = parseInt(centerSelect.selectedOptions[0]?.dataset?.maxRooms) || 3;
+            const selected = centerSelect.selectedOptions[0];
+            const baseMax = parseInt(selected?.dataset?.maxRooms) || 3;
+            const priorityLabel = selected?.dataset?.priorityLabel || '';
+            const effectiveMax = isDedicatedOrLimitedPriority(priorityLabel) ? 2 : baseMax;
+
             const helpText = document.querySelector('#addExtModal .form-text');
-            if (helpText) helpText.innerHTML = `Use Ctrl/Cmd + Click to select multiple. Current limit: <b>${max}</b> rooms for its priority.`;
+            if (helpText) helpText.innerHTML = `Use Ctrl/Cmd + Click to select multiple. Current limit: <b>${effectiveMax}</b> rooms for its priority.`;
+
+            const limitLabel = document.getElementById('coveredRoomsLimitLabel');
+            if (limitLabel) {
+                limitLabel.textContent = `(Up to ${effectiveMax})`;
+            }
         }
 
         function handleUpdateCenterRoomChange() {
@@ -1574,11 +1758,21 @@
             const centerId = centerSelect.value;
             if (!centerId) return;
 
+            let found = false;
             Array.from(coveredSelect.options).forEach(o => {
                 if (String(o.value) === String(centerId)) {
                     o.selected = true;
+                    found = true;
                 }
             });
+            if (!found) {
+                const centerOpt = centerSelect.selectedOptions[0];
+                const injected = document.createElement('option');
+                injected.value = centerId;
+                injected.textContent = (centerOpt?.textContent || `Room ${centerId}`) + ' (Center)';
+                injected.selected = true;
+                coveredSelect.appendChild(injected);
+            }
 
             const max = parseInt(centerSelect.selectedOptions[0]?.dataset?.maxRooms) || 3;
             const helpText = document.querySelector('#updateExtModal .form-text');
@@ -1592,6 +1786,9 @@
             // Temporarily enable disabled fields so they are included in FormData
             const disabledFields = Array.from(form.querySelectorAll(':disabled'));
             disabledFields.forEach(el => el.disabled = false);
+
+            // Ensure a valid date is sent (older DB schema requires non-null date_checked)
+            setTodayIfEmpty(document.querySelector('#addExtForm input[name="date_checked"]'));
 
             if (!form.checkValidity()) {
                 form.reportValidity();
@@ -1762,34 +1959,47 @@
                 const currentCoveredIds = ext.covered_rooms ? ext.covered_rooms.map(cr => Number(cr.id)) : [];
                 const currentCenterId = ext.room_id ? Number(ext.room_id) : null;
 
-                // Filter rooms - show only those that are:
-                // 1. On the same floor as the extinguisher, OR
-                // 2. Currently assigned to this extinguisher
-                const availableRooms = roomsData.rooms.filter(r => {
+                const hostRoomIds = roomsData.host_room_ids || [];
+
+                // For CENTER ROOM choices:
+                // - allow rooms even if currently covered by another extinguisher (they can host their own extinguisher)
+                // - do NOT allow rooms that already host another extinguisher
+                const roomsForCenter = roomsData.rooms.filter(r => {
                     const roomId = Number(r.id);
                     const isCurrentCenter = currentCenterId === roomId;
                     const isCurrentCovered = currentCoveredIds.includes(roomId);
-                    const coveredByOthers = roomsData.covered_room_ids.includes(roomId) && !isCurrentCenter && !isCurrentCovered;
                     const sameFloor = ext.floor_no ? Number(r.floor_no) === Number(ext.floor_no) : true;
-
-                    // Show room if it's on same floor OR currently assigned, and not covered by others
-                    return (sameFloor || isCurrentCenter || isCurrentCovered) && !coveredByOthers;
+                    const isHostRoom = !!r.is_host_room || hostRoomIds.includes(roomId);
+                    return (sameFloor || isCurrentCenter || isCurrentCovered) && (!isHostRoom || isCurrentCenter);
                 });
 
-                console.log('Available rooms:', availableRooms); // Debug log
+                // For COVERED ROOMS choices:
+                // - exclude host rooms (they have their own extinguisher) except this extinguisher's own center room
+                // - exclude Dedicated / Limited Shared rooms
+                // - exclude rooms covered by other extinguishers (no overlapping coverage)
+                const roomsForCovered = roomsData.rooms.filter(r => {
+                    const roomId = Number(r.id);
+                    const isCurrentCenter = currentCenterId === roomId;
+                    const isCurrentCovered = currentCoveredIds.includes(roomId);
+                    const sameFloor = ext.floor_no ? Number(r.floor_no) === Number(ext.floor_no) : true;
+                    const coveredByOthers = roomsData.covered_room_ids.includes(roomId) && !isCurrentCenter && !isCurrentCovered;
+                    const isHostRoom = (!!r.is_host_room || hostRoomIds.includes(roomId)) && !isCurrentCenter;
+                    const isDedicatedOrLimited = isDedicatedOrLimitedPriority(r.priority_label);
+                    return (sameFloor || isCurrentCenter || isCurrentCovered) && !coveredByOthers && !isHostRoom && (!isDedicatedOrLimited || isCurrentCenter);
+                });
 
                 // Populate selects
                 centerSelect.innerHTML = '<option value="">Select Center Room</option>';
                 // Always include Remove Assignment at the top
                 const removeOpt = document.createElement('option');
                 removeOpt.value = '__remove__';
-                removeOpt.textContent = '⛔ Remove Assignment (Unlink all rooms)';
+                removeOpt.textContent = 'Remove Assignment (Unlink all rooms)';
                 removeOpt.style.color = '#dc3545';
                 removeOpt.style.fontWeight = 'bold';
                 centerSelect.appendChild(removeOpt);
                 coveredSelect.innerHTML = '';
 
-                availableRooms.forEach(r => {
+                roomsForCenter.forEach(r => {
                     const displayName = r.room_code || `Room #${r.id}`;
 
                     // Add to center select
@@ -1798,25 +2008,44 @@
                     optCenter.textContent = `${displayName} - Floor ${r.floor_no} (${r.room_type || 'Unknown'})`;
                     optCenter.dataset.roomType = r.room_type || '';
                     optCenter.dataset.maxRooms = r.max_rooms || 2;
+                    optCenter.dataset.priorityLabel = r.priority_label || '';
                     if (currentCenterId === Number(r.id)) {
                         optCenter.selected = true;
                     }
                     centerSelect.appendChild(optCenter);
+                });
 
-                    // Add to covered select
+                roomsForCovered.forEach(r => {
+                    const displayName = r.room_code || `Room #${r.id}`;
                     const optCovered = document.createElement('option');
                     optCovered.value = r.id;
                     optCovered.textContent = `${displayName} - Floor ${r.floor_no} (${r.room_type || 'Unknown'})`;
                     optCovered.dataset.roomType = r.room_type || '';
                     optCovered.dataset.maxRooms = r.max_rooms || 2;
+                    optCovered.dataset.priorityLabel = r.priority_label || '';
                     if (currentCoveredIds.includes(Number(r.id))) {
                         optCovered.selected = true;
                     }
                     coveredSelect.appendChild(optCovered);
                 });
 
+                // Ensure current center room appears in Covered Rooms (even if filtered out),
+                // because backend requires the center room to be part of coverage.
+                if (currentCenterId) {
+                    const exists = Array.from(coveredSelect.options).some(o => Number(o.value) === Number(currentCenterId));
+                    if (!exists) {
+                        const centerRoom = roomsData.rooms.find(r => Number(r.id) === Number(currentCenterId));
+                        const displayName = centerRoom?.room_code || `Room #${currentCenterId}`;
+                        const injected = document.createElement('option');
+                        injected.value = currentCenterId;
+                        injected.textContent = `${displayName} - Floor ${centerRoom?.floor_no || ext.floor_no || '?'} (${centerRoom?.room_type || 'Unknown'}) (Center)`;
+                        injected.selected = true;
+                        coveredSelect.appendChild(injected);
+                    }
+                }
+
                 // If no rooms available on the same floor, show message
-                if (availableRooms.length === 0) {
+                if (roomsForCenter.length === 0) {
                     // Keep the Remove Assignment option, just add a disabled info option
                     const noRoomsOpt = document.createElement('option');
                     noRoomsOpt.value = '';
@@ -2234,7 +2463,42 @@
                 });
             });
 
-            // Secondary Exit Checkbox logic
+            // Add Room Modal Smoke logic
+            const addSmokeRequired = document.getElementById('addRoomSmokeDetectorRequired');
+            const addSmokeInstalledRow = document.getElementById('addSmokeDetectorInstalledRow');
+            if (addSmokeRequired && addSmokeInstalledRow) {
+                addSmokeRequired.addEventListener('change', function() {
+                    if (this.checked) {
+                        addSmokeInstalledRow.classList.remove('d-none');
+                        const yes = document.getElementById('addRoomSmokeDetectorYes');
+                        const no = document.getElementById('addRoomSmokeDetectorNo');
+                        if (!yes.checked && !no.checked) {
+                            no.checked = true;
+                            document.getElementById('addRoomSmokeDetector').value = 0;
+                        }
+                    } else {
+                        addSmokeInstalledRow.classList.add('d-none');
+                        document.getElementById('addRoomSmokeDetectorYes').checked = false;
+                        document.getElementById('addRoomSmokeDetectorNo').checked = false;
+                        document.getElementById('addRoomSmokeDetector').value = 0;
+                    }
+                });
+            }
+
+            document.querySelectorAll('.add-smoke-installed-toggle').forEach(chk => {
+                chk.addEventListener('change', function() {
+                    if (this.checked) {
+                        document.querySelectorAll('.add-smoke-installed-toggle').forEach(other => {
+                            if (other !== this) other.checked = false;
+                        });
+                        document.getElementById('addRoomSmokeDetector').value = this.value;
+                    } else {
+                        document.getElementById('addRoomSmokeDetector').value = 0;
+                    }
+                });
+            });
+
+            // Secondary Exit Checkbox logic (Add Room)
             const addSecondaryCheck = document.getElementById('addRoomSecondaryExit');
             if (addSecondaryCheck) {
                 addSecondaryCheck.addEventListener('change', function() {
@@ -2242,6 +2506,44 @@
                     if (label) label.textContent = this.checked ? 'Secondary Exit Details' : 'Remarks for No Secondary Exit';
                 });
             }
+
+            // Update modal UI logic (Update Room)
+            const smokeRequired = document.getElementById('updateRoomSmokeDetectorRequired');
+            const smokeInstalledRow = document.getElementById('smokeDetectorInstalledRow');
+            if (smokeRequired && smokeInstalledRow) {
+                smokeRequired.addEventListener('change', function() {
+                    if (this.checked) {
+                        smokeInstalledRow.classList.remove('d-none');
+                        // Default to No if nothing selected yet
+                        const smokeYes = document.getElementById('updateRoomSmokeDetectorYes');
+                        const smokeNo = document.getElementById('updateRoomSmokeDetectorNo');
+                        if (!smokeYes.checked && !smokeNo.checked) {
+                            smokeNo.checked = true;
+                            document.getElementById('updateRoomSmokeDetector').value = 0;
+                        }
+                    } else {
+                        smokeInstalledRow.classList.add('d-none');
+                        document.getElementById('updateRoomSmokeDetectorYes').checked = false;
+                        document.getElementById('updateRoomSmokeDetectorNo').checked = false;
+                        document.getElementById('updateRoomSmokeDetector').value = 0;
+                    }
+                });
+            }
+
+            // Radio-like behavior for smoke detector installed checkboxes
+            document.querySelectorAll('.smoke-installed-toggle').forEach(chk => {
+                chk.addEventListener('change', function() {
+                    if (this.checked) {
+                        document.querySelectorAll('.smoke-installed-toggle').forEach(other => {
+                            if (other !== this) other.checked = false;
+                        });
+                        document.getElementById('updateRoomSmokeDetector').value = this.value;
+                    } else {
+                        // Keep at least one checked if possible, or just set to 0
+                        document.getElementById('updateRoomSmokeDetector').value = 0;
+                    }
+                });
+            });
 
             const updateSecondaryCheck = document.getElementById('updateRoomSecondaryExit');
             if (updateSecondaryCheck) {
@@ -2263,6 +2565,22 @@
                 const lbl = opt.dataset.priorityLabel;
                 const max = opt.dataset.maxRooms;
                 priorityInput.value = lbl ? `${lbl} (Up to ${max} rooms)` : '';
+
+                // Smoke detector question is only for Administration rooms
+                const typeText = (opt.textContent || '').trim().toLowerCase();
+                const smokeRow = document.getElementById('updateRoomSmokeDetectorRow');
+                const smokeReqCb = document.getElementById('updateRoomSmokeDetectorRequired');
+                const smokeInstalledRow = document.getElementById('smokeDetectorInstalledRow');
+
+                if (smokeRow && smokeReqCb) {
+                    if (typeText.includes('administration')) {
+                        smokeRow.classList.remove('d-none');
+                    } else {
+                        smokeRow.classList.add('d-none');
+                        smokeReqCb.checked = false;
+                        if (smokeInstalledRow) smokeInstalledRow.classList.add('d-none');
+                    }
+                }
 
                 // Show warning only if the type actually changed from original
                 if (opt.value !== (sel.dataset.original || '')) {
@@ -2355,15 +2673,39 @@
                     });
                 }
 
-                // Smoke detector checkbox for Admin/Office
+                // Smoke detector logic
                 const smokeDetectorRow = document.getElementById('updateRoomSmokeDetectorRow');
-                const smokeDetectorInput = document.getElementById('updateRoomSmokeDetector');
+                const smokeReqCb = document.getElementById('updateRoomSmokeDetectorRequired');
+                const smokeInstalledRow = document.getElementById('smokeDetectorInstalledRow');
+                const smokeInstalledHidden = document.getElementById('updateRoomSmokeDetector');
+                const smokeYes = document.getElementById('updateRoomSmokeDetectorYes');
+                const smokeNo = document.getElementById('updateRoomSmokeDetectorNo');
+
                 const typeName = (data.room_type || '').toLowerCase();
-                if (typeName.includes('administration') || typeName.includes('office')) {
+                if (typeName.includes('administration')) {
                     smokeDetectorRow.classList.remove('d-none');
-                    smokeDetectorInput.checked = !!data.has_smoke_detector;
+                    const isRequired = !!data.smoke_detector_required;
+                    smokeReqCb.checked = isRequired;
+                    
+                    if (isRequired) {
+                        smokeInstalledRow.classList.remove('d-none');
+                        const isInstalled = !!data.has_smoke_detector;
+                        smokeInstalledHidden.value = isInstalled ? 1 : 0;
+                        smokeYes.checked = isInstalled;
+                        smokeNo.checked = !isInstalled;
+                    } else {
+                        smokeInstalledRow.classList.add('d-none');
+                        smokeInstalledHidden.value = 0;
+                        smokeYes.checked = false;
+                        smokeNo.checked = false;
+                    }
                 } else {
-                    smokeDetectorInput.checked = !!data.has_smoke_detector;
+                    smokeDetectorRow.classList.add('d-none');
+                    smokeReqCb.checked = false;
+                    smokeInstalledRow.classList.add('d-none');
+                    smokeInstalledHidden.value = 0;
+                    smokeYes.checked = false;
+                    smokeNo.checked = false;
                 }
 
                 const modalEl = document.getElementById('updateRoomModal');
@@ -2418,6 +2760,12 @@
                 const data = await resp.json();
                 if (data.success) {
                     if (data.type_changed) {
+                        // Update visible coverage badges immediately (before reload), so the room list reflects "Uncovered"
+                        const affected = Array.isArray(data.affected_room_ids) ? data.affected_room_ids : [];
+                        affected.forEach(rid => {
+                            const el = document.querySelector(`.coverage-badges[data-room-id="${rid}"]`);
+                            if (el) el.innerHTML = '<span class="badge bg-warning text-dark">Uncovered</span>';
+                        });
                         Swal.fire({
                             icon: 'success',
                             title: 'Room Type Changed',

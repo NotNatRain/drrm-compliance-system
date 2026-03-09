@@ -12,6 +12,12 @@
                 <div class="card-body p-4">
                     <p class="text-center mb-4">A 6-digit verification code has been sent to <strong>{{ request('email') }}</strong>. Please enter it below to reset your password.</p>
 
+                    @if (session('status'))
+                        <div class="alert alert-success" role="alert">
+                            {{ session('status') }}
+                        </div>
+                    @endif
+
                     @if (session('error'))
                         <div class="alert alert-danger" role="alert">
                             {{ session('error') }}

@@ -69,7 +69,7 @@ class User extends Authenticatable
     public function sendPasswordResetNotification($token)
     {
         // Instead of the token, we'll store a 6-digit code in the password_resets table
-        $code = rand(100000, 999999);
+        $code = random_int(100000, 999999);
         
         \DB::table('password_reset_tokens')->updateOrInsert(
             ['email' => $this->email],

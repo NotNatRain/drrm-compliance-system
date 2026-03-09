@@ -608,11 +608,16 @@ class FireSafetyController extends Controller
             'room_name' => 'nullable|string',
             'room_type_config_id' => 'nullable|exists:system_configurations,id',
             'nearest_extinguisher_room_id' => 'nullable|exists:fire_safety_rooms,id',
+            'smoke_detector_required' => 'boolean',
             'has_smoke_detector' => 'boolean',
             'has_secondary_exit' => 'boolean',
             'secondary_exit_remarks' => 'nullable|string',
             'remarks' => 'nullable|string'
         ]);
+
+        if (!isset($validated['smoke_detector_required'])) {
+            $validated['smoke_detector_required'] = false;
+        }
 
         if (!isset($validated['has_smoke_detector'])) {
             $validated['has_smoke_detector'] = false;
@@ -673,22 +678,47 @@ class FireSafetyController extends Controller
 
         // If room type changed, clear all extinguisher coverage for this room
         if ($roomTypeChanged) {
+            $affectedRoomIds = [];
+
             // If this room WAS a center room of an extinguisher, clear that extinguisher's
             // ENTIRE coverage (all rooms it was covering), then unlink the center room.
             $hostedExt = FireSafetyExtinguisher::where('room_id', $id)->first();
             if ($hostedExt) {
+                // Capture affected rooms BEFORE deleting pivot rows
+                $affectedRoomIds = DB::table('fire_safety_extinguisher_room_coverage')
+                    ->where('extinguisher_id', $hostedExt->id)
+                    ->pluck('room_id')
+                    ->map(fn ($v) => (int) $v)
+                    ->values()
+                    ->toArray();
+
                 // Remove ALL rooms from this extinguisher's coverage pivot
+                // Use relationship detach to ensure the correct connection/table is used.
+                $hostedExt->coveredRooms()->detach();
+
+                // Safety cleanup in case of legacy rows
                 DB::table('fire_safety_extinguisher_room_coverage')
                     ->where('extinguisher_id', $hostedExt->id)
                     ->delete();
+
+                // Clear nearest pointers that reference this former host room
+                FireSafetyRoom::where('building_id', $room->building_id)
+                    ->where('nearest_extinguisher_room_id', $id)
+                    ->update(['nearest_extinguisher_room_id' => null]);
+
                 // Unlink center room
                 $hostedExt->room_id = null;
                 $hostedExt->save();
             } else {
                 // Not a center room — just remove this room from any coverage pivot
                 DB::table('fire_safety_extinguisher_room_coverage')->where('room_id', $id)->delete();
+                $affectedRoomIds = [(int) $id];
             }
-            return response()->json(['success' => true, 'type_changed' => true]);
+            return response()->json([
+                'success' => true,
+                'type_changed' => true,
+                'affected_room_ids' => $affectedRoomIds,
+            ]);
         }
 
         // Sync Coverage Pivot Table
@@ -861,11 +891,16 @@ public function storeRoom(Request $request)
         'room_name' => 'nullable|string|max:100',
         'room_type_config_id' => 'required|exists:system_configurations,id',
         'floor_no' => 'required|integer|min:1|max:50',
+        'smoke_detector_required' => 'boolean',
         'has_smoke_detector' => 'boolean',
         'has_secondary_exit' => 'boolean',
         'secondary_exit_remarks' => 'nullable|string',
         'remarks' => 'nullable|string'
     ]);
+
+    if (!isset($validated['smoke_detector_required'])) {
+        $validated['smoke_detector_required'] = false;
+    }
 
     if (!isset($validated['has_smoke_detector'])) {
         $validated['has_smoke_detector'] = false;
@@ -1040,7 +1075,7 @@ public function storeRoom(Request $request)
             'pressure_level' => 'required|integer|min:0|max:100',
             'date_checked' => 'nullable|date',
             'evaluation_result' => 'nullable|string|max:255',
-            'room_id' => 'required|exists:fire_safety_rooms,id', // center room required
+            'room_id' => 'nullable|exists:fire_safety_rooms,id', // allow unassigned extinguishers
             'covered_room_ids' => 'nullable|array|max:5', // limit in browser but backend checks priority
             'covered_room_ids.*' => 'integer|exists:fire_safety_rooms,id',
             'remarks' => 'nullable|string',
@@ -1099,41 +1134,104 @@ public function storeRoom(Request $request)
             ], 422);
         }
 
-        // PRIORITY-BASED COVERAGE LIMIT
-        $centerRoom->load(['roomTypeConfig.parent']);
-        $priority = $centerRoom->roomTypeConfig?->parent;
-        $maxLimit = 3; // Default fallback
-        if ($priority && $priority->config_type === 'calculated_priority') {
-            $maxLimit = (int) ($priority->max_rooms_covered ?? 3);
-        } else {
-            // Legacy fallback if priority config is missing
-            $maxLimit = in_array(strtolower($centerRoom->room_type), ['classroom', 'department', 'library']) ? 3 : 2;
+        // Do not allow installing multiple extinguishers in the same host/center room
+        if (!empty($validated['room_id'])) {
+            $centerAlreadyHosts = FireSafetyExtinguisher::where('room_id', $validated['room_id'])->exists();
+            if ($centerAlreadyHosts) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Selected center room already hosts an extinguisher.'
+                ], 422);
+            }
         }
 
-        if (count($coveredRoomIds) > $maxLimit) {
-            $typeName = $centerRoom->roomTypeConfig?->name ?? $centerRoom->room_type;
-            $priorityName = $priority ? $priority->name : "Standard";
-            return response()->json([
-                'success' => false,
-                'message' => "Room type ($typeName) with priority '$priorityName' can only cover up to $maxLimit rooms."
-            ], 422);
-        }
-
-        // Enforce "1 extinguisher per room" coverage (no duplicate coverage)
+        // Covered rooms must NOT include rooms that already host an extinguisher (except the selected center room itself)
         if (count($coveredRoomIds) > 0) {
-            $alreadyCovered = DB::table('fire_safety_extinguisher_room_coverage')
-                ->whereIn('room_id', $coveredRoomIds)
-            ->pluck('room_id')
-            ->map(fn ($id) => (int) $id)
-            ->all();
-
-        if (!empty($alreadyCovered)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'One or more selected rooms already have an extinguisher assigned.'
-            ], 422);
+            $coveredHostRooms = FireSafetyExtinguisher::whereNotNull('room_id')
+                ->whereIn('room_id', array_values(array_diff($coveredRoomIds, [(int)$validated['room_id']])))
+                ->pluck('room_id')
+                ->map(fn ($v) => (int) $v)
+                ->values()
+                ->all();
+            if (!empty($coveredHostRooms)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'One or more selected covered rooms already host their own extinguisher. Remove them from Covered Rooms.'
+                ], 422);
+            }
         }
 
+        // Exclude Dedicated / Limited Shared rooms from being covered (they should host their own extinguisher)
+        if (count($coveredRoomIds) > 0) {
+            $centerId = (int) $validated['room_id'];
+            $roomsToValidate = array_values(array_diff($coveredRoomIds, [$centerId]));
+            if (count($roomsToValidate) > 0) {
+                $dedicatedLike = FireSafetyRoom::whereIn('id', $roomsToValidate)
+                    ->with(['roomTypeConfig.parent'])
+                    ->get()
+                    ->filter(function ($r) {
+                        $label = $r->roomTypeConfig?->parent?->name ?? $r->calculated_priority_label ?? '';
+                        $norm = strtolower(trim((string) $label));
+                        $norm = str_replace(['_', '-'], ' ', $norm);
+                        $norm = preg_replace('/\s+/', ' ', $norm);
+                        return in_array($norm, ['dedicated', 'limited shared'], true);
+                    })
+                    ->pluck('id')
+                    ->map(fn ($v) => (int) $v)
+                    ->values()
+                    ->all();
+                if (!empty($dedicatedLike)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Dedicated / Limited Shared rooms should not be selected as covered rooms. They must host their own extinguisher.'
+                    ], 422);
+                }
+            }
+        }
+
+        // PRIORITY-BASED COVERAGE LIMIT (only when a center room is selected)
+        if ($centerRoom) {
+            $centerRoom->load(['roomTypeConfig.parent']);
+            $priority = $centerRoom->roomTypeConfig?->parent;
+            $maxLimit = 3; // Default fallback
+            if ($priority && $priority->config_type === 'calculated_priority') {
+                $maxLimit = (int) ($priority->max_rooms_covered ?? 3);
+            } else {
+                // Legacy fallback if priority config is missing
+                $maxLimit = in_array(strtolower($centerRoom->room_type), ['classroom', 'department', 'library']) ? 3 : 2;
+            }
+
+            if (count($coveredRoomIds) > $maxLimit) {
+                $typeName = $centerRoom->roomTypeConfig?->name ?? $centerRoom->room_type;
+                $priorityName = $priority ? $priority->name : "Standard";
+                return response()->json([
+                    'success' => false,
+                    'message' => "Room type ($typeName) with priority '$priorityName' can only cover up to $maxLimit rooms."
+                ], 422);
+            }
+        }
+
+        // Allow a room to host its own extinguisher even if it was previously "covered" by another extinguisher.
+        // We'll remove any existing coverage rows for the selected center room INSIDE the transaction below,
+        // so a later validation failure does not accidentally clear coverage.
+        if ($centerRoom && count($coveredRoomIds) > 0) {
+            $centerId = (int) $validated['room_id'];
+            $coveredRoomIdsToCheck = array_values(array_diff(array_map('intval', $coveredRoomIds), [$centerId]));
+
+            if (count($coveredRoomIdsToCheck) > 0) {
+                $alreadyCovered = DB::table('fire_safety_extinguisher_room_coverage')
+                    ->whereIn('room_id', $coveredRoomIdsToCheck)
+                    ->pluck('room_id')
+                    ->map(fn ($id) => (int) $id)
+                    ->all();
+
+                if (!empty($alreadyCovered)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'One or more selected rooms already have an extinguisher assigned.'
+                    ], 422);
+                }
+            }
         }
 
         // Ensure code is unique within the same school (simple constraint at app level)
@@ -1152,19 +1250,28 @@ public function storeRoom(Request $request)
             // Automatic Evaluation Result: Only 'active' is Passed
             $evaluationResult = ($validated['status'] === 'active') ? 'Passed' : 'Failed';
 
+            // If a center room is selected, clear previous coverage rows for that room
+            if (!empty($validated['room_id'])) {
+                DB::table('fire_safety_extinguisher_room_coverage')
+                    ->where('room_id', (int) $validated['room_id'])
+                    ->delete();
+            }
+
             $ext = FireSafetyExtinguisher::create([
                 'school_id' => $validated['school_id'],
                 'building_id' => $validated['building_id'],
-                'room_id' => $validated['room_id'],
+                'room_id' => $validated['room_id'] ?? null,
                 'code' => $validated['code'],
                 'type' => $validated['type'],
                 'status' => $validated['status'],
                 'pressure_level' => $validated['pressure_level'],
-                'date_checked' => $validated['date_checked'] ?? null,
+                // DB column is non-null in older installs; default to today if empty
+                'date_checked' => $validated['date_checked'] ?? now()->toDateString(),
                 'evaluation_result' => $evaluationResult,
                 'remarks' => $validated['remarks'] ?? null,
             ]);
-            if (count($coveredRoomIds) > 0) {
+
+            if (!empty($validated['room_id']) && count($coveredRoomIds) > 0) {
                 $ext->coveredRooms()->sync($coveredRoomIds);
             }
 
@@ -1283,12 +1390,35 @@ public function storeRoom(Request $request)
                 ->values()
                 ->toArray();
 
+            // Rooms that host (center) an extinguisher in this building
+            $hostRoomIds = $extinguishers
+                ->pluck('room_id')
+                ->filter()
+                ->map(fn ($v) => (int) $v)
+                ->unique()
+                ->values()
+                ->toArray();
+
+            // Build covering extinguisher lookup (room_id -> extinguisher_code)
+            $coveringMap = [];
+            foreach ($extinguishers as $ext) {
+                foreach ($ext->coveredRooms as $r) {
+                    $coveringMap[(int) $r->id] = [
+                        'id' => (int) $ext->id,
+                        'code' => (string) $ext->code,
+                    ];
+                }
+            }
+
             // Get room details with coverage status
-            $rooms = $building->actualRooms->map(function($room) use ($coveredRoomIds) {
+            $rooms = $building->actualRooms->map(function($room) use ($coveredRoomIds, $hostRoomIds, $coveringMap) {
                 $priority = $room->roomTypeConfig?->parent;
                 $maxLimit = ($priority && $priority->config_type === 'calculated_priority') 
                     ? (int)($priority->max_rooms_covered ?? 3) 
                     : (in_array(strtolower($room->room_type), ['classroom', 'department', 'library']) ? 3 : 2);
+
+                $priorityLabel = $priority?->name ?? $room->calculated_priority_label ?? null;
+                $covering = $coveringMap[(int)$room->id] ?? null;
 
                 return [
                     'id' => $room->id,
@@ -1297,15 +1427,19 @@ public function storeRoom(Request $request)
                     'floor_no' => $room->floor_no,
                     'room_type' => $room->room_type,
                     'max_rooms' => $maxLimit,
+                    'priority_label' => $priorityLabel,
                     'is_covered' => in_array($room->id, $coveredRoomIds),
-                    'covering_extinguisher_id' => $this->getCoveringExtinguisherId($room->id)
+                    'is_host_room' => in_array((int)$room->id, $hostRoomIds, true),
+                    'covering_extinguisher_id' => $covering['id'] ?? null,
+                    'covering_extinguisher_code' => $covering['code'] ?? null,
                 ];
             });
 
             return response()->json([
                 'success' => true,
                 'rooms' => $rooms,
-                'covered_room_ids' => $coveredRoomIds
+                'covered_room_ids' => $coveredRoomIds,
+                'host_room_ids' => $hostRoomIds,
             ]);
 
         } catch (\Exception $e) {
@@ -1344,22 +1478,25 @@ public function storeRoom(Request $request)
 
             $ext = FireSafetyExtinguisher::findOrFail($id);
 
-            // Check if room_id is being changed
-            if ($request->has('room_id') && $request->room_id != $ext->room_id) {
-                // If changing center room, verify the new room is available
-                if ($request->room_id) {
-                    $isRoomAvailable = !DB::table('fire_safety_extinguisher_room_coverage')
-                        ->where('room_id', $request->room_id)
-                        ->where('extinguisher_id', '!=', $id)
-                        ->exists();
-
-                    if (!$isRoomAvailable) {
-                        return response()->json([
-                            'success' => false,
-                            'message' => 'Selected center room is already covered by another extinguisher.'
-                        ], 422);
-                    }
+            // A room can host its own extinguisher even if it was previously covered by another extinguisher.
+            // But it cannot host multiple extinguishers at once.
+            $newCenterId = $request->room_id ? (int) $request->room_id : null;
+            if ($newCenterId) {
+                $hostsAnotherExt = FireSafetyExtinguisher::where('room_id', $newCenterId)
+                    ->where('id', '!=', $id)
+                    ->exists();
+                if ($hostsAnotherExt) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Selected center room already hosts another extinguisher.'
+                    ], 422);
                 }
+
+                // Ensure the new center room is NOT covered by other extinguishers anymore
+                DB::table('fire_safety_extinguisher_room_coverage')
+                    ->where('room_id', $newCenterId)
+                    ->where('extinguisher_id', '!=', $id)
+                    ->delete();
             }
 
             $ext->status = $request->status;
@@ -1376,6 +1513,49 @@ public function storeRoom(Request $request)
                 // Ensure center room is included in covered rooms
                 if ($request->room_id && !in_array($request->room_id, $coveredRoomIds)) {
                     $coveredRoomIds[] = $request->room_id;
+                }
+
+                // Do not allow covered rooms that already host an extinguisher (except this extinguisher's own center room)
+                $centerId = $request->room_id ? (int) $request->room_id : 0;
+                $coveredInt = array_map('intval', $coveredRoomIds);
+                $coveredNoCenter = array_values(array_diff($coveredInt, [$centerId]));
+                if (count($coveredNoCenter) > 0) {
+                    $hostRoomIds = FireSafetyExtinguisher::whereNotNull('room_id')
+                        ->whereIn('room_id', $coveredNoCenter)
+                        ->pluck('room_id')
+                        ->map(fn ($v) => (int) $v)
+                        ->values()
+                        ->all();
+                    if (!empty($hostRoomIds)) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'One or more selected covered rooms already host their own extinguisher. Remove them from Covered Rooms.'
+                        ], 422);
+                    }
+                }
+
+                // Exclude Dedicated / Limited Shared rooms from being covered (except the center room itself)
+                if (count($coveredNoCenter) > 0) {
+                    $dedicatedLike = FireSafetyRoom::whereIn('id', $coveredNoCenter)
+                        ->with(['roomTypeConfig.parent'])
+                        ->get()
+                        ->filter(function ($r) {
+                            $label = $r->roomTypeConfig?->parent?->name ?? $r->calculated_priority_label ?? '';
+                            $norm = strtolower(trim((string) $label));
+                            $norm = str_replace(['_', '-'], ' ', $norm);
+                            $norm = preg_replace('/\s+/', ' ', $norm);
+                            return in_array($norm, ['dedicated', 'limited shared'], true);
+                        })
+                        ->pluck('id')
+                        ->map(fn ($v) => (int) $v)
+                        ->values()
+                        ->all();
+                    if (!empty($dedicatedLike)) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Dedicated / Limited Shared rooms should not be selected as covered rooms. They must host their own extinguisher.'
+                        ], 422);
+                    }
                 }
 
                 // PRIORITY-BASED COVERAGE LIMIT VALIDATION
@@ -1395,6 +1575,23 @@ public function storeRoom(Request $request)
                         'success' => false,
                         'message' => "Room type ($typeName) with priority '$priorityName' can only cover up to $maxLimit rooms."
                     ], 422);
+                }
+
+                // Disallow overlapping coverage for NON-center rooms (center is already force-uncovered above)
+                if (count($coveredNoCenter) > 0) {
+                    $alreadyCovered = DB::table('fire_safety_extinguisher_room_coverage')
+                        ->whereIn('room_id', $coveredNoCenter)
+                        ->where('extinguisher_id', '!=', $id)
+                        ->pluck('room_id')
+                        ->map(fn ($v) => (int) $v)
+                        ->values()
+                        ->all();
+                    if (!empty($alreadyCovered)) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'One or more selected rooms already have an extinguisher assigned.'
+                        ], 422);
+                    }
                 }
 
                 $ext->coveredRooms()->sync($coveredRoomIds);

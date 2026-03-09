@@ -31,6 +31,11 @@ class FireSafetyBuilding extends Model
         'compliance_reason'
     ];
 
+    protected $appends = [
+        'active_extinguishers_count',
+        'required_extinguishers_count',
+    ];
+
     protected $casts = [
         'floors' => 'integer',
         'rooms' => 'integer',

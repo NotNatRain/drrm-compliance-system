@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\SendsPasswordResetEmails;
+use Illuminate\Http\Request;
 
 class ForgotPasswordController extends Controller
 {
@@ -20,6 +21,15 @@ class ForgotPasswordController extends Controller
 
     use SendsPasswordResetEmails;
 
+    protected function validateEmail(Request $request)
+    {
+        $request->validate([
+            'email' => ['required', 'email', 'ends_with:gmail.com'],
+        ], [
+            'email.ends_with' => 'Password reset verification is only available for registered Gmail accounts.',
+        ]);
+    }
+
     /**
      * Get the response for a successful password reset link.
      *
@@ -30,6 +40,6 @@ class ForgotPasswordController extends Controller
     protected function sendResetLinkResponse(\Illuminate\Http\Request $request, $response)
     {
         return redirect()->route('password.verify-form', ['email' => $request->email])
-                         ->with('status', trans($response));
+                         ->with('status', 'We have emailed your 6-digit verification code.');
     }
 }

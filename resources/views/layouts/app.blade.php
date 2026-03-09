@@ -8,6 +8,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>@yield('title', 'DRRM Compliance Dashboard')</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/drrmis-logo-2.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/drrmis-logo-2.png') }}">
 
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.bunny.net">
@@ -25,7 +27,8 @@
             <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
                 <div class="container">
                     <a class="navbar-brand fw-bold text-primary" href="{{ route('dashboard') }}">
-                        <i class="fas fa-shield-alt"></i> DRRM Compliance Dashboard
+                        <img src="{{ asset('images/drrmis-logo-2.png') }}" alt="DRRM" style="height: 28px; width: auto; margin-right: 8px;">
+                        DRRM Compliance Dashboard
                     </a>
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
                         <span class="navbar-toggler-icon"></span>
@@ -73,12 +76,11 @@
                                     </a>
 
                                     <div class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="navbarDropdown">
-                                        @if(Auth::user()->role === 'admin')
-                                            <a class="dropdown-item py-2" href="{{ route('users.index') }}">
-                                                <i class="fas fa-users-cog text-primary me-2"></i> User Accounts
-                                            </a>
-                                            <div class="dropdown-divider"></div>
-                                        @endif
+                                        <a class="dropdown-item py-2" href="{{ route('users.index') }}">
+                                            <i class="fas fa-user-circle text-primary me-2"></i>
+                                            {{ Auth::user()->role === 'admin' ? 'User Accounts' : 'User Account' }}
+                                        </a>
+                                        <div class="dropdown-divider"></div>
                                         @if(Auth::user()->role === 'admin')
                                             <a class="dropdown-item py-2" href="#" data-bs-toggle="modal" data-bs-target="#announceModal">
                                                 <i class="fas fa-bullhorn text-warning me-2"></i> Announce

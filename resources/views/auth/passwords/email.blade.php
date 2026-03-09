@@ -4,8 +4,10 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">{{ __('Reset Password') }}</div>
+            <div class="card shadow border-0">
+                <div class="card-header bg-primary text-white fw-bold">
+                    <i class="fas fa-envelope me-2"></i>Reset Password
+                </div>
 
                 <div class="card-body">
                     @if (session('status'))
@@ -13,6 +15,10 @@
                             {{ session('status') }}
                         </div>
                     @endif
+
+                    <p class="text-muted mb-4">
+                        Enter your registered Gmail address. We’ll send a 6-digit verification code to your email.
+                    </p>
 
                     <form method="POST" action="{{ route('password.email') }}">
                         @csrf
@@ -34,7 +40,7 @@
                         <div class="row mb-0">
                             <div class="col-md-6 offset-md-4">
                                 <button type="submit" class="btn btn-primary">
-                                    {{ __('Send Password Reset Link') }}
+                                    {{ __('Send Verification Code') }}
                                 </button>
                             </div>
                         </div>

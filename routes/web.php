@@ -23,12 +23,17 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name
 // Main dashboard
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-// Global User Management (Admin Only)
-Route::middleware(['auth', 'role:admin'])->group(function () {
+// User account management
+Route::middleware(['auth'])->group(function () {
+    // Admins see all users; contributors/viewers see only themselves.
     Route::get('/users', [DashboardController::class, 'getUsers'])->name('users.index');
-    Route::post('/users', [DashboardController::class, 'storeUser'])->name('users.store');
     Route::get('/users/{id}', [DashboardController::class, 'getUser'])->name('users.show');
     Route::put('/users/{id}', [DashboardController::class, 'updateUser'])->name('users.update');
+});
+
+// Global User Management (Admin Only actions)
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::post('/users', [DashboardController::class, 'storeUser'])->name('users.store');
     Route::post('/users/{id}/toggle-status', [DashboardController::class, 'toggleUserStatus'])->name('users.toggle-status');
     Route::post('/users/{id}/assign', [DashboardController::class, 'assignAccess'])->name('users.assign');
     Route::delete('/users/{id}', [DashboardController::class, 'deleteUser'])->name('users.destroy');

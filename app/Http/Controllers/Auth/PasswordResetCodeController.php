@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Carbon;
 use App\Models\User;
 
 class PasswordResetCodeController extends Controller
@@ -29,7 +30,16 @@ class PasswordResetCodeController extends Controller
                     ->where('email', $request->email)
                     ->first();
 
-        if (!$record || !Hash::check($request->code, $record->token)) {
+        if (!$record || empty($record->created_at)) {
+            return back()->with('error', 'The verification code is invalid or has expired.');
+        }
+
+        $expiresAt = Carbon::parse($record->created_at)->addMinutes(config('auth.passwords.users.expire', 60));
+        if (now()->greaterThan($expiresAt)) {
+            return back()->with('error', 'The verification code is invalid or has expired.');
+        }
+
+        if (!Hash::check($request->code, $record->token)) {
             return back()->with('error', 'The verification code is invalid or has expired.');
         }
 

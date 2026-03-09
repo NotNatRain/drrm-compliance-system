@@ -129,6 +129,11 @@
 
 @section('content')
 <div class="container-fluid dashboard-container">
+    @php
+        $user = auth()->user();
+        $modules = $user?->module_access ?? [];
+        $isAdmin = $user && $user->role === 'admin';
+    @endphp
     @if($announcements->count() == 0)
         <div class="d-flex justify-content-between align-items-center mb-4">
             <p class="text-muted mb-0">Welcome back, <strong>{{ Auth::user()->name }}</strong>! Select a compliance system to manage.</p>
@@ -186,7 +191,9 @@
     <div class="row justify-content-center">
         <!-- Fire Safety Compliance -->
         <div class="col-md-4 mb-4">
-            <a href="{{ route('fire-safety.dashboard') }}" class="text-decoration-none">
+            @php $canAccessFire = $isAdmin || in_array('fire_safety', $modules); @endphp
+            <a href="{{ route('fire-safety.dashboard') }}" class="text-decoration-none module-card-link"
+               data-module="fire_safety" data-can-access="{{ $canAccessFire ? '1' : '0' }}" data-theme-color="#D12428">
                 <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #D12428;">
                     <div class="card-body text-center p-5">
                         <div class="mb-4">
@@ -208,7 +215,9 @@
 
         <!-- Typhoon/Flooding Compliance -->
         <div class="col-md-4 mb-4">
-            <a href="{{ route('typhoon.dashboard') }}" class="text-decoration-none">
+            @php $canAccessTyphoon = $isAdmin || in_array('typhoon_flood', $modules); @endphp
+            <a href="{{ route('typhoon.dashboard') }}" class="text-decoration-none module-card-link"
+               data-module="typhoon_flood" data-can-access="{{ $canAccessTyphoon ? '1' : '0' }}" data-theme-color="#1B4C6D">
                 <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #1B4C6D;">
                     <div class="card-body text-center p-5">
                         <div class="mb-4">
@@ -230,12 +239,9 @@
 
         <!-- Incidents Compliance -->
         <div class="col-md-4 mb-4">
-            @php
-                $user = auth()->user();
-                $modules = $user->module_access ?? [];
-                $canAccessIncidents = $user && ($user->role === 'admin' || in_array('incident_checklist', $modules));
-            @endphp
-            <a href="{{ $canAccessIncidents ? route('incidents.dashboard') : '#' }}" class="text-decoration-none {{ $canAccessIncidents ? '' : 'disabled' }}">
+            @php $canAccessIncidents = $isAdmin || in_array('incident_checklist', $modules); @endphp
+            <a href="{{ route('incidents.dashboard') }}" class="text-decoration-none module-card-link"
+               data-module="incident_checklist" data-can-access="{{ $canAccessIncidents ? '1' : '0' }}" data-theme-color="#F2C94C">
                 <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #F2C94C;">
                     <div class="card-body text-center p-5">
                         <div class="mb-4">
@@ -247,7 +253,7 @@
                         </p>
                     </div>
                     <div class="card-footer bg-transparent text-center">
-                        <span class="btn {{ $canAccessIncidents ? '' : 'disabled' }}" style="background-color: #F2C94C; color: #333; {{ $canAccessIncidents ? '' : 'opacity: 0.7; cursor: not-allowed;' }}">
+                        <span class="btn" style="background-color: #F2C94C; color: #333; {{ $canAccessIncidents ? '' : 'opacity: 0.7; cursor: not-allowed;' }}">
                             <i class="fas fa-arrow-right"></i> {{ $canAccessIncidents ? 'Enter' : 'Admin Only' }}
                         </span>
                     </div>
@@ -257,7 +263,9 @@
 
         <!-- Comprehensive School Safety (4th compliant - below Fire Safety) -->
         <div class="col-md-4 mb-4">
-            <a href="{{ route('comprehensive-school-safety.dashboard') }}" class="text-decoration-none">
+            @php $canAccessSchoolSafety = $isAdmin || in_array('comprehensive_school_safety', $modules); @endphp
+            <a href="{{ route('comprehensive-school-safety.dashboard') }}" class="text-decoration-none module-card-link"
+               data-module="comprehensive_school_safety" data-can-access="{{ $canAccessSchoolSafety ? '1' : '0' }}" data-theme-color="#5C4033">
                 <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #5C4033;">
                     <div class="card-body text-center p-5">
                         <div class="mb-4">
@@ -279,7 +287,9 @@
 
         <!-- Hazard Mapping (5th compliant) -->
         <div class="col-md-4 mb-4">
-            <a href="{{ route('hazard-mapping.dashboard') }}" class="text-decoration-none">
+            @php $canAccessHazard = $isAdmin || in_array('hazard_mapping', $modules); @endphp
+            <a href="{{ route('hazard-mapping.dashboard') }}" class="text-decoration-none module-card-link"
+               data-module="hazard_mapping" data-can-access="{{ $canAccessHazard ? '1' : '0' }}" data-theme-color="#0D7377">
                 <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #0D7377;">
                     <div class="card-body text-center p-5">
                         <div class="mb-4">
@@ -340,6 +350,30 @@
     </div>
 </div>
 
+<!-- No Access Modal -->
+<div class="modal fade" id="noModuleAccessModal" tabindex="-1" aria-labelledby="noModuleAccessModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header text-white" id="noModuleAccessModalHeader" style="background-color: #dc3545;">
+                <h5 class="modal-title" id="noModuleAccessModalLabel">
+                    <i class="fas fa-lock me-2"></i>Access denied
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">
+                    You don't currently have access to this module. Please contact your administrator if you need access for your role.
+                </p>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-primary" id="noModuleAccessCloseBtn" data-bs-dismiss="modal" style="border-color: transparent;">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Announce Modal -->
 <div class="modal fade" id="announceModal" tabindex="-1" aria-labelledby="announceModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -394,6 +428,30 @@
 
 @push('scripts')
 <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const links = document.querySelectorAll('a.module-card-link[data-module]');
+        const modalEl = document.getElementById('noModuleAccessModal');
+        const modal = modalEl ? bootstrap.Modal.getOrCreateInstance(modalEl) : null;
+        const headerEl = document.getElementById('noModuleAccessModalHeader');
+        const closeBtn = document.getElementById('noModuleAccessCloseBtn');
+
+        function applyThemeColor(color) {
+            const safeColor = (typeof color === 'string' && color.trim()) ? color.trim() : '#dc3545';
+            if (headerEl) headerEl.style.backgroundColor = safeColor;
+            if (closeBtn) closeBtn.style.backgroundColor = safeColor;
+        }
+
+        links.forEach(a => {
+            a.addEventListener('click', function (e) {
+                const canAccess = this.getAttribute('data-can-access') === '1';
+                if (canAccess) return;
+                e.preventDefault();
+                applyThemeColor(this.getAttribute('data-theme-color'));
+                if (modal) modal.show();
+            });
+        });
+    });
+
     function previewImage(input) {
         const preview = document.getElementById('imagePreview');
         const previewImg = document.getElementById('previewImg');
