@@ -1,4 +1,4 @@
-﻿@extends('layouts.fire-safety')
+@extends('layouts.fire-safety')
 
 @section('title', 'Fire Extinguishers - Fire Safety')
 @section('page_title', 'Fire Extinguisher & Rooms')
@@ -275,7 +275,7 @@
                                                                             </div>
                                                                         </div>
                                                                         @if($building->actualRooms->isEmpty())
-                                                                            <button class="btn btn-outline-secondary w-100 mb-0 py-3 border-dashed" 
+                                                                            <button class="btn btn-outline-secondary w-100 mb-0 py-3 border-dashed"
                                                                                     onclick="openAddRoomForBuilding({{ $school->id }}, {{ $building->id }}, '{{ $building->building_no }} - {{ $building->building_name }}')">
                                                                                 <i class="fas fa-door-open me-2"></i> No rooms defined yet for this building. Add Room?
                                                                             </button>
@@ -344,7 +344,7 @@
                                                                                     <tfoot class="border-top-0">
                                                                                         <tr>
                                                                                             <td colspan="6" class="p-0">
-                                                                                                <button class="btn btn-primary w-100 rounded-0 py-2 fw-bold" 
+                                                                                                <button class="btn btn-primary w-100 rounded-0 py-2 fw-bold"
                                                                                                         onclick="openAddRoomForBuilding({{ $school->id }}, {{ $building->id }}, '{{ $building->building_no }} - {{ $building->building_name }}')">
                                                                                                     <i class="fas fa-plus-circle me-1"></i> Add Room for {{ $building->building_no }}
                                                                                                 </button>
@@ -452,10 +452,10 @@
                                                         </table>
                                                     </div>
                                                 @endforeach
-                                                
+
                                                 @if($building->fireExtinguishers->count() < $building->requiredExtinguishersCount && auth()->user()->role !== 'viewer')
                                                 <div class="mt-2">
-                                                    <button class="btn btn-primary w-100 py-2 fw-bold shadow-sm" 
+                                                    <button class="btn btn-primary w-100 py-2 fw-bold shadow-sm"
                                                             onclick="openAddExtinguisherForBuilding({{ $school->id }}, {{ $building->id }}, '{{ $building->building_no }} - {{ $building->building_name }}')">
                                                         <i class="fas fa-plus-circle me-1"></i> Add Extinguisher for {{ $building->building_no }}
                                                         <div class="small opacity-75 fw-normal">Current: {{ $building->fireExtinguishers->count() }} / Required: {{ $building->requiredExtinguishersCount }}</div>
@@ -832,7 +832,7 @@
                         <div id="roomApprovalSection" class="d-none border-top pt-3 mt-3">
                             <h6 class="fw-bold text-danger mb-2"><i class="fas fa-user-shield me-2"></i>Approval Action</h6>
                             <p class="small text-muted mb-2">This update was submitted by a <strong id="roomInspectorRole">Contributor</strong> and requires your approval.</p>
-                            
+
                             <div class="mb-2">
                                 <label class="form-label small fw-bold">Rejection Reason (if applicable)</label>
                                 <textarea class="form-control form-control-sm" id="roomRejectionReason" rows="2" placeholder="State reason for rejection..."></textarea>
@@ -1516,7 +1516,7 @@
                 });
 
                 const data = await resp.json();
-                
+
                 if (saveBtn) {
                     saveBtn.disabled = false;
                     saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Room';
@@ -1851,7 +1851,7 @@
         async function saveExtinguisher() {
             const form = document.getElementById('addExtForm');
             if (!form) return;
-            
+
             // Temporarily enable disabled fields so they are included in FormData
             const disabledFields = Array.from(form.querySelectorAll(':disabled'));
             disabledFields.forEach(el => el.disabled = false);
@@ -1901,7 +1901,7 @@
 
             const selectedCenter = document.getElementById('centerRoomSelect').selectedOptions[0];
             const maxLimit = selectedCenter ? (parseInt(selectedCenter.dataset.maxRooms) || 3) : 3;
-            
+
             if (centerId && covered.length > maxLimit) {
                 Swal.fire('Constraint Error', `This center room type can only cover up to ${maxLimit} rooms.`, 'warning');
                 return;
@@ -1925,7 +1925,7 @@
                 });
 
                 const data = await resp.json();
-                
+
                 if (saveBtn) {
                     saveBtn.disabled = false;
                     saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Extinguisher';
@@ -1956,7 +1956,7 @@
                 const centerId = t.id === 'coveredRoomsSelect' ? 'centerRoomSelect' : 'updateCenterRoomSelect';
                 const centerSelect = document.getElementById(centerId);
                 const max = parseInt(centerSelect.selectedOptions[0]?.dataset?.maxRooms) || 3;
-                
+
                 const selected = Array.from(t.selectedOptions);
                 if (selected.length > max) {
                     selected.slice(max).forEach(o => o.selected = false);
@@ -2200,7 +2200,7 @@
         function showExtRemovalReason() {
             const section = document.getElementById('extRemovalReasonSection');
             if(!section) return;
-            
+
             section.classList.toggle('d-none');
             const isVisible = !section.classList.contains('d-none');
 
@@ -2631,11 +2631,11 @@
             // Initial load of data for the active tab or active school
             const activeTabPane = document.querySelector('.tab-pane.show.active');
             let initialSchoolId = '{{ $activeSchool->id ?? "" }}';
-            
+
             if(activeTabPane) {
                 initialSchoolId = activeTabPane.id.replace('school-', '');
             }
-            
+
             if(initialSchoolId) {
                 refreshRecentData(initialSchoolId);
             }
@@ -2833,7 +2833,7 @@
                 } else {
                     select.disabled = false;
                     select.classList.remove('bg-light');
-                    
+
                     // Add "None / Self-Covered" option
                     const noneOpt = document.createElement('option');
                     noneOpt.value = "";
@@ -2873,7 +2873,7 @@
                     smokeDetectorRow.classList.remove('d-none');
                     const isRequired = !!data.smoke_detector_required;
                     smokeReqCb.checked = isRequired;
-                    
+
                     if (isRequired) {
                         smokeInstalledRow.classList.remove('d-none');
                         const isInstalled = !!data.has_smoke_detector;
@@ -2902,7 +2902,7 @@
                 // Approval Section Visibility (Admin only)
                 const approvalSection = document.getElementById('roomApprovalSection');
                 const saveBtn = document.getElementById('saveRoomUpdateBtn');
-                
+
                 if (approvalSection) {
                     if (userRole === 'admin' && data.approval_status === 'pending' && data.last_inspector_role === 'contributor') {
                         approvalSection.classList.remove('d-none');
@@ -2999,7 +2999,7 @@
         async function rejectRoomAction() {
             const id = document.getElementById('updateRoomId').value;
             const reason = document.getElementById('roomRejectionReason').value;
-            
+
             if (!reason) {
                 Swal.fire('Required', 'Please provide a reason for rejection.', 'warning');
                 return;
@@ -3120,24 +3120,24 @@
 
         async function openAddRoomForBuilding(schoolId, buildingId, buildingName) {
             console.log("Opening Add Room Modal for Building:", buildingId);
-            
+
             // Set values
             const schoolIdInput = document.getElementById('roomSchoolId');
             if (schoolIdInput) schoolIdInput.value = schoolId;
-            
+
             // Clean buildingName (remove extra info if already has "(Locked)")
             const cleanName = buildingName.replace(' (Locked)', '').replace('Building: ', '');
-            
+
             // Populate buildings and pre-select/lock the target one
             populateBuildingsForSchool(schoolId, buildingId, cleanName);
-            
+
             const bSelect = document.getElementById('roomBuildingSelect');
             bSelect.value = buildingId;
             bSelect.disabled = true;
 
             // Load floors for this building
             await updateRoomFloors(buildingId);
-            
+
             const modalEl = document.getElementById('addRoomModal');
             const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
             modal.show();
@@ -3145,20 +3145,20 @@
 
         async function openAddExtinguisherForBuilding(schoolId, buildingId, buildingName) {
             console.log("Opening Add Extinguisher Modal for Building:", buildingId);
-            
+
             const schoolIdInput = document.getElementById('extSchoolId');
             if (schoolIdInput) schoolIdInput.value = schoolId;
 
             const cleanName = buildingName.replace(' (Locked)', '').replace('Building: ', '');
             populateBuildingsForSchool(schoolId, buildingId, cleanName);
-            
+
             const bSelect = document.getElementById('extBuildingSelect');
             bSelect.value = buildingId;
             bSelect.disabled = true;
 
             // Trigger floor and room population for extinguisher
             await handleExtBuildingChange();
-            
+
             const modalEl = document.getElementById('addExtModal');
             const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
             modal.show();
