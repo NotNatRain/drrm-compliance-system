@@ -472,12 +472,48 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body text-center p-4">
-                    <button class="btn btn-outline-secondary w-100 mb-3" onclick="openBuildingHistoryModal({{ $school->id }}); bootstrap.Modal.getInstance(document.getElementById('historyOptionsModal')).hide()">
-                        <i class="fas fa-building me-2"></i> Removed Floor/Room
+                    <button class="btn btn-outline-secondary w-100 mb-2" onclick="openBuildingHistoryModal({{ $school->id }}); bootstrap.Modal.getInstance(document.getElementById('historyOptionsModal')).hide()">
+                        <i class="fas fa-layer-group me-2"></i> Removed Floor/Room
                     </button>
-                    <button class="btn btn-outline-secondary w-100" onclick="openAlarmHistoryModal({{ $school->id }}); bootstrap.Modal.getInstance(document.getElementById('historyOptionsModal')).hide()">
+                    <button class="btn btn-outline-secondary w-100 mb-2" onclick="openAlarmHistoryModal({{ $school->id }}); bootstrap.Modal.getInstance(document.getElementById('historyOptionsModal')).hide()">
                         <i class="fas fa-bell me-2"></i> Removed Alarm System
                     </button>
+                    <button class="btn btn-outline-secondary w-100" onclick="openRemovedBuildingsHistoryModal({{ $school->id }}); bootstrap.Modal.getInstance(document.getElementById('historyOptionsModal')).hide()">
+                        <i class="fas fa-building me-2"></i> Removed Buildings
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Removed Buildings History Modal -->
+    <div class="modal fade" id="removedBuildingsHistoryModal" tabindex="-1">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header bg-secondary text-white">
+                    <h5 class="modal-title"><i class="fas fa-history me-2"></i> Removed Buildings History</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm" id="removedBuildingsHistoryTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date Removed</th>
+                                    <th>Building Code</th>
+                                    <th>Building Name</th>
+                                    <th>Reason</th>
+                                    <th>Associated Data (Archived)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data populated via AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
@@ -507,14 +543,14 @@
                                     <label class="form-label fw-bold">Building Number/Code *</label>
                                     <input type="text" class="form-control border-left-primary" name="building_no" id="building_no" placeholder="e.g., BLDG-001" required>
                                 </div>
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-6 mb-3" id="secondaryExitContainer" style="display: none;">
                                     <label class="form-label fw-bold">Secondary Exits Available (2–4 Storey Buildings) *</label>
-                                    <select class="form-control" name="emergency_exits" required>
-                                        <option value="0" selected>N/A (1 floor only)</option>
+                                    <select class="form-control" name="emergency_exits" id="emergencyExitsSelect">
+                                        <option value="" disabled selected>Select option</option>
                                         <option value="1">No</option>
                                         <option value="2">Yes</option>
                                     </select>
-                                    <small class="text-muted">For buildings with more than 1 floor, choose Yes or No. Single-storey defaults to N/A.</small>
+                                    <small class="text-muted">For buildings with more than 1 floor, choose Yes or No.</small>
                                 </div>
                             </div>
 
@@ -539,17 +575,30 @@
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label fw-bold">Number of Floors *</label>
                                         <div class="input-group">
+                                            <button class="btn btn-outline-danger" type="button" id="btnDecFloors" onclick="openReduceFloorsModal()" style="display: none;"><i class="fas fa-minus"></i></button>
                                             <input type="number" class="form-control" name="floors" id="buildingFloorsInput" min="1" max="50" value="1" readonly required>
-                                            <button class="btn btn-outline-secondary" type="button" id="btnIncFloors" onclick="incrementValue('buildingFloorsInput')"><i class="fas fa-plus"></i></button>
+                                            <button class="btn btn-outline-secondary" type="button" id="btnIncFloors" onclick="incrementFloor()"><i class="fas fa-plus"></i></button>
                                         </div>
+                                        <div id="floorActionMessage" class="small text-danger mt-1 fw-bold" style="display: none;"></div>
                                     </div>
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label fw-bold">Total Rooms *</label>
                                         <div class="input-group">
+                                            <button class="btn btn-outline-danger" type="button" id="btnDecRooms" onclick="decrementRoom()" style="display: none;"><i class="fas fa-minus"></i></button>
                                             <input type="number" class="form-control" name="rooms" id="buildingRoomsInput" min="1" value="1" readonly required>
-                                            <button class="btn btn-outline-secondary" type="button" id="btnIncRooms" onclick="incrementValue('buildingRoomsInput')"><i class="fas fa-plus"></i></button>
+                                            <button class="btn btn-outline-secondary" type="button" id="btnIncRooms" onclick="incrementRoom()"><i class="fas fa-plus"></i></button>
                                         </div>
+                                        <div id="roomActionMessage" class="small text-danger mt-1 fw-bold" style="display: none;"></div>
                                     </div>
+                                </div>
+                                <div id="roomReductionContainer" style="display: none;" class="mt-3 p-3 bg-white border border-danger rounded">
+                                    <h6 class="text-danger fw-bold"><i class="fas fa-exclamation-triangle me-1"></i> Rooms to Remove</h6>
+                                    <p class="small text-muted mb-2">You are reducing the total rooms by <span id="reduceRoomCountSpan" class="fw-bold">0</span>. Please select which specific room(s) to remove (if any are currently active).</p>
+                                    <div class="list-group mb-2" id="inlineReduceRoomsList" style="max-height: 150px; overflow-y: auto;">
+                                        <!-- populated via js -->
+                                    </div>
+                                    <label class="form-label fw-bold small text-danger mt-2">Reason for removal *</label>
+                                    <textarea class="form-control" name="room_removal_reason" id="inlineRoomRemovalReason" rows="2" placeholder="Explain why these rooms are being removed..."></textarea>
                                 </div>
                             </div>
                         </div>
@@ -608,44 +657,22 @@
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Manage Floors & Rooms (Edit Mode Only - Hidden in Add) -->
-                        <div id="manageFloorsRoomsSection" style="display: none;" class="mb-3 border rounded p-3 bg-light">
-                             <!-- Keep original content for edit mode compatibility -->
-                            <h6 class="fw-bold mb-3"><i class="fas fa-tasks me-2"></i>Manage Reduction (Optional)</h6>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label text-danger fw-bold">Remove Floor</label>
-                                    <select class="form-control border-danger" id="removeFloorSelect" onchange="toggleFloorRemovalReason()">
-                                        <option value="">-- No Floor to Remove --</option>
-                                    </select>
-                                    <small class="text-muted d-block mb-2">Removing a floor deletes its alarms, rooms, and extinguishers.</small>
-                                    <div id="floorRemovalReasonSection" style="display: none;">
-                                        <label class="form-label text-danger small fw-bold">Reason to be removed (Floor)</label>
-                                        <textarea class="form-control border-danger mb-2" id="floorRemovalReason" rows="2" placeholder="State reason for removing this floor..."></textarea>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label text-danger fw-bold">Remove Room</label>
-                                    <select class="form-control border-danger" id="removeRoomSelect" onchange="toggleRoomRemovalReason()">
-                                        <option value="">-- No Room to Remove --</option>
-                                    </select>
-                                    <small class="text-muted d-block mb-2">Removing a room re-assigns or removes extinguishers.</small>
-                                    <div id="roomRemovalReasonSection" style="display: none;">
-                                        <label class="form-label text-danger small fw-bold">Reason to be removed (Room)</label>
-                                        <textarea class="form-control border-danger" id="roomRemovalReason" rows="2" placeholder="State reason for removing this room..."></textarea>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </form>
                 </div>
-                <div class="modal-footer">
-                    @if(auth()->user()->role !== 'viewer')
-                    <button type="button" class="btn btn-primary" onclick="saveBuilding()">
-                        <i class="fas fa-save me-2"></i> Save Building
-                    </button>
-                    @endif
+                <div class="modal-footer d-flex justify-content-between">
+                    <div>
+                        <button type="button" class="btn btn-danger" id="btnRemoveBuilding" onclick="confirmRemoveBuilding()" style="display: none;">
+                            <i class="fas fa-trash-alt me-1"></i> Remove 1st floor/building
+                        </button>
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Close</button>
+                        @if(auth()->user()->role !== 'viewer')
+                        <button type="button" class="btn btn-primary" id="btnSaveBuilding" onclick="saveBuilding()">
+                            <i class="fas fa-save me-2"></i> Save Building
+                        </button>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>
@@ -756,9 +783,15 @@
                                                 </label>
                                             </div>
                                         @endforeach
-                                    @else
-                                        <p class="text-muted small">No observer types configured in customization.</p>
                                     @endif
+                                    
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" id="obs_others_chk" onchange="toggleOthersInput(this, 'obs_others_text_container')">
+                                        <label class="form-check-label small" for="obs_others_chk">OTHERS: (Please specify)</label>
+                                    </div>
+                                    <div id="obs_others_text_container" style="display: none;" class="ms-4 mb-2">
+                                        <input type="text" class="form-control form-control-sm border-primary" id="obs_others_text" placeholder="Specify other observers...">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -770,8 +803,9 @@
 
                         <div class="row border-top pt-3 bg-light rounded p-3">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label small fw-bold">Monitored By / Representative Name</label>
-                                <input type="text" class="form-control" name="monitored_by" value="{{ auth()->user()->name }}" required>
+                                <label class="form-label small fw-bold">Monitored By:</label>
+                                <input type="text" class="form-control mb-2" name="monitored_by" value="{{ auth()->user()->name }}" placeholder="Name" required>
+                                <input type="text" class="form-control" name="monitored_by_position" placeholder="Position">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label small fw-bold">School DRRM Coordinator</label>
@@ -795,6 +829,8 @@
             </div>
         </div>
     </div>
+
+    @include('fire-safety.partials.inspection-modals')
 
     <!-- View Building Modal -->
     <div class="modal fade" id="viewBuildingModal" tabindex="-1">
@@ -855,6 +891,78 @@
     <div class="modal fade" id="buildingAlarmsModal" tabindex="-1">
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content">
+
+    <!-- No longer needed: Reduce Rooms Modal -->
+
+    <!-- Reduce Floors Modal -->
+    <div class="modal fade" id="reduceFloorsModal" tabindex="-1" style="z-index: 1060;">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="fas fa-layer-group me-2"></i> Confirm Floor Removal</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-danger mb-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        You are reducing the total floors by <strong id="reduceFloorsCountDisplay">X</strong>.
+                        Floors are removed chronologically from the top. 
+                        <br><strong>Warning:</strong> All alarms, rooms, and extinguishers on these floors will be archived/deleted!
+                    </div>
+                    <div id="reduceFloorsList" class="mb-3 border rounded p-3 bg-light">
+                        <!-- Listed floors to be removed -->
+                        <div class="text-center text-muted">Calculating floors...</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-danger fw-bold">Reason for Removal *</label>
+                        <textarea class="form-control border-danger" id="reduceFloorsReason" rows="2" placeholder="State reason to remove these floors..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="cancelReduceFloors()">Cancel</button>
+                    <button type="button" class="btn btn-danger" onclick="confirmReduceFloors()">
+                        Confirm Removal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Removed Buildings History Modal -->
+    <div class="modal fade" id="removedBuildingsHistoryModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #6c757d; color: white;">
+                    <h5 class="modal-title"><i class="fas fa-building me-2"></i>Removed Buildings History</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm" id="removedBuildingsHistoryTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date Removed</th>
+                                    <th>Building Code</th>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Required FEXT</th>
+                                    <th>Details (Constructed/Renovated)</th>
+                                    <th>Description & Features</th>
+                                    <th>Reason to be removed</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data populated via AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title">
                         <i class="fas fa-bell me-2"></i> <span id="alarmsModalTitle">Building Alarms</span>
@@ -1103,7 +1211,7 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Location</label>
-                                <input type="text" class="form-control" name="location" id="updateAlarmLocation" required>
+                                <input type="text" class="form-control" name="location" id="updateAlarmLocation">
                             </div>
                         </div>
 
@@ -1307,6 +1415,50 @@
                 tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Failed to load history.</td></tr>';
             }
         }
+
+        async function openRemovedBuildingsHistoryModal(schoolId) {
+            const modalEl = document.getElementById('removedBuildingsHistoryModal');
+            if(!modalEl) return;
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            const tableBody = document.querySelector('#removedBuildingsHistoryTable tbody');
+            if(!tableBody) return;
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Loading...</td></tr>';
+            modal.show();
+
+            try {
+                const resp = await fetch(`/fire-safety/building/removed-history/${schoolId}`);
+                const data = await resp.json();
+
+                if (data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No removed buildings found.</td></tr>';
+                    return;
+                }
+
+                tableBody.innerHTML = '';
+                data.forEach(item => {
+                    const removedAt = new Date(item.removed_at).toLocaleString();
+                    const row = `
+                        <tr>
+                            <td>${removedAt}</td>
+                            <td class="fw-bold text-danger">${item.item_code || 'N/A'}</td>
+                            <td>${item.item_data.building_name || 'N/A'}</td>
+                            <td>${item.reason || 'No reason provided'}</td>
+                            <td>
+                                <small>
+                                    ${item.item_data.floors ? `Floors: ${item.item_data.floors}<br>` : ''}
+                                    ${item.item_data.rooms ? `Rooms: ${item.item_data.rooms}` : ''}
+                                </small>
+                            </td>
+                        </tr>
+                    `;
+                    tableBody.insertAdjacentHTML('beforeend', row);
+                });
+            } catch (e) {
+                console.error(e);
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Failed to load history.</td></tr>';
+            }
+        }
+        
         function formatDate(dateString) {
             try {
                 const date = new Date(dateString);
@@ -1567,20 +1719,44 @@
                     }
                     const building = await response.json();
 
+                    let roomsWithoutSecondary = 0;
+                    let classroomsCount = 0;
+                    let labsCount = 0;
+                    let adminCount = 0;
+                    let actualRoomsCount = 0;
+
+                    if (building.actual_rooms && Array.isArray(building.actual_rooms)) {
+                        actualRoomsCount = building.actual_rooms.length;
+                        building.actual_rooms.forEach(room => {
+                            if (!room.has_secondary_exit || room.has_secondary_exit == '0') roomsWithoutSecondary++;
+
+                            const type = (room.room_type || '').toLowerCase();
+                            if (type.includes('classroom')) classroomsCount++;
+                            if (type.includes('laboratory') || type.includes('lab')) labsCount++;
+                            if (type.includes('administration') || type.includes('admin')) adminCount++;
+                        });
+                    }
+
+                    const allEncoded = actualRoomsCount >= (building.rooms || 0);
+                    const allEncodedText = allEncoded ? 'Yes' : 'No';
+
                     let html = `
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <p><strong>Building Code:</strong> ${building.building_no}</p>
                                 <p><strong>Building Name:</strong> ${building.building_name || 'N/A'}</p>
-                                <p><strong>School:</strong> ${building.school?.school_name || 'N/A'}</p>
-                                <p><strong>Building Type:</strong> ${building.building_type || 'N/A'}</p>
-                            </div>
-                            <div class="col-md-6">
                                 <p><strong>Floors:</strong> ${building.floors || 0}</p>
-                                <p><strong>Standard Rooms:</strong> ${building.rooms || 0}</p>
-                                <p><strong>Rooms Added:</strong> ${building.actual_rooms ? building.actual_rooms.length : 0}</p>
+                                <p><strong>Building Type:</strong> ${building.building_type || 'N/A'}</p>
                                 <p><strong>Minimum Required Extinguisher:</strong> ${building.required_extinguishers_count || 1}</p>
-                                <p><strong>Emergency Exits:</strong> ${building.emergency_exits || 'N/A'}</p>
+                            </div>
+                            <div class="col-md-6">                                
+                                <p><strong>Numbers of Classrooms:</strong> ${classroomsCount}</p>
+                                <p><strong>Numbers of Lab:</strong> ${labsCount}</p>
+                                <p><strong>Numbers of administration office:</strong> ${adminCount}</p>
+                                <p><strong>Number of Rooms without Secondary:</strong> ${roomsWithoutSecondary}</p>
+                                <p><strong>Are rooms all encoded at this building?</strong> ${allEncodedText}
+                                    ${!allEncoded ? `<a href="{{ route('fire-safety.extinguishers') }}" class="btn btn-sm btn-outline-danger ms-2"><i class="fas fa-arrow-right"></i> Add for Extinguisher Page</a>` : ''}
+                                </p>
                             </div>
                         </div>
 
@@ -1698,17 +1874,46 @@
                 form.querySelector('[name="building_no"]').value = building.building_no;
                 form.querySelector('[name="building_name"]').value = building.building_name || '';
 
+                window.currentEditingBuilding = building; // Store for reduce modals
+
                 const floorsInput = form.querySelector('#buildingFloorsInput');
                 floorsInput.value = building.floors;
                 floorsInput.min = building.floors;
                 floorsInput.readOnly = true;
                 document.getElementById('btnIncFloors').style.display = 'block';
+                if (document.getElementById('btnDecFloors')) document.getElementById('btnDecFloors').style.display = 'block';
 
                 const roomsInput = form.querySelector('#buildingRoomsInput');
                 roomsInput.value = building.rooms;
                 roomsInput.min = building.rooms;
                 roomsInput.readOnly = true;
+                
+                // Set initial states for room reduction
+                originalRoomsCount = building.rooms;
+                roomActionType = null;
+                document.getElementById('roomActionMessage').style.display = 'none';
+                document.getElementById('roomReductionContainer').style.display = 'none';
+                if (document.getElementById('inlineReduceRoomsList')) document.getElementById('inlineReduceRoomsList').innerHTML = '';
+                document.getElementById('inlineRoomRemovalReason').value = '';
+                
                 document.getElementById('btnIncRooms').style.display = 'block';
+                if (document.getElementById('btnDecRooms')) document.getElementById('btnDecRooms').style.display = 'block';
+
+                const btnRemoveBuilding = document.getElementById('btnRemoveBuilding');
+                if (btnRemoveBuilding) {
+                    if (building.floors === 1) btnRemoveBuilding.style.display = 'block';
+                    else btnRemoveBuilding.style.display = 'none';
+                }
+
+                // Initial show/hide for Secondary Exits based on current floors
+                const secContainer = document.getElementById('secondaryExitContainer');
+                if (parseInt(building.floors) > 1) {
+                    secContainer.style.display = 'block';
+                    document.getElementById('emergencyExitsSelect').required = true;
+                } else {
+                    secContainer.style.display = 'none';
+                    document.getElementById('emergencyExitsSelect').required = false;
+                }
 
                 form.querySelector('[name="year_constructed"]').value = building.year_constructed || '';
                 form.querySelector('[name="last_renovation"]').value = building.last_renovation || '';
@@ -1729,69 +1934,6 @@
                     document.getElementById('roomFloorInputs').style.display = 'block';
                 }
 
-                // Populate Removal Selection
-                const removeFloorSelect = document.getElementById('removeFloorSelect');
-                const removeRoomSelect = document.getElementById('removeRoomSelect');
-                removeFloorSelect.innerHTML = '<option value="">-- No Floor to Remove --</option>';
-                removeRoomSelect.innerHTML = '<option value="">-- No Room to Remove --</option>';
-
-                // Add floors (never allow removing floor 1 - building must have at least 1 floor)
-                for (let i = 2; i <= building.floors; i++) {
-                    const opt = document.createElement('option');
-                    opt.value = i;
-                    opt.textContent = `Floor no. ${i}`;
-                    removeFloorSelect.appendChild(opt);
-                }
-                const manageSection = document.getElementById('manageFloorsRoomsSection');
-                const floorRemovalRow = removeFloorSelect.closest('.col-md-6');
-                if (floorRemovalRow) {
-                    if (building.floors <= 1) {
-                        floorRemovalRow.style.display = 'none';
-                    } else {
-                        floorRemovalRow.style.display = '';
-                    }
-                }
-
-                // Add rooms
-                if (building.rooms_list && Array.isArray(building.rooms_list)) {
-                    building.rooms_list.forEach(room => {
-                        const opt = document.createElement('option');
-                        opt.value = room.id;
-                        opt.textContent = `${room.room_name} (Floor ${room.floor_no})`;
-                        opt.dataset.extinguisher = room.is_center_room ? 'yes' : 'no';
-                        opt.dataset.hasOthers = room.has_other_rooms_on_floor ? 'yes' : 'no';
-                        opt.dataset.floorNo = room.floor_no; // Add floor number for filtering
-                        removeRoomSelect.appendChild(opt);
-                    });
-                }
-
-                // Add event listener to filter rooms when a floor is selected for removal
-                removeFloorSelect.addEventListener('change', function() {
-                    const selectedFloor = this.value;
-                    const roomOptions = removeRoomSelect.querySelectorAll('option');
-
-                    roomOptions.forEach(option => {
-                        if (option.value === '') return; // Skip the default option
-
-                        if (selectedFloor && option.dataset.floorNo === selectedFloor) {
-                            // Hide rooms from the selected floor
-                            option.style.display = 'none';
-                            option.disabled = true;
-                        } else {
-                            // Show all other rooms
-                            option.style.display = 'block';
-                            option.disabled = false;
-                        }
-                    });
-
-                    // Reset room selection if the selected room is from the removed floor
-                    const selectedRoomOption = removeRoomSelect.options[removeRoomSelect.selectedIndex];
-                    if (selectedRoomOption && selectedRoomOption.dataset.floorNo === selectedFloor) {
-                        removeRoomSelect.value = '';
-                    }
-                });
-
-                document.getElementById('manageFloorsRoomsSection').style.display = isMiniBldg ? 'none' : 'block';
                 document.getElementById('buildingReqExt').value = building.required_extinguishers || 0;
 
                 // Handle checkboxes
@@ -1801,7 +1943,7 @@
                 });
 
                 // Update save button to update button
-                const saveBtn = editModalEl.querySelector('.btn-primary');
+                const saveBtn = editModalEl.querySelector('#btnSaveBuilding');
                 const originalOnClick = saveBtn.getAttribute('onclick');
                 saveBtn.innerHTML = '<i class="fas fa-save me-2"></i> Update Information';
                 saveBtn.setAttribute('onclick', `updateBuilding(${building.id}, '${building.building_no}')`);
@@ -1816,12 +1958,16 @@
                     floorsInput.min = 1;
                     roomsInput.min = 1;
                     typeSelect.disabled = false;
+                    floorActionType = null;
+                    roomActionType = null;
+                    document.getElementById('floorActionMessage').style.display = 'none';
+                    document.getElementById('roomActionMessage').style.display = 'none';
+                    document.getElementById('roomReductionContainer').style.display = 'none';
                     document.getElementById('roomFloorInputs').style.display = 'block';
-                    document.getElementById('manageFloorsRoomsSection').style.display = 'none';
-                    document.getElementById('floorRemovalReasonSection').style.display = 'none';
-                    document.getElementById('roomRemovalReasonSection').style.display = 'none';
-                    document.getElementById('floorRemovalReason').value = '';
-                    document.getElementById('roomRemovalReason').value = '';
+                    if (document.getElementById('btnDecFloors')) document.getElementById('btnDecFloors').style.display = 'none';
+                    if (document.getElementById('btnDecRooms')) document.getElementById('btnDecRooms').style.display = 'none';
+                    if (document.getElementById('btnRemoveBuilding')) document.getElementById('btnRemoveBuilding').style.display = 'none';
+                    document.getElementById('secondaryExitContainer').style.display = 'none';
                 }, { once: true });
 
                 editModal.show();
@@ -1840,31 +1986,6 @@
             const formData = new FormData(form);
             const newBuildingNo = formData.get('building_no');
 
-            // Handle Floor Removal Logic
-            const floorToRemove = document.getElementById('removeFloorSelect').value;
-            const floorReason = document.getElementById('floorRemovalReason').value;
-
-            if (floorToRemove) {
-                 if (!floorReason.trim()) {
-                    Swal.fire('Reason Required', 'Please provide a reason for removing the floor.', 'warning');
-                    return;
-                }
-
-                const confirmFloor = await Swal.fire({
-                    title: 'Floor Removal Warning',
-                    text: `Are you sure you want to remove Floor ${floorToRemove}? This will remove all associated rooms and alarms.`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#A8191F',
-                    confirmButtonText: 'Yes, remove floor!',
-                    cancelButtonText: 'No, cancel!'
-                });
-
-                if (!confirmFloor.isConfirmed) return;
-                formData.append('removed_floor', floorToRemove);
-                formData.append('floor_removal_reason', floorReason);
-            }
-
             if (newBuildingNo !== oldBuildingNo) {
                 const result = await Swal.fire({
                     title: 'Confirmation',
@@ -1877,38 +1998,6 @@
                 });
 
                  if (!result.isConfirmed) return;
-            }
-
-            // Room Removal Confirmation
-            const roomToRemoveSelect = document.getElementById('removeRoomSelect');
-            const roomIdToRemove = roomToRemoveSelect.value;
-            if (roomIdToRemove) {
-                const roomName = roomToRemoveSelect.options[roomToRemoveSelect.selectedIndex].text;
-                const isCenter = roomToRemoveSelect.options[roomToRemoveSelect.selectedIndex].dataset.extinguisher === 'yes';
-                const hasOthers = roomToRemoveSelect.options[roomToRemoveSelect.selectedIndex].dataset.hasOthers === 'yes';
-
-                let message = `Are you sure you want to remove room ${roomName}?`;
-                if (isCenter) {
-                    if (hasOthers) {
-                        message += `, fire extinguisher will be re-assigned to its nearest room`;
-                    } else {
-                        message += `, fire extinguiser will be completely removed as there aren't anymore rooms to this floor left to be reassigned`;
-                    }
-                }
-
-                const result = await Swal.fire({
-                    title: 'Room Removal Warning',
-                    text: message,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#A8191F',
-                    confirmButtonText: 'Yes, remove room!',
-                    cancelButtonText: 'No, cancel!'
-                });
-
-                if (!result.isConfirmed) return;
-                formData.append('removed_room_id', roomIdToRemove);
-                formData.append('room_removal_reason', document.getElementById('roomRemovalReason').value);
             }
 
             try {
@@ -2004,11 +2093,29 @@
                 console.error('Error loading school data:', error);
             }
         }
+        
+        function toggleOthersInput(chk, containerId) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.style.display = chk.checked ? 'block' : 'none';
+                if (chk.checked) {
+                    const input = container.querySelector('input');
+                    if (input) input.focus();
+                }
+            }
+        }
 
         // Store inspection (Inspect Now)
         async function saveDrillInspection() {
             const form = document.getElementById('inspectNowForm');
             const formData = new FormData(form);
+
+            // Handle "Others" observer
+            const othersChk = document.getElementById('obs_others_chk');
+            const othersText = document.getElementById('obs_others_text');
+            if (othersChk && othersChk.checked && othersText && othersText.value.trim()) {
+                formData.append('observers_data[]', 'Others: ' + othersText.value.trim());
+            }
 
             // Validate required
             if (!formData.get('drill_type') || !formData.get('inspection_date') || !formData.get('inspection_time')) {
@@ -2109,7 +2216,9 @@
                             <td class="fw-bold">${date}<div class="small text-muted">${item.inspection_time || ''}</div></td>
                             <td><span class="badge ${getDrillBadgeClass(item.drill_type)}">${item.drill_type}</span></td>
                             <td>${item.monitored_by || 'N/A'}</td>
-                            <td><div class="text-truncate" style="max-width: 250px;" title="${item.remarks || ''}">${item.remarks || '<span class="text-muted small">No remarks</span>'}</div></td>
+                            <td>
+                                <textarea class="form-control bg-light border-1 small text-dark p-1" rows="2" style="max-width: 250px; resize: none; font-size: 0.8rem; height: 60px;" readonly>${item.remarks || 'No remarks'}</textarea>
+                            </td>
                             <td class="text-center" style="width: 180px;">
                                 <div class="btn-group">
                                     <button class="btn btn-sm btn-outline-primary" onclick="viewInspection(${item.id})">
@@ -2144,9 +2253,245 @@
             return 'bg-secondary';
         }
 
-        function viewInspectionDetail(id) {
-            // Simplified view for now - can be expanded
-            window.location.href = `/fire-safety/inspection/${id}/checklist`;
+        let currentInspectionForUpdate = null;
+
+        async function viewInspection(id) {
+            try {
+                const response = await fetch(`/fire-safety/inspection/${id}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    currentInspectionForUpdate = data;
+                    document.getElementById('viewInspectionIdSpan').textContent = id;
+                    
+                    // Create an exact read-only copy of the inspectNowForm structure
+                    let checkListHtml = '';
+                    const allChecks = Array.from(document.querySelectorAll('.check-upd-list')).map(el => el.value);
+                    const savedChecks = data.checklist_data || [];
+                    allChecks.forEach(val => {
+                        const isChecked = savedChecks.includes(val) ? 'checked' : '';
+                        checkListHtml += `<div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" disabled ${isChecked}>
+                            <label class="form-check-label small text-dark">${val}</label>
+                        </div>`;
+                    });
+
+                    let obsListHtml = '';
+                    const allObs = Array.from(document.querySelectorAll('.obs-upd-list')).map(el => el.value);
+                    const savedObs = data.observers_data || [];
+                    allObs.forEach(val => {
+                        const isChecked = savedObs.includes(val) ? 'checked' : '';
+                        obsListHtml += `<div class="form-check mb-2">
+                            <input class="form-check-input" type="checkbox" disabled ${isChecked}>
+                            <label class="form-check-label small text-dark">${val}</label>
+                        </div>`;
+                    });
+
+                    // Add saved "Others" observers if any
+                    savedObs.forEach(val => {
+                        if (val.startsWith('Others: ')) {
+                            obsListHtml += `<div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" disabled checked>
+                                <label class="form-check-label small text-dark">${val}</label>
+                            </div>`;
+                        }
+                    });
+
+                    const html = `
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="fw-bold small">Drill Type *</label>
+                                <input type="text" class="form-control" value="${data.drill_type || ''}" readonly disabled>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="fw-bold small">Date *</label>
+                                <input type="text" class="form-control" value="${data.inspection_date || ''}" readonly disabled>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="fw-bold small">Time *</label>
+                                <input type="text" class="form-control" value="${data.inspection_time || ''}" readonly disabled>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="small fw-bold">Time Started</label>
+                                <input type="text" class="form-control" value="${data.time_started || ''}" readonly disabled>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="small fw-bold">Time Finished</label>
+                                <input type="text" class="form-control" value="${data.time_finished || ''}" readonly disabled>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="small fw-bold">Elapsed Time (mm:ss)</label>
+                                <input type="text" class="form-control" value="${data.elapsed_time || ''}" readonly disabled>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label class="small fw-bold">No. of Exits</label>
+                                <input type="text" class="form-control" value="${data.no_of_exits || 0}" readonly disabled>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="small fw-bold">No. of Buildings</label>
+                                <input type="text" class="form-control" value="${data.no_of_buildings || 0}" readonly disabled>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="small fw-bold">No. of Students</label>
+                                <input type="text" class="form-control" value="${data.no_of_students || 0}" readonly disabled>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="small fw-bold">No. of Personnel</label>
+                                <input type="text" class="form-control" value="${data.no_of_personnel || 0}" readonly disabled>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row mb-3 border-bottom pb-2">
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-success"><i class="fas fa-list-check me-2"></i> Safety Checklist</h6>
+                                <div style="max-height: 200px; overflow-y: auto;">
+                                    ${checkListHtml || '<p class="text-muted small">None configured.</p>'}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="fw-bold text-primary"><i class="fas fa-users-viewfinder me-2"></i> Other Observers</h6>
+                                <div style="max-height: 200px; overflow-y: auto;">
+                                    ${obsListHtml || '<p class="text-muted small">None configured.</p>'}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="fw-bold small">Remarks / Findings</label>
+                            <textarea class="form-control text-dark" rows="3" readonly disabled>${data.remarks || ''}</textarea>
+                        </div>
+                        <div class="row bg-light rounded p-2 border">
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label small fw-bold">Monitored By:</label>
+                                <input type="text" class="form-control mb-1" value="${data.monitored_by || ''}" readonly disabled>
+                                <input type="text" class="form-control" value="${data.monitored_by_position || ''}" readonly disabled>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="form-label small fw-bold">School DRRM Coordinator</label>
+                                <input type="text" class="form-control" value="${data.coordinator_name || ''}" readonly disabled>
+                            </div>
+                            <div class="col-md-12">
+                                <label class="form-label small fw-bold">School Head / Principal</label>
+                                <input type="text" class="form-control" value="${data.school_head_name || ''}" readonly disabled>
+                            </div>
+                        </div>
+                    `;
+
+                    document.getElementById('viewInspectionBody').innerHTML = html;
+                    const viewModal = new bootstrap.Modal(document.getElementById('viewInspectionModal'));
+                    viewModal.show();
+                } else {
+                    Swal.fire('Error', 'Failed to fetch inspection details.', 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                Swal.fire('Error', 'An error occurred while fetching details.', 'error');
+            }
+        }
+
+        function openUpdateInspectionModal() {
+            if (!currentInspectionForUpdate) return;
+            // Hide view modal
+            const viewModalEl = document.getElementById('viewInspectionModal');
+            const viewModal = bootstrap.Modal.getInstance(viewModalEl);
+            if (viewModal) viewModal.hide();
+
+            // Populate form
+            const d = currentInspectionForUpdate;
+            document.getElementById('updateInspId').value = d.id;
+            document.getElementById('updateInspSchoolId').value = d.school_id;
+            document.getElementById('upd_drill_type').value = d.drill_type || '';
+            document.getElementById('upd_inspection_date').value = d.inspection_date || '';
+            document.getElementById('upd_inspection_time').value = d.inspection_time ? d.inspection_time.substring(0,5) : '';
+            document.getElementById('upd_time_started').value = d.time_started ? d.time_started.substring(0,5) : '';
+            document.getElementById('upd_time_finished').value = d.time_finished ? d.time_finished.substring(0,5) : '';
+            document.getElementById('upd_elapsed_time').value = d.elapsed_time || '';
+            document.getElementById('upd_no_of_exits').value = d.no_of_exits || 0;
+            document.getElementById('upd_no_of_buildings').value = d.no_of_buildings || 0;
+            document.getElementById('upd_no_of_students').value = d.no_of_students || 0;
+            document.getElementById('upd_no_of_personnel').value = d.no_of_personnel || 0;
+            document.getElementById('upd_remarks').value = d.remarks || '';
+            document.getElementById('upd_monitored_by').value = d.monitored_by || '';
+            document.getElementById('upd_monitored_by_position').value = d.monitored_by_position || '';
+            document.getElementById('upd_coordinator_name').value = d.coordinator_name || '';
+            document.getElementById('upd_school_head_name').value = d.school_head_name || '';
+
+            // Checkboxes
+            const savedChecks = d.checklist_data || [];
+            document.querySelectorAll('.check-upd-list').forEach(chk => {
+                chk.checked = false;
+                if (savedChecks.includes(chk.value)) chk.checked = true;
+            });
+            const savedObs = d.observers_data || [];
+            document.querySelectorAll('.obs-upd-list').forEach(chk => {
+                chk.checked = false;
+                if (savedObs.includes(chk.value)) chk.checked = true;
+            });
+
+            // Handle "Others" field in update modal
+            const othersChkUpd = document.getElementById('upd_obs_others_chk');
+            const othersTextUpd = document.getElementById('upd_obs_others_text');
+            const othersContainer = document.getElementById('upd_obs_others_text_container');
+            
+            othersChkUpd.checked = false;
+            othersTextUpd.value = '';
+            othersContainer.style.display = 'none';
+            
+            savedObs.forEach(obs => {
+                if (obs.startsWith('Others: ')) {
+                    othersChkUpd.checked = true;
+                    othersTextUpd.value = obs.replace('Others: ', '');
+                    othersContainer.style.display = 'block';
+                }
+            });
+
+            // Show updated modal
+            const updModal = new bootstrap.Modal(document.getElementById('updateInspectionModal'));
+            updModal.show();
+        }
+
+        async function updateDrillInspection() {
+            const form = document.getElementById('updateInspectionForm');
+            if(!form.checkValidity()) {
+                form.reportValidity();
+                return;
+            }
+
+            const id = document.getElementById('updateInspId').value;
+            const formData = new FormData(form);
+
+            // Handle "Others" observer for update
+            const othersChkUpd = document.getElementById('upd_obs_others_chk');
+            const othersTextUpd = document.getElementById('upd_obs_others_text');
+            if (othersChkUpd && othersChkUpd.checked && othersTextUpd && othersTextUpd.value.trim()) {
+                formData.append('observers_data[]', 'Others: ' + othersTextUpd.value.trim());
+            }
+
+            try {
+                const response = await fetch(`/fire-safety/inspection/${id}/update`, {
+                    method: 'POST', // Form handles PUT via _method parameter in FormData
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    Swal.fire('Success', data.message, 'success').then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire('Error', data.message || 'Validation failed.', 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                Swal.fire('Error', 'An error occurred during update.', 'error');
+            }
         }
 
         // Load compliance statistics
@@ -2328,6 +2673,29 @@
                 return;
             }
 
+            if (roomActionType === 'reduce') {
+                const reduceAmount = originalRoomsCount - parseInt(rooms);
+                const listObj = document.getElementById('inlineReduceRoomsList');
+                const checkedCount = listObj.querySelectorAll('.room-reduce-checkbox:checked').length;
+                const availableRooms = listObj.querySelectorAll('.room-reduce-checkbox').length;
+
+                // Only strictly require matching checkboxes if there are actually active rooms to remove
+                const expectedChecks = Math.min(reduceAmount, availableRooms);
+                
+                if (checkedCount !== expectedChecks) {
+                     Swal.fire('Validation Error', `You must select exactly ${expectedChecks} room(s) to remove based on your reduction.`, 'warning');
+                     return;
+                }
+                
+                const reason = document.getElementById('inlineRoomRemovalReason').value.trim();
+                formData.set('room_removal_reason', reason); // Ensure it's in the payload
+
+                if (!reason) {
+                    Swal.fire('Validation Error', 'Please provide a reason for the room removal.', 'warning');
+                    return;
+                }
+            }
+
             // Show loading state
             const saveButton = document.querySelector('#addBuildingModal .btn-primary');
             const originalText = saveButton.innerHTML;
@@ -2411,112 +2779,7 @@
             }
         }
 
-        // View Inspection Details
-        async function viewInspection(inspectionId) {
-            try {
-                const response = await fetch(`/fire-safety/inspection/${inspectionId}`);
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-
-                const inspection = await response.json();
-
-                // Create and show modal
-                const modalHtml = `
-                    <div class="modal fade" id="viewInspectionModal" tabindex="-1">
-                        <div class="modal-dialog modal-lg">
-                            <div class="modal-content">
-                                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
-                                    <h5 class="modal-title">
-                                        <i class="fas fa-clipboard-check me-2"></i> Inspection #${inspection.id}
-                                    </h5>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <div class="row mb-4">
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <strong>Inspection Date:</strong><br>
-                                                <span class="text-muted">${formatDate(inspection.inspection_date)}</span>
-                                            </div>
-                                            <div class="mb-3">
-                                                <strong>Building:</strong><br>
-                                                <span class="text-muted">${inspection.building_name || 'N/A'}</span>
-                                            </div>
-                                            <div class="mb-3">
-                                                <strong>School:</strong><br>
-                                                <span class="text-muted">${inspection.school?.school_name || 'N/A'}</span>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <strong>Inspection Type:</strong><br>
-                                                <span class="badge bg-primary">${getInspectionTypeText(inspection.inspection_type)}</span>
-                                            </div>
-                                            <div class="mb-3">
-                                                <strong>Status:</strong><br>
-                                                <span class="badge bg-${getStatusClass(inspection.status)}">${getInspectionTypeText(inspection.status)}</span>
-                                            </div>
-                                            <div class="mb-3">
-                                                <strong>Inspector:</strong><br>
-                                                <span class="text-muted">${inspection.inspector || 'N/A'}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    ${inspection.notes ? `
-                                    <div class="mb-4">
-                                        <strong>Notes:</strong>
-                                        <div class="border rounded p-3 bg-light mt-1">${inspection.notes}</div>
-                                    </div>
-                                    ` : ''}
-
-                                    ${inspection.findings ? `
-                                    <div class="mb-4">
-                                        <strong>Findings:</strong>
-                                        <div class="border rounded p-3 bg-light mt-1">${inspection.findings}</div>
-                                    </div>
-                                    ` : ''}
-
-                                    ${inspection.recommendations ? `
-                                    <div class="mb-4">
-                                        <strong>Recommendations:</strong>
-                                        <div class="border rounded p-3 bg-light mt-1">${inspection.recommendations}</div>
-                                    </div>
-                                    ` : ''}
-
-                                    <div class="alert alert-info">
-                                        <i class="fas fa-info-circle me-2"></i>
-                                        Created on: ${formatDate(inspection.created_at)}
-                                    </div>
-                                </div>
-                                <div class="modal-footer">
-                                    ${inspection.status === 'scheduled' && USER_ROLE !== 'viewer' ? `
-                                    <button type="button" class="btn btn-primary" onclick="startInspection(${inspection.id})">
-                                        <i class="fas fa-play me-2"></i> Start Inspection
-                                    </button>
-                                    ` : ''}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                // Remove existing modal if any
-                const existingModal = document.getElementById('viewInspectionModal');
-                if (existingModal) existingModal.remove();
-
-                // Add modal to body and show it
-                document.body.insertAdjacentHTML('beforeend', modalHtml);
-                const modal = new bootstrap.Modal(document.getElementById('viewInspectionModal'));
-                modal.show();
-
-            } catch (error) {
-                console.error('Error loading inspection details:', error);
-                Swal.fire('Error', 'Failed to load inspection details. Please try again.', 'error');
-            }
-        }
 
         async function cancelInspection(inspectionId) {
             const result = await Swal.fire({
@@ -2586,13 +2849,68 @@
             });
         }
 
-        function incrementValue(inputId) {
-            const input = document.getElementById(inputId);
-            let value = parseInt(input.value) || 0;
-            const max = parseInt(input.max) || 1000;
+        function toggleSecondaryExits() {
+            const floorsInput = document.getElementById('buildingFloorsInput');
+            const secondaryExitContainer = document.getElementById('secondaryExitContainer');
+            if (!secondaryExitContainer) return;
 
-            if (value < max) {
-                input.value = value + 1;
+            const emergencyExitsSelect = document.getElementById('emergencyExitsSelect');
+            if (parseInt(floorsInput.value) > 1) {
+                secondaryExitContainer.style.display = 'block';
+                emergencyExitsSelect.required = true;
+                const hidden = document.getElementById('hiddenEmergencyExits');
+                if (hidden) hidden.remove();
+            } else {
+                secondaryExitContainer.style.display = 'none';
+                emergencyExitsSelect.required = false;
+                emergencyExitsSelect.value = '';
+                if (!document.getElementById('hiddenEmergencyExits')) {
+                    const hidden = document.createElement('input');
+                    hidden.type = 'hidden';
+                    hidden.id = 'hiddenEmergencyExits';
+                    hidden.name = 'emergency_exits';
+                    hidden.value = '0';
+                    document.getElementById('addBuildingForm')?.appendChild(hidden);
+                }
+            }
+        }
+
+        document.getElementById('buildingFloorsInput')?.addEventListener('input', toggleSecondaryExits);
+        document.getElementById('buildingFloorsInput')?.addEventListener('change', toggleSecondaryExits);
+
+        let floorActionType = null;
+
+        function incrementFloor() {
+            if (floorActionType === 'reduce') return;
+            const input = document.getElementById('buildingFloorsInput');
+
+            if (window.currentEditingBuilding) {
+                if (!floorActionType) {
+                    floorActionType = 'add';
+                    const decBtn = document.getElementById('btnDecFloors');
+                    if (decBtn) decBtn.style.display = 'none';
+                    const msgEl = document.getElementById('floorActionMessage');
+                    if (msgEl) {
+                        msgEl.textContent = 'You can only add floors right now. Apply this action first to reduce floors.';
+                        msgEl.style.display = 'block';
+                    }
+                }
+            }
+            incrementValue('buildingFloorsInput');
+            
+            // Secondary exits container toggle
+            if (parseInt(input.value) > 1) {
+                const secContainer = document.getElementById('secondaryExitContainer');
+                if (secContainer) secContainer.style.display = 'block';
+            }
+        }
+
+        function incrementValue(elementId) {
+            const el = document.getElementById(elementId);
+            const val = parseInt(el.value) || 0;
+            const max = el.hasAttribute('max') ? parseInt(el.max) : null;
+            if (max === null || val < max) {
+                el.value = val + 1;
             }
         }
 
@@ -2621,6 +2939,15 @@
                 document.querySelector('#addBuildingModal .modal-title').innerHTML = '<i class="fas fa-plus me-2"></i> Add New Building';
                 document.getElementById('manageFloorsRoomsSection').style.display = 'none';
                 document.getElementById('buildingReqExt').value = 0;
+                
+                toggleSecondaryExits();
+
+                // Reset states
+                roomActionType = null;
+                floorActionType = null;
+                document.getElementById('roomActionMessage').style.display = 'none';
+                document.getElementById('floorActionMessage').style.display = 'none';
+                document.getElementById('roomReductionContainer').style.display = 'none';
 
                 // Enable building type select
                 document.getElementById('building_type_select').disabled = false;
@@ -3470,5 +3797,266 @@
         document.addEventListener('DOMContentLoaded', function() {
             connectAlarmTypeAndStatus('addAlarmType', 'addStatusSelect');
         });
+
+        // ==========================================
+        // JS Logic for Building Updates (Reductions)
+        // ==========================================
+
+
+
+        // ==========================================
+        // JS Logic for Building Updates (Reductions)
+        // ==========================================
+
+        let roomActionType = null;
+        let originalRoomsCount = 0;
+
+        function incrementRoom() {
+            if (roomActionType === 'reduce') return;
+            const input = document.getElementById('buildingRoomsInput');
+            const incBtn = document.getElementById('btnIncRooms');
+            const decBtn = document.getElementById('btnDecRooms');
+            const msgEl = document.getElementById('roomActionMessage');
+
+            input.value = parseInt(input.value) + 1;
+            
+            if (!roomActionType) {
+                roomActionType = 'add';
+                if (decBtn) decBtn.style.display = 'none';
+                msgEl.textContent = 'You can only add rooms right now. Save or reload to reduce rooms.';
+                msgEl.style.display = 'block';
+            }
+        }
+
+        function decrementRoom() {
+            if (roomActionType === 'add') return;
+            const input = document.getElementById('buildingRoomsInput');
+            const incBtn = document.getElementById('btnIncRooms');
+            const decBtn = document.getElementById('btnDecRooms');
+            const msgEl = document.getElementById('roomActionMessage');
+            const building = window.currentEditingBuilding;
+            
+            if (!building) return;
+
+            if (parseInt(input.value) <= 1) {
+                Swal.fire('Limit Reached', 'A building must have at least 1 room.', 'warning');
+                return;
+            }
+
+            input.value = parseInt(input.value) - 1;
+
+            if (!roomActionType) {
+                roomActionType = 'reduce';
+                if (incBtn) incBtn.style.display = 'none';
+                msgEl.textContent = 'You can only reduce rooms right now. Save or reload to add rooms.';
+                msgEl.style.display = 'block';
+                document.getElementById('roomReductionContainer').style.display = 'block';
+                populateInlineReduceRoomsList(building);
+            }
+
+            // Update UI
+            const reduceAmount = originalRoomsCount - parseInt(input.value);
+            document.getElementById('reduceRoomCountSpan').textContent = reduceAmount;
+            
+            // Limit checkbox selection
+            updateRoomReduceCheckboxes(reduceAmount);
+        }
+
+        function populateInlineReduceRoomsList(building) {
+            const listObj = document.getElementById('inlineReduceRoomsList');
+            listObj.innerHTML = '';
+            
+            if (building.rooms_list && building.rooms_list.length > 0) {
+                building.rooms_list.forEach(room => {
+                    const roomName = room.room_name || room.room_no;
+                    const isCenterLabel = room.is_center_room ? ' <span class="badge bg-warning text-dark"><i class="fas fa-fire-extinguisher"></i> Assumes FEXT</span>' : '';
+                    listObj.innerHTML += `
+                        <label class="list-group-item">
+                            <input class="form-check-input me-1 room-reduce-checkbox" type="checkbox" name="removed_room_id[]" value="${room.id}">
+                            ${roomName} (Floor ${room.floor_no}) ${isCenterLabel}
+                        </label>
+                    `;
+                });
+                
+                const checkboxes = listObj.querySelectorAll('.room-reduce-checkbox');
+                checkboxes.forEach(cb => {
+                    cb.addEventListener('change', () => {
+                        const input = document.getElementById('buildingRoomsInput');
+                        const reduceAmount = originalRoomsCount - parseInt(input.value);
+                        updateRoomReduceCheckboxes(reduceAmount);
+                    });
+                });
+            } else {
+                listObj.innerHTML = `<div class="text-center text-muted p-2">No active rooms available to remove. Just confirming count reduction.</div>`;
+            }
+        }
+
+        function updateRoomReduceCheckboxes(maxAllowed) {
+            const listObj = document.getElementById('inlineReduceRoomsList');
+            const checkboxes = listObj.querySelectorAll('.room-reduce-checkbox');
+            const checkedCount = listObj.querySelectorAll('.room-reduce-checkbox:checked').length;
+            
+            checkboxes.forEach(box => {
+                if (!box.checked) box.disabled = (checkedCount >= maxAllowed);
+            });
+        }
+
+        function openReduceFloorsModal() {
+            if (floorActionType === 'add') return;
+
+            const building = window.currentEditingBuilding;
+            if (!building) return;
+            if (building.floors <= 1) {
+                Swal.fire('Limit Reached', 'A building must have at least 1 floor.', 'warning');
+                return;
+            }
+
+            // Lock input mechanism logic applies FIRST
+            if (!floorActionType) {
+                floorActionType = 'reduce';
+                document.getElementById('btnIncFloors').style.display = 'none';
+                const msgEl = document.getElementById('floorActionMessage');
+                msgEl.textContent = 'You can only reduce floors right now. Apply this action first to add floors.';
+                msgEl.style.display = 'block';
+            }
+
+            document.getElementById('reduceFloorsCountDisplay').textContent = "1";
+            document.getElementById('reduceFloorsReason').value = "";
+            const listObj = document.getElementById('reduceFloorsList');
+            
+            // Just simulate removing the top floor
+            const topFloor = building.floors;
+            listObj.innerHTML = `
+                <div class="text-danger fw-bold"><i class="fas fa-layer-group me-2"></i> Floor ${topFloor}</div>
+                <div class="small mt-1 text-muted">Items to be archived/removed: Alarms (if specific to floor), Rooms, and Extinguishers on this floor.</div>
+            `;
+
+            const reduceModal = new bootstrap.Modal(document.getElementById('reduceFloorsModal'));
+            reduceModal.show();
+        }
+
+        function cancelReduceFloors() {
+            bootstrap.Modal.getInstance(document.getElementById('reduceFloorsModal')).hide();
+        }
+
+        async function confirmReduceFloors() {
+            const building = window.currentEditingBuilding;
+            if (!building) return;
+
+            const reason = document.getElementById('reduceFloorsReason').value;
+            if (!reason.trim()) {
+                Swal.fire('Reason Required', 'Please provide a reason to remove this floor.', 'warning');
+                return;
+            }
+
+            const topFloor = parseInt(building.floors);
+
+            try {
+                const formData = new FormData();
+                formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+                formData.append('removed_floor', topFloor);
+                formData.append('floor_removal_reason', reason);
+                formData.append('building_no', building.building_no);
+
+                // Use the update endpoint which we already configured to handle floor removal
+                const response = await fetch(`/fire-safety/building/${building.id}/update`, {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    Swal.fire('Success', 'Floor successfully removed.', 'success').then(() => location.reload());
+                } else {
+                    Swal.fire('Error', data.message || 'Failed to remove floor.', 'error');
+                }
+            } catch (err) {
+                Swal.fire('Error', 'An unexpected error occurred.', 'error');
+            }
+        }
+
+        async function confirmRemoveBuilding() {
+            const building = window.currentEditingBuilding;
+            if (!building) return;
+
+            const { value: reason } = await Swal.fire({
+                title: 'Remove 1st Floor / Building',
+                text: 'Removing the final floor will completely delete the building and all its contents (alarms, extinguishers). State the reason:',
+                input: 'textarea',
+                icon: 'warning',
+                inputPlaceholder: 'Reason for building removal...',
+                showCancelButton: true,
+                confirmButtonColor: '#A8191F',
+                confirmButtonText: 'Permanently Delete Building',
+                inputValidator: (value) => {
+                    if (!value) return 'You need to write a reason!'
+                }
+            });
+
+            if (reason) {
+                try {
+                    const formData = new FormData();
+                    formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+                    formData.append('reason', reason);
+
+                    const response = await fetch(`/fire-safety/building/${building.id}/remove`, {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'Accept': 'application/json' }
+                    });
+
+                    const data = await response.json();
+                    if (data.success) {
+                        Swal.fire('Deleted!', 'The building has been removed.', 'success').then(() => location.reload());
+                    } else {
+                        Swal.fire('Error', data.message || 'Failed to delete building.', 'error');
+                    }
+                } catch (err) {
+                    Swal.fire('Error', 'An unexpected error occurred.', 'error');
+                }
+            }
+        }
+
+        async function openRemovedBuildingsHistoryModal(schoolId) {
+            const modalEl = document.getElementById('removedBuildingsHistoryModal');
+            const modal = new bootstrap.Modal(modalEl);
+            const tbody = document.querySelector('#removedBuildingsHistoryTable tbody');
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center">Loading history...</td></tr>';
+
+            modal.show();
+
+            try {
+                const response = await fetch(`/fire-safety/building/history/${schoolId}`);
+                const history = await response.json();
+
+                if (history.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No building history found.</td></tr>';
+                } else {
+                    let html = '';
+                    history.forEach(item => {
+                        html += `
+                            <tr>
+                                <td>${formatDate(item.removed_at)}</td>
+                                <td class="fw-bold">${item.item_code}</td>
+                                <td>${item.item_data.building_name || 'N/A'}</td>
+                                <td>${item.item_data.type || 'N/A'}</td>
+                                <td>${item.item_data.required_fext || '0'}</td>
+                                <td>Const: ${item.item_data.year_constructed || 'N/A'}<br>Renov: ${item.item_data.last_renovation || 'N/A'}</td>
+                                <td>
+                                    <strong>Desc:</strong> ${item.item_data.description || 'N/A'}<br>
+                                    <strong>Feat:</strong> ${item.item_data.safety_features || 'N/A'}
+                                </td>
+                                <td class="text-danger">${item.reason}</td>
+                            </tr>
+                        `;
+                    });
+                    tbody.innerHTML = html;
+                }
+            } catch (error) {
+                console.error(error);
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Failed to load history.</td></tr>';
+            }
+        }
     </script>
 @endsection

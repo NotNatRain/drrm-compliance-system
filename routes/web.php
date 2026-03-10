@@ -6,7 +6,6 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FireSafetyController;
 use App\Http\Controllers\TyphoonController;
 use App\Http\Controllers\IncidentController;
-use App\Http\Controllers\PiePraController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -133,27 +132,29 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
 
     // Alarm System Routes
     Route::get('/buildings/{schoolId}', [FireSafetyController::class, 'getBuildings']);
-    Route::get('/alarm/{id}', [FireSafetyController::class, 'getAlarm']);
+    Route::get('/alarm/{id}', [FireSafetyController::class, 'getAlarm'])->name('fire-safety.alarm.show');
     Route::post('/alarm/store', [FireSafetyController::class, 'storeAlarm'])->name('fire-safety.alarm.store');
-    Route::put('/alarm/{id}', [FireSafetyController::class, 'updateAlarm']);
     Route::post('/alarm/{id}/update', [FireSafetyController::class, 'updateAlarm'])->name('fire-safety.alarm.update');
-    Route::post('/alarm/{id}/test', [FireSafetyController::class, 'testAlarm']);
+    Route::post('/alarm/{id}/test', [FireSafetyController::class, 'testAlarm'])->name('fire-safety.alarm.test');
     Route::post('/alarm/{id}/remove', [FireSafetyController::class, 'removeAlarm'])->name('fire-safety.alarm.remove');
     Route::get('/alarm/history/{schoolId}', [FireSafetyController::class, 'getAlarmHistory'])->name('fire-safety.alarm.history');
     Route::get('/check-alarm-code/{schoolId}/{code}', [FireSafetyController::class, 'checkAlarmCode']);
 
     // Building Routes
-    Route::get('/building/{id}', [FireSafetyController::class, 'getBuilding']);
+    Route::get('/building/{id}', [FireSafetyController::class, 'getBuilding'])->name('fire-safety.building.show');
     Route::post('/building/store', [FireSafetyController::class, 'storeBuilding'])->name('fire-safety.building.store');
     Route::post('/building/{id}/update', [FireSafetyController::class, 'updateBuilding'])->name('fire-safety.building.update');
+    Route::post('/building/{id}/remove', [FireSafetyController::class, 'removeBuilding'])->name('fire-safety.building.remove');
     Route::get('/inspections/{schoolId}', [FireSafetyController::class, 'getInspections']);
     Route::get('/compliance-stats/{schoolId}', [FireSafetyController::class, 'getComplianceStats']);
     Route::get('/sidebar-stats/{schoolId}', [FireSafetyController::class, 'getSidebarStats']);
     Route::get('/buildings-list/{schoolId}', [FireSafetyController::class, 'getBuildingsList']);
     Route::get('/building/history/{schoolId}', [FireSafetyController::class, 'getBuildingHistory'])->name('fire-safety.building.history');
+    Route::get('/building/removed-history/{schoolId}', [FireSafetyController::class, 'getRemovedBuildingsHistory'])->name('fire-safety.building.removed-history');
     // Inspection Routes (School-wide Drills)
     Route::get('/inspection/{id}', [FireSafetyController::class, 'getInspection'])->name('fire-safety.inspection.show');
     Route::post('/inspection/store', [FireSafetyController::class, 'storeInspection'])->name('fire-safety.inspection.store');
+    Route::put('/inspection/{id}/update', [FireSafetyController::class, 'updateInspection'])->name('fire-safety.inspection.update');
     Route::get('/inspection/{id}/checklist', [FireSafetyController::class, 'inspectionChecklist'])->name('fire-safety.inspection.checklist');
     Route::get('/inspection/{id}/print', [FireSafetyController::class, 'printInspection'])->name('fire-safety.inspection.print');
 
@@ -165,12 +166,14 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     Route::get('/room/{id}/candidates', [FireSafetyController::class, 'getNearestCandidateRooms'])->name('fire-safety.room.candidates');
     Route::post('/room/{id}/approve', [FireSafetyController::class, 'approveRoom'])->name('fire-safety.room.approve');
     Route::post('/room/{id}/reject', [FireSafetyController::class, 'rejectRoom'])->name('fire-safety.room.reject');
+    Route::post('/room/{id}/remove', [FireSafetyController::class, 'removeRoom'])->name('fire-safety.room.remove');
     Route::post('/extinguisher/store', [FireSafetyController::class, 'storeExtinguisher'])->name('fire-safety.extinguisher.store');
     Route::get('/extinguisher/{id}', [FireSafetyController::class, 'getExtinguisher'])->name('fire-safety.extinguisher.show');
     Route::post('/extinguisher/{id}/update', [FireSafetyController::class, 'updateExtinguisher'])->name('fire-safety.extinguisher.update');
     Route::post('/extinguisher/{id}/unassign', [FireSafetyController::class, 'unassignExtinguisher'])->name('fire-safety.extinguisher.unassign');
     Route::post('/extinguisher/{id}/remove', [FireSafetyController::class, 'removeExtinguisher'])->name('fire-safety.extinguisher.remove');
     Route::get('/extinguisher/history/{schoolId}', [FireSafetyController::class, 'getExtinguisherHistory'])->name('fire-safety.extinguisher.history');
+    Route::get('/room/history/{schoolId}', [FireSafetyController::class, 'getRoomHistory'])->name('fire-safety.room.history');
     Route::get('/extinguisher/inspections/{schoolId}', [FireSafetyController::class, 'getRecentExtinguisherInspections'])->name('fire-safety.extinguisher.inspections');
     Route::get('/building/{buildingId}/rooms-with-coverage', [FireSafetyController::class, 'getBuildingRoomsWithCoverage'])->name('fire-safety.building.rooms-with-coverage');
     Route::get('/recent-room-updates/{schoolId}', [FireSafetyController::class, 'getRecentRoomUpdates']);
@@ -189,25 +192,6 @@ Route::prefix('typhoon')->middleware(['auth', 'module.access:typhoon_flood'])->g
     Route::put('/evacuation-center/{id}', [TyphoonController::class, 'updateEvacuationCenter'])->name('typhoon.evacuation-center.update');
     Route::get('/realtime', [TyphoonController::class, 'realtime'])->name('typhoon.realtime');
     // Add other typhoon routes here
-});
-
-// PIE-PRA (Pre-Disaster Intelligent Evacuation Predictor & Resource Allocator)
-Route::prefix('pie-pra')->middleware(['auth', 'module.access:pie_pra'])->group(function () {
-    Route::get('/dashboard', [PiePraController::class, 'dashboard'])->name('pie-pra.dashboard');
-    Route::post('/run', [PiePraController::class, 'runPredictor'])->name('pie-pra.run');
-    Route::get('/scenario/{id}', [PiePraController::class, 'showScenario'])->name('pie-pra.scenario.show');
-
-    // Volunteers & matching
-    Route::get('/volunteers', [PiePraController::class, 'volunteers'])->name('pie-pra.volunteers');
-    Route::post('/volunteers', [PiePraController::class, 'storeVolunteer'])->name('pie-pra.volunteers.store');
-    Route::post('/match-volunteers', [PiePraController::class, 'matchVolunteers'])->name('pie-pra.volunteers.match');
-
-    // QR-based check-in/out (publicly scannable but safe via token)
-    Route::get('/qr/check-in/{token}', [PiePraController::class, 'qrCheckIn'])->name('pie-pra.qr.checkin');
-    Route::get('/qr/check-out/{token}', [PiePraController::class, 'qrCheckOut'])->name('pie-pra.qr.checkout');
-
-    // Certificates
-    Route::get('/certificate/{id}', [PiePraController::class, 'assignmentCertificate'])->name('pie-pra.certificate');
 });
 
 

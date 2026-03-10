@@ -58,16 +58,16 @@
 
         {{-- B. Incident Monitoring --}}
         <div class="col-md-6 col-lg-3">
-            <div class="card shadow-sm h-100 border-start border-4 border-danger">
+            <div class="card shadow-sm h-100 border-start border-4 border-info">
                 <div class="card-body">
                     <h6 class="text-uppercase text-muted fw-bold small mb-3">Incident Monitoring</h6>
                     <div class="d-flex justify-content-between mb-3 align-items-center">
                         <span>Major Incidents</span>
-                        <span class="badge bg-danger rounded-pill fs-6">{{ $incidentMonitoring['major'] ?? 0 }}</span>
+                        <span class="badge bg-info rounded-pill fs-6">{{ $incidentMonitoring['major'] ?? 0 }}</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center">
                         <span>Minor Incidents</span>
-                        <span class="badge bg-warning text-dark rounded-pill fs-6">{{ $incidentMonitoring['minor'] ?? 0 }}</span>
+                        <span class="badge bg-primary text-white rounded-pill fs-6">{{ $incidentMonitoring['minor'] ?? 0 }}</span>
                     </div>
                 </div>
             </div>
@@ -75,16 +75,16 @@
 
         {{-- C. Rainfall Accumulation --}}
         <div class="col-md-6 col-lg-3">
-            <div class="card shadow-sm h-100 border-start border-4 border-info">
+            <div class="card shadow-sm h-100 border-start border-4 border-primary">
                 <div class="card-body">
                     <h6 class="text-uppercase text-muted fw-bold small mb-3">Daily Rainfall (mm)</h6>
                     <div class="d-flex justify-content-between mb-2">
                         <span>Bangal Station</span>
-                        <span class="fw-bold text-info">{{ $rainfall['bangal'] ?? '0.0' }}</span>
+                        <span class="fw-bold text-primary">{{ $rainfall['bangal'] ?? '0.0' }}</span>
                     </div>
                     <div class="d-flex justify-content-between">
                         <span>Kalaklan Station</span>
-                        <span class="fw-bold text-info">{{ $rainfall['kalaklan'] ?? '0.0' }}</span>
+                        <span class="fw-bold text-primary">{{ $rainfall['kalaklan'] ?? '0.0' }}</span>
                     </div>
                 </div>
             </div>
@@ -92,12 +92,20 @@
 
         {{-- D. Weather Forecast --}}
         <div class="col-md-6 col-lg-3">
-            <div class="card shadow-sm h-100 border-start border-4 border-success">
+            <div class="card shadow-sm h-100 border-start border-4" style="border-color: #1B4C6D !important;">
                 <div class="card-body">
                     <h6 class="text-uppercase text-muted fw-bold small mb-3">Weather Forecast</h6>
                     <div class="mb-2">
-                        <span class="d-block text-muted small">System Name</span>
-                        <span class="fw-bold fs-5 text-success">{{ $typhoonData->name ?? 'None' }}</span>
+                        <span class="d-block text-muted small">Current Condition</span>
+                        <span class="fw-bold fs-5" style="color: #1B4C6D;">{{ $typhoonData->name ?? 'None' }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted small">Temperature</span>
+                        <span class="fw-bold small">{{ $typhoonData->temp }}°C</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small">Wind Speed</span>
+                        <span class="fw-bold small">{{ $typhoonData->wind }} km/h</span>
                     </div>
                     <div>
                         <span class="d-block text-muted small">As Of</span>
@@ -336,7 +344,6 @@
         return [
             'name' => \Illuminate\Support\Str::limit($ec->school->school_name ?? $ec->identification ?? 'Center #'.$ec->id, 15),
             'occupancy' => $ec->current_occupancy,
-            'capacity' => $ec->capacity,
         ];
     })->values();
 @endphp
@@ -353,7 +360,6 @@
 
         const labels = rawData.map(d => d.name);
         const dataOccupancy = rawData.map(d => d.occupancy);
-        const dataCapacity = rawData.map(d => d.capacity);
 
         new Chart(ctx, {
             type: 'bar',
@@ -365,14 +371,6 @@
                     backgroundColor: 'rgba(54, 162, 235, 0.7)',
                     borderColor: 'rgba(54, 162, 235, 1)',
                     borderWidth: 1
-                },
-                {
-                    label: 'Capacity',
-                    data: dataCapacity,
-                    backgroundColor: 'rgba(201, 203, 207, 0.3)',
-                    borderColor: 'rgba(201, 203, 207, 1)',
-                    borderWidth: 1,
-                    type: 'bar' 
                 }]
             },
             options: {

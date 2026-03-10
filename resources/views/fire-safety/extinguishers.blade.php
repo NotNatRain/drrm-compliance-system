@@ -218,8 +218,9 @@
                                             </button>
                                             <button class="btn btn-sm ms-2"
                                                     style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;"
-                                                    onclick="openExtHistoryModal({{ $school->id }})">
-                                                <i class="fas fa-history me-1"></i> Removed FEXT
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#historyOptionsModal">
+                                                <i class="fas fa-history me-1"></i> History
                                             </button>
                                             @endif
                                             <a href="{{ route('fire-safety.report.extinguisher-details', $school->id) }}" target="_blank"
@@ -851,10 +852,25 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     @if(auth()->user()->role !== 'viewer')
+                    <button type="button" class="btn btn-outline-danger" id="removeRoomBtn" style="display: none;" onclick="showRoomRemovalReason()">
+                        <i class="fas fa-trash-alt me-2"></i>Remove Room
+                    </button>
                     <button type="button" class="btn btn-primary" onclick="saveRoomUpdate()" id="saveRoomUpdateBtn">
                         <i class="fas fa-save me-2"></i>Save Changes
                     </button>
                     @endif
+                </div>
+                <!-- Reason for Removal section -->
+                <div class="card-footer bg-light border-top-0 d-none" id="roomRemovalReasonSection">
+                    <div class="p-3">
+                        <label class="form-label fw-bold text-danger">Reason for Removal *</label>
+                        <textarea class="form-control border-danger" id="roomRemovalReason" rows="2" placeholder="State reason for removing this room..."></textarea>
+                        <div class="mt-2 text-end">
+                            <button type="button" class="btn btn-danger btn-sm" onclick="confirmRemoveRoom()">
+                                <i class="fas fa-check me-2"></i>Yes, Remove It!
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1134,6 +1150,59 @@
                                     <th>Last Location</th>
                                     <th>Reason to be removed</th>
                                     <th>Last Recorded Data</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data populated via AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Options Modal -->
+    <div class="modal fade" id="historyOptionsModal" tabindex="-1">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-secondary text-white">
+                    <h6 class="modal-title mb-0"><i class="fas fa-history me-2"></i> History Options</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <button class="btn btn-outline-secondary w-100 mb-3" onclick="openExtHistoryModal({{ $school->id ?? 'null' }}); bootstrap.Modal.getInstance(document.getElementById('historyOptionsModal')).hide()">
+                        <i class="fas fa-fire-extinguisher me-2"></i> Fire Extinguisher History
+                    </button>
+                    <button class="btn btn-outline-secondary w-100" onclick="openRoomHistoryModal({{ $school->id ?? 'null' }}); bootstrap.Modal.getInstance(document.getElementById('historyOptionsModal')).hide()">
+                        <i class="fas fa-door-open me-2"></i> Removed Room History
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Room's History Modal -->
+    <div class="modal fade" id="roomHistoryModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: #6c757d; color: white;">
+                    <h5 class="modal-title"><i class="fas fa-history me-2"></i>Room's History</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm" id="roomHistoryTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date Removed</th>
+                                    <th>Building</th>
+                                    <th>Identifer</th>
+                                    <th>Reason to be removed</th>
+                                    <th>Involved Items (Archives)</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -2251,6 +2320,124 @@
             } catch (e) {
                 console.error(e);
                 tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Failed to load history.</td></tr>';
+            }
+        }
+
+        function showRoomRemovalReason() {
+            const btn = document.getElementById('removeRoomBtn');
+            const section = document.getElementById('roomRemovalReasonSection');
+            if (btn && section) {
+                btn.style.display = 'none';
+                section.classList.remove('d-none');
+            }
+        }
+
+        // Add event listener to reset the remove room reason UI when the modal opens
+        document.addEventListener('DOMContentLoaded', () => {
+            const updateRoomModalEl = document.getElementById('updateRoomModal');
+            if (updateRoomModalEl) {
+                updateRoomModalEl.addEventListener('show.bs.modal', () => {
+                    const btn = document.getElementById('removeRoomBtn');
+                    const section = document.getElementById('roomRemovalReasonSection');
+                    const reasonInput = document.getElementById('roomRemovalReason');
+                    if (btn) btn.style.display = 'inline-block';
+                    if (section) section.classList.add('d-none');
+                    if (reasonInput) reasonInput.value = '';
+                });
+            }
+        });
+
+        async function confirmRemoveRoom() {
+            const roomId = document.getElementById('updateRoomId').value;
+            const code = document.getElementById('updateRoomCode').value || roomId;
+            const reasonInput = document.getElementById('roomRemovalReason');
+            const reason = reasonInput ? reasonInput.value : '';
+
+            if (!reason.trim()) {
+                Swal.fire('Reason Required', 'Please provide a reason for removal.', 'warning');
+                return;
+            }
+
+            const result = await Swal.fire({
+                title: 'Are you sure?',
+                text: `You are about to remove Room ${code}. This will move it to archive and may unassign extinguishers.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, Remove It!'
+            });
+
+            if (result.isConfirmed) {
+                try {
+                    const resp = await fetch(`/fire-safety/room/${roomId}/remove`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken(),
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ reason: reason })
+                    });
+
+                    const data = await resp.json();
+                    if (data.success) {
+                        Swal.fire('Removed!', 'Room has been archived.', 'success').then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire('Error', data.message || 'Failed to remove room', 'error');
+                    }
+                } catch (e) {
+                    console.error(e);
+                    Swal.fire('Error', 'Network error during removal.', 'error');
+                }
+            }
+        }
+
+        async function openRoomHistoryModal(schoolId) {
+            const modalEl = document.getElementById('roomHistoryModal');
+            if(!modalEl) return;
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            const tableBody = document.querySelector('#roomHistoryTable tbody');
+            if(!tableBody) return;
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Loading...</td></tr>';
+            modal.show();
+
+            try {
+                const resp = await fetch(`/fire-safety/room/history/${schoolId}`);
+                const data = await resp.json();
+
+                if (data.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No removed rooms found.</td></tr>';
+                    return;
+                }
+
+                tableBody.innerHTML = '';
+                data.forEach(item => {
+                    const removedAt = new Date(item.removed_at).toLocaleString();
+                    const reason = item.reason || 'Manual removal';
+                    let archivesHtml = '';
+                    if (item.cascaded_archives && item.cascaded_archives.length > 0) {
+                        archivesHtml = `<ul>` + item.cascaded_archives.map(a => `<li>${a.type} - ${a.item_code}</li>`).join('') + `</ul>`;
+                    } else {
+                        archivesHtml = '<span class="text-muted">None</span>';
+                    }
+
+                    const row = `
+                        <tr>
+                            <td>${removedAt}</td>
+                            <td>${item.item_data.building_name || 'N/A'}</td>
+                            <td class="fw-bold text-danger">${item.item_code || 'N/A'} - Floor ${item.item_data.floor_no || '?'}</td>
+                            <td>${reason}</td>
+                            <td>${archivesHtml}</td>
+                        </tr>
+                    `;
+                    tableBody.insertAdjacentHTML('beforeend', row);
+                });
+            } catch (e) {
+                console.error(e);
+                tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Failed to load history.</td></tr>';
             }
         }
 

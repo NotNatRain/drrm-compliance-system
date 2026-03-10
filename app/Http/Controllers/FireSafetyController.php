@@ -329,9 +329,9 @@ class FireSafetyController extends Controller
                 'building_ids.*' => 'exists:firesafety_buildings,id',
                 'floor_id' => 'nullable|string',
                 'code' => 'required|string|max:50',
-                'alarm_type' => 'required|in:Bell,Mechanical,Digital',
+                'alarm_type' => 'required|string',
                 'status' => 'required|string',
-                'location' => 'required|string|max:255',
+                'location' => 'nullable|string|max:255',
                 'manufacturer' => 'nullable|string|max:100',
                 'installation_date' => 'nullable|date',
                 'last_test' => 'nullable|date',
@@ -341,6 +341,15 @@ class FireSafetyController extends Controller
 
             // Format status (convert to lowercase with underscores)
             $validated['status'] = strtolower(str_replace(' ', '_', $validated['status']));
+            
+            if (empty($validated['location'])) {
+                $validated['location'] = 'Not Specified';
+            }
+
+            // Handle 'all' floor_id - Convert to null for DB compatibility
+            if (isset($validated['floor_id']) && strtolower($validated['floor_id']) === 'all') {
+                $validated['floor_id'] = null;
+            }
 
             Log::info('Validation passed:', $validated);
 
@@ -406,6 +415,7 @@ class FireSafetyController extends Controller
         $validated = $request->validate([
             'code' => 'required|string|max:50',
             'status' => 'required|string',
+            'location' => 'nullable|string|max:255',
             'last_test' => 'nullable|date',
             'next_test_due' => 'required|date',
             'notes' => 'nullable|string',
@@ -435,6 +445,15 @@ class FireSafetyController extends Controller
         ];
         $originalStatus = strtolower(str_replace(' ', '_', $validated['status']));
         $validated['status'] = $statusMap[$originalStatus] ?? $originalStatus;
+        
+        if (empty($validated['location'])) {
+            $validated['location'] = 'Not Specified';
+        }
+
+        // Handle 'all' floor_id - Convert to null for DB compatibility
+        if (isset($validated['floor_id']) && strtolower($validated['floor_id']) === 'all') {
+            $validated['floor_id'] = null;
+        }
 
         $alarm->update($validated);
 
@@ -1704,6 +1723,49 @@ public function storeRoom(Request $request)
         return response()->json($archives);
     }
 
+    public function getRoomHistory($schoolId)
+    {
+        $archives = FireSafetyArchive::where('school_id', $schoolId)
+            ->where('type', 'room')
+            ->orderBy('removed_at', 'desc')
+            ->get();
+
+        return response()->json($archives);
+    }
+
+    public function removeRoom(Request $request, $id)
+    {
+        if (auth()->user()->role === 'viewer') {
+            return response()->json(['success' => false, 'message' => 'Viewers cannot remove rooms.'], 403);
+        }
+
+        $request->validate([
+            'reason' => 'required|string|max:500'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $room = FireSafetyRoom::with(['building'])->findOrFail($id);
+            $building = $room->building;
+
+            $message = $this->processRoomRemoval($room, $request->reason);
+
+            if ($building) {
+                // Ensure room removals from the Extinguisher page DO NOT reduce the Total Rooms capacity of the Building
+                // We only process the room archival, leaving the overall building room quota intact.
+            }
+
+            DB::commit();
+            return response()->json(['success' => true, 'message' => $message]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error removing room: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to remove room.'], 500);
+        }
+    }
+
     // Get Recent Inspections (AJAX)
     public function getRecentExtinguisherInspections($schoolId)
     {
@@ -1947,7 +2009,8 @@ public function storeRoom(Request $request)
             'description' => 'nullable|string',
             'features' => 'nullable|array',
             'removed_floor' => 'nullable|integer',
-            'removed_room_id' => 'nullable|exists:fire_safety_rooms,id',
+            'removed_room_id' => 'nullable|array',
+            'removed_room_id.*' => 'exists:fire_safety_rooms,id',
             'floor_removal_reason' => 'nullable|required_with:removed_floor|string|max:500',
             'room_removal_reason' => 'nullable|required_with:removed_room_id|string|max:500',
             'required_extinguishers' => 'nullable|integer|min:0'
@@ -2051,12 +2114,16 @@ public function storeRoom(Request $request)
             }
 
             // 2. Room Removal
-            if ($request->filled('removed_room_id')) {
-                $room = FireSafetyRoom::findOrFail($request->removed_room_id);
+            if ($request->has('removed_room_id') && is_array($request->removed_room_id)) {
                 $reason = $request->room_removal_reason;
-                $res = $this->processRoomRemoval($room, $reason);
-                $building->decrement('rooms');
-                if ($res) $cascadingMessages[] = $res;
+                foreach ($request->removed_room_id as $roomId) {
+                    $room = FireSafetyRoom::find($roomId);
+                    if ($room) {
+                        $res = $this->processRoomRemoval($room, $reason);
+                        $building->decrement('rooms');
+                        if ($res) $cascadingMessages[] = $res;
+                    }
+                }
             }
 
             // 3. Handle Floor and Room Increments (do not overwrite floors when we just removed one)
@@ -2090,6 +2157,71 @@ public function storeRoom(Request $request)
             ], 500);
         }
     }
+
+    public function removeBuilding(Request $request, $id)
+    {
+        if (auth()->user()->role === 'viewer') {
+            return response()->json(['success' => false, 'message' => 'Viewers cannot delete buildings.'], 403);
+        }
+
+        $building = FireSafetyBuilding::findOrFail($id);
+
+        if (auth()->user()->role !== 'admin' && (int)$building->school_id !== (int)auth()->user()->school_id) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized access.'], 403);
+        }
+
+        $validated = $request->validate([
+            'reason' => 'required|string|max:500'
+        ]);
+
+        DB::beginTransaction();
+        try {
+            // Archive Building
+            FireSafetyArchive::create([
+                'school_id' => $building->school_id,
+                'type' => 'building',
+                'item_id' => null, // It's deleted
+                'item_code' => $building->building_no,
+                'item_data' => [
+                    'building_name' => $building->building_name,
+                    'type' => $building->building_type,
+                    'required_fext' => $building->required_extinguishers,
+                    'year_constructed' => $building->year_constructed,
+                    'last_renovation' => $building->last_renovation,
+                    'description' => $building->description,
+                    'safety_features' => $building->features,
+                ],
+                'reason' => $validated['reason'],
+                'removed_at' => now()
+            ]);
+
+            // Cascade deletes manually to be safe
+            $building->alarmSystems()->delete();
+            
+            $rooms = FireSafetyRoom::where('building_id', $building->id)->get();
+            foreach ($rooms as $room) {
+               FireSafetyExtinguisher::where('room_id', $room->id)->delete();
+               $room->delete();
+            }
+
+            $building->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Building removed successfully.'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error removing building: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to remove building: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
 
     private function processRoomRemoval($room, $reason = 'Manual removal')
     {
@@ -2297,9 +2429,12 @@ public function storeRoom(Request $request)
     {
         try {
             $inspection = FireSafetyInspection::with('school')->findOrFail($id);
-            return view('fire-safety.reports.monitoring-tool', compact('inspection'));
+            $checklists = SystemConfiguration::where('config_type', 'inspection_checklist')->orderBy('sort_order')->get();
+            $observers = SystemConfiguration::where('config_type', 'inspection_observer')->orderBy('sort_order')->get();
+            return view('fire-safety.reports.monitoring-tool', compact('inspection', 'checklists', 'observers'));
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Inspection not found or unable to print.');
+            Log::error('Print Inspection Error: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Inspection not found or unable to print. Error: ' . $e->getMessage());
         }
     }
 
@@ -2327,6 +2462,7 @@ public function storeRoom(Request $request)
             'no_of_students' => 'nullable|integer',
             'no_of_personnel' => 'nullable|integer',
             'monitored_by' => 'required|string',
+            'monitored_by_position' => 'nullable|string',
             'checklist_data' => 'nullable|array',
             'observers_data' => 'nullable|array',
             'remarks' => 'nullable|string',
@@ -2339,6 +2475,49 @@ public function storeRoom(Request $request)
         return response()->json([
             'success' => true,
             'message' => 'Inspection saved successfully!',
+            'inspection' => $inspection
+        ]);
+    }
+
+    // Update inspection
+    public function updateInspection(Request $request, $id)
+    {
+        if (auth()->user()->role === 'viewer') {
+            return response()->json(['success' => false, 'message' => 'Viewers cannot update inspections.'], 403);
+        }
+
+        $inspection = FireSafetyInspection::findOrFail($id);
+        
+        if (auth()->user()->role !== 'admin' && (int)$inspection->school_id !== (int)auth()->user()->school_id) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized access to this inspection.'], 403);
+        }
+
+        $validated = $request->validate([
+            'school_id' => 'required|exists:firesafety_school_information,id',
+            'drill_type' => 'required|string',
+            'inspection_date' => 'required|date',
+            'inspection_time' => 'required',
+            'time_started' => 'nullable',
+            'time_finished' => 'nullable',
+            'elapsed_time' => 'nullable|string',
+            'no_of_exits' => 'nullable|integer',
+            'no_of_buildings' => 'nullable|integer',
+            'no_of_students' => 'nullable|integer',
+            'no_of_personnel' => 'nullable|integer',
+            'monitored_by' => 'required|string',
+            'monitored_by_position' => 'nullable|string',
+            'checklist_data' => 'nullable|array',
+            'observers_data' => 'nullable|array',
+            'remarks' => 'nullable|string',
+            'coordinator_name' => 'nullable|string',
+            'school_head_name' => 'nullable|string',
+        ]);
+
+        $inspection->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Inspection updated successfully!',
             'inspection' => $inspection
         ]);
     }
@@ -3685,6 +3864,16 @@ public function storeRoom(Request $request)
     {
         $archives = FireSafetyArchive::where('school_id', $schoolId)
             ->whereIn('type', ['floor', 'room'])
+            ->orderBy('removed_at', 'desc')
+            ->get();
+
+        return response()->json($archives);
+    }
+
+    public function getRemovedBuildingsHistory($schoolId)
+    {
+        $archives = FireSafetyArchive::where('school_id', $schoolId)
+            ->where('type', 'building')
             ->orderBy('removed_at', 'desc')
             ->get();
 

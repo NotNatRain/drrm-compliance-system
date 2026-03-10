@@ -21,6 +21,7 @@ class FireSafetyInspection extends Model
         'no_of_students',
         'no_of_personnel',
         'monitored_by',
+        'monitored_by_position',
         'checklist_data',
         'observers_data',
         'remarks',
