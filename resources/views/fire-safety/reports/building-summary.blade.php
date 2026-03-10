@@ -171,14 +171,10 @@
                     });
                     $offices = $adminRooms->count();
                     
-                    // Count rooms without secondary exit (rooms on floors >= 2 in buildings without adequate emergency exits)
-                    $roomsWithoutSecondaryExit = 0;
-                    if ($building->floors >= 2 && $building->emergency_exits < 2) {
-                        // Count rooms on floor 2 and above
-                        $roomsWithoutSecondaryExit = $rooms->filter(function($room) {
-                            return ($room->floor_no ?? 1) >= 2;
-                        })->count();
-                    }
+                    // Count rooms without secondary exit (rooms where has_secondary_exit is false/0)
+                    $roomsWithoutSecondaryExit = $rooms->filter(function($room) {
+                        return !$room->has_secondary_exit || $room->has_secondary_exit == '0';
+                    })->count();
                     
                     // Logic for Rooms Without Secondary Exit Background
                     $roomsWithoutExitColor = $roomsWithoutSecondaryExit === 0 ? '#90EE90' : '#e20707ff';

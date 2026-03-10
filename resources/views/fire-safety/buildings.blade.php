@@ -1325,6 +1325,33 @@
             </div>
         </div>
     </div>
+
+    <!-- Alarm Detail Modal (for Upcoming Alarm Tests) -->
+    <div class="modal fade" id="alarmDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-bell me-2"></i> <span id="alarmDetailTitle">Alarm Details</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="list-group list-group-flush" id="alarmDetailBody">
+                        <!-- Populated via JS -->
+                    </div>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    @if(auth()->user()->role !== 'viewer')
+                    <button type="button" class="btn btn-success" id="alarmDetailTestNowBtn">
+                        <i class="fas fa-check-circle me-2"></i> Test Now
+                    </button>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 @section('scripts')
@@ -3229,8 +3256,9 @@
                 if(diffDays < 0) badge = 'bg-danger'; // Overdue
                 else if(diffDays <= 7) badge = 'bg-warning text-dark';
 
+                const alarmData = encodeURIComponent(JSON.stringify(a));
                 html += `
-                    <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-3 alarm-test-card" style="cursor: pointer;" onclick="openAlarmDetailModal(decodeURIComponent('${alarmData}'))">
                         <div>
                             <div class="fw-bold text-primary">${a.code}</div>
                             <div class="small text-muted">${a.location || 'Building ' + (a.building_no || '')}</div>
@@ -3243,6 +3271,112 @@
                 `;
             });
             list.innerHTML = html;
+        }
+
+        function openAlarmDetailModal(alarmJson) {
+            const alarm = JSON.parse(alarmJson);
+            const modal = document.getElementById('alarmDetailModal');
+            document.getElementById('alarmDetailTitle').textContent = alarm.code + ' - Alarm Details';
+
+            const floor = alarm.floor || alarm.floor_no || alarm.floor_id || 'N/A';
+            const floorLabel = typeof formatFloorLabel === 'function' ? formatFloorLabel(floor) : floor;
+            const statusBadge = typeof getAlarmStatusBadge === 'function' ? getAlarmStatusBadge(alarm.status) : 'bg-secondary';
+            const statusText = typeof formatStatus === 'function' ? formatStatus(alarm.status) : alarm.status;
+
+            let bodyHtml = `
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-hashtag me-2 text-primary"></i><strong>Code</strong></span>
+                    <span class="fw-bold">${alarm.code}</span>
+                </div>
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-bell me-2 text-info"></i><strong>Type</strong></span>
+                    <span>${alarm.alarm_type || 'N/A'}</span>
+                </div>
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-map-marker-alt me-2 text-danger"></i><strong>Location</strong></span>
+                    <span>${alarm.location || 'N/A'}</span>
+                </div>
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-building me-2 text-secondary"></i><strong>Building</strong></span>
+                    <span>${alarm.building_no ? 'Building ' + alarm.building_no : 'N/A'}</span>
+                </div>
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-layer-group me-2 text-warning"></i><strong>Floor</strong></span>
+                    <span>${floorLabel}</span>
+                </div>
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-info-circle me-2 text-success"></i><strong>Status</strong></span>
+                    <span class="badge ${statusBadge}">${statusText}</span>
+                </div>
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-calendar-check me-2 text-primary"></i><strong>Last Test</strong></span>
+                    <span>${alarm.last_test ? formatDate(alarm.last_test) : '<span class="text-warning">Never</span>'}</span>
+                </div>
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-calendar-alt me-2 text-danger"></i><strong>Next Test Due</strong></span>
+                    <span class="fw-bold">${alarm.next_test_due ? formatDate(alarm.next_test_due) : 'N/A'}</span>
+                </div>
+            `;
+
+            document.getElementById('alarmDetailBody').innerHTML = bodyHtml;
+
+            const testBtn = document.getElementById('alarmDetailTestNowBtn');
+            if (testBtn) {
+                testBtn.onclick = function() {
+                    testAlarmFromUpcoming(alarm.id);
+                };
+            }
+
+            const bsModal = new bootstrap.Modal(modal);
+            bsModal.show();
+        }
+
+        async function testAlarmFromUpcoming(id) {
+            try {
+                const response = await fetch(`/fire-safety/alarm/${id}/test`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    // Close the detail modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('alarmDetailModal'));
+                    if (modal) modal.hide();
+
+                    // Remove the tested alarm card from Upcoming Alarm Tests list
+                    const listEl = document.getElementById('mainUpcomingTestsList');
+                    if (listEl) {
+                        const cards = listEl.querySelectorAll('.alarm-test-card');
+                        cards.forEach(card => {
+                            const onclickAttr = card.getAttribute('onclick') || '';
+                            if (onclickAttr.includes('"id":' + id + ',') || onclickAttr.includes('"id":' + id + '}')) {
+                                card.remove();
+                            }
+                        });
+                        // If no more items, show empty message
+                        if (listEl.querySelectorAll('.alarm-test-card').length === 0) {
+                            listEl.innerHTML = '<li class="list-group-item text-muted small text-center py-3">No upcoming tests scheduled.</li>';
+                        }
+                    }
+
+                    Swal.fire({
+                        title: 'Tested!',
+                        text: 'Alarm test recorded successfully.',
+                        icon: 'success',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
+                } else {
+                    Swal.fire('Error', data.message || 'Failed to test alarm.', 'error');
+                }
+            } catch (e) {
+                Swal.fire('Error', 'Failed to record test.', 'error');
+            }
         }
 
         async function fetchSchoolUpcomingTests(schoolId) {
