@@ -1385,8 +1385,14 @@
 
                 const currentTotalCount = existingRooms.length;
                 const roomsByFloor = {};
+                const normalizeFloorNo = (value) => {
+                    if (value === null || value === undefined) return null;
+                    const n = parseInt(String(value).match(/\d+/)?.[0] ?? '', 10);
+                    return Number.isFinite(n) ? n : null;
+                };
+
                 for (let i = 1; i <= totalFloors; i++) {
-                    roomsByFloor[i] = existingRooms.filter(r => r.floor_no == i).length;
+                    roomsByFloor[i] = existingRooms.filter(r => normalizeFloorNo(r.floor_no) === i).length;
                 }
 
                 const remainingSlots = totalRequiredRooms - currentTotalCount;
@@ -1402,19 +1408,25 @@
                 const floorsWithRooms = Object.keys(roomsByFloor).filter(f => roomsByFloor[f] > 0).length;
                 const floorsWithoutRooms = totalFloors - floorsWithRooms;
 
-                for (let i = 1; i <= totalFloors; i++) {
+                if (totalRequiredRooms > 0 && remainingSlots <= 0) {
+                    Swal.fire('Limit Reached', 'No more rooms can be added without violating building room limit.', 'warning');
+                    floorSelect.disabled = true;
+                    return;
+                }
+
+                let candidateFloors = [];
+                if (floorsWithoutRooms > 0) {
+                    candidateFloors = Array.from({ length: totalFloors }, (_, idx) => idx + 1)
+                        .filter(floorNo => (roomsByFloor[floorNo] || 0) === 0);
+                } else {
+                    // Keep floor distribution stable once all floors already have at least one room.
+                    const minCount = Math.min(...Object.values(roomsByFloor));
+                    candidateFloors = Array.from({ length: totalFloors }, (_, idx) => idx + 1)
+                        .filter(floorNo => (roomsByFloor[floorNo] || 0) === minCount);
+                }
+
+                for (const i of candidateFloors) {
                     const floorIsEmpty = (roomsByFloor[i] === 0 || !roomsByFloor[i]);
-
-                    // If there are floors without any rooms yet, only show those empty floors
-                    // until each floor has at least 1 room.
-                    if (floorsWithoutRooms > 0 && !floorIsEmpty) {
-                        continue;
-                    }
-
-                    // Respect overall building room limit if defined
-                    if (totalRequiredRooms > 0 && remainingSlots <= 0) {
-                        continue;
-                    }
 
                     const opt = document.createElement('option');
                     opt.value = i;
@@ -1422,8 +1434,7 @@
                     floorSelect.appendChild(opt);
                 }
 
-                if (floorSelect.options.length <= 1 && totalRequiredRooms > 0 && remainingSlots <= 0) {
-                    Swal.fire('Limit Reached', 'No more rooms can be added without violating building room limit.', 'warning');
+                if (floorSelect.options.length <= 1) {
                     floorSelect.disabled = true;
                 } else {
                     floorSelect.disabled = false;

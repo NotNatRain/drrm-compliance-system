@@ -784,7 +784,7 @@
                                             </div>
                                         @endforeach
                                     @endif
-                                    
+
                                     <div class="form-check mb-2">
                                         <input class="form-check-input" type="checkbox" id="obs_others_chk" onchange="toggleOthersInput(this, 'obs_others_text_container')">
                                         <label class="form-check-label small" for="obs_others_chk">OTHERS: (Please specify)</label>
@@ -906,7 +906,7 @@
                     <div class="alert alert-danger mb-3">
                         <i class="fas fa-exclamation-triangle me-2"></i>
                         You are reducing the total floors by <strong id="reduceFloorsCountDisplay">X</strong>.
-                        Floors are removed chronologically from the top. 
+                        Floors are removed chronologically from the top.
                         <br><strong>Warning:</strong> All alarms, rooms, and extinguishers on these floors will be archived/deleted!
                     </div>
                     <div id="reduceFloorsList" class="mb-3 border rounded p-3 bg-light">
@@ -1160,7 +1160,6 @@
                 <div class="modal-body">
                     <form id="updateAlarmForm">
                         @csrf
-                        @method('PUT')
                         <input type="hidden" id="updateAlarmId">
                         <input type="hidden" id="updateSchoolId" name="school_id">
                         <input type="hidden" id="originalAlarmCode">
@@ -1458,7 +1457,7 @@
                 tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Failed to load history.</td></tr>';
             }
         }
-        
+
         function formatDate(dateString) {
             try {
                 const date = new Date(dateString);
@@ -1513,10 +1512,10 @@
         function formatFloorLabel(floor) {
             if (!floor || floor === 'N/A') return '-';
             if (floor === 'all' || floor === 'ALL' || floor === '0') return 'Entire Building';
-            
+
             const num = Number(floor);
             if (isNaN(num)) return floor;
-            
+
             const j = num % 10,
                 k = num % 100;
             if (j === 1 && k !== 11) return num + "st Floor";
@@ -1749,7 +1748,7 @@
                                 <p><strong>Building Type:</strong> ${building.building_type || 'N/A'}</p>
                                 <p><strong>Minimum Required Extinguisher:</strong> ${building.required_extinguishers_count || 1}</p>
                             </div>
-                            <div class="col-md-6">                                
+                            <div class="col-md-6">
                                 <p><strong>Numbers of Classrooms:</strong> ${classroomsCount}</p>
                                 <p><strong>Numbers of Lab:</strong> ${labsCount}</p>
                                 <p><strong>Numbers of administration office:</strong> ${adminCount}</p>
@@ -1887,7 +1886,7 @@
                 roomsInput.value = building.rooms;
                 roomsInput.min = building.rooms;
                 roomsInput.readOnly = true;
-                
+
                 // Set initial states for room reduction
                 originalRoomsCount = building.rooms;
                 roomActionType = null;
@@ -1895,7 +1894,7 @@
                 document.getElementById('roomReductionContainer').style.display = 'none';
                 if (document.getElementById('inlineReduceRoomsList')) document.getElementById('inlineReduceRoomsList').innerHTML = '';
                 document.getElementById('inlineRoomRemovalReason').value = '';
-                
+
                 document.getElementById('btnIncRooms').style.display = 'block';
                 if (document.getElementById('btnDecRooms')) document.getElementById('btnDecRooms').style.display = 'block';
 
@@ -2093,7 +2092,7 @@
                 console.error('Error loading school data:', error);
             }
         }
-        
+
         function toggleOthersInput(chk, containerId) {
             const container = document.getElementById(containerId);
             if (container) {
@@ -2263,7 +2262,7 @@
                 if (response.ok) {
                     currentInspectionForUpdate = data;
                     document.getElementById('viewInspectionIdSpan').textContent = id;
-                    
+
                     // Create an exact read-only copy of the inspectNowForm structure
                     let checkListHtml = '';
                     const allChecks = Array.from(document.querySelectorAll('.check-upd-list')).map(el => el.value);
@@ -2435,11 +2434,11 @@
             const othersChkUpd = document.getElementById('upd_obs_others_chk');
             const othersTextUpd = document.getElementById('upd_obs_others_text');
             const othersContainer = document.getElementById('upd_obs_others_text_container');
-            
+
             othersChkUpd.checked = false;
             othersTextUpd.value = '';
             othersContainer.style.display = 'none';
-            
+
             savedObs.forEach(obs => {
                 if (obs.startsWith('Others: ')) {
                     othersChkUpd.checked = true;
@@ -2681,12 +2680,12 @@
 
                 // Only strictly require matching checkboxes if there are actually active rooms to remove
                 const expectedChecks = Math.min(reduceAmount, availableRooms);
-                
+
                 if (checkedCount !== expectedChecks) {
                      Swal.fire('Validation Error', `You must select exactly ${expectedChecks} room(s) to remove based on your reduction.`, 'warning');
                      return;
                 }
-                
+
                 const reason = document.getElementById('inlineRoomRemovalReason').value.trim();
                 formData.set('room_removal_reason', reason); // Ensure it's in the payload
 
@@ -2897,7 +2896,7 @@
                 }
             }
             incrementValue('buildingFloorsInput');
-            
+
             // Secondary exits container toggle
             if (parseInt(input.value) > 1) {
                 const secContainer = document.getElementById('secondaryExitContainer');
@@ -2939,7 +2938,7 @@
                 document.querySelector('#addBuildingModal .modal-title').innerHTML = '<i class="fas fa-plus me-2"></i> Add New Building';
                 document.getElementById('manageFloorsRoomsSection').style.display = 'none';
                 document.getElementById('buildingReqExt').value = 0;
-                
+
                 toggleSecondaryExits();
 
                 // Reset states
@@ -3097,6 +3096,7 @@
             const building = await response.json();
             // Store current building context for update-alarm modal display
             window.currentAlarmModalBuildingId = buildingId;
+            currentAlarmsBuildingId = buildingId;
 
             // Set context for Add Modal
             document.getElementById('addAlarmBuildingId').value = buildingId;
@@ -3151,10 +3151,14 @@
             }
         }
 
+        let pendingAlarmFocusId = null;
+        let currentAlarmsBuildingId = null;
+
         // Load Alarms for List
         async function loadBuildingAlarms(buildingId) {
             const tbody = document.querySelector('#buildingAlarmsTable tbody');
             tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4"><i class="fas fa-spinner fa-spin me-2"></i> Loading alarms...</td></tr>';
+            currentAlarmsBuildingId = buildingId;
 
             try {
                 // We reuse the getBuilding endpoint which now includes alarmSystems
@@ -3168,7 +3172,7 @@
                     let html = '';
                     alarms.forEach(alarm => {
                         html += `
-                                <tr>
+                                <tr id="alarm-row-${alarm.id}">
                                     <td class="fw-bold text-primary">${alarm.code}</td>  <!-- Code -->
                                     <td>${alarm.alarm_type}</td>  <!-- Type -->
                                     <td>${alarm.location || '-'}</td>  <!-- Location (if you have location data) -->
@@ -3178,9 +3182,6 @@
                                     <td>${alarm.next_test_due ? formatDate(alarm.next_test_due) : '-'}</td>  <!-- Next Test Due (after Floor) -->
                                     <td>  <!-- Actions -->
                                         <div class="btn-group btn-group-sm">
-                                            <button class="btn btn-outline-success" onclick="testAlarm(${alarm.id})" title="Test Now">
-                                                <i class="fas fa-check-circle"></i>
-                                            </button>
                                             <button class="btn btn-outline-primary" onclick="openUpdateAlarmModal(${alarm.id}, ${buildingId})" title="Update">
                                                 <i class="fas fa-edit"></i>
                                             </button>
@@ -3193,12 +3194,17 @@
                             `;
                     });
                     tbody.innerHTML = html;
-                }
 
-                // Update Upcoming Tests (Mockup Logic based on alarm data)
-                updateUpcomingTests(alarms, true); // true for main dashboard if needed?
-                // Actually we should fetch for the whole school for the main dashboard one.
-                fetchSchoolUpcomingTests(currentSchoolId);
+                    if (pendingAlarmFocusId) {
+                        const targetRow = document.getElementById(`alarm-row-${pendingAlarmFocusId}`);
+                        if (targetRow) {
+                            targetRow.classList.add('table-warning');
+                            targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            setTimeout(() => targetRow.classList.remove('table-warning'), 2500);
+                        }
+                        pendingAlarmFocusId = null;
+                    }
+                }
 
             } catch (error) {
                 console.error(error);
@@ -3211,7 +3217,31 @@
             const list = document.getElementById(listId);
             if(!list) return;
 
-            const upcoming = alarms.filter(a => a.next_test_due).sort((a,b) => new Date(a.next_test_due) - new Date(b.next_test_due));
+            const todayIso = new Date().toISOString().split('T')[0];
+            const toDateOnly = (dateValue) => {
+                if (!dateValue) return null;
+                if (typeof dateValue === 'string' && dateValue.length >= 10) {
+                    return dateValue.slice(0, 10);
+                }
+                const d = new Date(dateValue);
+                if (Number.isNaN(d.getTime())) return null;
+                return d.toISOString().split('T')[0];
+            };
+
+            const upcoming = alarms
+                .filter(a => {
+                    const nextDue = a.next_test_due || a.next_test_date || a.next_due_date || null;
+                    if (!nextDue) return false;
+                    const nextDueIso = toDateOnly(nextDue);
+                    if (!nextDueIso) return false;
+                    a.next_test_due = nextDueIso;
+
+                    const lastTestIso = toDateOnly(a.last_test);
+                    // Hide alarms only when already tested for the current due cycle.
+                    // If user updates next due to a future date, it appears again.
+                    return !lastTestIso || nextDueIso > lastTestIso;
+                })
+                .sort((a,b) => a.next_test_due.localeCompare(b.next_test_due));
 
             if (upcoming.length === 0) {
                 list.innerHTML = '<li class="list-group-item text-muted small text-center py-3">No upcoming tests scheduled.</li>';
@@ -3220,29 +3250,63 @@
 
             let html = '';
             upcoming.forEach(a => {
-                const due = new Date(a.next_test_due);
-                const today = new Date();
-                const diffTime = due - today;
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const diffDays = Math.floor((Date.parse(a.next_test_due) - Date.parse(todayIso)) / (1000 * 60 * 60 * 24));
 
                 let badge = 'bg-success';
-                if(diffDays < 0) badge = 'bg-danger'; // Overdue
-                else if(diffDays <= 7) badge = 'bg-warning text-dark';
+                let statusLabel = 'Upcoming';
+                if (diffDays < 0) {
+                    badge = 'bg-danger';
+                    statusLabel = 'Due';
+                } else if (diffDays === 0) {
+                    badge = 'bg-warning text-dark';
+                    statusLabel = 'Today';
+                }
+
+                const targetBuildingId = a.building_id || a.primary_building_id || '';
+                const installedHere = [a.building_no, a.building_name].filter(Boolean).join(' - ');
 
                 html += `
-                    <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                    <li class="list-group-item d-flex justify-content-between align-items-center py-3 upcoming-test-item"
+                        role="button"
+                        onclick="openUpcomingAlarmModal(${a.id}, ${targetBuildingId || 'null'})"
+                        title="Open alarm details">
                         <div>
                             <div class="fw-bold text-primary">${a.code}</div>
-                            <div class="small text-muted">${a.location || 'Building ' + (a.building_no || '')}</div>
+                            <div class="small text-muted">${a.location || 'No location set'}</div>
+                            <div class="small text-secondary">Installed here: ${installedHere || 'Unknown building'}</div>
                         </div>
                         <div class="text-end">
                             <div class="small fw-bold">${formatDate(a.next_test_due)}</div>
-                            <span class="badge ${badge} rounded-pill">${diffDays < 0 ? 'Overdue' : (diffDays === 0 ? 'Today' : (diffDays === 1 ? 'Tomorrow' : diffDays + ' days'))}</span>
+                            <span class="badge ${badge} rounded-pill">${statusLabel}</span>
+                            ${diffDays <= 0 ? `
+                                <div class="mt-2">
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-success"
+                                            onclick="event.stopPropagation(); quickTestAlarmFromUpcoming(${a.id})"
+                                            title="Test Now">
+                                        <i class="fas fa-check-circle me-1"></i> Test Now
+                                    </button>
+                                </div>
+                            ` : ''}
                         </div>
                     </li>
                 `;
             });
             list.innerHTML = html;
+        }
+
+        async function quickTestAlarmFromUpcoming(alarmId) {
+            await testAlarm(alarmId, false);
+        }
+
+        function openUpcomingAlarmModal(alarmId, buildingId = null) {
+            pendingAlarmFocusId = alarmId;
+
+            if (buildingId) {
+                openBuildingAlarms(buildingId);
+            } else {
+                openUpdateAlarmModal(alarmId);
+            }
         }
 
         async function fetchSchoolUpcomingTests(schoolId) {
@@ -3259,13 +3323,22 @@
                     [...alarms, ...alarmsMany].forEach(a => {
                         if (!alarmMap.has(a.id)) {
                             a.building_no = b.building_no;
+                            a.building_name = b.building_name;
+                            a.primary_building_id = b.id;
+                            if (!a.building_id) a.building_id = b.id;
                             alarmMap.set(a.id, a);
                             allAlarms.push(a);
                         }
                     });
                 });
                 updateUpcomingTests(allAlarms, true);
-            } catch(e) { console.error('Error fetching upcoming tests:', e); }
+            } catch(e) {
+                console.error('Error fetching upcoming tests:', e);
+                const list = document.getElementById('mainUpcomingTestsList');
+                if (list) {
+                    list.innerHTML = '<li class="list-group-item text-danger small text-center py-3">Failed to load upcoming tests.</li>';
+                }
+            }
         }
 
         async function loadMultiBuildingOptions(schoolId, excludeBuildingIds, selectId = 'addMultiBuildingSelect') {
@@ -3558,8 +3631,8 @@
             }
 
             try {
-                const response = await fetch(`/fire-safety/alarm/${id}`, {
-                    method: 'PUT',
+                const response = await fetch(`/fire-safety/alarm/${id}/update`, {
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -3627,7 +3700,7 @@
             }
         }
 
-        async function testAlarm(id) {
+        async function testAlarm(id, silent = false) {
              try {
                 const response = await fetch(`/fire-safety/alarm/${id}/test`, {
                     method: 'POST',
@@ -3638,26 +3711,21 @@
                 });
                 const data = await response.json();
                 if(data.success) {
-                    Swal.fire({
-                        title: 'Tested!',
-                        text: 'Alarm test recorded successfully.',
-                        icon: 'success',
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 3000
-                    });
-                     // determine building id to reload?
-                     // Just reload list if open
-                     if (document.getElementById('buildingAlarmsModal').classList.contains('show')) {
-                         // Find which building is active?
-                         // We don't have easy access to buildingId here unless we store it globally
-                         // But we can just use the row data or reload entire table if we knew buildingId
-                         location.reload(); // safest
-                     }
+                    if (!silent) {
+                        Swal.fire({
+                            title: 'Tested!',
+                            text: 'Alarm test recorded successfully.',
+                            icon: 'success',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000
+                        });
+                    }
+                    location.reload();
                 }
              } catch(e) {
-                 Swal.fire('Error', 'Failed to record test.', 'error');
+                 if (!silent) Swal.fire('Error', 'Failed to record test.', 'error');
              }
         }
 
@@ -3819,7 +3887,7 @@
             const msgEl = document.getElementById('roomActionMessage');
 
             input.value = parseInt(input.value) + 1;
-            
+
             if (!roomActionType) {
                 roomActionType = 'add';
                 if (decBtn) decBtn.style.display = 'none';
@@ -3835,7 +3903,7 @@
             const decBtn = document.getElementById('btnDecRooms');
             const msgEl = document.getElementById('roomActionMessage');
             const building = window.currentEditingBuilding;
-            
+
             if (!building) return;
 
             if (parseInt(input.value) <= 1) {
@@ -3857,7 +3925,7 @@
             // Update UI
             const reduceAmount = originalRoomsCount - parseInt(input.value);
             document.getElementById('reduceRoomCountSpan').textContent = reduceAmount;
-            
+
             // Limit checkbox selection
             updateRoomReduceCheckboxes(reduceAmount);
         }
@@ -3865,7 +3933,7 @@
         function populateInlineReduceRoomsList(building) {
             const listObj = document.getElementById('inlineReduceRoomsList');
             listObj.innerHTML = '';
-            
+
             if (building.rooms_list && building.rooms_list.length > 0) {
                 building.rooms_list.forEach(room => {
                     const roomName = room.room_name || room.room_no;
@@ -3877,7 +3945,7 @@
                         </label>
                     `;
                 });
-                
+
                 const checkboxes = listObj.querySelectorAll('.room-reduce-checkbox');
                 checkboxes.forEach(cb => {
                     cb.addEventListener('change', () => {
@@ -3895,7 +3963,7 @@
             const listObj = document.getElementById('inlineReduceRoomsList');
             const checkboxes = listObj.querySelectorAll('.room-reduce-checkbox');
             const checkedCount = listObj.querySelectorAll('.room-reduce-checkbox:checked').length;
-            
+
             checkboxes.forEach(box => {
                 if (!box.checked) box.disabled = (checkedCount >= maxAllowed);
             });
@@ -3923,7 +3991,7 @@
             document.getElementById('reduceFloorsCountDisplay').textContent = "1";
             document.getElementById('reduceFloorsReason').value = "";
             const listObj = document.getElementById('reduceFloorsList');
-            
+
             // Just simulate removing the top floor
             const topFloor = building.floors;
             listObj.innerHTML = `

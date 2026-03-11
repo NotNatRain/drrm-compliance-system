@@ -87,20 +87,29 @@
         <button class="btn-print" style="background: #6c757d;" onclick="window.close()">Close</button>
     </div>
 
-    <div class="header-container">
-        <div class="header-title">
-            <h1>Fire Alarm System Inspection and Coverage Details</h1>
+    <div class="header-container" style="position: relative; height: 80px; display: flex; align-items: center; margin-bottom: 10px;">
+        <div style="position: absolute; left: 0; top: 0; display: flex; align-items: center;">
+            <img src="{{ asset('images/Layer-0-1.png') }}" alt="Logo 1" style="height: 60px; margin-right: 10px;">
+            <img src="{{ asset('images/What-Is-the-Difference-Between-DepEd-Seal-and-DepEd-Logo.png') }}" alt="Logo 2" style="height: 60px; margin-right: 10px;">
+            <img src="{{ asset('images/drrmis-logo-2.png') }}" alt="Logo 3" style="height: 60px; margin-right: 15px;">
+            <div style="text-align: left;">
+                <h2 style="margin: 0; font-size: 16px; font-weight: bold; text-transform: uppercase;">DepEd DRRM</h2>
+            </div>
         </div>
 
-        <div class="info-grid">
-            <div class="info-row">
-                <div><strong>Name of School:</strong> {{ $school->school_name }}</div>
-                <div><strong>Name of School Head:</strong> {{ $school->school_head }}</div>
-            </div>
-            <div class="info-row">
-                <div><strong>School ID:</strong> {{ $school->school_id }}</div>
-                <div><strong>DRRM Coordinator:</strong> {{ $school->school_drrm_coordinator }}</div>
-            </div>
+        <div style="width: 100%; text-align: center; padding-left: 430px; padding-right: 30px; box-sizing: border-box;">
+            <h1 style="margin: 0; font-size: 14px; font-weight: normal; text-transform: uppercase;">Fire Alarm System Inspection and Coverage Details</h1>
+        </div>
+    </div>
+
+    <div class="info-grid">
+        <div class="info-row">
+            <div><strong>Name of School:</strong> {{ $school->school_name }}</div>
+            <div><strong>Name of School Head:</strong> {{ $school->school_head }}</div>
+        </div>
+        <div class="info-row">
+            <div><strong>School ID:</strong> {{ $school->school_id }}</div>
+            <div><strong>DRRM Coordinator:</strong> {{ $school->school_drrm_coordinator }}</div>
         </div>
     </div>
 

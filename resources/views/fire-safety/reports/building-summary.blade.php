@@ -171,18 +171,11 @@
                     });
                     $offices = $adminRooms->count();
                     
-                    // Count rooms without secondary exit (rooms on floors >= 2 in buildings without adequate emergency exits)
-                    $roomsWithoutSecondaryExit = 0;
-                    if ($building->floors >= 2 && $building->emergency_exits < 2) {
-                        // Count rooms on floor 2 and above
-                        $roomsWithoutSecondaryExit = $rooms->filter(function($room) {
-                            return ($room->floor_no ?? 1) >= 2;
-                        })->count();
-                    }
+                    // Count rooms without secondary exit using room-level flag
+                    $roomsWithoutSecondaryExit = $rooms->filter(function($room) {
+                        return !$room->has_secondary_exit || $room->has_secondary_exit == '0';
+                    })->count();
                     
-                    // Logic for Rooms Without Secondary Exit Background
-                    $roomsWithoutExitColor = $roomsWithoutSecondaryExit === 0 ? '#90EE90' : '#e20707ff';
-
                     // Get required fire extinguishers
                     $requiredExtinguishers = $building->required_extinguishers ?? $building->requiredExtinguishersCount;
                     
@@ -301,7 +294,7 @@
                     <td class="center-text" style="padding: 4px;">{{ $building->floors }}</td>
                     <td class="center-text" style="padding: 4px; background-color: {{ $secExitBg }};">{{ $secExitContent }}</td>
                     <td class="center-text" style="padding: 4px;">{{ $classrooms }}</td>
-                    <td class="center-text" style="padding: 4px; background-color: {{ $roomsWithoutExitColor }};">{{ $roomsWithoutSecondaryExit }}</td>
+                    <td class="center-text" style="padding: 4px;">{{ $roomsWithoutSecondaryExit }}</td>
                     <td class="center-text" style="padding: 4px;">{{ $laboratories }}</td>
                     <td class="center-text" style="padding: 4px;">{{ $offices }}</td>
                     <td class="center-text" style="padding: 4px;">{{ $requiredExtinguishers }}</td>

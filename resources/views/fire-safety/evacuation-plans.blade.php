@@ -12,21 +12,21 @@
             .school-map-canvas-container:active { cursor: grabbing; }
             .map-element { transition: border-color 0.2s; }
             .map-element.building-element { box-shadow: 4px 4px 10px rgba(0,0,0,0.2) !important; }
-            
+
             @media print {
                 .no-print { display: none !important; }
                 html, body { margin: 0; padding: 0; background: white; overflow: hidden !important; height: 100% !important; }
                 .card { border: none !important; box-shadow: none !important; }
                 @page { size: landscape; margin: 0; }
                 header, .top-nav, .sidebar, .breadcrumb, .school-tabs, .card-header, .card-footer, .no-print, .btn, .mt-3.p-3.bg-white { display: none !important; }
-                .container-fluid, .row, .col-12, .card, .card-body, .tab-content, .tab-pane { 
-                    margin: 0 !important; 
-                    padding: 0 !important; 
+                .container-fluid, .row, .col-12, .card, .card-body, .tab-content, .tab-pane {
+                    margin: 0 !important;
+                    padding: 0 !important;
                     overflow: hidden !important;
                     background: white !important;
                 }
-                .school-map-canvas-container { 
-                    width: 100vw !important; 
+                .school-map-canvas-container {
+                    width: 100vw !important;
                     height: 100vh !important;
                     border: none !important;
                     box-shadow: none !important;
@@ -37,7 +37,7 @@
                 }
             }
             .facility-element { border-radius: 4px; display: flex; align-items: center; justify-content: center; text-align: center; color: white; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); border: 2px solid rgba(0,0,0,0.2); }
-            
+
             /* Toggle Division Styles */
             .toggle-icon {
                 cursor: pointer;
@@ -178,7 +178,7 @@
                                     <div class="tab-pane fade show active" id="plans-content-{{ $school->id }}" role="tabpanel" aria-labelledby="plans-tab-{{ $school->id }}">
                                         <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
                                             <h6 class="m-0 fw-bold text-primary">
-                                                
+
                                                 Plans Overview
                                             </h6>
                                              <div>
@@ -195,11 +195,6 @@
                                                              <i class="fas fa-plus me-2"></i> Add School Plan
                                                          </button>
                                                      @endif
-
-                                                     <button class="btn btn-success btn-sm me-2"
-                                                             onclick="openScheduleDrillModal({{ $school->id }})">
-                                                         <i class="fas fa-bullhorn me-2"></i> Schedule Drill
-                                                     </button>
 
                                                      <button class="btn btn-sm me-2" style="background-color: #e9ecef; border: 1px solid #ced4da; color: black; font-size: 0.75rem;" onclick="printAllPlans({{ $school->id }})">
                                                          <i class="fas fa-print me-1"></i> Print Plans Report
@@ -437,7 +432,7 @@
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <div>
                                             <h6 class="fw-bold text-primary mb-1">
-                                                
+
                                                 Visual Evacuation Map
                                             </h6>
                                             <small class="text-muted"><i class="fas fa-info-circle me-1"></i>Drag buildings to arrange layout. Click 'Edit Placement' to unlock.</small>
@@ -449,9 +444,6 @@
                                             </button>
                                             <button class="btn btn-outline-secondary btn-sm me-2 no-print" onclick="printEvacuationMap({{ $school->id }})">
                                                 <i class="fas fa-print me-2"></i> Print Map
-                                            </button>
-                                            <button class="btn btn-primary btn-sm no-print" id="save-placement-btn-{{ $school->id }}" onclick="saveMapLayout({{ $school->id }})" disabled>
-                                                <i class="fas fa-save me-2"></i> Save Layout
                                             </button>
                                             <button class="btn btn-outline-primary btn-sm me-2 no-print" id="edit-placement-btn-{{ $school->id }}" onclick="toggleMapEdit({{ $school->id }})">
                                                 <i class="fas fa-arrows-alt me-2"></i> Edit Placement
@@ -488,47 +480,6 @@
                     </div>
                 </div>
 
-                <!-- Evacuation Drill Schedule -->
-                <div class="row mt-4">
-                    <div class="col-lg-8 col-md-6">
-                        <div class="card dashboard-card">
-                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                                <h6 class="m-0 fw-bold text-primary">
-                                    <i class="fas fa-calendar-alt me-2"></i> Evacuation Drills - {{ $school->school_name }}
-                                </h6>
-                                <button class="btn btn-sm btn-outline-primary" onclick="loadDrillHistory({{ $school->id }})">
-                                    <i class="fas fa-sync-alt me-1"></i> Refresh
-                                </button>
-                            </div>
-                            <div class="card-body">
-                                <div id="drillHistory-{{ $school->id }}">
-                                    <!-- Drill history will be loaded here -->
-                                    <div class="loading-placeholder">
-                                        <i class="fas fa-spinner fa-spin"></i>
-                                        <p>Loading drill history...</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-lg-4 col-md-6">
-                        <div class="card dashboard-card">
-                            <div class="card-header py-3 bg-primary text-white">
-                                <h6 class="m-0 fw-bold">
-                                    <i class="fas fa-chart-pie me-2"></i> Plan Statistics - {{ $school->school_name }}
-                                </h6>
-                            </div>
-                            <div class="card-body">
-                                <div id="planStats-{{ $school->id }}">
-                                    <div class="text-center py-4">
-                                        <i class="fas fa-spinner fa-spin"></i> Loading statistics...
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
         @endif
     </div>
 @endsection
@@ -846,120 +797,6 @@
         </div>
     </div>
 
-    <!-- Schedule Drill Modal -->
-    <div class="modal fade" id="scheduleDrillModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
-                    <h5 class="modal-title">
-                        <i class="fas fa-calendar-plus me-2"></i> Schedule a Drill
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="scheduleDrillForm">
-                        @csrf
-                        <input type="hidden" name="school_id" id="drillSchoolId">
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Drill Type *</label>
-                                <select class="form-control" name="drill_type" required>
-                                    <option value="Announced">Announced Drill</option>
-                                    <option value="Unannounced">Unannounced Drill</option>
-                                    <option value="Partial">Partial Building Drill</option>
-                                    <option value="Full">Full Evacuation Drill</option>
-                                    <option value="Night">Night Drill</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label fw-bold">Drill Date *</label>
-                                <input type="date" class="form-control" name="drill_date" id="drillDate" required>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Start Time <i>(optional)</i></label>
-                                <input type="time" class="form-control" name="start_time" id="startTime">
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">End Time <i>(optional)</i></label>
-                                <input type="time" class="form-control" name="end_time" id="endTime">
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label fw-bold">Status *</label>
-                                <select class="form-control" name="status" required>
-                                    <option value="scheduled">Scheduled</option>
-                                    <option value="completed">Completed</option>
-                                    <option value="cancelled">Cancelled</option>
-                                    <option value="postponed">Postponed</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Target Buildings *</label>
-                            <div class="d-flex gap-4 mb-2">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="building_scope" id="scopeAll" value="all" checked onchange="toggleBuildingSelection()">
-                                    <label class="form-check-label" for="scopeAll">All Buildings</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="building_scope" id="scopeSpecific" value="specific" onchange="toggleBuildingSelection()">
-                                    <label class="form-check-label" for="scopeSpecific">Specific Building/s</label>
-                                </div>
-                            </div>
-
-                            <div id="specificBuildingsContainer" style="display: none;" class="border rounded p-3 bg-light">
-                                <p class="small text-muted mb-2">Select the buildings participating in this drill:</p>
-                                <div id="drillBuildingsList" class="row g-2">
-                                    <!-- Populated via JS -->
-                                    <div class="col-12 text-center py-2">
-                                        <i class="fas fa-spinner fa-spin me-2"></i> Loading buildings...
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Participants Count</label>
-                                <input type="number" class="form-control" name="participants_count" min="0" placeholder="e.g., 500">
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Evacuation Time (minutes)</label>
-                                <input type="number" class="form-control" name="evacuation_time_minutes" min="0" placeholder="e.g., 5">
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <label class="form-label">Coordinator</label>
-                                <input type="text" class="form-control" name="coordinator" value="{{ Auth::user()->name }}" readonly>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Remarks</label>
-                            <input type="text" class="form-control" name="remarks" placeholder="Brief summary of drill result...">
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Notes <i>(optional)</i></label>
-                            <textarea class="form-control" name="notes" rows="3" placeholder="Additional instructions or detailed observations..."></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    @if(auth()->user()->role !== 'viewer')
-                    <button type="button" class="btn btn-primary" onclick="saveDrillSchedule()">
-                        <i class="fas fa-calendar-check me-2"></i> Confirm Schedule
-                    </button>
-                    @endif
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Facility Modals -->
     <div class="modal fade" id="addFacilityModal" tabindex="-1">
         <div class="modal-dialog">
@@ -1055,7 +892,6 @@
         let currentSchoolId = null;
         let currentPlanId = null;
         const userRole = "{{ auth()->user()->role }}";
-        let drillsData = {};
 
         // Global check for viewer access
         function checkViewerAccess(formId) {
@@ -1080,12 +916,6 @@
                 loadSchoolData(currentSchoolId);
             @endif
 
-            // Tomorrow's date for drill
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            const drillInput = document.getElementById('drillDate');
-            if (drillInput) drillInput.value = tomorrow.toISOString().split('T')[0];
-
             // Modal Trigger Listeners
             initModalListeners();
         });
@@ -1095,8 +925,6 @@
             if (!schoolId) return;
             currentSchoolId = schoolId;
 
-            await loadDrillHistory(schoolId);
-            loadPlanStats(schoolId);
             loadSidebarStats(schoolId);
 
             // Check if map tab is active
@@ -1198,56 +1026,6 @@
             } catch (error) { console.error('Error loading sidebar stats:', error); }
         }
 
-        async function loadDrillHistory(schoolId) {
-            const container = document.getElementById(`drillHistory-${schoolId}`);
-            if (!container) return;
-
-            try {
-                container.innerHTML = '<div class="text-center py-5"><i class="fas fa-spinner fa-spin fa-2x"></i></div>';
-                const response = await fetch(`/fire-safety/drill-history/${schoolId}`);
-                const drills = await response.json();
-                drillsData[schoolId] = drills;
-
-                if (!drills || drills.length === 0) {
-                    container.innerHTML = `
-                        <div class="text-center text-muted py-5">
-                            <i class="fas fa-calendar-times fa-3x mb-3" style="opacity: 0.2;"></i>
-                            <p>No evacuation drills recorded.</p>
-                            @if(auth()->user()->role !== 'viewer')
-                            <button class="btn btn-primary" onclick="openScheduleDrillModal(${schoolId})">
-                                <i class="fas fa-calendar-plus me-2"></i> Schedule First Drill
-                            </button>
-                            @endif
-                        </div>
-                    `;
-                    return;
-                }
-
-                let html = '<div class="table-responsive"><table class="table table-hover"><thead><tr><th>Date</th><th>Type</th><th>Status</th><th>Participants</th><th>Evac. Time</th><th>Actions</th></tr></thead><tbody>';
-                drills.forEach(drill => {
-                    const statusColor = drill.status === 'completed' ? 'success' : (drill.status === 'scheduled' ? 'primary' : 'danger');
-                    html += `
-                        <tr>
-                            <td>${new Date(drill.drill_date).toLocaleDateString()}</td>
-                            <td><span class="badge bg-info">${drill.drill_type}</span></td>
-                            <td><span class="badge bg-${statusColor}">${drill.status}</span></td>
-                            <td>${drill.participants_count || '-'}</td>
-                            <td>${drill.evacuation_time_minutes ? drill.evacuation_time_minutes + ' m' : '-'}</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-primary" onclick="viewDrillDetails(${drill.id})"><i class="fas fa-eye"></i></button>
-                                @if(auth()->user()->role !== 'viewer')
-                                <button class="btn btn-sm btn-outline-danger" onclick="deleteDrill(${drill.id}, ${schoolId})"><i class="fas fa-trash"></i></button>
-                                @endif
-                            </td>
-                        </tr>
-                    `;
-                });
-                html += '</tbody></table></div>';
-                container.innerHTML = html;
-            } catch (error) {
-                container.innerHTML = '<div class="alert alert-danger">Error loading drills.</div>';
-            }
-        }
 
         function initModalListeners() {
             // Add Building Plan
@@ -1454,118 +1232,6 @@
         function successSwal(text, callback) { Swal.fire({ icon: 'success', title: 'Success', text: text, timer: 1500, showConfirmButton: false }).then(callback); }
         function errorSwal(text) { Swal.fire({ icon: 'error', title: 'Error', text: text }); }
 
-        async function openScheduleDrillModal(sId) {
-            const modalEl = document.getElementById('scheduleDrillModal');
-            const modal = new bootstrap.Modal(modalEl);
-            document.getElementById('drillSchoolId').value = sId;
-            const list = document.getElementById('drillBuildingsList');
-            list.innerHTML = '<div class="col-12 text-center py-3"><i class="fas fa-spinner fa-spin"></i> Loading...</div>';
-
-            try {
-                const res = await fetch(`/fire-safety/drill-buildings/${sId}`);
-                const buildings = await res.json();
-                let html = '';
-                if (buildings.length > 0) {
-                    buildings.forEach(b => {
-                        html += `<div class="col-md-6"><div class="form-check">
-                            <input class="form-check-input building-checkbox" type="checkbox" value="${b.id}" id="drillBldg${b.id}">
-                            <label class="form-check-label small" for="drillBldg${b.id}">${b.building_no}${b.building_name ? ' - ' + b.building_name : ''}</label>
-                        </div></div>`;
-                    });
-                } else html = '<div class="col-12 text-center text-muted">No buildings found</div>';
-                list.innerHTML = html;
-                modal.show();
-            } catch (e) { list.innerHTML = '<p class="text-danger">Error loading buildings.</p>'; }
-        }
-
-        async function saveDrillSchedule() {
-            const form = document.getElementById('scheduleDrillForm');
-            if (!form.checkValidity()) { form.reportValidity(); return; }
-            const formData = new FormData(form);
-
-            const scopeField = form.querySelector('input[name="building_scope"]:checked');
-            const scope = scopeField ? scopeField.value : 'all';
-
-            let checkboxes;
-            if (scope === 'all') {
-                checkboxes = document.querySelectorAll('.building-checkbox');
-            } else {
-                checkboxes = document.querySelectorAll('.building-checkbox:checked');
-            }
-
-            if (checkboxes.length === 0) {
-                Swal.fire('Error', 'No buildings available or selected for this drill.', 'error');
-                return;
-            }
-
-            checkboxes.forEach(cb => formData.append('building_ids[]', cb.value));
-
-            try {
-                loadingSwal('Scheduling...');
-                const res = await fetch('/fire-safety/drill/schedule', {
-                    method: 'POST',
-                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' },
-                    body: formData
-                });
-                const data = await res.json();
-                if (data.success) successSwal('Drill scheduled!', () => location.reload());
-                else errorSwal(data.message);
-            } catch (e) { errorSwal('Error scheduling drill.'); }
-        }
-
-        async function viewDrillDetails(drillId) {
-            try {
-                const res = await fetch(`/fire-safety/drill/${drillId}`);
-                const drill = await res.json();
-
-                let bHtml = '';
-                if (drill.buildings && drill.buildings.length > 0) {
-                    drill.buildings.forEach(b => {
-                        bHtml += `<span class="badge bg-secondary me-1">${b.building_no}</span>`;
-                    });
-                }
-
-                Swal.fire({
-                    title: 'Drill Details',
-                    html: `
-                        <div class="text-start">
-                            <p><strong>Type:</strong> ${drill.drill_type}</p>
-                            <p><strong>Date:</strong> ${new Date(drill.drill_date).toLocaleDateString()}</p>
-                            <p><strong>Status:</strong> <span class="badge bg-info">${drill.status}</span></p>
-                            <p><strong>Buildings involved:</strong><br>${bHtml || 'None'}</p>
-                            <hr>
-                            <p><strong>Participants:</strong> ${drill.participants_count || 'N/A'}</p>
-                            <p><strong>Evac Time:</strong> ${drill.evacuation_time_minutes ? drill.evacuation_time_minutes + ' mins' : 'N/A'}</p>
-                            <p><strong>Coordinator:</strong> ${drill.coordinator || 'N/A'}</p>
-                            <p><strong>Remarks:</strong> ${drill.remarks || 'None'}</p>
-                        </div>
-                    `,
-                    icon: 'info'
-                });
-            } catch (e) { errorSwal('Error loading drill details'); }
-        }
-
-        async function deleteDrill(drillId, schoolId) {
-            const r = await Swal.fire({
-                title: 'Cancel Drill?',
-                text: "Are you sure you want to cancel this scheduled drill?",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                confirmButtonText: 'Yes, cancel it!'
-            });
-            if (r.isConfirmed) {
-                try {
-                    const res = await fetch(`/fire-safety/drill/${drillId}/cancel`, {
-                        method: 'DELETE',
-                        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content, 'Accept': 'application/json' }
-                    });
-                    const d = await res.json();
-                    if (d.success) successSwal('Drill cancelled!', () => loadDrillHistory(schoolId));
-                    else errorSwal(d.message);
-                } catch (e) { errorSwal('Error cancelling drill.'); }
-            }
-        }
 
         async function deletePlan(pId) {
             const r = await Swal.fire({ title: 'Delete Plan?', text: "You won't be able to revert this!", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Yes, delete it!' });
@@ -1600,12 +1266,6 @@
             container.innerHTML = html;
         }
 
-        function toggleBuildingSelection() {
-            const scope = document.querySelector('input[name="building_scope"]:checked').value;
-            const container = document.getElementById('specificBuildingsContainer');
-            if (container) container.style.display = scope === 'specific' ? 'block' : 'none';
-        }
-
         function printAllPlans(sId) {
             window.open(`/fire-safety/reports/evacuation-plans/${sId}`, '_blank');
         }
@@ -1625,6 +1285,16 @@
         // ==========================================
         let mapDataArr = {};
         let isMapEditable = {};
+        let mapBuildingLookup = {};
+
+        function floorOrdinalLabel(floorNo) {
+            const n = Number(floorNo);
+            if (n % 100 >= 11 && n % 100 <= 13) return `${n}th`;
+            if (n % 10 === 1) return `${n}st`;
+            if (n % 10 === 2) return `${n}nd`;
+            if (n % 10 === 3) return `${n}rd`;
+            return `${n}th`;
+        }
 
         async function initEvacuationMap(schoolId) {
             const canvasContainer = document.getElementById(`school-map-canvas-${schoolId}`);
@@ -1676,48 +1346,65 @@
 
             const buildings = school.buildings || [];
             const facilities = school.facilities || [];
-            
-            // Fixed virtual size for consistent coordinates across devices
-            canvas.style.width = '2400px'; 
-            canvas.style.height = '1400px'; // Slightly reduced height to prevent excessive bottom space
+            mapBuildingLookup[schoolId] = {};
+
+            canvas.style.width = '2400px';
+            canvas.style.height = '1400px';
 
             let x = 100, y = 100;
-            const savedLayout = school.evacuation_map_layout || {};
+            const savedLayout = school.evacuation_map_layout || school.map_layout || {};
 
-            buildings.forEach((building, index) => {
+            buildings.forEach((building) => {
+                mapBuildingLookup[schoolId][building.id] = building;
+
+                const allRooms = Array.isArray(building.actual_rooms) ? building.actual_rooms : [];
+                const maxFloorFromRooms = allRooms.reduce((mx, room) => {
+                    const f = Number(room.floor_no || room.floor || 1);
+                    return Number.isFinite(f) ? Math.max(mx, f) : mx;
+                }, 1);
+
+                const floors = Math.max(Number(building.floors || 1), maxFloorFromRooms, 1);
+                const roomsByFloor = {};
+                for (let i = 1; i <= floors; i++) roomsByFloor[i] = [];
+
+                allRooms.forEach(room => {
+                    let floorNo = Number(room.floor_no || room.floor || 1);
+                    if (!Number.isFinite(floorNo) || floorNo < 1) floorNo = 1;
+                    if (floorNo > floors) floorNo = floors;
+                    roomsByFloor[floorNo].push(room);
+                });
+
+                const maxRoomsOnFloor = Math.max(1, ...Object.values(roomsByFloor).map(rooms => rooms.length || 1));
+                const roomGap = 10;
+                const floorGap = 10;
+                const headerHeight = 30;
+                const minRoomSize = 52;
+
+                let buildingWidth = Math.max(300, maxRoomsOnFloor * minRoomSize + roomGap * (maxRoomsOnFloor + 1));
+                const maxRoomWidth = (buildingWidth - roomGap * (maxRoomsOnFloor + 1)) / maxRoomsOnFloor;
+                const floorHeight = Math.max(60, maxRoomWidth);
+                let buildingHeight = headerHeight + floorGap * (floors + 1) + floors * floorHeight;
+
+                const layoutKey = `building_${building.id}`;
+                const savedItem = savedLayout[layoutKey] || null;
+                if (savedItem && Number(savedItem.width) > 0) buildingWidth = Number(savedItem.width);
+                if (savedItem && Number(savedItem.height) > 0) buildingHeight = Number(savedItem.height);
+
                 const buildingContainerDiv = document.createElement('div');
                 buildingContainerDiv.className = 'map-element building-element';
                 buildingContainerDiv.id = `map-bldg-${building.id}`;
-                buildingContainerDiv.dataset.id = `building_${building.id}`;
+                buildingContainerDiv.dataset.id = layoutKey;
                 buildingContainerDiv.dataset.schoolId = schoolId;
                 buildingContainerDiv.dataset.buildingId = building.id;
                 buildingContainerDiv.dataset.buildingNo = building.building_no;
                 buildingContainerDiv.style.position = 'absolute';
 
-                // Building dimensions (reduced width; height calculated so rooms are square)
-                const buildingWidth = 300;
-                const floors = building.floors || 1;
-                const roomsPerFloor = 3;
-                // spacing between rooms/floors
-                const roomGap = 10;
-                const floorGap = 10;
-
-                // compute room size based on available width
-                const usableWidth = buildingWidth - roomGap * (roomsPerFloor + 1);
-                const roomWidth = usableWidth / roomsPerFloor;
-                const floorHeight = roomWidth; // square rooms
-                // total building height = header (30px) + gaps + floors*floorHeight
-                const buildingHeight = 30 + floorGap * (floors + 1) + floors * floorHeight;
-
-                // Use saved coordinates/rotation if available (stored in DB JSON `evacuation_map_layout`)
-                const savedLayout = school.evacuation_map_layout || school.map_layout || {};
-                if (savedLayout && savedLayout[buildingContainerDiv.dataset.id]) {
-                    buildingContainerDiv.style.left = savedLayout[buildingContainerDiv.dataset.id].x + 'px';
-                    buildingContainerDiv.style.top = savedLayout[buildingContainerDiv.dataset.id].y + 'px';
+                if (savedItem) {
+                    buildingContainerDiv.style.left = Number(savedItem.x || 0) + 'px';
+                    buildingContainerDiv.style.top = Number(savedItem.y || 0) + 'px';
                 } else {
                     buildingContainerDiv.style.left = x + 'px';
                     buildingContainerDiv.style.top = y + 'px';
-
                     x += buildingWidth + 20;
                     if (x > 1200) { x = 50; y += buildingHeight + 50; }
                 }
@@ -1732,10 +1419,7 @@
                 buildingContainerDiv.style.overflow = 'hidden';
                 buildingContainerDiv.style.padding = '0px';
 
-                // Apply saved rotation (0/90/180/270)
-                const savedRotation = (savedLayout && savedLayout[buildingContainerDiv.dataset.id] && savedLayout[buildingContainerDiv.dataset.id].rotation)
-                    ? Number(savedLayout[buildingContainerDiv.dataset.id].rotation)
-                    : 0;
+                const savedRotation = savedItem && savedItem.rotation ? Number(savedItem.rotation) : 0;
                 buildingContainerDiv.dataset.rotation = String(savedRotation);
                 buildingContainerDiv.dataset.baseWidth = String(buildingWidth);
                 buildingContainerDiv.dataset.baseHeight = String(buildingHeight);
@@ -1744,9 +1428,7 @@
                     buildingContainerDiv.style.transform = `rotate(${savedRotation}deg)`;
                 }
 
-                // Create building header
                 const headerDiv = document.createElement('div');
-                // make sure bell icon appears below header if it exists
                 headerDiv.style.padding = '5px 8px';
                 headerDiv.style.backgroundColor = '#007bff';
                 headerDiv.style.color = 'white';
@@ -1757,9 +1439,7 @@
                 headerDiv.style.justifyContent = 'space-between';
                 headerDiv.style.alignItems = 'center';
 
-                // Check if building has an evacuation plan (check both camelCase and snake_case)
                 const hasPlan = building.evacuation_plan || building.evacuationPlan || school.evacuation_plan || school.evacuationPlan;
-
                 headerDiv.innerHTML = `
                     <span>${building.building_no}</span>
                     <span style="font-size: 10px;">${building.building_name || ''}</span>
@@ -1776,18 +1456,12 @@
                 `;
                 buildingContainerDiv.appendChild(headerDiv);
 
-                // Create building interior canvas using SVG
                 const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                svg.setAttribute('width', buildingWidth);
-                svg.setAttribute('height', buildingHeight - 30);
-                // allow pointer events so rooms and icons can be clicked
-                svg.setAttribute('style', 'display: block; cursor: inherit;');
+                const interiorHeight = Math.max(100, buildingHeight - headerHeight);
+                svg.setAttribute('viewBox', `0 0 ${buildingWidth} ${interiorHeight}`);
+                svg.setAttribute('preserveAspectRatio', 'none');
+                svg.setAttribute('style', 'display:block; width:100%; height:calc(100% - 30px); cursor:inherit;');
 
-                // floorHeight and roomWidth already computed above for square rooms
-                // const floorHeight = (buildingHeight - 30 - floorGap * (floors + 1)) / floors;
-                // const roomWidth = (buildingWidth - roomGap * (roomsPerFloor + 1)) / roomsPerFloor;
-
-                // Collect alarms for this building (supports both API shapes)
                 const directAlarms = building.alarm_systems || building.alarmSystems || [];
                 const coveredAlarms = building.alarm_systems_many || building.alarmSystemsMany || [];
                 const alarms = [...directAlarms, ...coveredAlarms].filter((a, idx, arr) => {
@@ -1796,12 +1470,12 @@
                     return arr.findIndex(x => x && x.id === id) === idx;
                 });
 
-                // Draw floors and rooms
-                for (let floorIdx = 0; floorIdx < floors; floorIdx++) {
-                    // bottom floor should appear lowest in the svg, so invert the y-coordinate calculation
-                    const floorY = floorGap + (floors - 1 - floorIdx) * (floorHeight + floorGap);
+                const computedFloorHeight = Math.max(40, (interiorHeight - floorGap * (floors + 1)) / floors);
 
-                    // Draw horizontal lines for floor separators
+                for (let floorIdx = 0; floorIdx < floors; floorIdx++) {
+                    const floorNo = floorIdx + 1;
+                    const floorY = floorGap + (floors - 1 - floorIdx) * (computedFloorHeight + floorGap);
+
                     if (floorIdx > 0) {
                         const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                         line.setAttribute('x1', '0');
@@ -1813,44 +1487,50 @@
                         svg.appendChild(line);
                     }
 
-                    // Draw vertical lines for room separators
-                    for (let roomIdx = 0; roomIdx < roomsPerFloor - 1; roomIdx++) {
+                    const floorLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    floorLabel.setAttribute('x', 6);
+                    floorLabel.setAttribute('y', floorY + 12);
+                    floorLabel.setAttribute('font-size', '8px');
+                    floorLabel.setAttribute('fill', '#444');
+                    floorLabel.textContent = floorOrdinalLabel(floorNo);
+                    svg.appendChild(floorLabel);
+
+                    const floorRooms = roomsByFloor[floorNo] || [];
+                    const roomCount = Math.max(1, floorRooms.length);
+                    const roomWidth = (buildingWidth - roomGap * (roomCount + 1)) / roomCount;
+
+                    for (let roomIdx = 0; roomIdx < roomCount - 1; roomIdx++) {
                         const roomX = roomGap + (roomIdx + 1) * (roomWidth + roomGap);
                         const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                         line.setAttribute('x1', roomX);
                         line.setAttribute('y1', floorY);
                         line.setAttribute('x2', roomX);
-                        line.setAttribute('y2', floorY + floorHeight);
+                        line.setAttribute('y2', floorY + computedFloorHeight);
                         line.setAttribute('stroke', 'black');
                         line.setAttribute('stroke-width', '1');
                         svg.appendChild(line);
                     }
 
-                    // Draw a closing horizontal line at the bottom of the lowest floor (after inversion lowest floor is floorIdx 0)
                     if (floorIdx === 0) {
                         const bottomLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                         bottomLine.setAttribute('x1', '0');
-                        bottomLine.setAttribute('y1', floorY + floorHeight);
+                        bottomLine.setAttribute('y1', floorY + computedFloorHeight);
                         bottomLine.setAttribute('x2', buildingWidth);
-                        bottomLine.setAttribute('y2', floorY + floorHeight);
+                        bottomLine.setAttribute('y2', floorY + computedFloorHeight);
                         bottomLine.setAttribute('stroke', 'black');
                         bottomLine.setAttribute('stroke-width', '2');
                         svg.appendChild(bottomLine);
                     }
 
-                    // Add rooms to each floor
-                    const floorRooms = building.actual_rooms && Array.isArray(building.actual_rooms) ? building.actual_rooms.filter(r => (r.floor_no || r.floor) === (floorIdx + 1)) : [];
-
-                    for (let roomIdx = 0; roomIdx < roomsPerFloor; roomIdx++) {
+                    for (let roomIdx = 0; roomIdx < roomCount; roomIdx++) {
                         const roomX = roomGap + roomIdx * (roomWidth + roomGap);
-                        const room = floorRooms.length > roomIdx ? floorRooms[roomIdx] : null;
+                        const room = floorRooms[roomIdx] || null;
 
-                        // Draw room rectangle background (light gray)
                         const roomRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                         roomRect.setAttribute('x', roomX + 1);
                         roomRect.setAttribute('y', floorY + 1);
-                        roomRect.setAttribute('width', roomWidth - 2);
-                        roomRect.setAttribute('height', floorHeight - 2);
+                        roomRect.setAttribute('width', Math.max(1, roomWidth - 2));
+                        roomRect.setAttribute('height', Math.max(1, computedFloorHeight - 2));
                         roomRect.setAttribute('fill', room ? '#f0f0f0' : '#ffffff');
                         roomRect.setAttribute('stroke', 'none');
                         if (room) {
@@ -1858,13 +1538,11 @@
                             roomRect.addEventListener('click', e => {
                                 e.stopPropagation();
                                 if (isMapEditable[schoolId]) return;
-                                // navigate to extinguisher list for this room
                                 openRoomExtinguishers(building.id, room.id, schoolId);
                             });
                         }
                         svg.appendChild(roomRect);
 
-                        // Add room number/label
                         if (room) {
                             const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
                             text.setAttribute('x', roomX + roomWidth / 2);
@@ -1876,13 +1554,13 @@
                             text.textContent = room.room_name || `R${room.id}`;
                             svg.appendChild(text);
 
-                            // Add fire extinguisher icon if assigned to this room
-                            const extinguishers = building.fire_extinguishers ? building.fire_extinguishers.filter(e => e.room_id === room.id) : [];
+                            const extinguishers = building.fire_extinguishers
+                                ? building.fire_extinguishers.filter(e => Number(e.room_id) === Number(room.id))
+                                : [];
                             if (extinguishers.length > 0) {
                                 const extIcon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                                // place icon at center of room
                                 extIcon.setAttribute('x', roomX + roomWidth / 2);
-                                extIcon.setAttribute('y', floorY + floorHeight / 2 + 4);
+                                extIcon.setAttribute('y', floorY + computedFloorHeight / 2 + 4);
                                 extIcon.setAttribute('font-size', '16px');
                                 extIcon.setAttribute('title', `${extinguishers.length} extinguisher(s)`);
                                 extIcon.textContent = '🧯';
@@ -1895,11 +1573,9 @@
                                 svg.appendChild(extIcon);
                             }
 
-                            // Add smoke detector for office/admin rooms
-                            const isOfficeOrAdmin = room.room_type_config &&
-                                                   (room.room_type_config.type_name &&
-                                                   (room.room_type_config.type_name.toLowerCase().includes('office') ||
-                                                    room.room_type_config.type_name.toLowerCase().includes('admin')));
+                            const roomType = room.roomTypeConfig || room.room_type_config || null;
+                            const typeName = roomType && roomType.type_name ? String(roomType.type_name).toLowerCase() : '';
+                            const isOfficeOrAdmin = typeName.includes('office') || typeName.includes('admin');
                             if (isOfficeOrAdmin) {
                                 const detectorIcon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
                                 detectorIcon.setAttribute('x', roomX + roomWidth - 12);
@@ -1911,38 +1587,27 @@
                             }
                         }
                     }
-                    // place alarms icons on this floor, if any
-                    const thisFloor = floorIdx + 1;
 
-                    // Floor-specific alarms (exact floor match)
-                    const floorAlarms = alarms.filter(a =>
-                        a.floor_id &&
-                        a.floor_id !== 'all' &&
-                        Number(a.floor_id) === thisFloor
-                    );
+                    const floorAlarms = alarms.filter(a => a.floor_id && String(a.floor_id).toLowerCase() !== 'all' && Number(a.floor_id) === floorNo);
                     floorAlarms.forEach((a, idx) => {
                         const alarmIcon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                        // place near left, inside this floor band
                         alarmIcon.setAttribute('x', roomGap + (idx * 18) + 5);
-                        alarmIcon.setAttribute('y', floorY + floorHeight / 2);
+                        alarmIcon.setAttribute('y', floorY + computedFloorHeight / 2);
                         alarmIcon.setAttribute('font-size', '16px');
                         alarmIcon.setAttribute('title', `Alarm: ${a.code}`);
                         alarmIcon.textContent = '🔔';
                         svg.appendChild(alarmIcon);
                     });
-
                 }
 
-                // All-floor / entire-building alarms: show once at the divider above the bottom floor (or top padding if 1 floor)
                 const allFloorAlarms = alarms.filter(a => {
                     const v = (a && a.floor_id != null) ? String(a.floor_id).toLowerCase() : '';
                     return !v || v === 'all' || v.includes('all');
                 });
                 if (allFloorAlarms.length > 0) {
-                    const dividerY = floorGap; // top of bottom floor band
+                    const dividerY = floorGap;
                     allFloorAlarms.forEach((a, idx) => {
                         const alarmIcon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                        // centered horizontally, on the divider between floors
                         alarmIcon.setAttribute('x', buildingWidth / 2 + idx * 18);
                         alarmIcon.setAttribute('y', dividerY);
                         alarmIcon.setAttribute('font-size', '16px');
@@ -1952,12 +1617,11 @@
                     });
                 }
 
-                // Draw outer border of building
                 const outerBorder = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                 outerBorder.setAttribute('x', '0');
                 outerBorder.setAttribute('y', '0');
                 outerBorder.setAttribute('width', buildingWidth);
-                outerBorder.setAttribute('height', buildingHeight - 30);
+                outerBorder.setAttribute('height', interiorHeight);
                 outerBorder.setAttribute('fill', 'none');
                 outerBorder.setAttribute('stroke', 'black');
                 outerBorder.setAttribute('stroke-width', '3');
@@ -1965,7 +1629,6 @@
 
                 buildingContainerDiv.appendChild(svg);
 
-                // Add info button
                 const infoBtn = document.createElement('div');
                 infoBtn.style.position = 'absolute';
                 infoBtn.style.bottom = '5px';
@@ -1982,7 +1645,6 @@
 
                 canvas.appendChild(buildingContainerDiv);
 
-                // Add click handler to open context menu
                 buildingContainerDiv.addEventListener('click', function(e) {
                     if (!isMapEditable[schoolId] && !e.target.closest('svg') && e.target !== infoBtn) {
                         e.preventDefault();
@@ -1991,14 +1653,13 @@
                 });
 
                 makeDraggable(buildingContainerDiv, schoolId);
+                makeResizable(buildingContainerDiv, schoolId);
             });
 
-            // Render Facilities
             facilities.forEach(facility => {
                 renderFacility(facility, schoolId, savedLayout);
             });
 
-            // When locked, auto-fit all buildings to the visible canvas area
             applyMapFit(schoolId);
         }
 
@@ -2008,7 +1669,11 @@
                 console.error('Canvas not found for school:', schoolId);
                 return;
             }
-            
+
+            const layoutItem = (savedLayout && facility.id) ? savedLayout[facility.id] : null;
+            const facilityWidth = Number((layoutItem && layoutItem.width) || facility.width || 200);
+            const facilityHeight = Number((layoutItem && layoutItem.height) || facility.height || 100);
+
             const facilityDiv = document.createElement('div');
             facilityDiv.className = 'map-element facility-element';
             facilityDiv.id = facility.id;
@@ -2018,15 +1683,17 @@
             facilityDiv.dataset.name = facility.name;
             facilityDiv.dataset.description = facility.description || '';
             facilityDiv.dataset.color = facility.color;
-            
+            facilityDiv.dataset.baseWidth = String(facilityWidth);
+            facilityDiv.dataset.baseHeight = String(facilityHeight);
+
             facilityDiv.style.position = 'absolute';
-            facilityDiv.style.width = '200px';
-            facilityDiv.style.height = '100px';
+            facilityDiv.style.width = `${facilityWidth}px`;
+            facilityDiv.style.height = `${facilityHeight}px`;
             facilityDiv.style.backgroundColor = facility.color;
             facilityDiv.style.left = (facility.x || 300) + 'px';
             facilityDiv.style.top = (facility.y || 300) + 'px';
             facilityDiv.textContent = facility.name;
-            
+
             facilityDiv.onclick = (e) => {
                 if (isMapEditable[schoolId]) return;
                 openEditFacilityModal(facility, schoolId);
@@ -2034,6 +1701,7 @@
 
             canvas.appendChild(facilityDiv);
             makeDraggable(facilityDiv, schoolId);
+            makeResizable(facilityDiv, schoolId);
         }
 
         function applyMapFit(schoolId) {
@@ -2058,10 +1726,10 @@
                 const left = parseFloat(el.style.left);
                 const top = parseFloat(el.style.top);
                 const isFacility = el.classList.contains('facility-element');
-                const bw = isFacility ? 200 : parseFloat(el.dataset.baseWidth || 300);
-                const bh = isFacility ? 100 : parseFloat(el.dataset.baseHeight || 150);
+                const bw = isFacility ? parseFloat(el.dataset.baseWidth || el.style.width || 200) : parseFloat(el.dataset.baseWidth || 300);
+                const bh = isFacility ? parseFloat(el.dataset.baseHeight || el.style.height || 100) : parseFloat(el.dataset.baseHeight || 150);
                 const rotation = parseInt(el.dataset.rotation || 0);
-                
+
                 const isRotated = (rotation % 180 !== 0);
                 const w = isRotated ? bh : bw;
                 const h = isRotated ? bw : bh;
@@ -2076,13 +1744,13 @@
             const boundsH = Math.max(300, maxY - minY);
             const availW = container.clientWidth - pad * 2;
             const availH = container.clientHeight - pad * 2;
-            
+
             let scale = Math.min(availW / boundsW, availH / boundsH);
             if (window.innerWidth < 768) scale = Math.max(scale, 0.4);
-            
+
             const tx = (container.clientWidth - boundsW * scale) / 2 - minX * scale;
             let ty = (container.clientHeight - boundsH * scale) / 2 - minY * scale;
-            
+
             // Adjust centering to allow placement at the top without forced empty space
             if (ty > pad && minY < 200) {
                 ty = pad - minY * scale;
@@ -2105,12 +1773,12 @@
             const el = document.getElementById(elementId);
             if (!el) return;
             if (!isMapEditable[schoolId]) return;
-            
+
             const bw = parseFloat(el.dataset.baseWidth || 300);
             const bh = parseFloat(el.dataset.baseHeight || 150);
             const current = Number(el.dataset.rotation || 0);
             const next = (current + 90) % 360;
-            
+
             // Adjust position slightly to prevent building from flying off-canvas
             // 90deg rotation around top-left (0,0) moves (w,0) to (0,w) and (w,h) to (-h,w)
             // So if we rotate 90deg, the building's new bounding box starts H units to the left of the original.
@@ -2127,7 +1795,7 @@
             el.style.top = y + 'px';
             el.style.transformOrigin = 'top left';
             el.style.transform = `rotate(${next}deg)`;
-            
+
             clampMapElementToCanvas(el, schoolId);
         }
 
@@ -2136,8 +1804,8 @@
             if (!canvas) return;
 
             const isFacility = element.classList.contains('facility-element');
-            const bw = isFacility ? 200 : parseFloat(element.dataset.baseWidth || 300);
-            const bh = isFacility ? 100 : parseFloat(element.dataset.baseHeight || 150);
+            const bw = isFacility ? parseFloat(element.dataset.baseWidth || element.style.width || 200) : parseFloat(element.dataset.baseWidth || 300);
+            const bh = isFacility ? parseFloat(element.dataset.baseHeight || element.style.height || 100) : parseFloat(element.dataset.baseHeight || 150);
             const rotation = parseInt(element.dataset.rotation || 0);
             const isRotated = (rotation % 180 !== 0);
             const w = isRotated ? bh : bw;
@@ -2283,8 +1951,10 @@
             const saveBtn = document.getElementById(`save-placement-btn-${schoolId}`);
 
             if (isMapEditable[schoolId]) {
-                btn.innerHTML = '<i class="fas fa-lock me-2"></i> Lock Placement';
-                btn.classList.replace('btn-outline-primary', 'btn-warning');
+                btn.innerHTML = '<i class="fas fa-save me-2"></i> Save Layout';
+                btn.classList.remove('btn-outline-primary', 'btn-warning');
+                btn.classList.add('btn-success');
+                btn.setAttribute('onclick', `saveMapLayout(${schoolId})`);
                 if (saveBtn) saveBtn.disabled = false;
 
                 document.querySelectorAll(`#school-map-canvas-${schoolId} .map-element`).forEach(el => {
@@ -2295,7 +1965,9 @@
                 applyMapFit(schoolId);
             } else {
                 btn.innerHTML = '<i class="fas fa-arrows-alt me-2"></i> Edit Placement';
-                btn.classList.replace('btn-warning', 'btn-outline-primary');
+                btn.classList.remove('btn-success', 'btn-warning');
+                btn.classList.add('btn-outline-primary');
+                btn.setAttribute('onclick', `toggleMapEdit(${schoolId})`);
                 if (saveBtn) saveBtn.disabled = true;
 
                 document.querySelectorAll(`#school-map-canvas-${schoolId} .map-element`).forEach(el => {
@@ -2310,10 +1982,12 @@
         function makeDraggable(element, schoolId) {
             let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
 
-            element.onmousedown = dragMouseDown;
+            element.addEventListener('mousedown', dragMouseDown);
 
             function dragMouseDown(e) {
                 if (!isMapEditable[schoolId]) return;
+                if (element.dataset.isResizing === '1') return;
+                if (e.button !== 0) return;
 
                 e.preventDefault();
                 pos3 = e.clientX;
@@ -2324,7 +1998,7 @@
 
             function elementDrag(e) {
                 e.preventDefault();
-                
+
                 // Account for canvas scale during drag
                 const canvas = document.getElementById(`school-map-canvas-${schoolId}`);
                 const transform = canvas.style.transform;
@@ -2335,7 +2009,7 @@
                 pos2 = (pos4 - e.clientY) / scale;
                 pos3 = e.clientX;
                 pos4 = e.clientY;
-                
+
                 element.style.top = (element.offsetTop - pos2) + "px";
                 element.style.left = (element.offsetLeft - pos1) + "px";
                 clampMapElementToCanvas(element, schoolId);
@@ -2345,6 +2019,126 @@
                 document.onmouseup = null;
                 document.onmousemove = null;
             }
+        }
+
+        function makeResizable(element, schoolId) {
+            const isBuilding = element.classList.contains('building-element');
+            const isFacility = element.classList.contains('facility-element');
+            if (!isBuilding && !isFacility) return;
+
+            const edge = 10;
+            const minW = isFacility ? 120 : 220;
+            const minH = isFacility ? 60 : 140;
+            let resizeDir = null;
+
+            function getResizeDirection(e) {
+                const rect = element.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const nearLeft = x <= edge;
+                const nearRight = x >= rect.width - edge;
+                const nearTop = y <= edge;
+                const nearBottom = y >= rect.height - edge;
+
+                if (nearLeft && nearTop) return 'nw';
+                if (nearRight && nearTop) return 'ne';
+                if (nearLeft && nearBottom) return 'sw';
+                if (nearRight && nearBottom) return 'se';
+                if (nearLeft || nearRight) return nearLeft ? 'w' : 'e';
+                if (nearTop || nearBottom) return nearTop ? 'n' : 's';
+                return null;
+            }
+
+            function getCursor(dir) {
+                if (dir === 'e' || dir === 'w') return 'ew-resize';
+                if (dir === 'n' || dir === 's') return 'ns-resize';
+                if (dir === 'nw' || dir === 'se') return 'nwse-resize';
+                if (dir === 'ne' || dir === 'sw') return 'nesw-resize';
+                return 'move';
+            }
+
+            element.addEventListener('mousemove', (e) => {
+                if (!isMapEditable[schoolId] || element.dataset.isResizing === '1') return;
+                const dir = getResizeDirection(e);
+                element.style.cursor = dir ? getCursor(dir) : 'move';
+            });
+
+            element.addEventListener('mouseleave', () => {
+                if (!isMapEditable[schoolId] || element.dataset.isResizing === '1') return;
+                element.style.cursor = 'move';
+            });
+
+            element.addEventListener('mousedown', (e) => {
+                if (!isMapEditable[schoolId] || e.button !== 0) return;
+
+                resizeDir = getResizeDirection(e);
+                if (!resizeDir) return;
+
+                e.preventDefault();
+                e.stopImmediatePropagation();
+                element.dataset.isResizing = '1';
+
+                const canvas = document.getElementById(`school-map-canvas-${schoolId}`);
+                const transform = canvas.style.transform;
+                const scaleMatch = transform.match(/scale\(([^)]+)\)/);
+                const scale = scaleMatch ? parseFloat(scaleMatch[1]) : 1;
+
+                const startX = e.clientX;
+                const startY = e.clientY;
+                const startW = parseFloat(element.style.width);
+                const startH = parseFloat(element.style.height);
+                const startL = parseFloat(element.style.left);
+                const startT = parseFloat(element.style.top);
+
+                function onMove(ev) {
+                    ev.preventDefault();
+
+                    const dx = (ev.clientX - startX) / scale;
+                    const dy = (ev.clientY - startY) / scale;
+
+                    let newW = startW;
+                    let newH = startH;
+                    let newL = startL;
+                    let newT = startT;
+
+                    const rightResize = resizeDir === 'e' || resizeDir === 'se' || resizeDir === 'ne';
+                    const leftResize = resizeDir === 'w' || resizeDir === 'sw' || resizeDir === 'nw';
+                    const bottomResize = resizeDir === 's' || resizeDir === 'se' || resizeDir === 'sw';
+                    const topResize = resizeDir === 'n' || resizeDir === 'ne' || resizeDir === 'nw';
+
+                    if (rightResize) newW = startW + dx;
+                    if (leftResize) {
+                        newW = startW - dx;
+                        newL = startL + dx;
+                    }
+                    if (bottomResize) newH = startH + dy;
+                    if (topResize) {
+                        newH = startH - dy;
+                        newT = startT + dy;
+                    }
+
+                    newW = Math.max(minW, newW);
+                    newH = Math.max(minH, newH);
+
+                    element.style.width = `${newW}px`;
+                    element.style.height = `${newH}px`;
+                    element.style.left = `${newL}px`;
+                    element.style.top = `${newT}px`;
+                    element.dataset.baseWidth = String(newW);
+                    element.dataset.baseHeight = String(newH);
+                    clampMapElementToCanvas(element, schoolId);
+                }
+
+                function onUp() {
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('mouseup', onUp);
+                    element.dataset.isResizing = '0';
+                    element.style.cursor = 'move';
+                }
+
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+            });
         }
 
         function printEvacuationMap(schoolId) {
@@ -2369,13 +2163,17 @@
                         description: el.dataset.description,
                         color: el.dataset.color,
                         x: parseFloat(el.style.left),
-                        y: parseFloat(el.style.top)
+                        y: parseFloat(el.style.top),
+                        width: Number(el.dataset.baseWidth || parseFloat(el.style.width) || 200),
+                        height: Number(el.dataset.baseHeight || parseFloat(el.style.height) || 100)
                     };
                 } else {
                     layout[id] = {
                         x: parseFloat(el.style.left),
                         y: parseFloat(el.style.top),
-                        rotation: Number(el.dataset.rotation || 0)
+                        rotation: Number(el.dataset.rotation || 0),
+                        width: Number(el.dataset.baseWidth || parseFloat(el.style.width) || 300),
+                        height: Number(el.dataset.baseHeight || parseFloat(el.style.height) || 150)
                     };
                 }
             });
@@ -2396,7 +2194,7 @@
                 if (result.success) {
                     successSwal('Map layout saved successfully!', () => {
                         if (isMapEditable[schoolId]) toggleMapEdit(schoolId);
-                        location.reload(); 
+                        location.reload();
                     });
                 } else {
                     errorSwal(result.message || 'Failed to save layout');
@@ -2412,7 +2210,7 @@
             currentSchoolId = schoolId;
             const input = document.getElementById('addFacilitySchoolId');
             if (input) input.value = schoolId;
-            
+
             const modalEl = document.getElementById('addFacilityModal');
             let modal = bootstrap.Modal.getInstance(modalEl);
             if (!modal) modal = new bootstrap.Modal(modalEl);
@@ -2427,13 +2225,13 @@
                     alert('Debug: addFacilityForm not found');
                     return;
                 }
-                
+
                 // 2. Extract values safely
                 const nameInput = form.querySelector('[name="name"]');
                 const descInput = form.querySelector('[name="description"]');
                 const colorInput = form.querySelector('[name="color"]:checked');
                 const schoolIdInput = document.getElementById('addFacilitySchoolId');
-                
+
                 const name = nameInput ? nameInput.value.trim() : "";
                 const description = descInput ? descInput.value.trim() : "";
                 const color = colorInput ? colorInput.value : "#28a745";
@@ -2460,16 +2258,16 @@
                     x: 800, // Central-ish on the 2400 width
                     y: 600
                 };
-                
+
                 // 4. Update data structure
                 if (typeof mapDataArr === 'undefined') window.mapDataArr = {};
                 if (!mapDataArr[sId]) mapDataArr[sId] = { buildings: [], facilities: [] };
                 if (!mapDataArr[sId].facilities) mapDataArr[sId].facilities = [];
                 mapDataArr[sId].facilities.push(facility);
-                
+
                 // 5. Render it
                 renderFacility(facility, sId, {});
-                
+
                 // 6. UI Updates
                 const modalEl = document.getElementById('addFacilityModal');
                 if (window.bootstrap && bootstrap.Modal) {
@@ -2477,9 +2275,9 @@
                     if (modal && typeof modal.hide === 'function') modal.hide();
                 } else {
                     // Fallback hide
-                    $(modalEl).modal('hide'); 
+                    $(modalEl).modal('hide');
                 }
-                
+
                 // Enable save button
                 const saveBtn = document.getElementById(`save-placement-btn-${sId}`);
                 if (saveBtn) {
@@ -2487,10 +2285,10 @@
                     saveBtn.classList.remove('btn-secondary');
                     saveBtn.classList.add('btn-primary');
                 }
-                
+
                 // Unlock map for positioning
                 if (!isMapEditable[sId]) toggleMapEdit(sId);
-                
+
                 form.reset();
                 Swal.fire({
                     icon: 'success',
@@ -2508,7 +2306,7 @@
             document.getElementById('editFacilityId').value = facility.id;
             document.getElementById('editFacilityName').value = facility.name;
             document.getElementById('editFacilityDesc').value = facility.description || '';
-            
+
             const colorOption = document.querySelector(`#editFacilityColorOptions input[value="${facility.color}"]`);
             if (colorOption) colorOption.checked = true;
 
@@ -2539,7 +2337,7 @@
         function togglePlanView(mode, schoolId) {
             const schoolView = document.getElementById(`school-plan-view-${schoolId}`);
             const buildingView = document.getElementById(`building-plans-view-${schoolId}`);
-            
+
             if (mode === 'school') {
                 schoolView.style.display = 'block';
                 buildingView.style.display = 'none';
@@ -2553,7 +2351,7 @@
             const id = document.getElementById('editFacilityId').value;
             const el = document.getElementById(id);
             if (el) el.remove();
-            
+
             bootstrap.Modal.getInstance(document.getElementById('editFacilityModal')).hide();
             const saveBtn = document.getElementById(`save-placement-btn-${currentSchoolId}`);
             if (saveBtn) saveBtn.disabled = false;

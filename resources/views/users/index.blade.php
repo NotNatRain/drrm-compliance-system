@@ -98,10 +98,27 @@
                                 @if($user->role === 'admin')
                                     <span class="text-muted small">All Modules</span>
                                 @else
-                                    @php $modules = $user->module_access ?? []; @endphp
-                                    @foreach($modules as $mod)
-                                        <span class="badge bg-secondary small mb-1">{{ str_replace('_', ' ', $mod) }}</span>
-                                    @endforeach
+                                    @php
+                                        $modules = $user->module_access ?? [];
+                                        $allAvailableModules = [
+                                            'fire_safety',
+                                            'typhoon_flood',
+                                            'incident_checklist',
+                                            'comprehensive_school_safety',
+                                            'hazard_mapping',
+                                        ];
+                                        $hasAllModules = $user->role === 'contributor'
+                                            && empty(array_diff($allAvailableModules, $modules));
+                                    @endphp
+
+                                    @if($hasAllModules)
+                                        <span class="text-muted small">All Modules</span>
+                                    @else
+                                        @foreach($modules as $mod)
+                                            <span class="badge bg-secondary small mb-1">{{ str_replace('_', ' ', $mod) }}</span>
+                                        @endforeach
+                                    @endif
+
                                     @if(empty($modules))
                                         <span class="text-muted italic small">No access</span>
                                     @endif

@@ -49,7 +49,6 @@
                 <div class="modal-body">
                     <form id="updateAlarmForm">
                         @csrf
-                        @method('PUT')
                         <input type="hidden" name="alarm_id" id="updateAlarmId">
                         <input type="hidden" id="updateSchoolId">
 
@@ -702,18 +701,18 @@
                 if (buildingSelect) {
                     buildingSelect.addEventListener('change', handleBuildingChange);
                 }
-                
+
                 // --- UPDATE MODAL LOGIC ---
                 const updateCoversMultiple = document.getElementById('updateCoversMultiple');
                 const updateBuildingSelect = document.getElementById('updateBuildingSelect');
-                
+
                 if (updateCoversMultiple) {
                     updateCoversMultiple.addEventListener('change', function() {
                          const help = document.getElementById('updateMultiSelectHelp');
                          const floorsCont = document.getElementById('updateFloorsContainer');
                          const floorSel = document.getElementById('updateFloorSelect');
                          const locInput = document.getElementById('updateAlarmSpecificLocation');
-                         
+
                          if (this.checked) {
                             updateBuildingSelect.setAttribute('multiple', 'multiple');
                             updateBuildingSelect.size = 4;
@@ -739,7 +738,7 @@
                          }
                     });
                 }
-                
+
                 if (updateBuildingSelect) {
                     updateBuildingSelect.addEventListener('change', handleUpdateBuildingChange);
                 }
@@ -749,18 +748,18 @@
                     const bSelect = document.getElementById('updateBuildingSelect');
                     const floorsCont = document.getElementById('updateFloorsContainer');
                     const floorSel = document.getElementById('updateFloorSelect');
-                    
+
                     if (!isMultiple && bSelect.value) {
                         const buildingId = bSelect.value;
                         floorsCont.style.display = 'block';
                         floorSel.required = true;
-                        
+
                         // We need the floors count. We can store it in dataset when populating options.
                         const selectedOpt = bSelect.options[bSelect.selectedIndex];
                         const floors = selectedOpt ? parseInt(selectedOpt.dataset.floors || 1) : 1;
-                        
+
                         floorSel.innerHTML = '<option value="">Select Floor</option><option value="All Floors">All Floors</option>';
-                        
+
                         const getOrdinal = (n) => {
                             const s = ["th", "st", "nd", "rd"];
                             const v = n % 100;
@@ -925,7 +924,7 @@
                 // Fetch Buildings List for this school
                 const buildingsResp = await fetch(`/fire-safety/buildings/${alarm.school_id}`);
                 const buildings = await buildingsResp.json();
-                
+
                 const bSelect = document.getElementById('updateBuildingSelect');
                 bSelect.innerHTML = '<option value="">Select Building</option>';
                 buildings.forEach(b => {
@@ -940,7 +939,7 @@
                 const isMulti = (alarm.buildings && alarm.buildings.length > 1);
                 const updateCoversMultiple = document.getElementById('updateCoversMultiple');
                 updateCoversMultiple.checked = isMulti;
-                
+
                 // Trigger UI update manually based on state
                 const help = document.getElementById('updateMultiSelectHelp');
                 const floorsCont = document.getElementById('updateFloorsContainer');
@@ -954,7 +953,7 @@
                     floorsCont.style.display = 'none';
                     floorSel.required = false;
                     locInput.value = "Multiple Buildings - Shared System";
-                    
+
                     // Select buildings
                     const assignedIds = alarm.buildings.map(b => b.id);
                     Array.from(bSelect.options).forEach(opt => {
@@ -966,18 +965,18 @@
                     help.style.display = 'none';
                     floorsCont.style.display = 'block';
                     floorSel.required = true;
-                    
+
                     // Select single building (either from list or direct ID)
                     const bId = (alarm.buildings && alarm.buildings.length > 0) ? alarm.buildings[0].id : (alarm.building_id || '');
                     bSelect.value = bId;
-                    
+
                     // Populate Floors for selected building
                     if (bId) {
                         const selectedOpt = bSelect.options[bSelect.selectedIndex];
                         const floors = selectedOpt ? parseInt(selectedOpt.dataset.floors || 1) : 1;
-                        
+
                         floorSel.innerHTML = '<option value="">Select Floor</option><option value="All Floors">All Floors</option>';
-                        
+
                         const getOrdinal = (n) => {
                             const s = ["th", "st", "nd", "rd"];
                             const v = n % 100;
@@ -990,12 +989,12 @@
                             opt.textContent = getOrdinal(i) + " Floor";
                             floorSel.appendChild(opt);
                         }
-                        
+
                         // Parse Location
                         let location = alarm.location || '';
                         let specificLoc = location;
                         let matchedFloor = '';
-                        
+
                         // Try to match start of string with floor options
                         // Location format usually: "1st Floor - Lobby"
                         for (let opt of floorSel.options) {
@@ -1009,7 +1008,7 @@
                                 break;
                             }
                         }
-                        
+
                         floorSel.value = matchedFloor;
                         locInput.value = specificLoc;
                     } else {
@@ -1293,11 +1292,11 @@
             const alarmId = document.getElementById('updateAlarmId').value;
             const newCode = document.getElementById('updateAlarmCode').value;
             const oldCode = document.getElementById('originalAlarmCode').value;
-            
+
             // Handle Location Combination Logic
             const isMultiple = document.getElementById('updateCoversMultiple').checked;
             const bSelect = document.getElementById('updateBuildingSelect');
-            
+
             if (isMultiple) {
                 // Check if at least one building selected
                 if (bSelect.selectedOptions.length === 0) {
@@ -1311,24 +1310,24 @@
                      Swal.fire('Missing Information', 'Please select a building.', 'warning');
                      return;
                 }
-                
+
                 const floor = document.getElementById('updateFloorSelect').value;
                 const specific = document.getElementById('updateAlarmSpecificLocation').value.trim();
-                
+
                 if (!floor) {
                      Swal.fire('Missing Information', 'Please select a floor.', 'warning');
                      return;
                 }
-                
+
                 if (!specific) {
                      Swal.fire('Missing Information', 'Please enter a specific location.', 'warning');
                      return;
                 }
-                
+
                 // Combine value for submission
                 // We modify the input value just before FormData creation
                 // Note: We might want to revert this if submission fails, but for now it's fine as page reloads on success
-                // Actually, let's keep the specific value clean in the input and append to FormData manually if needed, 
+                // Actually, let's keep the specific value clean in the input and append to FormData manually if needed,
                 // BUT FormData reads from the input value.
                 // To avoid visual glitch if we cancel/fail, we can just handle the string in FormData.
             }
@@ -1370,10 +1369,9 @@
             }
 
             const formData = new FormData(form);
-            formData.append('_method', 'PUT');
             // Auto-update Last Test to Today
             formData.append('last_test', today);
-            
+
             // Handle Location Override in FormData for Single Building
             if (!isMultiple) {
                 const floor = document.getElementById('updateFloorSelect').value;
@@ -1398,7 +1396,7 @@
             });
 
             try {
-                const response = await fetch(`/fire-safety/alarm/${alarmId}`, {
+                const response = await fetch(`/fire-safety/alarm/${alarmId}/update`, {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
