@@ -131,8 +131,11 @@
                     <td><strong>{{ $ext->code }}</strong></td>
                     <td>
                         {{ $ext->centerRoom ? $ext->centerRoom->room_name : 'N/A' }}
-                        @if($ext->coveredRooms->count() > 1)
-                            <small class="text-muted d-block">(And {{ $ext->coveredRooms->count() - 1 }} other rooms)</small>
+                        @php
+                            $otherRooms = $ext->coveredRooms->filter(fn($r) => $ext->centerRoom && $r->id !== $ext->centerRoom->id);
+                        @endphp
+                        @if($otherRooms->count() > 0)
+                            <small class="text-muted d-block">({{ $otherRooms->map(fn($r) => 'Room ' . ($r->room_code ?: $r->room_name))->implode(' & ') }} taking cover)</small>
                         @endif
                     </td>
                     <td class="status-cell">{{ strtoupper($ext->status) }}</td>

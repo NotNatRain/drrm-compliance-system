@@ -172,6 +172,7 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     Route::post('/extinguisher/{id}/update', [FireSafetyController::class, 'updateExtinguisher'])->name('fire-safety.extinguisher.update');
     Route::post('/extinguisher/{id}/unassign', [FireSafetyController::class, 'unassignExtinguisher'])->name('fire-safety.extinguisher.unassign');
     Route::post('/extinguisher/{id}/remove', [FireSafetyController::class, 'removeExtinguisher'])->name('fire-safety.extinguisher.remove');
+    Route::post('/extinguisher/{id}/transfer', [FireSafetyController::class, 'transferExtinguisher'])->name('fire-safety.extinguisher.transfer');
     Route::get('/extinguisher/history/{schoolId}', [FireSafetyController::class, 'getExtinguisherHistory'])->name('fire-safety.extinguisher.history');
     Route::get('/room/history/{schoolId}', [FireSafetyController::class, 'getRoomHistory'])->name('fire-safety.room.history');
     Route::get('/extinguisher/inspections/{schoolId}', [FireSafetyController::class, 'getRecentExtinguisherInspections'])->name('fire-safety.extinguisher.inspections');

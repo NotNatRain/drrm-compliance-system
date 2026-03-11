@@ -295,32 +295,83 @@
                                                         <div class="row g-3">
                                                             @php
                                                                 $config = $school->config_status;
-                                                                $modules = [
-                                                                    ['id' => 'Building', 'key' => 'has_buildings', 'label' => 'Buildings & Alarms', 'icon' => 'fa-building', 'route' => 'fire-safety.buildings'],
-                                                                    ['id' => 'Room', 'key' => 'has_rooms', 'label' => 'Room Setup', 'icon' => 'fa-door-open', 'route' => 'fire-safety.extinguishers'],
-                                                                    ['id' => 'Extinguisher', 'key' => 'has_extinguishers', 'label' => 'Fire Extinguishers', 'icon' => 'fa-fire-extinguisher', 'route' => 'fire-safety.extinguishers'],
-                                                                    ['id' => 'Plan', 'key' => 'has_plans', 'label' => 'Evacuation Plans', 'icon' => 'fa-map-signs', 'route' => 'fire-safety.evacuation-plans'],
-                                                                ];
+                                                                $bldgAlarmDone = $config['has_buildings'] && $config['has_alarms'];
+                                                                $extRoomDone = $config['has_rooms'] && $config['has_extinguishers'];
+                                                                $planDone = $config['has_plans'];
+
+                                                                // Highlight logic: next card to configure
+                                                                $highlightBldg = !$bldgAlarmDone && !$extRoomDone;
+                                                                $highlightExtRoom = $bldgAlarmDone && !$extRoomDone;
+                                                                // Also highlight ext/room if user started there first (ext/room done but bldg not)
+                                                                $highlightBldgAlt = !$bldgAlarmDone && $extRoomDone;
+                                                                $highlightPlan = $bldgAlarmDone && $extRoomDone && !$planDone;
                                                             @endphp
-                                                            @foreach($modules as $m)
-                                                                @php $isDone = $config[$m['key']]; @endphp
-                                                                <div class="col-md-6 col-lg-3">
-                                                                    <div class="card h-100 text-center p-3 border-2 {{ $isDone ? 'border-success bg-success-subtle' : 'border-secondary bg-light' }}">
-                                                                        <i class="fas {{ $m['icon'] }} fa-2x mb-2 {{ $isDone ? 'text-success' : 'text-secondary' }}"></i>
-                                                                        <h6 class="small fw-bold">{{ $m['label'] }}</h6>
-                                                                        <div class="mb-2">
-                                                                            @if($isDone)
-                                                                                <span class="badge bg-success"><i class="fas fa-check-circle"></i> Done</span>
-                                                                            @else
-                                                                                <span class="badge bg-secondary">Pending</span>
-                                                                            @endif
-                                                                        </div>
-                                                                        <a href="{{ route($m['route']) }}" class="btn btn-sm w-100 {{ $isDone ? 'btn-success' : 'btn-outline-dark' }}">
-                                                                            <i class="fas {{ $isDone ? 'fa-edit' : 'fa-plus' }} me-1"></i> {{ $isDone ? 'Update' : 'Setup Now' }}
-                                                                        </a>
+                                                            {{-- Buildings & Alarm System card --}}
+                                                            <div class="col-md-4">
+                                                                <div class="card h-100 text-center p-3 border-2
+                                                                    {{ $bldgAlarmDone ? 'border-success bg-success-subtle' : (($highlightBldg || $highlightBldgAlt) ? 'border-primary bg-primary-subtle' : 'border-secondary bg-light') }}">
+                                                                    <div class="d-flex justify-content-center gap-2 mb-2">
+                                                                        <i class="fas fa-building fa-2x {{ $bldgAlarmDone ? 'text-success' : (($highlightBldg || $highlightBldgAlt) ? 'text-primary' : 'text-secondary') }}"></i>
+                                                                        <i class="fas fa-bell fa-2x {{ $bldgAlarmDone ? 'text-success' : (($highlightBldg || $highlightBldgAlt) ? 'text-primary' : 'text-secondary') }}"></i>
                                                                     </div>
+                                                                    <h6 class="small fw-bold">Buildings & Alarm System</h6>
+                                                                    <div class="mb-2">
+                                                                        @if($bldgAlarmDone)
+                                                                            <span class="badge bg-success"><i class="fas fa-check-circle"></i> Done</span>
+                                                                        @elseif($highlightBldg || $highlightBldgAlt)
+                                                                            <span class="badge bg-primary"><i class="fas fa-arrow-right"></i> Next Step</span>
+                                                                        @else
+                                                                            <span class="badge bg-secondary">Pending</span>
+                                                                        @endif
+                                                                    </div>
+                                                                    <a href="{{ route('fire-safety.buildings') }}" class="btn btn-sm w-100 {{ $bldgAlarmDone ? 'btn-success' : (($highlightBldg || $highlightBldgAlt) ? 'btn-primary' : 'btn-outline-dark') }}">
+                                                                        <i class="fas {{ $bldgAlarmDone ? 'fa-edit' : 'fa-plus' }} me-1"></i> {{ $bldgAlarmDone ? 'Update' : 'Setup Now' }}
+                                                                    </a>
                                                                 </div>
-                                                            @endforeach
+                                                            </div>
+                                                            {{-- Fire Extinguisher & Rooms card --}}
+                                                            <div class="col-md-4">
+                                                                <div class="card h-100 text-center p-3 border-2
+                                                                    {{ $extRoomDone ? 'border-success bg-success-subtle' : ($highlightExtRoom ? 'border-primary bg-primary-subtle' : 'border-secondary bg-light') }}">
+                                                                    <div class="d-flex justify-content-center gap-2 mb-2">
+                                                                        <i class="fas fa-fire-extinguisher fa-2x {{ $extRoomDone ? 'text-success' : ($highlightExtRoom ? 'text-primary' : 'text-secondary') }}"></i>
+                                                                        <i class="fas fa-door-open fa-2x {{ $extRoomDone ? 'text-success' : ($highlightExtRoom ? 'text-primary' : 'text-secondary') }}"></i>
+                                                                    </div>
+                                                                    <h6 class="small fw-bold">Fire Extinguisher & Rooms</h6>
+                                                                    <div class="mb-2">
+                                                                        @if($extRoomDone)
+                                                                            <span class="badge bg-success"><i class="fas fa-check-circle"></i> Done</span>
+                                                                        @elseif($highlightExtRoom)
+                                                                            <span class="badge bg-primary"><i class="fas fa-arrow-right"></i> Next Step</span>
+                                                                        @else
+                                                                            <span class="badge bg-secondary">Pending</span>
+                                                                        @endif
+                                                                    </div>
+                                                                    <a href="{{ route('fire-safety.extinguishers') }}" class="btn btn-sm w-100 {{ $extRoomDone ? 'btn-success' : ($highlightExtRoom ? 'btn-primary' : 'btn-outline-dark') }}">
+                                                                        <i class="fas {{ $extRoomDone ? 'fa-edit' : 'fa-plus' }} me-1"></i> {{ $extRoomDone ? 'Update' : 'Setup Now' }}
+                                                                    </a>
+                                                                </div>
+                                                            </div>
+                                                            {{-- Evacuation Plans card --}}
+                                                            <div class="col-md-4">
+                                                                <div class="card h-100 text-center p-3 border-2
+                                                                    {{ $planDone ? 'border-success bg-success-subtle' : ($highlightPlan ? 'border-primary bg-primary-subtle' : 'border-secondary bg-light') }}">
+                                                                    <i class="fas fa-map-signs fa-2x mb-2 {{ $planDone ? 'text-success' : ($highlightPlan ? 'text-primary' : 'text-secondary') }}"></i>
+                                                                    <h6 class="small fw-bold">Evacuation Plans</h6>
+                                                                    <div class="mb-2">
+                                                                        @if($planDone)
+                                                                            <span class="badge bg-success"><i class="fas fa-check-circle"></i> Done</span>
+                                                                        @elseif($highlightPlan)
+                                                                            <span class="badge bg-primary"><i class="fas fa-arrow-right"></i> Next Step</span>
+                                                                        @else
+                                                                            <span class="badge bg-secondary">Pending</span>
+                                                                        @endif
+                                                                    </div>
+                                                                    <a href="{{ route('fire-safety.evacuation-plans') }}" class="btn btn-sm w-100 {{ $planDone ? 'btn-success' : ($highlightPlan ? 'btn-primary' : 'btn-outline-dark') }}">
+                                                                        <i class="fas {{ $planDone ? 'fa-edit' : 'fa-plus' }} me-1"></i> {{ $planDone ? 'Update' : 'Setup Now' }}
+                                                                    </a>
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                     @else
                                                         <h6 class="text-muted text-uppercase small fw-bold mb-3"><i class="fas fa-exclamation-triangle me-2"></i>Identified Issues per Module</h6>
@@ -329,42 +380,73 @@
                                                                 <thead class="table-light">
                                                                     <tr>
                                                                         <th>Module</th>
-                                                                        <th>Identified Issues / Locations</th>
+                                                                        <th>Location / Building</th>
                                                                         <th class="text-center">Action</th>
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody>
                                                                     @php
-                                                                        $issues = $school->module_issues;
-                                                                        $moduleMap = [
-                                                                            ['key' => 'buildings', 'label' => 'Buildings', 'icon' => 'fa-building', 'color' => 'primary', 'route' => 'fire-safety.buildings'],
-                                                                            ['key' => 'alarms', 'label' => 'Alarm System', 'icon' => 'fa-bell', 'color' => 'info', 'route' => 'fire-safety.alarm-systems'],
-                                                                            ['key' => 'rooms', 'label' => 'Room Config', 'icon' => 'fa-door-open', 'color' => 'warning', 'route' => 'fire-safety.extinguishers'],
-                                                                            ['key' => 'extinguishers', 'label' => 'Extinguishers', 'icon' => 'fa-fire-extinguisher', 'color' => 'danger', 'route' => 'fire-safety.extinguishers'],
-                                                                            ['key' => 'plans', 'label' => 'Evac Plans', 'icon' => 'fa-map-signs', 'color' => 'success', 'route' => 'fire-safety.evacuation-plans']
+                                                                        $mi = $school->module_issues;
+                                                                        $combinedModules = [
+                                                                            [
+                                                                                'label' => 'Buildings & Alarm System',
+                                                                                'icons' => ['fa-building', 'fa-bell'],
+                                                                                'data' => $mi['buildings_alarms'],
+                                                                                'route' => 'fire-safety.buildings',
+                                                                                'schoolId' => $school->id,
+                                                                            ],
+                                                                            [
+                                                                                'label' => 'Fire Extinguisher & Rooms',
+                                                                                'icons' => ['fa-fire-extinguisher', 'fa-door-open'],
+                                                                                'data' => $mi['ext_rooms'],
+                                                                                'route' => 'fire-safety.extinguishers',
+                                                                                'schoolId' => $school->id,
+                                                                            ],
+                                                                            [
+                                                                                'label' => 'Evacuation Plans',
+                                                                                'icons' => ['fa-map-signs'],
+                                                                                'data' => $mi['plans'],
+                                                                                'route' => 'fire-safety.evacuation-plans',
+                                                                                'schoolId' => $school->id,
+                                                                            ],
                                                                         ];
                                                                     @endphp
-                                                                    @foreach($moduleMap as $m)
-                                                                        @if(isset($issues[$m['key']]) && count($issues[$m['key']]) > 0)
-                                                                            <tr>
-                                                                                <td>
-                                                                                    <div class="d-flex align-items-center">
-                                                                                        <i class="fas {{ $m['icon'] }} text-{{ $m['color'] }} me-2"></i>
-                                                                                        <span class="fw-bold small">{{ $m['label'] }}</span>
-                                                                                    </div>
-                                                                                </td>
-                                                                                <td>
-                                                                                    @foreach($issues[$m['key']] as $issue)
-                                                                                        <span class="badge bg-light text-danger border small mb-1">{{ $issue }}</span>
+                                                                    @foreach($combinedModules as $cm)
+                                                                        @php
+                                                                            $hasIssues = count($cm['data']['issues']) > 0;
+                                                                            $isGreen = !$hasIssues && !empty($cm['data']['green_msg']);
+                                                                            $worstSeverity = 'green';
+                                                                            foreach ($cm['data']['issues'] as $iss) {
+                                                                                if ($iss['severity'] === 'red') { $worstSeverity = 'red'; break; }
+                                                                                if ($iss['severity'] === 'yellow') $worstSeverity = 'yellow';
+                                                                            }
+                                                                            $arrowColor = $worstSeverity === 'red' ? 'danger' : ($worstSeverity === 'yellow' ? 'warning' : 'success');
+                                                                        @endphp
+                                                                        <tr>
+                                                                            <td>
+                                                                                <div class="d-flex align-items-center">
+                                                                                    @foreach($cm['icons'] as $icon)
+                                                                                        <i class="fas {{ $icon }} text-dark me-1"></i>
                                                                                     @endforeach
-                                                                                </td>
-                                                                                <td class="text-center">
-                                                                                    <a href="{{ route($m['route']) }}" class="btn btn-sm btn-outline-{{ $m['color'] }}">
-                                                                                        <i class="fas fa-arrow-right"></i>
-                                                                                    </a>
-                                                                                </td>
-                                                                            </tr>
-                                                                        @endif
+                                                                                    <span class="fw-bold small ms-1">{{ $cm['label'] }}</span>
+                                                                                </div>
+                                                                            </td>
+                                                                            <td>
+                                                                                @if($isGreen)
+                                                                                    <span class="text-success small"><i class="fas fa-check-circle me-1"></i>{{ $cm['data']['green_msg'] }}</span>
+                                                                                @elseif(!empty($cm['data']['green_msg']) && $hasIssues)
+                                                                                    <span class="text-success small d-block mb-1"><i class="fas fa-check-circle me-1"></i>{{ $cm['data']['green_msg'] }}</span>
+                                                                                @endif
+                                                                                @foreach($cm['data']['issues'] as $iss)
+                                                                                    <span class="badge bg-light text-{{ $iss['severity'] === 'red' ? 'danger' : ($iss['severity'] === 'yellow' ? 'warning' : 'success') }} border small mb-1 d-inline-block">{{ $iss['text'] }}</span>
+                                                                                @endforeach
+                                                                            </td>
+                                                                            <td class="text-center">
+                                                                                <a href="{{ route($cm['route']) }}" class="btn btn-sm btn-outline-{{ $arrowColor }} switch-school-link" data-school-id="{{ $cm['schoolId'] }}">
+                                                                                    <i class="fas fa-arrow-right"></i>
+                                                                                </a>
+                                                                            </td>
+                                                                        </tr>
                                                                     @endforeach
                                                                 </tbody>
                                                             </table>
@@ -547,7 +629,7 @@
                         <div id="unconfiguredView" style="display: none;">
                             <h6 class="text-muted text-uppercase small fw-bold mb-3">Required Setup Checklist</h6>
                             <div class="row g-3">
-                                <div class="col-md-6">
+                                <div class="col-md-4">
                                     <div class="card h-100 text-center p-3 border-2" id="btnConfigBuilding">
                                         <div class="d-flex justify-content-center gap-2 mb-2">
                                             <i class="fas fa-building fa-2x"></i>
@@ -558,26 +640,18 @@
                                         <a href="{{ route('fire-safety.buildings') }}" class="btn btn-sm mt-2">{{ auth()->user()->role === 'viewer' ? 'View' : 'Configure' }}</a>
                                     </div>
                                 </div>
-                                <div class="col-md-6" style="display:none;" id="btnConfigAlarm">
-                                     <!-- Hidden but kept for JS compatibility -->
+                                <div class="col-md-4">
+                                    <div class="card h-100 text-center p-3 border-2" id="btnConfigExtRoom">
+                                        <div class="d-flex justify-content-center gap-2 mb-2">
+                                            <i class="fas fa-fire-extinguisher fa-2x"></i>
+                                            <i class="fas fa-door-open fa-2x"></i>
+                                        </div>
+                                        <h6>Fire Extinguisher & Rooms</h6>
+                                        <div class="mt-2 status-indicator"></div>
+                                        <a href="{{ route('fire-safety.extinguishers') }}" class="btn btn-sm mt-2">{{ auth()->user()->role === 'viewer' ? 'View' : 'Configure' }}</a>
+                                    </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="card h-100 text-center p-3 border-2" id="btnConfigRoom">
-                                        <i class="fas fa-door-open fa-2x mb-2"></i>
-                                        <h6>Room Setup</h6>
-                                        <div class="mt-2 status-indicator"></div>
-                                        <a href="{{ route('fire-safety.extinguishers') }}" class="btn btn-sm mt-2">{{ auth()->user()->role === 'viewer' ? 'View' : 'Configure' }}</a>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="card h-100 text-center p-3 border-2" id="btnConfigExtinguisher">
-                                        <i class="fas fa-fire-extinguisher fa-2x mb-2"></i>
-                                        <h6>Fire Extinguishers</h6>
-                                        <div class="mt-2 status-indicator"></div>
-                                        <a href="{{ route('fire-safety.extinguishers') }}" class="btn btn-sm mt-2">{{ auth()->user()->role === 'viewer' ? 'View' : 'Configure' }}</a>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
                                     <div class="card h-100 text-center p-3 border-2" id="btnConfigPlan">
                                         <i class="fas fa-map-signs fa-2x mb-2"></i>
                                         <h6>Evacuation Plans</h6>
@@ -833,95 +907,177 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 unconfiguredView.style.display = 'none';
                 ongoingView.style.display = 'block';
-                renderOngoingIssues(school.module_issues);
+                renderOngoingIssues(school.module_issues, school.id);
             }
         });
     });
 
     function renderUnconfiguredChecklist(config, schoolIdDisplay, schoolIdDb) {
-        const modules = [
-            { id: 'Building', key: 'has_buildings', color: 'primary', icon: 'fa-building' },
-            { id: 'Alarm', key: 'has_alarms', color: 'info', icon: 'fa-bell' },
-            { id: 'Room', key: 'has_rooms', color: 'warning', icon: 'fa-door-open' },
-            { id: 'Extinguisher', key: 'has_extinguishers', color: 'danger', icon: 'fa-fire-extinguisher' },
-            { id: 'Plan', key: 'has_plans', color: 'success', icon: 'fa-map-signs' }
+        const bldgAlarmDone = config.has_buildings && config.has_alarms;
+        const extRoomDone = config.has_rooms && config.has_extinguishers;
+        const planDone = config.has_plans;
+
+        const highlightBldg = !bldgAlarmDone && !extRoomDone;
+        const highlightExtRoom = bldgAlarmDone && !extRoomDone;
+        const highlightBldgAlt = !bldgAlarmDone && extRoomDone;
+        const highlightPlan = bldgAlarmDone && extRoomDone && !planDone;
+
+        const cards = [
+            { id: 'Building', done: bldgAlarmDone, highlight: highlightBldg || highlightBldgAlt },
+            { id: 'ExtRoom', done: extRoomDone, highlight: highlightExtRoom },
+            { id: 'Plan', done: planDone, highlight: highlightPlan },
         ];
 
-        modules.forEach(m => {
-            const card = document.getElementById(`btnConfig${m.id}`);
+        cards.forEach(c => {
+            const card = document.getElementById(`btnConfig${c.id}`);
+            if (!card) return;
             const indicator = card.querySelector('.status-indicator');
-            const isDone = config[m.key];
 
-            card.className = `card h-100 text-center p-3 border-2 ${isDone ? 'border-success bg-success-subtle' : 'border-secondary bg-light'}`;
-            indicator.innerHTML = isDone ?
-                `<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> Configured</span>` :
-                `<span class="badge bg-secondary"><i class="fas fa-clock me-1"></i> Pending</span>`;
+            if (c.done) {
+                card.className = 'card h-100 text-center p-3 border-2 border-success bg-success-subtle';
+            } else if (c.highlight) {
+                card.className = 'card h-100 text-center p-3 border-2 border-primary bg-primary-subtle';
+            } else {
+                card.className = 'card h-100 text-center p-3 border-2 border-secondary bg-light';
+            }
+
+            if (c.done) {
+                indicator.innerHTML = '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> Configured</span>';
+            } else if (c.highlight) {
+                indicator.innerHTML = '<span class="badge bg-primary"><i class="fas fa-arrow-right me-1"></i> Next Step</span>';
+            } else {
+                indicator.innerHTML = '<span class="badge bg-secondary"><i class="fas fa-clock me-1"></i> Pending</span>';
+            }
+
+            // Update icons color
+            card.querySelectorAll('i.fa-2x, i.fas.fa-2x').forEach(icon => {
+                icon.classList.remove('text-success', 'text-primary', 'text-secondary');
+                if (c.done) icon.classList.add('text-success');
+                else if (c.highlight) icon.classList.add('text-primary');
+                else icon.classList.add('text-secondary');
+            });
 
             const btn = card.querySelector('a');
             const route = btn.getAttribute('href');
-            btn.className = `btn btn-sm mt-2 ${isDone ? 'btn-success' : 'btn-outline-dark'}`;
+            if (c.done) {
+                btn.className = 'btn btn-sm mt-2 btn-success';
+            } else if (c.highlight) {
+                btn.className = 'btn btn-sm mt-2 btn-primary';
+            } else {
+                btn.className = 'btn btn-sm mt-2 btn-outline-dark';
+            }
+
             if (userRole === 'viewer') {
                 btn.innerHTML = '<i class="fas fa-search me-1"></i> View';
             } else {
-                if (!isDone) {
-                    btn.innerHTML = '<i class="fas fa-plus me-1"></i> Setup Now';
-                    if (userRole === 'admin') {
-                         btn.onclick = function(e) {
-                             e.preventDefault();
-                             switchSchoolAndRedirect(schoolIdDb, route);
-                         };
-                    }
-                } else {
-                    btn.innerHTML = '<i class="fas fa-edit me-1"></i> Update';
-                     if (userRole === 'admin') {
-                         btn.onclick = function(e) {
-                             e.preventDefault();
-                             switchSchoolAndRedirect(schoolIdDb, route);
-                         };
-                    }
-                }
+                btn.innerHTML = c.done
+                    ? '<i class="fas fa-edit me-1"></i> Update'
+                    : '<i class="fas fa-plus me-1"></i> Setup Now';
+            }
+
+            if (userRole === 'admin') {
+                btn.onclick = function(e) {
+                    e.preventDefault();
+                    switchSchoolAndRedirect(schoolIdDb, route);
+                };
             }
         });
     }
 
-    function renderOngoingIssues(issues) {
+    function renderOngoingIssues(issues, schoolIdDb) {
         const tbody = document.getElementById('ongoingIssuesTable');
         tbody.innerHTML = '';
 
         const moduleMap = [
-            { key: 'buildings', label: 'Buildings', icon: 'fa-building', color: 'primary', route: 'buildings' },
-            { key: 'alarms', label: 'Alarm System', icon: 'fa-bell', color: 'info', route: 'alarm-systems' },
-            { key: 'rooms', label: 'Room Config', icon: 'fa-door-open', color: 'warning', route: 'extinguishers' },
-            { key: 'extinguishers', label: 'Extinguishers', icon: 'fa-fire-extinguisher', color: 'danger', route: 'extinguishers' },
-            { key: 'plans', label: 'Evac Plans', icon: 'fa-map-signs', color: 'success', route: 'evacuation-plans' }
+            {
+                label: 'Buildings & Alarm System',
+                icons: ['fa-building', 'fa-bell'],
+                dataKey: 'buildings_alarms',
+                route: 'buildings'
+            },
+            {
+                label: 'Fire Extinguisher & Rooms',
+                icons: ['fa-fire-extinguisher', 'fa-door-open'],
+                dataKey: 'ext_rooms',
+                route: 'extinguishers'
+            },
+            {
+                label: 'Evacuation Plans',
+                icons: ['fa-map-signs'],
+                dataKey: 'plans',
+                route: 'evacuation-plans'
+            }
         ];
 
         moduleMap.forEach(m => {
-            if (issues[m.key] && issues[m.key].length > 0) {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>
-                        <div class="d-flex align-items-center">
-                            <i class="fas ${m.icon} text-${m.color} me-2"></i>
-                            <span class="fw-bold">${m.label}</span>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="text-muted small">${issues[m.key].join(', ')}</div>
-                    </td>
-                    <td class="text-center">
-                        <a href="/fire-safety/${m.route}" class="btn btn-xs btn-outline-${m.color}">
-                            <i class="fas fa-arrow-right"></i>
-                        </a>
-                    </td>
-                `;
-                tbody.appendChild(tr);
+            const data = issues[m.dataKey];
+            if (!data) return;
+
+            const hasIssues = data.issues && data.issues.length > 0;
+            const greenMsg = data.green_msg || '';
+
+            // Determine worst severity for arrow color
+            let worstSeverity = 'green';
+            if (hasIssues) {
+                data.issues.forEach(iss => {
+                    if (iss.severity === 'red') worstSeverity = 'red';
+                    else if (iss.severity === 'yellow' && worstSeverity !== 'red') worstSeverity = 'yellow';
+                });
             }
+
+            const arrowColorClass = worstSeverity === 'red' ? 'danger' : (worstSeverity === 'yellow' ? 'warning' : 'success');
+
+            const tr = document.createElement('tr');
+
+            // Module column
+            const iconHtml = m.icons.map(ic => `<i class="fas ${ic} text-dark me-1"></i>`).join('');
+
+            // Location column
+            let locationHtml = '';
+            if (!hasIssues && greenMsg) {
+                locationHtml = `<span class="text-success small"><i class="fas fa-check-circle me-1"></i>${greenMsg}</span>`;
+            } else {
+                if (greenMsg) {
+                    locationHtml += `<span class="text-success small d-block mb-1"><i class="fas fa-check-circle me-1"></i>${greenMsg}</span>`;
+                }
+                if (hasIssues) {
+                    data.issues.forEach(iss => {
+                        const badgeColor = iss.severity === 'red' ? 'danger' : (iss.severity === 'yellow' ? 'warning' : 'success');
+                        locationHtml += `<span class="badge bg-light text-${badgeColor} border small mb-1 d-inline-block me-1">${iss.text}</span>`;
+                    });
+                }
+            }
+
+            tr.innerHTML = `
+                <td>
+                    <div class="d-flex align-items-center">
+                        ${iconHtml}
+                        <span class="fw-bold small ms-1">${m.label}</span>
+                    </div>
+                </td>
+                <td>${locationHtml}</td>
+                <td class="text-center">
+                    <a href="/fire-safety/${m.route}" class="btn btn-xs btn-outline-${arrowColorClass} switch-school-link" data-school-id="${schoolIdDb}">
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </td>
+            `;
+            tbody.appendChild(tr);
         });
 
         if (tbody.innerHTML === '') {
             tbody.innerHTML = '<tr><td colspan="3" class="text-center py-3 text-success">All modules reported 100% compliant!</td></tr>';
         }
+
+        // Attach school switch handlers to arrow links
+        tbody.querySelectorAll('.switch-school-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const sId = this.getAttribute('data-school-id');
+                const targetUrl = this.getAttribute('href');
+                switchSchoolAndRedirect(sId, targetUrl);
+            });
+        });
     }
 
     // Filter and Sort functionality
@@ -966,6 +1122,16 @@ document.addEventListener('DOMContentLoaded', function() {
         statusFilter.addEventListener('change', filterAndSortSchools);
         sortFilter.addEventListener('change', filterAndSortSchools);
     }
+
+    // Attach school switch handlers to inline arrow links (Blade-rendered)
+    document.querySelectorAll('.switch-school-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const sId = this.getAttribute('data-school-id');
+            const targetUrl = this.getAttribute('href');
+            switchSchoolAndRedirect(sId, targetUrl);
+        });
+    });
 
     // Add School Form Submission
     const addSchoolForm = document.getElementById('addSchoolForm');

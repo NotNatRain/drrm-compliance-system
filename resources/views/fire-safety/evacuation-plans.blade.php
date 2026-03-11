@@ -23,7 +23,6 @@
                     margin: 0 !important;
                     padding: 0 !important;
                     overflow: hidden !important;
-                    background: white !important;
                 }
                 .school-map-canvas-container {
                     width: 100vw !important;
@@ -34,6 +33,17 @@
                     top: 0 !important;
                     left: 0 !important;
                     z-index: 9999 !important;
+                }
+                /* Force browsers to print background colors & images */
+                * {
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                    color-adjust: exact !important;
+                }
+                .building-element, .facility-element, .map-element {
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                    color-adjust: exact !important;
                 }
             }
             .facility-element { border-radius: 4px; display: flex; align-items: center; justify-content: center; text-align: center; color: white; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); border: 2px solid rgba(0,0,0,0.2); }
@@ -162,10 +172,10 @@
                                 <div class="school-tabs overflow-hidden">
                                     <nav>
                                         <div class="nav nav-tabs border-0" id="evacuationTabs-{{ $school->id }}" role="tablist">
-                                            <button class="nav-link school-tab-btn active" id="plans-tab-{{ $school->id }}" data-bs-toggle="tab" data-bs-target="#plans-content-{{ $school->id }}" type="button" role="tab" aria-controls="plans-content-{{ $school->id }}" aria-selected="true">
+                                            <button class="nav-link school-tab-btn active" id="plans-tab-{{ $school->id }}" data-bs-toggle="tab" data-bs-target="#plans-content-{{ $school->id }}" type="button" role="tab" aria-controls="plans-content-{{ $school->id }}" aria-selected="true" data-tab-key="plans">
                                                 <i class="fas fa-list me-2"></i> Building Evacuation Plans
                                             </button>
-                                            <button class="nav-link school-tab-btn" id="map-tab-{{ $school->id }}" data-bs-toggle="tab" data-bs-target="#map-content-{{ $school->id }}" type="button" role="tab" aria-controls="map-content-{{ $school->id }}" aria-selected="false" onclick="initEvacuationMap({{ $school->id }})">
+                                            <button class="nav-link school-tab-btn" id="map-tab-{{ $school->id }}" data-bs-toggle="tab" data-bs-target="#map-content-{{ $school->id }}" type="button" role="tab" aria-controls="map-content-{{ $school->id }}" aria-selected="false" data-tab-key="map" onclick="initEvacuationMap({{ $school->id }})">
                                                 <i class="fas fa-map-marked-alt me-2"></i> Evacuation Map
                                             </button>
                                         </div>
@@ -893,6 +903,31 @@
         let currentPlanId = null;
         const userRole = "{{ auth()->user()->role }}";
 
+        // --- Tab Persistence via localStorage ---
+        document.addEventListener('DOMContentLoaded', function() {
+            const schoolId = {{ $activeSchool->id ?? 0 }};
+            if (!schoolId) return;
+
+            // Save tab choice when any tab is clicked
+            document.querySelectorAll(`#evacuationTabs-${schoolId} .nav-link`).forEach(function(tabBtn) {
+                tabBtn.addEventListener('shown.bs.tab', function() {
+                    const key = this.dataset.tabKey; // 'plans' or 'map'
+                    if (key) localStorage.setItem('evacuation_last_tab', key);
+                });
+            });
+
+            // Restore last active tab
+            const lastTab = localStorage.getItem('evacuation_last_tab');
+            if (lastTab === 'map') {
+                const mapTabBtn = document.getElementById(`map-tab-${schoolId}`);
+                if (mapTabBtn) {
+                    const tab = new bootstrap.Tab(mapTabBtn);
+                    tab.show();
+                    initEvacuationMap(schoolId);
+                }
+            }
+        });
+
         // Global check for viewer access
         function checkViewerAccess(formId) {
             if (userRole === 'viewer') {
@@ -1440,11 +1475,32 @@
                 headerDiv.style.alignItems = 'center';
 
                 const hasPlan = building.evacuation_plan || building.evacuationPlan || school.evacuation_plan || school.evacuationPlan;
+
+                // Collect alarms
+                const directAlarms = building.alarm_systems || building.alarmSystems || [];
+                const coveredAlarms = building.alarm_systems_many || building.alarmSystemsMany || [];
+                const alarms = [...directAlarms, ...coveredAlarms].filter((a, idx, arr) => {
+                    const id = a && a.id ? a.id : null;
+                    if (id === null) return true;
+                    return arr.findIndex(x => x && x.id === id) === idx;
+                });
+                const buildingAlarms = alarms.filter(a => {
+                    const v = (a && a.floor_id != null) ? String(a.floor_id).toLowerCase() : '';
+                    return !v || v === 'all' || v.includes('all');
+                });
+
+                // Build header with building alarm bells
+                let bellHtml = '';
+                buildingAlarms.forEach(a => {
+                    bellHtml += `<span title="Alarm (All Floors): ${a.code || ''}" style="font-size:14px;">🔔</span>`;
+                });
+
                 headerDiv.innerHTML = `
                     <span>${building.building_no}</span>
                     <span style="font-size: 10px;">${building.building_name || ''}</span>
                     <span style="display:flex; align-items:center; gap:6px;">
-                        <span style="background: ${hasPlan ? 'green' : 'red'}; padding: 2px 6px; border-radius: 3px; font-size: 9px;">
+                        ${bellHtml}
+                        <span style="background: ${hasPlan ? 'green' : 'red'}; padding: 2px 6px; border-radius: 3px; font-size: 9px; color: white;">
                             ${hasPlan ? 'Plan OK' : 'No Plan'}
                         </span>
                         <button type="button" class="btn btn-sm btn-light p-0 px-1" title="Rotate building" style="line-height:1;"
@@ -1456,178 +1512,143 @@
                 `;
                 buildingContainerDiv.appendChild(headerDiv);
 
-                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                const interiorHeight = Math.max(100, buildingHeight - headerHeight);
-                svg.setAttribute('viewBox', `0 0 ${buildingWidth} ${interiorHeight}`);
-                svg.setAttribute('preserveAspectRatio', 'none');
-                svg.setAttribute('style', 'display:block; width:100%; height:calc(100% - 30px); cursor:inherit;');
+                // --- Build interior using HTML divs for rooms ---
+                const interiorDiv = document.createElement('div');
+                interiorDiv.style.width = '100%';
+                interiorDiv.style.height = `calc(100% - ${headerHeight}px)`;
+                interiorDiv.style.position = 'relative';
+                interiorDiv.style.overflow = 'hidden';
+                interiorDiv.style.border = '2px solid black';
+                interiorDiv.style.boxSizing = 'border-box';
 
-                const directAlarms = building.alarm_systems || building.alarmSystems || [];
-                const coveredAlarms = building.alarm_systems_many || building.alarmSystemsMany || [];
-                const alarms = [...directAlarms, ...coveredAlarms].filter((a, idx, arr) => {
-                    const id = a && a.id ? a.id : null;
-                    if (id === null) return true;
-                    return arr.findIndex(x => x && x.id === id) === idx;
-                });
+                const computedFloorHeight = Math.max(50, (buildingHeight - headerHeight - floorGap * (floors + 1)) / floors);
 
-                const computedFloorHeight = Math.max(40, (interiorHeight - floorGap * (floors + 1)) / floors);
-
+                // Render floors top-down (highest floor at top)
                 for (let floorIdx = 0; floorIdx < floors; floorIdx++) {
-                    const floorNo = floorIdx + 1;
-                    const floorY = floorGap + (floors - 1 - floorIdx) * (computedFloorHeight + floorGap);
-
-                    if (floorIdx > 0) {
-                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                        line.setAttribute('x1', '0');
-                        line.setAttribute('y1', floorY);
-                        line.setAttribute('x2', buildingWidth);
-                        line.setAttribute('y2', floorY);
-                        line.setAttribute('stroke', 'black');
-                        line.setAttribute('stroke-width', '2');
-                        svg.appendChild(line);
-                    }
-
-                    const floorLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                    floorLabel.setAttribute('x', 6);
-                    floorLabel.setAttribute('y', floorY + 12);
-                    floorLabel.setAttribute('font-size', '8px');
-                    floorLabel.setAttribute('fill', '#444');
-                    floorLabel.textContent = floorOrdinalLabel(floorNo);
-                    svg.appendChild(floorLabel);
+                    const floorNo = floors - floorIdx; // top = highest floor
+                    const floorY = floorGap + floorIdx * (computedFloorHeight + floorGap);
 
                     const floorRooms = roomsByFloor[floorNo] || [];
                     const roomCount = Math.max(1, floorRooms.length);
-                    const roomWidth = (buildingWidth - roomGap * (roomCount + 1)) / roomCount;
+                    const roomWidth = Math.max(30, (buildingWidth - roomGap * (roomCount + 1)) / roomCount);
 
-                    for (let roomIdx = 0; roomIdx < roomCount - 1; roomIdx++) {
-                        const roomX = roomGap + (roomIdx + 1) * (roomWidth + roomGap);
-                        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                        line.setAttribute('x1', roomX);
-                        line.setAttribute('y1', floorY);
-                        line.setAttribute('x2', roomX);
-                        line.setAttribute('y2', floorY + computedFloorHeight);
-                        line.setAttribute('stroke', 'black');
-                        line.setAttribute('stroke-width', '1');
-                        svg.appendChild(line);
-                    }
-
-                    if (floorIdx === 0) {
-                        const bottomLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                        bottomLine.setAttribute('x1', '0');
-                        bottomLine.setAttribute('y1', floorY + computedFloorHeight);
-                        bottomLine.setAttribute('x2', buildingWidth);
-                        bottomLine.setAttribute('y2', floorY + computedFloorHeight);
-                        bottomLine.setAttribute('stroke', 'black');
-                        bottomLine.setAttribute('stroke-width', '2');
-                        svg.appendChild(bottomLine);
-                    }
-
+                    // Room row
                     for (let roomIdx = 0; roomIdx < roomCount; roomIdx++) {
-                        const roomX = roomGap + roomIdx * (roomWidth + roomGap);
                         const room = floorRooms[roomIdx] || null;
+                        const roomX = roomGap + roomIdx * (roomWidth + roomGap);
 
-                        const roomRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-                        roomRect.setAttribute('x', roomX + 1);
-                        roomRect.setAttribute('y', floorY + 1);
-                        roomRect.setAttribute('width', Math.max(1, roomWidth - 2));
-                        roomRect.setAttribute('height', Math.max(1, computedFloorHeight - 2));
-                        roomRect.setAttribute('fill', room ? '#f0f0f0' : '#ffffff');
-                        roomRect.setAttribute('stroke', 'none');
+                        const roomDiv = document.createElement('div');
+                        roomDiv.style.position = 'absolute';
+                        roomDiv.style.left = roomX + 'px';
+                        roomDiv.style.top = floorY + 'px';
+                        roomDiv.style.width = Math.max(1, roomWidth - 2) + 'px';
+                        roomDiv.style.height = Math.max(1, computedFloorHeight - 2) + 'px';
+                        roomDiv.style.border = room ? '1px solid black' : '1px solid #ccc';
+                        roomDiv.style.backgroundColor = room ? '#f8f8f8' : '#ffffff';
+                        roomDiv.style.display = 'flex';
+                        roomDiv.style.flexDirection = 'column';
+                        roomDiv.style.alignItems = 'center';
+                        roomDiv.style.justifyContent = 'center';
+                        roomDiv.style.overflow = 'hidden';
+
                         if (room) {
-                            roomRect.style.cursor = 'pointer';
-                            roomRect.addEventListener('click', e => {
+                            roomDiv.style.cursor = 'pointer';
+                            roomDiv.addEventListener('click', ((bId, rId, sId) => (e) => {
                                 e.stopPropagation();
-                                if (isMapEditable[schoolId]) return;
-                                openRoomExtinguishers(building.id, room.id, schoolId);
-                            });
-                        }
-                        svg.appendChild(roomRect);
+                                if (isMapEditable[sId]) return;
+                                openRoomExtinguishers(bId, rId, sId);
+                            })(building.id, room.id, schoolId));
 
-                        if (room) {
-                            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                            text.setAttribute('x', roomX + roomWidth / 2);
-                            text.setAttribute('y', floorY + 12);
-                            text.setAttribute('text-anchor', 'middle');
-                            text.setAttribute('font-size', '9px');
-                            text.setAttribute('font-weight', 'bold');
-                            text.setAttribute('fill', '#333');
-                            text.textContent = room.room_name || `R${room.id}`;
-                            svg.appendChild(text);
+                            // Room number (top center)
+                            const roomLabel = document.createElement('div');
+                            roomLabel.style.fontSize = '9px';
+                            roomLabel.style.fontWeight = 'bold';
+                            roomLabel.style.color = '#333';
+                            roomLabel.style.textAlign = 'center';
+                            roomLabel.style.lineHeight = '1.1';
+                            roomLabel.style.marginBottom = '2px';
+                            roomLabel.style.overflow = 'hidden';
+                            roomLabel.style.textOverflow = 'ellipsis';
+                            roomLabel.style.whiteSpace = 'nowrap';
+                            roomLabel.style.maxWidth = '100%';
+                            roomLabel.style.padding = '0 2px';
+                            roomLabel.textContent = room.room_name || `R${room.id}`;
+                            roomDiv.appendChild(roomLabel);
 
+                            // Fire extinguisher icon (center)
                             const extinguishers = building.fire_extinguishers
                                 ? building.fire_extinguishers.filter(e => Number(e.room_id) === Number(room.id))
                                 : [];
                             if (extinguishers.length > 0) {
-                                const extIcon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                                extIcon.setAttribute('x', roomX + roomWidth / 2);
-                                extIcon.setAttribute('y', floorY + computedFloorHeight / 2 + 4);
-                                extIcon.setAttribute('font-size', '16px');
-                                extIcon.setAttribute('title', `${extinguishers.length} extinguisher(s)`);
+                                const extIcon = document.createElement('div');
+                                extIcon.style.fontSize = '16px';
+                                extIcon.style.lineHeight = '1';
+                                extIcon.title = `${extinguishers.length} extinguisher(s)`;
                                 extIcon.textContent = '🧯';
-                                extIcon.style.cursor = 'pointer';
-                                extIcon.onclick = e => {
-                                    e.stopPropagation();
-                                    if (isMapEditable[schoolId]) return;
-                                    openRoomExtinguishers(building.id, room.id, schoolId);
-                                };
-                                svg.appendChild(extIcon);
-                            }
-
-                            const roomType = room.roomTypeConfig || room.room_type_config || null;
-                            const typeName = roomType && roomType.type_name ? String(roomType.type_name).toLowerCase() : '';
-                            const isOfficeOrAdmin = typeName.includes('office') || typeName.includes('admin');
-                            if (isOfficeOrAdmin) {
-                                const detectorIcon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                                detectorIcon.setAttribute('x', roomX + roomWidth - 12);
-                                detectorIcon.setAttribute('y', floorY + 14);
-                                detectorIcon.setAttribute('font-size', '12px');
-                                detectorIcon.setAttribute('title', 'Smoke detector');
-                                detectorIcon.textContent = '⚪';
-                                svg.appendChild(detectorIcon);
+                                roomDiv.appendChild(extIcon);
                             }
                         }
+
+                        interiorDiv.appendChild(roomDiv);
                     }
 
-                    const floorAlarms = alarms.filter(a => a.floor_id && String(a.floor_id).toLowerCase() !== 'all' && Number(a.floor_id) === floorNo);
-                    floorAlarms.forEach((a, idx) => {
-                        const alarmIcon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                        alarmIcon.setAttribute('x', roomGap + (idx * 18) + 5);
-                        alarmIcon.setAttribute('y', floorY + computedFloorHeight / 2);
-                        alarmIcon.setAttribute('font-size', '16px');
-                        alarmIcon.setAttribute('title', `Alarm: ${a.code}`);
-                        alarmIcon.textContent = '🔔';
-                        svg.appendChild(alarmIcon);
-                    });
+                    // Floor divider line (below this floor's rooms, except for the last/bottom floor)
+                    if (floorIdx < floors - 1) {
+                        const dividerY = floorY + computedFloorHeight;
+
+                        const divider = document.createElement('div');
+                        divider.style.position = 'absolute';
+                        divider.style.left = '0';
+                        divider.style.top = dividerY + 'px';
+                        divider.style.width = '100%';
+                        divider.style.height = floorGap + 'px';
+                        divider.style.display = 'flex';
+                        divider.style.alignItems = 'center';
+                        divider.style.justifyContent = 'center';
+                        divider.style.borderTop = '2px solid black';
+                        divider.style.position = 'absolute';
+
+                        // Floor alarms on the divider
+                        const floorBelowNo = floorNo; // bell belongs to the floor above the divider
+                        const floorAlarms = alarms.filter(a => a.floor_id && String(a.floor_id).toLowerCase() !== 'all' && Number(a.floor_id) === floorBelowNo);
+                        floorAlarms.forEach(a => {
+                            const bellSpan = document.createElement('span');
+                            bellSpan.style.fontSize = '12px';
+                            bellSpan.style.position = 'relative';
+                            bellSpan.style.top = '-6px';
+                            bellSpan.title = `Floor ${floorBelowNo} Alarm: ${a.code || ''}`;
+                            bellSpan.textContent = '🔔';
+                            divider.appendChild(bellSpan);
+                        });
+
+                        interiorDiv.appendChild(divider);
+                    }
+
+                    // For the bottom floor, show its alarms at the very bottom
+                    if (floorIdx === floors - 1 && floorNo >= 1) {
+                        const bottomFloorAlarms = alarms.filter(a => a.floor_id && String(a.floor_id).toLowerCase() !== 'all' && Number(a.floor_id) === floorNo);
+                        if (bottomFloorAlarms.length > 0) {
+                            const bottomDivider = document.createElement('div');
+                            bottomDivider.style.position = 'absolute';
+                            bottomDivider.style.left = '0';
+                            bottomDivider.style.top = (floorY + computedFloorHeight) + 'px';
+                            bottomDivider.style.width = '100%';
+                            bottomDivider.style.display = 'flex';
+                            bottomDivider.style.alignItems = 'center';
+                            bottomDivider.style.justifyContent = 'center';
+                            bottomFloorAlarms.forEach(a => {
+                                const bellSpan = document.createElement('span');
+                                bellSpan.style.fontSize = '12px';
+                                bellSpan.title = `Floor ${floorNo} Alarm: ${a.code || ''}`;
+                                bellSpan.textContent = '🔔';
+                                bottomDivider.appendChild(bellSpan);
+                            });
+                            interiorDiv.appendChild(bottomDivider);
+                        }
+                    }
                 }
 
-                const allFloorAlarms = alarms.filter(a => {
-                    const v = (a && a.floor_id != null) ? String(a.floor_id).toLowerCase() : '';
-                    return !v || v === 'all' || v.includes('all');
-                });
-                if (allFloorAlarms.length > 0) {
-                    const dividerY = floorGap;
-                    allFloorAlarms.forEach((a, idx) => {
-                        const alarmIcon = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                        alarmIcon.setAttribute('x', buildingWidth / 2 + idx * 18);
-                        alarmIcon.setAttribute('y', dividerY);
-                        alarmIcon.setAttribute('font-size', '16px');
-                        alarmIcon.setAttribute('title', `Alarm (All Floors): ${a.code}`);
-                        alarmIcon.textContent = '🔔';
-                        svg.appendChild(alarmIcon);
-                    });
-                }
-
-                const outerBorder = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-                outerBorder.setAttribute('x', '0');
-                outerBorder.setAttribute('y', '0');
-                outerBorder.setAttribute('width', buildingWidth);
-                outerBorder.setAttribute('height', interiorHeight);
-                outerBorder.setAttribute('fill', 'none');
-                outerBorder.setAttribute('stroke', 'black');
-                outerBorder.setAttribute('stroke-width', '3');
-                svg.appendChild(outerBorder);
-
-                buildingContainerDiv.appendChild(svg);
+                buildingContainerDiv.appendChild(interiorDiv);
 
                 const infoBtn = document.createElement('div');
                 infoBtn.style.position = 'absolute';
@@ -1646,7 +1667,7 @@
                 canvas.appendChild(buildingContainerDiv);
 
                 buildingContainerDiv.addEventListener('click', function(e) {
-                    if (!isMapEditable[schoolId] && !e.target.closest('svg') && e.target !== infoBtn) {
+                    if (!isMapEditable[schoolId] && e.target !== infoBtn) {
                         e.preventDefault();
                         showBuildingOptions(building.id, building.building_no, schoolId);
                     }

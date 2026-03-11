@@ -214,7 +214,7 @@
                                 <div class="card-body">
                                     <div class="row align-items-center">
                                         <div class="col">
-                                            <div class="text-xs fw-bold text-secondary text-uppercase mb-1">Last Tested</div>
+                                            <div class="text-xs fw-bold text-secondary text-uppercase mb-1">Last Alarm Tested</div>
                                             @php
                                                 $latestTested = $school->alarmSystems()
                                                     ->whereNotNull('last_test')
@@ -1082,7 +1082,7 @@
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Status *</label>
                                 <select class="form-control" name="status" id="addStatusSelect" required>
-                                    <option value="functional">Functional (Active)</option>
+                                    <option value="active">Active</option>
                                      @foreach($alarmStatusesByType as $parentId => $statuses)
                                         <optgroup label="{{ \App\Models\SystemConfiguration::find($parentId)->name }}" data-parent-id="{{ $parentId }}">
                                             @foreach($statuses as $status)

@@ -87,7 +87,7 @@ class FireSafetyBuilding extends Model
     // Helper methods
     public function getFunctionalAlarmsCountAttribute(): int
     {
-        return $this->alarmSystems()->where('status', 'active')->count();
+        return $this->alarmSystems()->whereIn('status', ['active', 'functional'])->count();
     }
 
     public function getActiveExtinguishersCountAttribute(): int
@@ -119,7 +119,7 @@ class FireSafetyBuilding extends Model
         $extScore = (int) round($extRatio * 45);
 
         // Alarm score: 45 if building or school has a functional/active alarm
-        $schoolHasAlarm = $this->school->alarmSystems()->where('status', 'active')->exists();
+        $schoolHasAlarm = $this->school->alarmSystems()->whereIn('status', ['active', 'functional'])->exists();
         $alarmScore = ($this->functionalAlarmsCount > 0 || $schoolHasAlarm) ? 45 : 0;
 
         // Plan score: school-level = 5, building-level = additional 5
