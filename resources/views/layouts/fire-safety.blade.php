@@ -139,6 +139,11 @@
         .modal-backdrop { z-index: 1060 !important; }
         .swal2-container { z-index: 2060 !important; }
 
+        /* Ensure dropdowns in top-nav appear above everything */
+        .top-nav .dropdown-menu {
+            z-index: 1050 !important;
+        }
+
 
         /* School Tabs Styles */
         .nav-tabs { border-bottom: 2px solid #dee2e6; }
@@ -323,7 +328,7 @@
                 <div class="col-auto">
                     <div class="d-flex align-items-center">
                         <div class="dropdown me-3">
-                            <a href="#" class="text-white position-relative" data-bs-toggle="dropdown" id="notificationDropdown">
+                            <a href="#" class="text-white position-relative dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" id="notificationDropdown" data-bs-auto-close="outside">
                                 <i class="fas fa-bell fa-lg"></i>
                                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" id="notifBadge">
                                     0
@@ -341,18 +346,18 @@
                                     </div>
                                 </div>
                                 <div class="dropdown-divider"></div>
-                                <a class="dropdown-item text-center small text-primary" href="{{ route('fire-safety.dashboard') }}">View All Dashboard</a>
+                                <a class="dropdown-item text-center small text-primary" href="{{ route('fire-safety.notifications.page') }}">See All</a>
                             </div>
                         </div>
 
                         <div class="dropdown">
-                            <a href="#" class="text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
+                            <a href="#" class="text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false">
                                 <i class="fas fa-user-circle fa-lg me-2"></i>
                                 <span class="d-none d-md-inline">{{ Auth::user()->name ?? 'User' }}</span>
                             </a>
                             <div class="dropdown-menu dropdown-menu-end">
-                                <a class="dropdown-item" href="{{ route('fire-safety.dashboard') }}">
-                                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                                <a class="dropdown-item" href="{{ route('users.index') }}">
+                                    <i class="fas fa-users-cog me-2"></i> {{ Auth::user()->role === 'admin' ? 'User Accounts' : 'User Account' }}
                                 </a>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="{{ route('logout') }}"
@@ -404,7 +409,6 @@
                         <span>Evacuation Plans</span>
                     </a>
                 </li>
-
                 @if(auth()->user()->role !== 'viewer')
                 <li class="nav-item">
                     <a class="nav-link {{ Route::is('fire-safety.customization') ? 'active' : '' }}" href="{{ route('fire-safety.customization') }}">
@@ -421,7 +425,7 @@
     <!-- Main Content -->
     <div class="main-content">
         @if(isset($schools) && $schools->isNotEmpty())
-            @if(auth()->user()->role === 'admin' && !request()->routeIs(['fire-safety.dashboard', 'fire-safety.customization']))
+            @if(auth()->user()->role === 'admin' && !request()->routeIs(['fire-safety.dashboard', 'fire-safety.customization', 'fire-safety.notifications.page']))
             <!-- School Selection Tabs (Admin only) -->
             <div class="row mb-4">
                 <div class="col-12">
@@ -546,6 +550,11 @@
             const currentUserRole = "{{ auth()->user()->role }}";
             const currentUserSchoolId = "{{ auth()->user()->school_id }}";
 
+            // Explicitly initialize all dropdowns in the top-nav to ensure they work on every page
+            document.querySelectorAll('.top-nav [data-bs-toggle="dropdown"]').forEach(function(el) {
+                new bootstrap.Dropdown(el);
+            });
+
             function fetchNotifications() {
                 fetch('{{ route("fire-safety.notifications") }}')
                     .then(response => response.json())
@@ -556,76 +565,86 @@
             }
 
             function renderNotifications(data) {
-                const alerts = data.alerts || [];
-                const events = data.events || [];
-                const all = [...alerts, ...events].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+                const notifications = data.notifications || [];
+                const unreadCount = data.unread_count || 0;
 
-                if (all.length === 0) {
+                if (notifications.length === 0) {
                     notifList.innerHTML = '<div class="dropdown-item text-center py-3 text-muted">No notifications</div>';
                     notifBadge.classList.add('d-none');
                     return;
                 }
 
-                notifBadge.textContent = data.unread_count || all.length;
-                notifBadge.classList.remove('d-none');
+                if (unreadCount > 0) {
+                    notifBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                    notifBadge.classList.remove('d-none');
+                    document.querySelector('.unread-label').classList.remove('d-none');
+                } else {
+                    notifBadge.classList.add('d-none');
+                    document.querySelector('.unread-label').classList.add('d-none');
+                }
 
                 notifList.innerHTML = '';
-                all.forEach(item => {
-                    const isAlert = item.item_type === 'alert';
-                    const icon = isAlert ? 'fa-exclamation-triangle' : 'fa-calendar-alt';
-                    const color = isAlert ? (item.type === 'danger' ? 'danger' : 'warning') : 'info';
+                // Show only the latest 8 in dropdown
+                notifications.slice(0, 8).forEach(item => {
+                    const iconMap = {
+                        'inspection': 'fa-clipboard-check',
+                        'alarm_due': 'fa-bell',
+                        'alarm_update': 'fa-bell',
+                        'room_approval': 'fa-door-open',
+                        'room_update': 'fa-door-open',
+                        'extinguisher_inspection': 'fa-fire-extinguisher',
+                        'building_update': 'fa-building',
+                        'general': 'fa-info-circle',
+                        'alert': 'fa-exclamation-triangle',
+                        'event': 'fa-calendar-alt'
+                    };
+                    const colorMap = {
+                        'inspection': 'primary',
+                        'alarm_due': 'warning',
+                        'alarm_update': 'warning',
+                        'room_approval': 'info',
+                        'room_update': 'info',
+                        'extinguisher_inspection': 'danger',
+                        'building_update': 'dark',
+                        'general': 'secondary',
+                        'alert': 'danger',
+                        'event': 'success'
+                    };
+                    const icon = iconMap[item.type] || 'fa-bell';
+                    const color = colorMap[item.type] || 'primary';
+                    const isUnread = !item.is_read;
 
                     const div = document.createElement('div');
-                    div.className = 'dropdown-item p-3 border-bottom';
+                    div.className = `dropdown-item p-2 border-bottom ${isUnread ? 'bg-light' : ''}`;
+                    div.style.cursor = 'pointer';
                     div.innerHTML = `
-                        <div class="d-flex w-100">
-                            <div class="flex-shrink-0 me-3">
+                        <div class="d-flex w-100 align-items-start">
+                            <div class="flex-shrink-0 me-2">
                                 <span class="badge bg-${color}-subtle text-${color} p-2 rounded">
                                     <i class="fas ${icon}"></i>
                                 </span>
                             </div>
-                            <div class="flex-grow-1">
+                            <div class="flex-grow-1" style="min-width: 0;">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <h6 class="mb-0 fw-bold small">${item.title}</h6>
-                                    <small class="text-muted" style="font-size: 0.7rem;">${new Date(item.created_at).toLocaleDateString()}</small>
+                                    <h6 class="mb-0 fw-bold small text-truncate" style="max-width: 180px;">${item.title}</h6>
+                                    <small class="text-muted ms-1" style="font-size: 0.65rem; white-space: nowrap;">${item.time_ago}</small>
                                 </div>
-                                ${item.posted_by ? `<div class="mb-1 small text-muted">Posted by: ${item.posted_by}</div>` : ''}
-                                <p class="mb-1 small text-truncate" style="max-width: 200px;">${item.description}</p>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted fw-bold" style="font-size: 0.65rem;">${item.school_name}</small>
-                                    <button class="btn btn-xs btn-outline-primary py-0 px-2 reply-btn"
-                                            data-id="${item.id}"
-                                            data-school="${item.school_id}"
-                                            style="font-size: 0.65rem;">
-                                        Reply${item.replies && item.replies.length ? ' ('+item.replies.length+')' : ''}
-                                    </button>
+                                <p class="mb-1 small text-truncate text-muted" style="max-width: 230px; font-size: 0.75rem;">${item.message}</p>
+                                <div class="d-flex align-items-center gap-1">
+                                    ${item.school_name ? `<span class="badge bg-primary-subtle text-primary" style="font-size: 0.55rem;"><i class="fas fa-school me-1"></i>${item.school_name}</span>` : ''}
+                                    ${isUnread ? '<span class="badge bg-primary" style="font-size: 0.55rem;">New</span>' : ''}
                                 </div>
-                                ${item.replies && item.replies.length > 0 ? `
-                                    <div class="mt-2 bg-light p-1 rounded border-start border-primary border-3">
-                                        <small class="d-block fw-bold" style="font-size: 0.6rem;">Replies:</small>
-                                        ${item.replies.map(r => `<div class="small text-muted mb-1"><strong>${r.user_name}</strong>: ${r.message}</div>`).join('')}
-                                    </div>
-                                ` : ''}
                             </div>
                         </div>
                     `;
                     notifList.appendChild(div);
                 });
-
-                // Attach reply events
-                notifList.querySelectorAll('.reply-btn').forEach(btn => {
-                    btn.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        document.getElementById('replyItemId').value = this.dataset.id;
-                        document.getElementById('replySchoolId').value = this.dataset.school;
-                        const modal = new bootstrap.Modal(document.getElementById('notifReplyModal'));
-                        modal.show();
-                    });
-                });
             }
 
             // Initial fetch
             fetchNotifications();
+            // Auto-refresh every 30 seconds
+            setInterval(fetchNotifications, 30000);
 
             // Auto-select school in Add Alert/Event modals for contributors
             const alertModalEl = document.getElementById('addAlertModal');

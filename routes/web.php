@@ -102,6 +102,9 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     Route::post('/school/event', [FireSafetyController::class, 'storeEvent'])->name('fire-safety.school.event.store');
     Route::post('/notification/reply', [FireSafetyController::class, 'replyToNotification'])->name('fire-safety.notification.reply');
     Route::get('/notifications', [FireSafetyController::class, 'getNotifications'])->name('fire-safety.notifications');
+    Route::get('/notifications-page', [FireSafetyController::class, 'notificationsPage'])->name('fire-safety.notifications.page');
+    Route::post('/notification/{id}/mark-read', [FireSafetyController::class, 'markNotificationRead'])->name('fire-safety.notification.mark-read');
+    Route::post('/notifications/mark-all-read', [FireSafetyController::class, 'markAllNotificationsRead'])->name('fire-safety.notifications.mark-all-read');
     Route::post('/set-school/{id}', [FireSafetyController::class, 'setActiveSchool'])->name('fire-safety.set-school');
 
     // Report Printing Routes

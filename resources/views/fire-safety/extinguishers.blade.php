@@ -194,7 +194,7 @@
                         @endif
 
                         <!-- Buildings -->
-                        <div class="row">
+                        <div class="row" id="extinguisher-section">
                             <div class="col-12 mb-4">
                                 <div class="card dashboard-card" id="room-ext-card-{{ $school->id }}">
                                     <div class="card-header py-3 d-flex justify-content-between align-items-center">
@@ -486,7 +486,7 @@
                         </div>
 
                         <!-- Recent Inspections -->
-                        <div class="row mt-4">
+                        <div class="row mt-4" id="inspection-section">
                             <div class="col-12">
                                 <div class="card dashboard-card" id="recent-inspections-card-{{ $school->id }}">
                                     <div class="card-header py-3 d-flex justify-content-between align-items-center bg-light">
@@ -1251,13 +1251,22 @@
 @endsection
 
 @section('scripts')
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
     <script>
         const schools = @json($schools);
         const userRole = "{{ auth()->user()->role }}";
         let currentBuildingRooms = [];
+
+        // Auto-scroll to section if hash is present
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.location.hash) {
+                const target = document.querySelector(window.location.hash);
+                if (target) {
+                    setTimeout(() => {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 500);
+                }
+            }
+        });
 
         function checkViewerAccess(formId, buttonsId = null) {
             if (userRole === 'viewer') {

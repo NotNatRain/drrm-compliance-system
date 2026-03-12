@@ -401,7 +401,7 @@
                 </div>
 
                 <!-- History Section -->
-                <div class="row mt-4">
+                <div class="row mt-4" id="inspection-history-section">
                     <!-- Inspected Checklist History -->
                     <div class="col-lg-6">
                         <div class="card dashboard-card h-100">
@@ -982,7 +982,7 @@
                     </div>
 
                     <!-- Alarms List -->
-                    <div class="card shadow-sm mb-3">
+                    <div class="card shadow-sm mb-3" id="alarm-section">
                          <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
                             <h6 class="m-0 fw-bold text-dark"><i class="fas fa-list me-2"></i> Installed Alarm Systems</h6>
                              @if(auth()->user()->role !== 'viewer')
@@ -1331,6 +1331,18 @@
         // Global variables
         const USER_ROLE = "{{ auth()->user()->role }}";
         let currentSchoolId = {{ $activeSchool->id ?? 'null' }};
+
+        // Auto-scroll to section if hash is present
+        document.addEventListener('DOMContentLoaded', function() {
+            if (window.location.hash) {
+                const target = document.querySelector(window.location.hash);
+                if (target) {
+                    setTimeout(() => {
+                        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 500);
+                }
+            }
+        });
 
         function checkViewerAccess(formId, buttonsId = null) {
             if (USER_ROLE === 'viewer') {
