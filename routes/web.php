@@ -61,6 +61,7 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     Route::get('/building/{buildingId}/evacuation-data', [FireSafetyController::class, 'getBuildingEvacuationData']);
     Route::get('/school/{schoolId}/map-data', [FireSafetyController::class, 'getSchoolMapData']);
     Route::post('/school/{schoolId}/map-save', [FireSafetyController::class, 'saveMapLayout']);
+    Route::post('/school/{schoolId}/map-notify', [FireSafetyController::class, 'notifyMapUpdate'])->name('fire-safety.map.notify');
 
     // Drill routes
     Route::get('/drill-history/{schoolId}', [FireSafetyController::class, 'getDrillHistory']);

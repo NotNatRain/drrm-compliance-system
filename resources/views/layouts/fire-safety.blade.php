@@ -596,7 +596,8 @@
                         'building_update': 'fa-building',
                         'general': 'fa-info-circle',
                         'alert': 'fa-exclamation-triangle',
-                        'event': 'fa-calendar-alt'
+                        'event': 'fa-calendar-alt',
+                        'evacuation_plan': 'fa-map-signs'
                     };
                     const colorMap = {
                         'inspection': 'primary',
@@ -608,7 +609,8 @@
                         'building_update': 'dark',
                         'general': 'secondary',
                         'alert': 'danger',
-                        'event': 'success'
+                        'event': 'success',
+                        'evacuation_plan': 'info'
                     };
                     const icon = iconMap[item.type] || 'fa-bell';
                     const color = colorMap[item.type] || 'primary';

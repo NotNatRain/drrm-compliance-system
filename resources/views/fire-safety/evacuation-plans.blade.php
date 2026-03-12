@@ -458,6 +458,9 @@
                                             <button class="btn btn-outline-primary btn-sm me-2 no-print" id="edit-placement-btn-{{ $school->id }}" onclick="toggleMapEdit({{ $school->id }})">
                                                 <i class="fas fa-arrows-alt me-2"></i> Edit Placement
                                             </button>
+                                            <button class="btn btn-outline-warning btn-sm me-2 no-print" onclick="openNotifyAdminModal({{ $school->id }})">
+                                                <i class="fas fa-bullhorn me-2"></i> Notify Administrator
+                                            </button>
                                             @endif
                                         </div>
                                     </div>
@@ -893,6 +896,35 @@
         </div>
     </div>
 
+    <!-- Notify Administrator Modal -->
+    <div class="modal fade" id="notifyAdminModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-warning text-dark">
+                    <h5 class="modal-title"><i class="fas fa-bullhorn me-2"></i> Notify Administrator</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="notifyAdminForm">
+                    @csrf
+                    <input type="hidden" name="school_id" id="notifyAdminSchoolId">
+                    <div class="modal-body">
+                        <div class="alert alert-info small mb-3">
+                            <i class="fas fa-info-circle me-1"></i> Use this to notify the administrator about recent changes you made to the evacuation map layout.
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">What did you update? *</label>
+                            <textarea class="form-control" name="description" rows="4" placeholder="e.g., Repositioned Building A to reflect actual campus layout, added new facility marker for the guard house..." required maxlength="1000"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning"><i class="fas fa-paper-plane me-1"></i> Send Notification</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
 
 @endsection
 
@@ -902,6 +934,44 @@
         let currentSchoolId = null;
         let currentPlanId = null;
         const userRole = "{{ auth()->user()->role }}";
+
+        // Notify Administrator modal
+        function openNotifyAdminModal(schoolId) {
+            document.getElementById('notifyAdminSchoolId').value = schoolId;
+            document.querySelector('#notifyAdminForm textarea[name="description"]').value = '';
+            new bootstrap.Modal(document.getElementById('notifyAdminModal')).show();
+        }
+
+        document.getElementById('notifyAdminForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const schoolId = document.getElementById('notifyAdminSchoolId').value;
+            const description = this.querySelector('textarea[name="description"]').value;
+            const submitBtn = this.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+
+            fetch(`/fire-safety/school/${schoolId}/map-notify`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ description })
+            })
+            .then(response => response.json().then(data => ({ ok: response.ok, data })))
+            .then(({ ok, data }) => {
+                submitBtn.disabled = false;
+                bootstrap.Modal.getInstance(document.getElementById('notifyAdminModal')).hide();
+                if (ok && data.success) {
+                    Swal.fire('Sent!', data.message, 'success');
+                } else {
+                    Swal.fire('Error', data.message || 'Failed to send notification.', 'error');
+                }
+            })
+            .catch(() => {
+                submitBtn.disabled = false;
+                Swal.fire('Error', 'Something went wrong. Please try again.', 'error');
+            });
+        });
 
         // --- Tab Persistence via localStorage ---
         document.addEventListener('DOMContentLoaded', function() {

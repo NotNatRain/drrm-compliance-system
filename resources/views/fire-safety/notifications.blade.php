@@ -144,6 +144,9 @@
                 <button class="btn btn-sm btn-outline-dark filter-btn" data-filter="building_update">
                     <i class="fas fa-building me-1"></i> Building
                 </button>
+                <button class="btn btn-sm btn-outline-info filter-btn" data-filter="evacuation_plan">
+                    <i class="fas fa-map-signs me-1"></i> Evacuation Plans
+                </button>
                 <button class="btn btn-sm btn-outline-danger filter-btn" data-filter="alert">
                     <i class="fas fa-exclamation-triangle me-1"></i> Alerts
                 </button>
@@ -172,6 +175,7 @@
                         'building_update' => ['icon' => 'fa-building', 'bg' => 'bg-dark bg-opacity-10', 'text' => 'text-dark', 'label' => 'Building Update'],
                         'alert' => ['icon' => 'fa-exclamation-triangle', 'bg' => 'bg-danger-subtle', 'text' => 'text-danger', 'label' => 'Alert'],
                         'event' => ['icon' => 'fa-calendar-alt', 'bg' => 'bg-success-subtle', 'text' => 'text-success', 'label' => 'Event'],
+                        'evacuation_plan' => ['icon' => 'fa-map-signs', 'bg' => 'bg-info-subtle', 'text' => 'text-info', 'label' => 'Evacuation Plan'],
                         'general' => ['icon' => 'fa-info-circle', 'bg' => 'bg-secondary-subtle', 'text' => 'text-secondary', 'label' => 'General'],
                     ];
                     $style = $iconMap[$notif->type] ?? $iconMap['general'];

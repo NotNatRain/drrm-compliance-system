@@ -417,32 +417,57 @@ class FireSafetyController extends Controller
                 return $school;
             });
 
-        $allAlerts = [];
-        $allEvents = [];
+        // Pull only manually posted alerts and events from notifications table
+        $alertQuery = FireSafetyNotification::where('type', 'alert')
+            ->orderBy('created_at', 'desc')
+            ->limit(10);
+        $eventQuery = FireSafetyNotification::where('type', 'event')
+            ->orderBy('created_at', 'desc')
+            ->limit(10);
 
-        foreach ($schools as $school) {
-            if ($school->alerts) {
-                foreach ($school->alerts as $alert) {
-                    $alert['school_name'] = $school->school_name;
-                    $allAlerts[] = $alert;
-                }
-            }
-            if ($school->events) {
-                foreach ($school->events as $event) {
-                    $event['school_name'] = $school->school_name;
-                    $allEvents[] = $event;
-                }
-            }
+        if (auth()->user()->role !== 'admin') {
+            $userSchoolId = auth()->user()->school_id;
+            $alertQuery->where(function($q) use ($userSchoolId) {
+                $q->where('school_id', $userSchoolId)->orWhereNull('school_id');
+            });
+            $eventQuery->where(function($q) use ($userSchoolId) {
+                $q->where('school_id', $userSchoolId)->orWhereNull('school_id');
+            });
         }
 
-        // Sort by date
-        usort($allAlerts, fn($a, $b) => strtotime($b['created_at']) - strtotime($a['created_at']));
-        usort($allEvents, fn($a, $b) => strtotime($a['date']) - strtotime($b['date']));
+        $allAlerts = $alertQuery->get()->map(function($n) use ($schools) {
+            $school = $schools->firstWhere('id', $n->school_id);
+            $actionData = $n->action_data ?? [];
+            return [
+                'id' => $n->id,
+                'title' => preg_replace('/^Alert:\s*/', '', $n->title),
+                'description' => preg_replace('/\s*\(Posted by:.*?\)\s*$/', '', $n->message),
+                'type' => $actionData['alert_type'] ?? 'info',
+                'school_name' => $school->school_name ?? 'Unknown',
+                'posted_by' => $actionData['posted_by'] ?? '',
+                'created_at' => $n->created_at->toDateTimeString(),
+            ];
+        })->toArray();
+
+        $allEvents = $eventQuery->get()->map(function($n) use ($schools) {
+            $school = $schools->firstWhere('id', $n->school_id);
+            $actionData = $n->action_data ?? [];
+            return [
+                'id' => $n->id,
+                'title' => preg_replace('/^Event:\s*/', '', $n->title),
+                'description' => preg_replace('/\s*(\|.*|\(Posted by:.*?\))\s*$/', '', $n->message),
+                'date' => $actionData['event_date'] ?? $n->created_at->format('Y-m-d'),
+                'time' => $actionData['event_time'] ?? '',
+                'school_name' => $school->school_name ?? 'Unknown',
+                'posted_by' => $actionData['posted_by'] ?? '',
+                'created_at' => $n->created_at->toDateTimeString(),
+            ];
+        })->toArray();
 
         return view('fire-safety.dashboard', [
             'schools' => $schools,
-            'allAlerts' => array_slice($allAlerts, 0, 10),
-            'allEvents' => array_slice($allEvents, 0, 10)
+            'allAlerts' => $allAlerts,
+            'allEvents' => $allEvents
         ]);
     }
 
@@ -1258,19 +1283,17 @@ public function storeRoom(Request $request)
     if ($user->role === 'contributor') {
         $validated['approval_status'] = 'pending';
 
-        // Notify Admins
+        // Notify Admins via notification
         $school = FireSafetySchool::find($validated['school_id']);
         if ($school) {
-            $alerts = $school->alerts ?? [];
-            $alerts[] = [
-                'id' => uniqid(),
-                'title' => 'New Room Created (Pending Approval)',
-                'description' => "Contributor {$user->name} created a new room and it requires administrator approval.",
-                'type' => 'warning',
-                'created_at' => now()->toDateTimeString()
-            ];
-            $school->alerts = $alerts;
-            $school->save();
+            self::createFireSafetyNotification(
+                'room_approval',
+                'New Room Created (Pending Approval)',
+                "Contributor {$user->name} created a new room and it requires administrator approval.",
+                $school->id,
+                null,
+                ['posted_by' => $user->name]
+            );
         }
     } else {
         $validated['approval_status'] = 'approved';
@@ -3032,6 +3055,20 @@ public function storeRoom(Request $request)
 
             DB::commit();
 
+            // Create notification for evacuation plan creation
+            $user = auth()->user();
+            $planLabel = $request->building_id
+                ? 'Building Plan (' . (FireSafetyBuilding::find($request->building_id)->building_name ?? 'Unknown') . ')'
+                : 'School-Wide Plan';
+            self::createFireSafetyNotification(
+                'evacuation_plan',
+                'Evacuation Plan Created: ' . $request->plan_no,
+                $user->name . ' created a new evacuation plan "' . $request->plan_no . '" - ' . $planLabel,
+                $request->school_id,
+                null,
+                ['plan_id' => $plan->id, 'plan_type' => $request->building_id ? 'building' : 'school', 'posted_by' => $user->name]
+            );
+
             return response()->json(['success' => true, 'message' => 'Evacuation plan created successfully', 'plan' => $plan]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -3139,6 +3176,20 @@ public function storeRoom(Request $request)
                 }
             }
             DB::commit();
+
+            // Create notification for evacuation plan update
+            $user = auth()->user();
+            $planLabel = $plan->building_id
+                ? 'Building Plan (' . (FireSafetyBuilding::find($plan->building_id)->building_name ?? 'Unknown') . ')'
+                : 'School-Wide Plan';
+            self::createFireSafetyNotification(
+                'evacuation_plan',
+                'Evacuation Plan Updated: ' . $plan->plan_no,
+                $user->name . ' updated evacuation plan "' . $plan->plan_no . '" - ' . $planLabel,
+                $plan->school_id,
+                null,
+                ['plan_id' => $plan->id, 'plan_type' => $plan->building_id ? 'building' : 'school', 'posted_by' => $user->name]
+            );
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error updating evacuation plan: ' . $e->getMessage());
@@ -3715,6 +3766,12 @@ public function storeRoom(Request $request)
         if (auth()->user()->role === 'viewer') {
             return response()->json(['success' => false, 'message' => 'Viewers cannot add alerts.'], 403);
         }
+
+        // For contributors, always use their assigned school
+        if (auth()->user()->role === 'contributor' && auth()->user()->school_id) {
+            $request->merge(['school_id' => (string) auth()->user()->school_id]);
+        }
+
         $validated = $request->validate([
             'school_id' => 'required|string',
             'title' => 'required|string|max:255',
@@ -3735,19 +3792,6 @@ public function storeRoom(Request $request)
         if ($validated['school_id'] === 'all') {
             $schools = FireSafetySchool::all();
             foreach ($schools as $school) {
-                $alerts = $school->alerts ?? [];
-                $alerts[] = [
-                    'id' => uniqid(),
-                    'title' => $validated['title'],
-                    'description' => $validated['description'],
-                    'type' => $validated['type'],
-                    'posted_by' => $user->name,
-                    'created_at' => now()->toDateTimeString()
-                ];
-                $school->alerts = $alerts;
-                $school->save();
-
-                // Also store as notification
                 self::createFireSafetyNotification(
                     'alert',
                     'Alert: ' . $validated['title'],
@@ -3762,20 +3806,6 @@ public function storeRoom(Request $request)
 
         $school = FireSafetySchool::findOrFail($validated['school_id']);
 
-        $alerts = $school->alerts ?? [];
-        $alerts[] = [
-            'id' => uniqid(),
-            'title' => $validated['title'],
-            'description' => $validated['description'],
-            'type' => $validated['type'],
-            'posted_by' => $user->name,
-            'created_at' => now()->toDateTimeString()
-        ];
-
-        $school->alerts = $alerts;
-        $school->save();
-
-        // Also store as notification
         self::createFireSafetyNotification(
             'alert',
             'Alert: ' . $validated['title'],
@@ -3785,7 +3815,7 @@ public function storeRoom(Request $request)
             ['alert_type' => $validated['type'], 'posted_by' => $user->name]
         );
 
-        return response()->json(['success' => true, 'message' => 'Alert added successfully!', 'alerts' => $alerts]);
+        return response()->json(['success' => true, 'message' => 'Alert added successfully!']);
     }
 
     public function storeEvent(Request $request)
@@ -3793,6 +3823,12 @@ public function storeRoom(Request $request)
         if (auth()->user()->role === 'viewer') {
             return response()->json(['success' => false, 'message' => 'Viewers cannot schedule events.'], 403);
         }
+
+        // For contributors, always use their assigned school
+        if (auth()->user()->role === 'contributor' && auth()->user()->school_id) {
+            $request->merge(['school_id' => (string) auth()->user()->school_id]);
+        }
+
         $validated = $request->validate([
             'school_id' => 'required|string',
             'title' => 'required|string|max:255',
@@ -3814,20 +3850,6 @@ public function storeRoom(Request $request)
         if ($validated['school_id'] === 'all') {
             $schools = FireSafetySchool::all();
             foreach ($schools as $school) {
-                $events = $school->events ?? [];
-                $events[] = [
-                    'id' => uniqid(),
-                    'title' => $validated['title'],
-                    'description' => $validated['description'],
-                    'date' => $validated['date'],
-                    'time' => $validated['time'],
-                    'posted_by' => $user->name,
-                    'created_at' => now()->toDateTimeString()
-                ];
-                $school->events = $events;
-                $school->save();
-
-                // Also store as notification
                 self::createFireSafetyNotification(
                     'event',
                     'Event: ' . $validated['title'],
@@ -3842,21 +3864,6 @@ public function storeRoom(Request $request)
 
         $school = FireSafetySchool::findOrFail($validated['school_id']);
 
-        $events = $school->events ?? [];
-        $events[] = [
-            'id' => uniqid(),
-            'title' => $validated['title'],
-            'description' => $validated['description'],
-            'date' => $validated['date'],
-            'time' => $validated['time'],
-            'posted_by' => $user->name,
-            'created_at' => now()->toDateTimeString()
-        ];
-
-        $school->events = $events;
-        $school->save();
-
-        // Also store as notification
         self::createFireSafetyNotification(
             'event',
             'Event: ' . $validated['title'],
@@ -3866,7 +3873,7 @@ public function storeRoom(Request $request)
             ['event_date' => $validated['date'], 'event_time' => $validated['time'], 'posted_by' => $user->name]
         );
 
-        return response()->json(['success' => true, 'message' => 'Event added successfully!', 'events' => $events]);
+        return response()->json(['success' => true, 'message' => 'Event added successfully!']);
     }
 
     public function checkAlarmCode($schoolId, $code)
@@ -4311,6 +4318,35 @@ public function storeRoom(Request $request)
         $school->save();
 
         return response()->json(['success' => true, 'message' => 'Map layout saved successfully!']);
+    }
+
+    public function notifyMapUpdate(Request $request, $schoolId)
+    {
+        if (auth()->user()->role === 'viewer') {
+            return response()->json(['success' => false, 'message' => 'Viewers cannot send notifications.'], 403);
+        }
+
+        if (auth()->user()->role !== 'admin' && (int)$schoolId !== (int)auth()->user()->school_id) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized access to this school.'], 403);
+        }
+
+        $request->validate([
+            'description' => 'required|string|max:1000',
+        ]);
+
+        $user = auth()->user();
+        $school = FireSafetySchool::findOrFail($schoolId);
+
+        self::createFireSafetyNotification(
+            'evacuation_plan',
+            'Evacuation Map Updated: ' . $school->school_name,
+            $user->name . ' updated the evacuation map layout. Details: ' . $request->description,
+            $school->id,
+            null,
+            ['plan_type' => 'map', 'posted_by' => $user->name]
+        );
+
+        return response()->json(['success' => true, 'message' => 'Administrator has been notified about the map update.']);
     }
 
     // --- Report Printing Methods ---

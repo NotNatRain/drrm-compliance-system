@@ -473,15 +473,23 @@
                                             @endif
                                         </div>
                                     </div>
-                                    <div class="card-body" id="allAlerts">
+                                    <div class="card-body" id="allAlerts" style="max-height: 400px; overflow-y: auto;">
                                         @forelse($allAlerts as $alert)
-                                            <div class="card mb-2 border-start border-4 {{ $alert['type'] == 'danger' ? 'border-danger' : ($alert['type'] == 'warning' ? 'border-warning' : 'border-info') }}">
+                                            @php
+                                                $borderClass = $alert['type'] == 'danger' ? 'border-danger' : ($alert['type'] == 'warning' ? 'border-warning' : 'border-info');
+                                            @endphp
+                                            <div class="card mb-2 border-start border-4 {{ $borderClass }}">
                                                 <div class="card-body p-2">
                                                     <div class="d-flex justify-content-between">
-                                                        <h6 class="mb-1 fw-bold text-{{ $alert['type'] }}">{{ $alert['school_name'] }}: {{ $alert['title'] }}</h6>
-                                                        <small class="text-muted" style="font-size: 0.7rem;">{{ \Carbon\Carbon::parse($alert['created_at'])->diffForHumans() }}</small>
+                                                        <h6 class="mb-1 fw-bold text-{{ $alert['type'] }}" style="font-size: 0.85rem;">
+                                                            <i class="fas fa-exclamation-triangle me-1"></i> {{ $alert['school_name'] }}: {{ $alert['title'] }}
+                                                        </h6>
+                                                        <small class="text-muted text-nowrap ms-2" style="font-size: 0.7rem;">{{ \Carbon\Carbon::parse($alert['created_at'])->diffForHumans() }}</small>
                                                     </div>
                                                     <p class="mb-0 small text-dark">{{ $alert['description'] }}</p>
+                                                    @if(!empty($alert['posted_by']))
+                                                        <small class="text-muted" style="font-size: 0.65rem;"><i class="fas fa-user me-1"></i>{{ $alert['posted_by'] }}</small>
+                                                    @endif
                                                 </div>
                                             </div>
                                         @empty
@@ -506,15 +514,20 @@
                                             @endif
                                         </div>
                                     </div>
-                                    <div class="card-body" id="allEvents">
+                                    <div class="card-body" id="allEvents" style="max-height: 400px; overflow-y: auto;">
                                         @forelse($allEvents as $event)
                                             <div class="card mb-2 border-start border-4 border-primary">
                                                 <div class="card-body p-2">
                                                     <div class="d-flex justify-content-between">
-                                                        <h6 class="mb-1 fw-bold text-primary">{{ $event['school_name'] }}: {{ $event['title'] }}</h6>
-                                                        <small class="text-muted" style="font-size: 0.7rem;">{{ $event['date'] }} {{ $event['time'] }}</small>
+                                                        <h6 class="mb-1 fw-bold text-primary" style="font-size: 0.85rem;">
+                                                            <i class="fas fa-calendar-alt me-1"></i> {{ $event['school_name'] }}: {{ $event['title'] }}
+                                                        </h6>
+                                                        <small class="text-muted text-nowrap ms-2" style="font-size: 0.7rem;">{{ $event['date'] }} {{ $event['time'] }}</small>
                                                     </div>
                                                     <p class="mb-0 small text-dark">{{ $event['description'] }}</p>
+                                                    @if(!empty($event['posted_by']))
+                                                        <small class="text-muted" style="font-size: 0.65rem;"><i class="fas fa-user me-1"></i>{{ $event['posted_by'] }}</small>
+                                                    @endif
                                                 </div>
                                             </div>
                                         @empty
@@ -747,9 +760,11 @@
                                         @endforeach
                                     @else
                                         @php
-                                            $mySchool = $schools->firstWhere('id', auth()->user()->school_id);
+                                            $mySchool = $schools->first();
                                         @endphp
-                                        <option value="{{ auth()->user()->school_id }}">{{ $mySchool?->school_name ?? 'My School' }}</option>
+                                        @if($mySchool)
+                                            <option value="{{ $mySchool->id }}" selected>{{ $mySchool->school_name }}</option>
+                                        @endif
                                     @endif
                                 </select>
                             </div>
@@ -801,9 +816,11 @@
                                         @endforeach
                                     @else
                                         @php
-                                            $mySchool = $schools->firstWhere('id', auth()->user()->school_id);
+                                            $mySchool = $schools->first();
                                         @endphp
-                                        <option value="{{ auth()->user()->school_id }}">{{ $mySchool?->school_name ?? 'My School' }}</option>
+                                        @if($mySchool)
+                                            <option value="{{ $mySchool->id }}" selected>{{ $mySchool->school_name }}</option>
+                                        @endif
                                     @endif
                                 </select>
                             </div>
@@ -1175,15 +1192,20 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData(this);
             fetch('{{ route("fire-safety.school.alert.store") }}', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
                 body: JSON.stringify(Object.fromEntries(formData.entries()))
             })
-            .then(response => response.json())
-            .then(res => {
-                if (res.success) {
-                    Swal.fire('Success', 'Alert posted successfully!', 'success')
+            .then(response => response.json().then(data => ({ ok: response.ok, data })))
+            .then(({ ok, data }) => {
+                if (ok && data.success) {
+                    Swal.fire('Success', data.message || 'Alert posted successfully!', 'success')
                     .then(() => location.reload());
+                } else {
+                    Swal.fire('Error', data.message || 'Failed to post alert.', 'error');
                 }
+            })
+            .catch(() => {
+                Swal.fire('Error', 'Something went wrong. Please try again.', 'error');
             });
         });
     }
@@ -1196,15 +1218,20 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData(this);
             fetch('{{ route("fire-safety.school.event.store") }}', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
                 body: JSON.stringify(Object.fromEntries(formData.entries()))
             })
-            .then(response => response.json())
-            .then(res => {
-                if (res.success) {
-                    Swal.fire('Success', 'Event scheduled successfully!', 'success')
+            .then(response => response.json().then(data => ({ ok: response.ok, data })))
+            .then(({ ok, data }) => {
+                if (ok && data.success) {
+                    Swal.fire('Success', data.message || 'Event scheduled successfully!', 'success')
                     .then(() => location.reload());
+                } else {
+                    Swal.fire('Error', data.message || 'Failed to schedule event.', 'error');
                 }
+            })
+            .catch(() => {
+                Swal.fire('Error', 'Something went wrong. Please try again.', 'error');
             });
         });
     }

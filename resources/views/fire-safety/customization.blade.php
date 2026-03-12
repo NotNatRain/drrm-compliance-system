@@ -1435,9 +1435,9 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                <button class="btn btn-primary btn-sm edit-school-btn" 
+                                                <button class="btn btn-primary btn-sm edit-school-btn"
                                                         data-school-id="{{ $mySchool->id }}"
-                                                        data-bs-toggle="modal" 
+                                                        data-bs-toggle="modal"
                                                         data-bs-target="#editSchoolModal">
                                                     <i class="fas fa-edit me-1"></i> Update Info
                                                 </button>
@@ -2609,7 +2609,7 @@
                         </button>
                     </div>
                 `;
-                
+
                 // Expose helper to add new status fields
                 window.addNewAlarmStatusToModal = function() {
                     const list = document.getElementById('alarmEditStatusesList');
@@ -2857,7 +2857,7 @@
             const card = icon.closest('.card');
             card.id = cardId; // Ensure card has ID for persistence
             card.classList.toggle('card-collapsed');
-            
+
             const cardStates = JSON.parse(localStorage.getItem('fireSafetyCardStates') || '{}');
             cardStates[cardId] = card.classList.contains('card-collapsed') ? 'collapsed' : 'expanded';
             localStorage.setItem('fireSafetyCardStates', JSON.stringify(cardStates));
