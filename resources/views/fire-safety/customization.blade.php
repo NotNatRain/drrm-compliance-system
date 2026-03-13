@@ -511,6 +511,7 @@
                                                     <div>
                                                         <strong>{{ $p->name }}</strong>
                                                         <div class="small text-muted">Max covered rooms: {{ $p->max_rooms_covered ?? '—' }} (max 5)</div>
+                                                        <div class="small text-muted">Required extinguishers: {{ $p->required_extinguishers ?? 1 }}</div>
                                                     </div>
                                                 </div>
                                                 <div class="mt-2">
@@ -519,7 +520,8 @@
                                                             data-type="calculated_priority"
                                                             data-name="{{ $p->name }}"
                                                             data-description="{{ $p->description }}"
-                                                            data-max-rooms="{{ $p->max_rooms_covered ?? '' }}">
+                                                            data-max-rooms="{{ $p->max_rooms_covered ?? '' }}"
+                                                            data-required-extinguishers="{{ $p->required_extinguishers ?? 1 }}">
                                                         <i class="fas fa-edit"></i> Edit
                                                     </button>
                                                 </div>
@@ -543,6 +545,9 @@
                                                             Priority: {{ $p->name ?? '—' }}
                                                             @if($p && $p->max_rooms_covered)
                                                                 (Up to {{ $p->max_rooms_covered }} rooms)
+                                                            @endif
+                                                            @if($p)
+                                                                • {{ $p->required_extinguishers ?? 1 }} extinguisher(s) required
                                                             @endif
                                                         </div>
                                                     </div>
@@ -1059,6 +1064,11 @@
                             <small class="text-muted">Maximum allowed is 5 rooms.</small>
                         </div>
                         <div class="mb-3">
+                            <label class="form-label">Required calculated priority extinguisher *</label>
+                            <input type="number" class="form-control" name="required_extinguishers" required min="1" max="5" value="1" placeholder="How many extinguishers are required for this priority?">
+                            <small class="text-muted">Set how many extinguishers rooms under this calculated priority are allowed to host. Default is 1.</small>
+                        </div>
+                        <div class="mb-3">
                             <label class="form-label">Description</label>
                             <textarea class="form-control" name="description" rows="2"></textarea>
                         </div>
@@ -1096,7 +1106,7 @@
                             <select class="form-control" name="parent_id" required>
                                 <option value="">Select priority</option>
                                 @foreach(($calculatedPriorities ?? collect()) as $p)
-                                    <option value="{{ $p->id }}">{{ $p->name }} (Up to {{ $p->max_rooms_covered ?? '—' }} rooms)</option>
+                                    <option value="{{ $p->id }}">{{ $p->name }} (Up to {{ $p->max_rooms_covered ?? '—' }} rooms, {{ $p->required_extinguishers ?? 1 }} extinguisher(s))</option>
                                 @endforeach
                             </select>
                         </div>
@@ -1531,6 +1541,7 @@
                     const configCategory = this.getAttribute('data-category');
                     const configParentId = this.getAttribute('data-parent-id');
                     const configMaxRooms = this.getAttribute('data-max-rooms');
+                    const configRequiredExtinguishers = this.getAttribute('data-required-extinguishers');
                     editConfigItem(
                         configId,
                         configType,
@@ -1543,7 +1554,8 @@
                         configPressureMax,
                         configCategory,
                         configParentId,
-                        configMaxRooms
+                        configMaxRooms,
+                        configRequiredExtinguishers
                     );
                 });
             });
@@ -2567,7 +2579,7 @@
         }
 
         // Edit config item
-        function editConfigItem(id, type, name, description, isActive, minFloors, totalRooms, pressureMin, pressureMax, category, parentId, maxRoomsCovered) {
+        function editConfigItem(id, type, name, description, isActive, minFloors, totalRooms, pressureMin, pressureMax, category, parentId, maxRoomsCovered, requiredExtinguishers) {
             const isBuildingType = (type === 'building_type');
             const isExtinguisherStatus = (type === 'extinguisher_status');
             const isSafetyFeature = (type === 'safety_feature');
@@ -2665,6 +2677,11 @@
                                         <input type="number" class="form-control" name="max_rooms_covered" min="1" max="5" required value="${maxRoomsCovered !== null && maxRoomsCovered !== undefined && maxRoomsCovered !== '' ? maxRoomsCovered : ''}">
                                         <small class="text-muted">Maximum allowed is 5 rooms.</small>
                                     </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Required calculated priority extinguisher *</label>
+                                        <input type="number" class="form-control" name="required_extinguishers" min="1" max="5" required value="${requiredExtinguishers !== null && requiredExtinguishers !== undefined && requiredExtinguishers !== '' ? requiredExtinguishers : '1'}">
+                                        <small class="text-muted">Set how many extinguishers rooms under this calculated priority are allowed to host. Default is 1.</small>
+                                    </div>
                                     ` : '';
             const roomTypePriorityHtml = isRoomType ? (() => {
                 const list = Array.isArray(window._calculatedPriorities) ? window._calculatedPriorities : [];
@@ -2672,7 +2689,8 @@
                 const opts = list.map(p => {
                     const idStr = String(p.id);
                     const max = p.max_rooms_covered ?? '';
-                    const label = `${p.name}${max ? ' (Up to ' + max + ' rooms)' : ''}`;
+                    const required = p.required_extinguishers ?? 1;
+                    const label = `${p.name}${max ? ' (Up to ' + max + ' rooms' : ' ('}${max ? ', ' : ''}${required} extinguisher(s))`;
                     return `<option value="${idStr}" ${idStr === selected ? 'selected' : ''}>${label}</option>`;
                 }).join('');
                 return `

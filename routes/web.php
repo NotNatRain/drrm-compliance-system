@@ -30,6 +30,11 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/users/{id}', [DashboardController::class, 'updateUser'])->name('users.update');
 });
 
+// Activity Log (admin and viewer only; contributors cannot see)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/activity-logs', [App\Http\Controllers\ActivityLogController::class, 'index'])->name('activity-logs.index');
+});
+
 // Global User Management (Admin Only actions)
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::post('/users', [DashboardController::class, 'storeUser'])->name('users.store');

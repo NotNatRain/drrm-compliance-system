@@ -21,11 +21,14 @@ class SystemConfiguration extends Model
         'pressure_min',
         'pressure_max',
         'max_rooms_covered',
+        'required_extinguishers',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'sort_order' => 'integer',
+        'max_rooms_covered' => 'integer',
+        'required_extinguishers' => 'integer',
     ];
 
     public function parent()

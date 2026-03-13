@@ -982,7 +982,7 @@
                                 </div>
                             `).join('');
                         } else {
-                            incList.innerHTML = '<div class="text-center text-muted py-5"><i class="fas fa-folder-open fa-3x mb-3"></i><p>No incidents for this day</p></div>';
+                            incList.innerHTML = '<div class="text-center text-muted py-5"><i class="fas fa-folder-open fa-3x mb-3"></i><p>No incidents for this day</p><a href="#" class="text-warning fw-bold" onclick="logForSelectedDateWithTab(event, \'incident\');">Log new entry?</a></div>';
                         }
                         if (compliance.length) {
                             compList.innerHTML = compliance.map(c => `
@@ -1019,8 +1019,8 @@
                                     </div>
                                 </div>
                             `).join('');
-                        }else {
-                            compList.innerHTML = '<div class="text-center text-muted py-5"><i class="fas fa-calendar fa-3x mb-3"></i><p>No compliance events for this day</p></div>';
+                        } else {
+                            compList.innerHTML = '<div class="text-center text-muted py-5"><i class="fas fa-calendar fa-3x mb-3"></i><p>No compliance events for this day</p><a href="#" class="text-warning fw-bold" onclick="logForSelectedDateWithTab(event, \'compliance\');">Log new entry?</a></div>';
                         }
                     })
                     .catch(() => {
@@ -1101,6 +1101,11 @@
         });
 
         function logForSelectedDate() {
+            logForSelectedDateWithTab(null, 'incident');
+        }
+
+        function logForSelectedDateWithTab(e, tab) {
+            if (e) e.preventDefault();
             const date = window._selectedDateForLog;
             bootstrap.Modal.getInstance(document.getElementById('dayDetailsModal')).hide();
             setTimeout(() => {
@@ -1111,6 +1116,13 @@
                     document.getElementById('incident_date').value = date;
                     document.getElementById('compliance_date_input').value = date;
                     document.getElementById('compliance_incident_date').value = date;
+                }
+                if (tab === 'compliance') {
+                    const compTab = document.getElementById('compliance-tab');
+                    if (compTab) new bootstrap.Tab(compTab).show();
+                } else {
+                    const incTab = document.getElementById('incident-tab');
+                    if (incTab) new bootstrap.Tab(incTab).show();
                 }
             }, 300);
         }

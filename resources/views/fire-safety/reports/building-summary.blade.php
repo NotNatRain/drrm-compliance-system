@@ -146,10 +146,13 @@
                 @php
                     $rooms = $building->actualRooms;
 
-                    // Count classrooms - looking for room_type = 'classroom' or room types with 'classroom' in name
+                    // Count classrooms - rooms whose type name contains 'classroom'
+                    // "Classroom and Administration" rooms count here AND in admin offices (dual count)
                     $classrooms = $rooms->filter(function($room) {
-                        return strtolower($room->room_type) === 'classroom' ||
-                               (isset($room->roomTypeConfig->name) && stripos($room->roomTypeConfig->name, 'classroom') !== false);
+                        $configName = isset($room->roomTypeConfig->name) ? strtolower($room->roomTypeConfig->name) : '';
+                        $typeName   = strtolower($room->room_type ?? '');
+                        return stripos($configName, 'classroom') !== false ||
+                               stripos($typeName,   'classroom') !== false;
                     })->count();
 
                     // Count laboratories - looking for room_type = 'laboratory' or room types with 'lab' in name

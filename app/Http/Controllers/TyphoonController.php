@@ -11,6 +11,7 @@ use App\Models\TypFldEvacuationCenter;
 use App\Models\TypFldFamily;
 use App\Models\TypFldFamilyMember;
 use App\Models\TypFldMonitoringSnapshot;
+use App\Models\ActivityLog;
 
 class TyphoonController extends Controller
 {
@@ -298,6 +299,11 @@ class TyphoonController extends Controller
             }
 
             $ec->save();
+
+            ActivityLog::log('typhoon_flood', 'Registered family: ' . $family->head_family_name, [
+                'school_id' => $ec->school_id,
+                'notes' => $family->collective_needs,
+            ]);
         });
 
         return redirect()->route('typhoon.dashboard')->with('success', 'Family registered successfully.');
@@ -391,6 +397,10 @@ class TyphoonController extends Controller
 
         session(['typhoon_active_school_id' => $schoolId]);
 
+        ActivityLog::log('typhoon_flood', 'Created evacuation center: ' . ($request->school_name ?: $request->identification), [
+            'school_id' => $schoolId,
+        ]);
+
         return redirect()->route('typhoon.dashboard')->with('success', 'Evacuation center created.');
     }
 
@@ -416,6 +426,11 @@ class TyphoonController extends Controller
         $ec->emergency_resources = $request->emergency_resources;
         $ec->reports_status = $request->reports_status;
         $ec->save();
+
+        ActivityLog::log('typhoon_flood', 'Updated evacuation center: ' . $ec->identification, [
+            'school_id' => $ec->school_id,
+            'notes' => "Status: {$ec->usage_status}",
+        ]);
 
         return redirect()->route('typhoon.evacuation-center.show', $ec->id)->with('success', 'Evacuation center updated.');
     }

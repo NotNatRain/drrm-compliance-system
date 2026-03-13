@@ -8,6 +8,7 @@ use App\Models\IncidentType;
 use App\Models\IncidentStatus;
 use App\Models\IncidentSchool;
 use App\Models\IncidentChecklist;
+use App\Models\ActivityLog;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpWord\PhpWord;
@@ -109,6 +110,8 @@ class IncidentController extends Controller
             'priority' => is_null($maxPriority) ? 1 : $maxPriority + 1,
         ]);
 
+        ActivityLog::log('incident_checklist', 'Created incident type: ' . $type->name);
+
         return response()->json([
             'success' => true,
             'type' => $type,
@@ -129,6 +132,8 @@ class IncidentController extends Controller
             'name' => $validated['name'],
         ]);
 
+        ActivityLog::log('incident_checklist', 'Updated incident type: ' . $type->name);
+
         return response()->json([
             'success' => true,
             'type' => $type,
@@ -147,9 +152,11 @@ class IncidentController extends Controller
         $status = IncidentStatus::create([
             'name' => $validated['name'],
             'color_class' => 'status-no-suspension',
-            'short_code' => null,
+            'short_code' => strtoupper(substr($validated['name'], 0, 1)),
             'is_compliance' => true,
         ]);
+
+        ActivityLog::log('incident_checklist', 'Created incident status: ' . $status->name);
 
         return response()->json([
             'success' => true,
@@ -170,6 +177,8 @@ class IncidentController extends Controller
         $status->update([
             'name' => $validated['name'],
         ]);
+
+        ActivityLog::log('incident_checklist', 'Updated incident status: ' . $status->name);
 
         return response()->json([
             'success' => true,
@@ -242,6 +251,8 @@ class IncidentController extends Controller
             'sort_order' => is_null($maxOrder) ? 0 : $maxOrder + 1,
         ]);
 
+        ActivityLog::log('incident_checklist', 'Added checklist item: ' . $item->label);
+
         return response()->json([
             'success' => true,
             'item' => $item,
@@ -263,6 +274,8 @@ class IncidentController extends Controller
         $item->fill($validated);
         $item->save();
 
+        ActivityLog::log('incident_checklist', 'Updated checklist item: ' . $item->label . ($item->is_completed ? ' (Completed)' : ' (Uncompleted)'));
+
         return response()->json([
             'success' => true,
             'item' => $item,
@@ -275,7 +288,10 @@ class IncidentController extends Controller
     public function destroyChecklistItem(Request $request, $id)
     {
         $item = IncidentChecklist::where('user_id', $request->user()->id)->findOrFail($id);
+        $label = $item->label;
         $item->delete();
+
+        ActivityLog::log('incident_checklist', 'Deleted checklist item: ' . $label);
 
         return response()->json([
             'success' => true,
@@ -327,6 +343,11 @@ class IncidentController extends Controller
         // Store the incident
         $incident = IncidentCalendar::create($validated);
 
+        ActivityLog::log('incident_checklist', 'Logged incident: ' . ($incident->incidentType?->name ?? 'Incident') . ' at ' . $incident->school_name, [
+            'school_name' => $incident->school_name,
+            'notes' => $incident->remarks,
+        ]);
+
         // Update or create school record
         $this->updateSchoolRecord($validated['school_name']);
 
@@ -361,7 +382,11 @@ class IncidentController extends Controller
     public function destroy($id)
     {
         $incident = IncidentCalendar::findOrFail($id);
+        $typeName = $incident->incidentType?->name ?? 'Incident';
+        $schoolName = $incident->school_name;
         $incident->delete();
+
+        ActivityLog::log('incident_checklist', 'Deleted incident: ' . $typeName . ' at ' . $schoolName);
 
         return response()->json(['success' => true, 'message' => 'Incident deleted successfully!']);
     }
@@ -602,6 +627,10 @@ class IncidentController extends Controller
 
             DB::statement('SET FOREIGN_KEY_CHECKS=1');
         });
+
+        ActivityLog::log('incident_checklist', 'Imported backup data', [
+            'notes' => 'Full data restore from backup file',
+        ]);
 
         return response()->json([
             'success' => true,

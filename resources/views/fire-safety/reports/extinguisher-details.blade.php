@@ -55,6 +55,19 @@
             text-align: center;
             font-weight: bold;
         }
+        .section-title {
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-bottom: 2px solid #000;
+            padding-bottom: 4px;
+            margin-top: 28px;
+            margin-bottom: 8px;
+        }
+        .uncovered {
+            color: #c0392b;
+            font-weight: bold;
+        }
         @media print {
             .no-print {
                 display: none;
@@ -155,6 +168,62 @@
     <div class="purpose">
         <p><strong>Overall Purpose:</strong> This sheet is designed for equipment-level tracking, allowing monitoring of maintenance schedules, operational readiness, placement coverage, and compliance documentation.</p>
     </div>
+
+    {{-- ===== ROOM INFORMATION SECTION ===== --}}
+    <div class="section-title">Room Information</div>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 4%; text-align: center;">#</th>
+                <th style="width: 8%;">Room Code</th>
+                <th style="width: 15%;">Room Name</th>
+                <th style="width: 14%;">Building</th>
+                <th style="width: 5%; text-align: center;">Floor</th>
+                <th style="width: 18%;">Room Type</th>
+                <th style="width: 8%; text-align: center;">2nd Exit</th>
+                <th style="width: 10%; text-align: center;">Smoke Detector</th>
+                <th>Covered By</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($rooms as $index => $room)
+                @php
+                    $coveringExts  = $room->extinguishersCoveringThisRoom;
+                    $hostedExt     = $room->hostedExtinguisher;
+                    $isUncovered   = $coveringExts->isEmpty();
+                @endphp
+                <tr>
+                    <td style="text-align: center;">{{ $index + 1 }}</td>
+                    <td>{{ $room->room_code ?: '—' }}</td>
+                    <td>{{ $room->room_name }}</td>
+                    <td>{{ $room->building?->building_name ?? 'N/A' }}</td>
+                    <td style="text-align: center;">{{ $room->floor_no ?? '—' }}</td>
+                    <td>{{ $room->roomTypeConfig?->name ?? $room->room_type }}</td>
+                    <td style="text-align: center;">{{ $room->has_secondary_exit ? 'Yes' : 'No' }}</td>
+                    <td style="text-align: center;">
+                        @if($room->smoke_detector_required)
+                            {{ $room->has_smoke_detector ? 'Yes' : 'No' }}
+                        @else
+                            N/A
+                        @endif
+                    </td>
+                    <td>
+                        @if($isUncovered)
+                            <span class="uncovered">Uncovered</span>
+                        @else
+                            @foreach($coveringExts as $covExt)
+                                <strong>{{ $covExt->code }}</strong>@if($hostedExt && $hostedExt->id === $covExt->id) <em>(Center)</em>@endif{{ !$loop->last ? ', ' : '' }}
+                            @endforeach
+                        @endif
+                    </td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="9" style="text-align: center; padding: 20px;">No rooms recorded for this school.</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
 
     <div style="margin-top: 40px; display: flex; justify-content: space-between; padding: 0 50px;">
         <div style="text-align: center;">

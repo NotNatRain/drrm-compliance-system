@@ -15,6 +15,7 @@ use App\Models\FireSafetyRoom;
 use App\Models\FireSafetyEvacuationDrill;
 use App\Models\FireSafetyArchive;
 use App\Models\FireSafetyNotification;
+use App\Models\ActivityLog;
 use Carbon\Carbon;
 use App\Models\User;
 use App\Models\SystemConfiguration;
@@ -615,6 +616,11 @@ class FireSafetyController extends Controller
                 $alarm->buildings()->sync([$request->building_id]);
             }
 
+            ActivityLog::log('fire_safety', 'Created alarm: ' . $alarm->code, [
+                'school_id' => $alarm->school_id,
+                'notes' => $validated['notes'] ?? null,
+            ]);
+
             Log::info('Alarm created successfully:', ['id' => $alarm->id]);
 
             return response()->json([
@@ -728,6 +734,11 @@ class FireSafetyController extends Controller
             );
         }
 
+        ActivityLog::log('fire_safety', 'Updated alarm: ' . $alarm->code, [
+            'school_id' => $alarm->school_id,
+            'notes' => $validated['notes'] ?? null,
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Alarm system updated successfully!'
@@ -750,6 +761,10 @@ class FireSafetyController extends Controller
             'go_test',
             ['alarm_id' => $alarm->id, 'school_id' => $alarm->school_id]
         );
+
+        ActivityLog::log('fire_safety', 'Tested alarm: ' . $alarm->code, [
+            'school_id' => $alarm->school_id,
+        ]);
 
         return response()->json([
             'success' => true,
@@ -797,7 +812,14 @@ class FireSafetyController extends Controller
             // Delete associations if any (e.g., if there's a pivot for multi-building)
             DB::table('fire_safety_alarm_building')->where('alarm_id', $alarm->id)->delete();
 
+            $schoolId = $alarm->school_id;
+            $alarmCode = $alarm->code;
             $alarm->delete();
+
+            ActivityLog::log('fire_safety', 'Removed alarm: ' . $alarmCode, [
+                'school_id' => $schoolId,
+                'notes' => $request->reason,
+            ]);
 
             DB::commit();
             return response()->json(['success' => true]);
@@ -993,40 +1015,46 @@ class FireSafetyController extends Controller
         if ($roomTypeChanged) {
             $affectedRoomIds = [];
 
-            // If this room WAS a center room of an extinguisher, clear that extinguisher's
+            // If this room WAS a center room of extinguisher(s), clear each extinguisher's
             // ENTIRE coverage (all rooms it was covering), then unlink the center room.
-            $hostedExt = FireSafetyExtinguisher::where('room_id', $id)->first();
-            if ($hostedExt) {
+            $hostedExtinguishers = FireSafetyExtinguisher::where('room_id', $id)->get();
+            if ($hostedExtinguishers->isNotEmpty()) {
                 // Capture affected rooms BEFORE deleting pivot rows
                 $affectedRoomIds = DB::table('fire_safety_extinguisher_room_coverage')
-                    ->where('extinguisher_id', $hostedExt->id)
+                    ->whereIn('extinguisher_id', $hostedExtinguishers->pluck('id'))
                     ->pluck('room_id')
                     ->map(fn ($v) => (int) $v)
                     ->values()
                     ->toArray();
 
-                // Remove ALL rooms from this extinguisher's coverage pivot
-                // Use relationship detach to ensure the correct connection/table is used.
-                $hostedExt->coveredRooms()->detach();
+                foreach ($hostedExtinguishers as $hostedExt) {
+                    // Remove ALL rooms from this extinguisher's coverage pivot
+                    // Use relationship detach to ensure the correct connection/table is used.
+                    $hostedExt->coveredRooms()->detach();
 
-                // Safety cleanup in case of legacy rows
-                DB::table('fire_safety_extinguisher_room_coverage')
-                    ->where('extinguisher_id', $hostedExt->id)
-                    ->delete();
+                    // Safety cleanup in case of legacy rows
+                    DB::table('fire_safety_extinguisher_room_coverage')
+                        ->where('extinguisher_id', $hostedExt->id)
+                        ->delete();
+
+                    // Unlink center room
+                    $hostedExt->room_id = null;
+                    $hostedExt->save();
+                }
 
                 // Clear nearest pointers that reference this former host room
                 FireSafetyRoom::where('building_id', $room->building_id)
                     ->where('nearest_extinguisher_room_id', $id)
                     ->update(['nearest_extinguisher_room_id' => null]);
-
-                // Unlink center room
-                $hostedExt->room_id = null;
-                $hostedExt->save();
             } else {
                 // Not a center room — just remove this room from any coverage pivot
                 DB::table('fire_safety_extinguisher_room_coverage')->where('room_id', $id)->delete();
                 $affectedRoomIds = [(int) $id];
             }
+            ActivityLog::log('fire_safety', 'Updated room: ' . ($room->room_code ?? $room->room_name ?? 'Room'), [
+                'school_id' => $room->school_id,
+                'notes' => $validated['remarks'] ?? null,
+            ]);
             return response()->json([
                 'success' => true,
                 'type_changed' => true,
@@ -1073,6 +1101,11 @@ class FireSafetyController extends Controller
             }
         }
 
+        ActivityLog::log('fire_safety', 'Updated room: ' . ($room->room_code ?? $room->room_name ?? 'Room'), [
+            'school_id' => $room->school_id,
+            'notes' => $validated['remarks'] ?? null,
+        ]);
+
         return response()->json(['success' => true]);
     }
 
@@ -1098,6 +1131,10 @@ class FireSafetyController extends Controller
             ['room_id' => $room->id, 'school_id' => $room->school_id, 'status' => 'approved']
         );
 
+        ActivityLog::log('fire_safety', 'Approved room: ' . ($room->room_code ?? $room->room_name ?? 'Room'), [
+            'school_id' => $room->school_id,
+        ]);
+
         return response()->json(['success' => true]);
     }
 
@@ -1114,15 +1151,10 @@ class FireSafetyController extends Controller
             'approval_message' => $reason
         ]);
 
-        // Create notification for room rejection
-        self::createFireSafetyNotification(
-            'room_approval',
-            'Room Update Rejected',
-            'Room ' . $room->room_code . ' has been rejected. Reason: ' . $reason,
-            $room->school_id,
-            'see_inspection',
-            ['room_id' => $room->id, 'school_id' => $room->school_id, 'status' => 'rejected']
-        );
+        ActivityLog::log('fire_safety', 'Rejected room: ' . ($room->room_code ?? $room->room_name ?? 'Room'), [
+            'school_id' => $room->school_id,
+            'notes' => $reason,
+        ]);
 
         return response()->json(['success' => true]);
     }
@@ -1301,6 +1333,11 @@ public function storeRoom(Request $request)
 
     $room = FireSafetyRoom::create($validated);
 
+    ActivityLog::log('fire_safety', 'Created room: ' . ($room->room_name ?? $room->room_code ?? 'Room'), [
+        'school_id' => $room->school_id,
+        'notes' => $validated['remarks'] ?? null,
+    ]);
+
     return response()->json([
         'success' => true,
         'message' => 'Room added successfully!',
@@ -1434,11 +1471,13 @@ public function storeRoom(Request $request)
 
         // Do not allow installing multiple extinguishers in the same host/center room
         if (!empty($validated['room_id'])) {
-            $centerAlreadyHosts = FireSafetyExtinguisher::where('room_id', $validated['room_id'])->exists();
-            if ($centerAlreadyHosts) {
+            $centerRoom->loadMissing(['roomTypeConfig.parent']);
+            $hostLimit = $this->getCenterRoomHostLimit($centerRoom);
+            $existingCenterHostCount = FireSafetyExtinguisher::where('room_id', $validated['room_id'])->count();
+            if ($existingCenterHostCount >= $hostLimit) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Selected center room already hosts an extinguisher.'
+                    'message' => "Selected center room can only host up to {$hostLimit} extinguisher(s)."
                 ], 422);
             }
         }
@@ -1548,8 +1587,8 @@ public function storeRoom(Request $request)
             // Automatic Evaluation Result: Only 'active' is Passed
             $evaluationResult = ($validated['status'] === 'active') ? 'Passed' : 'Failed';
 
-            // If a center room is selected, clear previous coverage rows for that room
-            if (!empty($validated['room_id'])) {
+            // If this is the first hosted extinguisher for the center room, clear previous third-party coverage rows.
+            if (!empty($validated['room_id']) && (($existingCenterHostCount ?? 0) === 0)) {
                 DB::table('fire_safety_extinguisher_room_coverage')
                     ->where('room_id', (int) $validated['room_id'])
                     ->delete();
@@ -1572,6 +1611,11 @@ public function storeRoom(Request $request)
             if (!empty($validated['room_id']) && count($coveredRoomIds) > 0) {
                 $ext->coveredRooms()->sync($coveredRoomIds);
             }
+
+            ActivityLog::log('fire_safety', 'Created extinguisher: ' . $ext->code, [
+                'school_id' => $ext->school_id,
+                'notes' => $validated['remarks'] ?? null,
+            ]);
 
             DB::commit();
 
@@ -1697,26 +1741,36 @@ public function storeRoom(Request $request)
                 ->values()
                 ->toArray();
 
-            // Build covering extinguisher lookup (room_id -> extinguisher_code)
+            $hostCountsByRoom = $extinguishers
+                ->pluck('room_id')
+                ->filter()
+                ->map(fn ($v) => (int) $v)
+                ->countBy();
+
+            // Build covering extinguisher lookup (room_id -> all extinguisher codes)
             $coveringMap = [];
             foreach ($extinguishers as $ext) {
                 foreach ($ext->coveredRooms as $r) {
-                    $coveringMap[(int) $r->id] = [
+                    $coveringMap[(int) $r->id] ??= [];
+                    $coveringMap[(int) $r->id][] = [
                         'id' => (int) $ext->id,
                         'code' => (string) $ext->code,
+                        'is_center_room' => (int) $ext->room_id === (int) $r->id,
                     ];
                 }
             }
 
             // Get room details with coverage status
-            $rooms = $building->actualRooms->map(function($room) use ($coveredRoomIds, $hostRoomIds, $coveringMap) {
+            $rooms = $building->actualRooms->map(function($room) use ($coveredRoomIds, $hostRoomIds, $hostCountsByRoom, $coveringMap) {
                 $priority = $room->roomTypeConfig?->parent;
                 $maxLimit = ($priority && $priority->config_type === 'calculated_priority')
                     ? (int)($priority->max_rooms_covered ?? 3)
                     : (in_array(strtolower($room->room_type), ['classroom', 'department', 'library']) ? 3 : 2);
 
                 $priorityLabel = $priority?->name ?? $room->calculated_priority_label ?? null;
-                $covering = $coveringMap[(int)$room->id] ?? null;
+                $coverings = $coveringMap[(int) $room->id] ?? [];
+                $hostCount = (int) ($hostCountsByRoom->get((int) $room->id, 0));
+                $hostLimit = $this->getCenterRoomHostLimit($room);
 
                 return [
                     'id' => $room->id,
@@ -1726,10 +1780,14 @@ public function storeRoom(Request $request)
                     'room_type' => $room->room_type,
                     'max_rooms' => $maxLimit,
                     'priority_label' => $priorityLabel,
+                    'host_count' => $hostCount,
+                    'host_limit' => $hostLimit,
+                    'can_host_more' => $hostCount < $hostLimit,
                     'is_covered' => in_array($room->id, $coveredRoomIds),
                     'is_host_room' => in_array((int)$room->id, $hostRoomIds, true),
-                    'covering_extinguisher_id' => $covering['id'] ?? null,
-                    'covering_extinguisher_code' => $covering['code'] ?? null,
+                    'covering_extinguishers' => $coverings,
+                    'covering_extinguisher_ids' => array_column($coverings, 'id'),
+                    'covering_extinguisher_codes' => array_column($coverings, 'code'),
                 ];
             });
 
@@ -1755,6 +1813,19 @@ public function storeRoom(Request $request)
         return $coverage ? $coverage->extinguisher_id : null;
     }
 
+    private function getCenterRoomHostLimit(?FireSafetyRoom $room): int
+    {
+        if (!$room) {
+            return 1;
+        }
+
+        $room->loadMissing(['roomTypeConfig.parent']);
+        $priorityConfig = $room->roomTypeConfig?->parent;
+        $requiredExtinguishers = (int) ($priorityConfig?->required_extinguishers ?? 1);
+
+        return max(1, min(5, $requiredExtinguishers));
+    }
+
     // Update Extinguisher Status & Log Inspection
     public function updateExtinguisher(Request $request, $id)
     {
@@ -1777,24 +1848,28 @@ public function storeRoom(Request $request)
             $ext = FireSafetyExtinguisher::findOrFail($id);
 
             // A room can host its own extinguisher even if it was previously covered by another extinguisher.
-            // But it cannot host multiple extinguishers at once.
+            // Shared Space rooms can host up to 2 extinguishers; all others can host 1.
             $newCenterId = $request->room_id ? (int) $request->room_id : null;
             if ($newCenterId) {
-                $hostsAnotherExt = FireSafetyExtinguisher::where('room_id', $newCenterId)
+                $newCenterRoom = FireSafetyRoom::with(['roomTypeConfig.parent'])->find($newCenterId);
+                $hostLimit = $this->getCenterRoomHostLimit($newCenterRoom);
+                $hostsAnotherExtCount = FireSafetyExtinguisher::where('room_id', $newCenterId)
                     ->where('id', '!=', $id)
-                    ->exists();
-                if ($hostsAnotherExt) {
+                    ->count();
+                if ($hostsAnotherExtCount >= $hostLimit) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'Selected center room already hosts another extinguisher.'
+                        'message' => "Selected center room can only host up to {$hostLimit} extinguisher(s)."
                     ], 422);
                 }
 
-                // Ensure the new center room is NOT covered by other extinguishers anymore
-                DB::table('fire_safety_extinguisher_room_coverage')
-                    ->where('room_id', $newCenterId)
-                    ->where('extinguisher_id', '!=', $id)
-                    ->delete();
+                if ($hostsAnotherExtCount === 0) {
+                    // When this is the first host in the room, clear stale third-party coverage rows.
+                    DB::table('fire_safety_extinguisher_room_coverage')
+                        ->where('room_id', $newCenterId)
+                        ->where('extinguisher_id', '!=', $id)
+                        ->delete();
+                }
             }
 
             $ext->status = $request->status;
@@ -1915,6 +1990,11 @@ public function storeRoom(Request $request)
                 ['extinguisher_id' => $ext->id, 'school_id' => $ext->school_id]
             );
 
+            ActivityLog::log('fire_safety', 'Updated extinguisher: ' . $ext->code, [
+                'school_id' => $ext->school_id,
+                'notes' => $request->notes,
+            ]);
+
             DB::commit();
 
             return response()->json(['success' => true, 'message' => 'Extinguisher updated successfully!']);
@@ -1944,6 +2024,10 @@ public function storeRoom(Request $request)
             $ext->room_id = null;
             $ext->save();
 
+            ActivityLog::log('fire_safety', 'Unassigned extinguisher: ' . $ext->code, [
+                'school_id' => $ext->school_id,
+            ]);
+
             DB::commit();
 
             return response()->json(['success' => true, 'message' => 'Extinguisher assignment removed.']);
@@ -1968,6 +2052,8 @@ public function storeRoom(Request $request)
             DB::beginTransaction();
 
             $ext = FireSafetyExtinguisher::with(['building', 'room'])->findOrFail($id);
+            $schoolId = $ext->school_id;
+            $code = $ext->code;
 
             // Create archive entry
             FireSafetyArchive::create([
@@ -1992,6 +2078,11 @@ public function storeRoom(Request $request)
 
             // Delete the extinguisher
             $ext->delete();
+
+            ActivityLog::log('fire_safety', 'Removed extinguisher: ' . $code, [
+                'school_id' => $schoolId,
+                'notes' => $request->reason,
+            ]);
 
             DB::commit();
             return response()->json(['success' => true]);
@@ -2046,6 +2137,10 @@ public function storeRoom(Request $request)
             $ext->room_id = null;
             $ext->save();
 
+            ActivityLog::log('fire_safety', 'Transferred extinguisher: ' . $ext->code . ' to ' . $targetBuilding->building_no, [
+                'school_id' => $ext->school_id,
+            ]);
+
             DB::commit();
 
             return response()->json([
@@ -2084,8 +2179,15 @@ public function storeRoom(Request $request)
 
             $room = FireSafetyRoom::with(['building'])->findOrFail($id);
             $building = $room->building;
+            $schoolId = $room->school_id;
+            $roomLabel = $room->room_code ?? $room->room_name ?? 'Room';
 
             $message = $this->processRoomRemoval($room, $request->reason);
+
+            ActivityLog::log('fire_safety', 'Removed room: ' . $roomLabel, [
+                'school_id' => $schoolId,
+                'notes' => $request->reason,
+            ]);
 
             if ($building) {
                 // Ensure room removals from the Extinguisher page DO NOT reduce the Total Rooms capacity of the Building
@@ -2322,6 +2424,11 @@ public function storeRoom(Request $request)
     }
     $building = FireSafetyBuilding::create($validated);
 
+        ActivityLog::log('fire_safety', 'Created building: ' . ($building->building_name ?? $building->building_no), [
+            'school_id' => $building->school_id,
+            'notes' => $validated['description'] ?? null,
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Building added successfully!'
@@ -2510,6 +2617,15 @@ public function storeRoom(Request $request)
                 );
             }
 
+            $notes = array_filter([
+                $request->floor_removal_reason,
+                $request->room_removal_reason,
+            ]);
+            ActivityLog::log('fire_safety', 'Updated building: ' . ($building->building_name ?? $building->building_no), [
+                'school_id' => $building->school_id,
+                'notes' => implode('; ', $notes) ?: null,
+            ]);
+
             DB::commit();
 
             return response()->json([
@@ -2573,7 +2689,14 @@ public function storeRoom(Request $request)
                $room->delete();
             }
 
+            $schoolId = $building->school_id;
+            $buildingName = $building->building_name ?? $building->building_no;
             $building->delete();
+
+            ActivityLog::log('fire_safety', 'Removed building: ' . $buildingName, [
+                'school_id' => $schoolId,
+                'notes' => $validated['reason'],
+            ]);
 
             DB::commit();
 
@@ -2852,6 +2975,11 @@ public function storeRoom(Request $request)
             ['inspection_id' => $inspection->id, 'school_id' => $validated['school_id']]
         );
 
+        ActivityLog::log('fire_safety', 'Created inspection: ' . $validated['drill_type'], [
+            'school_id' => $validated['school_id'],
+            'notes' => $validated['remarks'] ?? null,
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Inspection saved successfully!',
@@ -2894,6 +3022,11 @@ public function storeRoom(Request $request)
         ]);
 
         $inspection->update($validated);
+
+        ActivityLog::log('fire_safety', 'Updated inspection: ' . $validated['drill_type'], [
+            'school_id' => $validated['school_id'],
+            'notes' => $validated['remarks'] ?? null,
+        ]);
 
         return response()->json([
             'success' => true,
@@ -3069,6 +3202,11 @@ public function storeRoom(Request $request)
                 ['plan_id' => $plan->id, 'plan_type' => $request->building_id ? 'building' : 'school', 'posted_by' => $user->name]
             );
 
+            ActivityLog::log('fire_safety', 'Created evacuation plan: ' . $request->plan_no, [
+                'school_id' => (int) $request->school_id,
+                'notes' => $request->special_instructions ?: null,
+            ]);
+
             return response()->json(['success' => true, 'message' => 'Evacuation plan created successfully', 'plan' => $plan]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -3190,6 +3328,11 @@ public function storeRoom(Request $request)
                 null,
                 ['plan_id' => $plan->id, 'plan_type' => $plan->building_id ? 'building' : 'school', 'posted_by' => $user->name]
             );
+
+            ActivityLog::log('fire_safety', 'Updated evacuation plan: ' . $plan->plan_no, [
+                'school_id' => $plan->school_id,
+                'notes' => $request->special_instructions ?: null,
+            ]);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error updating evacuation plan: ' . $e->getMessage());
@@ -3211,6 +3354,8 @@ public function storeRoom(Request $request)
             return response()->json(['success' => false, 'message' => 'Unauthorized access to this plan.'], 403);
         }
 
+        $schoolId = $plan->school_id;
+        $planNo = $plan->plan_no;
         $plan->delete();
 
         // after removing plan, refresh building compliance
@@ -3226,6 +3371,10 @@ public function storeRoom(Request $request)
                 $this->updateBuildingComplianceStatus($building);
             }
         }
+
+        ActivityLog::log('fire_safety', 'Deleted evacuation plan: ' . $planNo, [
+            'school_id' => $schoolId,
+        ]);
 
         return response()->json(['success' => true, 'message' => 'Evacuation plan deleted successfully']);
     }
@@ -3319,6 +3468,11 @@ public function storeRoom(Request $request)
 
         $drill->buildings()->attach($request->building_ids);
 
+        ActivityLog::log('fire_safety', 'Scheduled drill: ' . $drill->drill_type, [
+            'school_id' => $drill->school_id,
+            'notes' => "Date: {$drill->drill_date}",
+        ]);
+
         return response()->json(['success' => true, 'message' => 'Drill scheduled successfully']);
     }
 
@@ -3340,6 +3494,11 @@ public function storeRoom(Request $request)
             return response()->json(['success' => false, 'message' => 'Unauthorized access to this drill.'], 403);
         }
         $drill->update(['status' => 'cancelled']);
+
+        ActivityLog::log('fire_safety', 'Cancelled drill: ' . $drill->drill_type, [
+            'school_id' => $drill->school_id,
+        ]);
+
         return response()->json(['success' => true, 'message' => 'Drill cancelled successfully']);
     }
 
@@ -3478,6 +3637,11 @@ public function storeRoom(Request $request)
         $school = FireSafetySchool::findOrFail($schoolId);
         $school->update($validated);
 
+        ActivityLog::log('fire_safety', 'Updated school profile: ' . $school->school_name, [
+            'school_id' => $school->id,
+            'notes' => $request->input('remarks') ?: null,
+        ]);
+
         return response()->json(['success' => true, 'message' => 'School updated successfully']);
     }
 
@@ -3605,6 +3769,10 @@ public function storeRoom(Request $request)
             'status' => $validated['status'] ?? 'unconfigured',
         ]);
 
+        ActivityLog::log('fire_safety', 'Created school: ' . $school->school_name, [
+            'school_id' => $school->id,
+        ]);
+
         // If contributor creates the school, assign them to it automatically
         if ($user->role === 'contributor' && !$user->school_id) {
             $user->school_id = $school->id;
@@ -3645,6 +3813,7 @@ public function storeRoom(Request $request)
         try {
             $school = FireSafetySchool::withCount(['buildings', 'alarmSystems', 'extinguishers as fire_extinguishers_count', 'evacuationPlans'])
                 ->findOrFail($id);
+            $schoolName = $school->school_name;
 
             // Capture FULL snapshot of school data before deletion
             $fullSchoolData = FireSafetySchool::with([
@@ -3726,6 +3895,11 @@ public function storeRoom(Request $request)
             });
 
             $school->delete();
+
+            ActivityLog::log('fire_safety', 'Deleted school: ' . $schoolName, [
+                'school_id' => (int) $id,
+                'notes' => $reason,
+            ]);
 
             DB::commit();
 
@@ -3815,6 +3989,11 @@ public function storeRoom(Request $request)
             ['alert_type' => $validated['type'], 'posted_by' => $user->name]
         );
 
+        ActivityLog::log('fire_safety', 'Posted alert: ' . $validated['title'], [
+            'school_id' => $school->id,
+            'notes' => $validated['description'],
+        ]);
+
         return response()->json(['success' => true, 'message' => 'Alert added successfully!']);
     }
 
@@ -3873,6 +4052,11 @@ public function storeRoom(Request $request)
             ['event_date' => $validated['date'], 'event_time' => $validated['time'], 'posted_by' => $user->name]
         );
 
+        ActivityLog::log('fire_safety', 'Scheduled event: ' . $validated['title'], [
+            'school_id' => $school->id,
+            'notes' => $validated['description'] . " (Date: {$validated['date']})",
+        ]);
+
         return response()->json(['success' => true, 'message' => 'Event added successfully!']);
     }
 
@@ -3902,6 +4086,8 @@ public function storeRoom(Request $request)
                 ->where('config_type', str_replace('-', '_', $type))
                 ->update(['sort_order' => $index]);
         }
+
+        ActivityLog::log('fire_safety', 'Reordered configuration: ' . $type);
 
         return response()->json(['success' => true]);
     }
@@ -3935,6 +4121,7 @@ public function storeRoom(Request $request)
         }
         if ($configType === 'calculated_priority') {
             $rules['max_rooms_covered'] = 'required|integer|min:1|max:5';
+            $rules['required_extinguishers'] = 'required|integer|min:1|max:5';
         }
         if ($configType === 'room_type') {
             $rules['parent_id'] = 'required|exists:system_configurations,id';
@@ -3963,6 +4150,7 @@ public function storeRoom(Request $request)
         }
         if ($configType === 'calculated_priority') {
             $data['max_rooms_covered'] = (int) $validated['max_rooms_covered'];
+            $data['required_extinguishers'] = (int) $validated['required_extinguishers'];
         }
         if ($configType === 'room_type') {
             $parent = SystemConfiguration::where('id', $validated['parent_id'])
@@ -3987,6 +4175,8 @@ public function storeRoom(Request $request)
                 ]);
             }
         }
+
+        ActivityLog::log('fire_safety', "Created configuration ($configType): " . $config->name);
 
         return response()->json(['success' => true, 'message' => 'Configuration saved successfully', 'config' => $config]);
     }
@@ -4016,6 +4206,7 @@ public function storeRoom(Request $request)
         }
         if ($configType === 'calculated_priority') {
             $rules['max_rooms_covered'] = 'required|integer|min:1|max:5';
+            $rules['required_extinguishers'] = 'required|integer|min:1|max:5';
         }
         if ($configType === 'room_type') {
             $rules['parent_id'] = 'required|exists:system_configurations,id';
@@ -4048,6 +4239,7 @@ public function storeRoom(Request $request)
         }
         if ($configType === 'calculated_priority') {
             $update['max_rooms_covered'] = (int) $validated['max_rooms_covered'];
+            $update['required_extinguishers'] = (int) $validated['required_extinguishers'];
         }
         if ($configType === 'room_type') {
             $parent = SystemConfiguration::where('id', $validated['parent_id'])
@@ -4081,6 +4273,8 @@ public function storeRoom(Request $request)
             }
         }
 
+        ActivityLog::log('fire_safety', "Updated configuration ($configType): " . $config->name);
+
         return response()->json(['success' => true, 'message' => 'Configuration updated successfully']);
     }
 
@@ -4090,9 +4284,16 @@ public function storeRoom(Request $request)
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        SystemConfiguration::where('id', $id)
+        $config = SystemConfiguration::where('id', $id)
             ->where('config_type', str_replace('-', '_', $type))
-            ->delete();
+            ->first();
+
+        $name = $config ? $config->name : 'Unknown';
+
+        if ($config) {
+            $config->delete();
+            ActivityLog::log('fire_safety', "Deleted configuration ($type): " . $name);
+        }
 
         return response()->json(['success' => true, 'message' => 'Configuration deleted successfully']);
     }
@@ -4178,6 +4379,8 @@ public function storeRoom(Request $request)
         $path = $dir . '/' . $fileName;
         Storage::disk('local')->put($path, json_encode($payload, JSON_PRETTY_PRINT));
 
+        ActivityLog::log('fire_safety', 'Created backup: ' . $fileName);
+
         return response()->json(['success' => true, 'file' => $fileName]);
     }
 
@@ -4228,6 +4431,10 @@ public function storeRoom(Request $request)
 
             try { DB::statement('SET FOREIGN_KEY_CHECKS=1'); } catch (\Throwable $e) {}
         });
+
+        ActivityLog::log('fire_safety', 'Restored backup: ' . $fileName, [
+            'notes' => 'Full data restore from backup file',
+        ]);
 
         return response()->json(['success' => true]);
     }
@@ -4317,6 +4524,10 @@ public function storeRoom(Request $request)
         $school->evacuation_map_layout = $request->layout;
         $school->save();
 
+        ActivityLog::log('fire_safety', 'Updated evacuation map layout', [
+            'school_id' => $school->id,
+        ]);
+
         return response()->json(['success' => true, 'message' => 'Map layout saved successfully!']);
     }
 
@@ -4345,6 +4556,11 @@ public function storeRoom(Request $request)
             null,
             ['plan_type' => 'map', 'posted_by' => $user->name]
         );
+
+        ActivityLog::log('fire_safety', 'Sent map update notification', [
+            'school_id' => $school->id,
+            'notes' => $request->description,
+        ]);
 
         return response()->json(['success' => true, 'message' => 'Administrator has been notified about the map update.']);
     }
@@ -4391,7 +4607,14 @@ public function storeRoom(Request $request)
             ->with(['building', 'centerRoom', 'coveredRooms'])
             ->get();
 
-        return view('fire-safety.reports.extinguisher-details', compact('school', 'extinguishers'));
+        $rooms = FireSafetyRoom::where('school_id', $schoolId)
+            ->with(['building', 'roomTypeConfig', 'extinguishersCoveringThisRoom', 'hostedExtinguisher'])
+            ->orderBy('building_id')
+            ->orderBy('floor_no')
+            ->orderBy('room_name')
+            ->get();
+
+        return view('fire-safety.reports.extinguisher-details', compact('school', 'extinguishers', 'rooms'));
     }
 
     public function printEvacuationPlans(Request $request, $schoolId)
@@ -4649,6 +4872,11 @@ public function storeRoom(Request $request)
 
         $school->replies = $replies;
         $school->save();
+
+        ActivityLog::log('fire_safety', 'Replied to notification', [
+            'school_id' => $school->id,
+            'notes' => $validated['message'],
+        ]);
 
         return response()->json(['success' => true, 'message' => 'Reply sent successfully!']);
     }

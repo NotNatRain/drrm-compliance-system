@@ -245,7 +245,8 @@
                                                         $coverageMap = [];
                                                         foreach ($building->fireExtinguishers as $ext) {
                                                             foreach ($ext->coveredRooms as $r) {
-                                                                $coverageMap[$r->id] = $ext;
+                                                                $coverageMap[$r->id] ??= [];
+                                                                $coverageMap[$r->id][] = $ext;
                                                             }
                                                         }
                                                     @endphp
@@ -295,7 +296,7 @@
                                                                                     </thead>
                                                                                     <tbody>
                                                                                         @foreach($building->actualRooms as $room)
-                                                                                            @php $ext = $coverageMap[$room->id] ?? null; @endphp
+                                                                                            @php $coveringExtinguishers = $coverageMap[$room->id] ?? []; @endphp
                                                                                             <tr data-room-id="{{ $room->id }}">
                                                                                                 <td>
                                                                                                     <div class="fw-semibold">{{ $room->room_code }}</div>
@@ -308,11 +309,13 @@
                                                                                                 <td>{{ $room->floor_no ?? 'â€”' }}</td>
                                                                                                 <td>
                                                                                                     <span class="coverage-badges" data-room-id="{{ $room->id }}">
-                                                                                                        @if($ext)
-                                                                                                            <span class="badge bg-success">{{ $ext->code }}</span>
-                                                                                                            @if($ext->room_id === $room->id)
-                                                                                                                <span class="badge bg-primary">Center</span>
-                                                                                                            @endif
+                                                                                                        @if(!empty($coveringExtinguishers))
+                                                                                                            @foreach($coveringExtinguishers as $ext)
+                                                                                                                <span class="badge bg-success">{{ $ext->code }}</span>
+                                                                                                                @if($ext->room_id === $room->id)
+                                                                                                                    <span class="badge bg-primary">Center</span>
+                                                                                                                @endif
+                                                                                                            @endforeach
                                                                                                         @else
                                                                                                             <span class="badge bg-warning text-dark">Uncovered</span>
                                                                                                         @endif
@@ -898,7 +901,7 @@
                         <textarea class="form-control border-danger" id="roomRemovalReason" rows="2" placeholder="State reason for removing this room..."></textarea>
                         <div class="mt-2 text-end">
                             <button type="button" class="btn btn-danger btn-sm" onclick="confirmRemoveRoom()">
-                                <i class="fas fa-check me-2"></i>Yes, Remove It!
+                                <ito that  class="fas fa-check me-2"></i>Yes, Remove It!
                             </button>
                         </div>
                     </div>
@@ -1686,10 +1689,12 @@
 
                 const hostIds = (window.currentBuildingHostRoomIds || []);
                 const isHostRoom = hostIds.includes(Number(r.id)) || r.is_host_room === true;
+                const canHostMore = r.can_host_more === true;
                 const isCoveredByAny = (r.is_covered === true) || (window.currentBuildingCoveredRoomIds || []).includes(Number(r.id));
 
-                // Center room: allow rooms even if currently covered, but do NOT allow host rooms
-                if (!isHostRoom) {
+                // Center room: allow rooms even if currently covered. Shared Space rooms can stay selectable
+                // while they still have remaining host capacity for another extinguisher.
+                if (!isHostRoom || canHostMore) {
                     const optCenter = document.createElement('option');
                     optCenter.value = r.id;
                     optCenter.textContent = label;
@@ -1794,10 +1799,12 @@
 
                 const hostIds = (window.currentBuildingHostRoomIds || []);
                 const isHostRoom = hostIds.includes(Number(r.id)) || r.is_host_room === true;
+                const canHostMore = r.can_host_more === true;
                 const isCoveredByAny = (r.is_covered === true) || (window.currentBuildingCoveredRoomIds || []).includes(Number(r.id));
 
-                // Center room: allow rooms even if currently covered, but do NOT allow host rooms
-                if (!isHostRoom) {
+                // Center room: allow rooms even if currently covered. Shared Space rooms can stay selectable
+                // while they still have remaining host capacity for another extinguisher.
+                if (!isHostRoom || canHostMore) {
                     const optCenter = document.createElement('option');
                     optCenter.value = r.id;
                     optCenter.textContent = label;
@@ -2151,7 +2158,8 @@
                     const roomId = Number(r.id);
                     const isCurrentCenter = currentCenterId === roomId;
                     const isHostRoom = !!r.is_host_room || hostRoomIds.includes(roomId);
-                    return !isHostRoom || isCurrentCenter;
+                    const canHostMore = r.can_host_more === true;
+                    return !isHostRoom || isCurrentCenter || canHostMore;
                 });
 
                 // Determine center room's floor for covered room filtering
