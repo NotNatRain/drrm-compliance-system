@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Incidents Compliance Dashboard - DRRM</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/incident-checklist-logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/incident-checklist-logo.png') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -319,7 +321,10 @@
                 <a href="{{ route('dashboard') }}" class="back-btn mb-3 d-inline-block">
                     <i class="fas fa-arrow-left me-2"></i> Back to Main
                 </a>
-                <h1>Incidents Dashboard</h1>
+                <div class="d-flex align-items-center mb-2">
+                    <img src="{{ asset('images/incident-checklist-logo.png') }}" alt="Incident Checklist" style="height: 40px; width: auto; margin-right: 15px;">
+                    <h1>Incidents Dashboard</h1>
+                </div>
                 <p>Real-time incident tracking and compliance monitoring system</p>
             </div>
             <div class="header-actions">

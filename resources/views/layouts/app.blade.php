@@ -8,8 +8,16 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>@yield('title', 'DRRM Compliance Dashboard')</title>
-    <link rel="icon" type="image/png" href="{{ asset('images/drrmis-logo-2.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('images/drrmis-logo-2.png') }}">
+    @if(Route::is('typhoon.*'))
+        <link rel="icon" type="image/png" href="{{ asset('images/typhoon-flood-logo.png') }}">
+        <link rel="apple-touch-icon" href="{{ asset('images/typhoon-flood-logo.png') }}">
+    @elseif(Route::is('incidents.*'))
+        <link rel="icon" type="image/png" href="{{ asset('images/incident-checklist-logo.png') }}">
+        <link rel="apple-touch-icon" href="{{ asset('images/incident-checklist-logo.png') }}">
+    @else
+        <link rel="icon" type="image/png" href="{{ asset('images/drrmis-logo-2.png') }}">
+        <link rel="apple-touch-icon" href="{{ asset('images/drrmis-logo-2.png') }}">
+    @endif
 
     <!-- Fonts -->
     <link rel="dns-prefetch" href="//fonts.bunny.net">
@@ -27,8 +35,16 @@
             <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
                 <div class="container">
                     <a class="navbar-brand fw-bold text-primary" href="{{ route('dashboard') }}">
-                        <img src="{{ asset('images/drrmis-logo-2.png') }}" alt="DRRM" style="height: 28px; width: auto; margin-right: 8px;">
-                        DRRM Compliance Dashboard
+                        @if(Route::is('typhoon.*'))
+                            <img src="{{ asset('images/typhoon-flood-logo.png') }}" alt="Typhoon/Flood" style="height: 28px; width: auto; margin-right: 8px;">
+                            Typhoon/Flood Monitoring
+                        @elseif(Route::is('incidents.*'))
+                            <img src="{{ asset('images/incident-checklist-logo.png') }}" alt="Incident Checklist" style="height: 28px; width: auto; margin-right: 8px;">
+                            Incident Checklist
+                        @else
+                            <img src="{{ asset('images/drrmis-logo-2.png') }}" alt="DRRM" style="height: 28px; width: auto; margin-right: 8px;">
+                            DRRM Compliance Dashboard
+                        @endif
                     </a>
                     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
                         <span class="navbar-toggler-icon"></span>
