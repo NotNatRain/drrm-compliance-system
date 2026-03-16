@@ -1,9 +1,9 @@
 <div class="modal fade" id="chooseSchoolModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header" style="background-color:#1B4C6D;color:white;">
+            <div class="modal-header" style="background-color: #0a192f; color: #00d2ff; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
                 <h5 class="modal-title">
-                    <i class="fas fa-school"></i> Choose Evacuation Center / School
+                    <i class="fas fa-school me-2"></i> Choose Evacuation Center / School
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>

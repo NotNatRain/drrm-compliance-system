@@ -3,9 +3,9 @@
         <form method="POST" action="{{ route('typhoon.evacuation-center.store') }}">
             @csrf
             <div class="modal-content">
-                <div class="modal-header" style="background-color:#1B4C6D;color:white;">
+                <div class="modal-header" style="background-color: #0a192f; color: #00d2ff; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
                     <h5 class="modal-title">
-                        <i class="fas fa-plus-circle"></i> Create Evacuation Center / School
+                        <i class="fas fa-plus-circle me-2"></i> Create Evacuation Center / School
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
@@ -59,7 +59,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn" style="background-color:#1B4C6D;color:white;">Create</button>
+                    <button type="submit" class="btn" style="background-color: #0a192f; color: #00d2ff; border: 1px solid #00d2ff;">Create Center</button>
                 </div>
             </div>
         </form>

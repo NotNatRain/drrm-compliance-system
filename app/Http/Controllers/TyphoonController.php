@@ -30,81 +30,71 @@ class TyphoonController extends Controller
     {
         $user = auth()->user();
 
-        // Determine active school (admins can switch; contributors only see their own)
-        $activeSchoolId = session('typhoon_active_school_id');
+        // For contributors: resolve their assigned typhoon school
+        $contributorActiveSchoolId = null;
         if ($user->role !== 'admin') {
-            $activeSchoolId = $user->school_id;
+            if ($user->typhoon_school_id) {
+                $assignedEc = TypFldEvacuationCenter::find($user->typhoon_school_id);
+                $contributorActiveSchoolId = $assignedEc ? $assignedEc->school_id : null;
+            }
         }
 
-        $evacuationCentersQuery = TypFldEvacuationCenter::query()
-            ->with('school');
+        // ─── EVACUATION CENTERS for the bottom section ──────────────────────────
+        // Admins → ALL centers (no filter); Contributors → only their school's center
+        $evacuationCentersQuery = TypFldEvacuationCenter::query()->with('school');
 
-        if ($user->role !== 'admin' && $activeSchoolId) {
-            $evacuationCentersQuery->where('school_id', $activeSchoolId);
-        } elseif ($activeSchoolId && $user->role !== 'admin') {
-            // For admins, show ALL even if activeSchoolId is set
-            $evacuationCentersQuery->where('school_id', $activeSchoolId);
+        if ($user->role !== 'admin') {
+            if ($contributorActiveSchoolId) {
+                $evacuationCentersQuery->where('school_id', $contributorActiveSchoolId);
+            } else {
+                $evacuationCentersQuery->whereRaw('1=0');
+            }
         }
+        // admin: no where clause → all centers
 
         $evacuationCenters = $evacuationCentersQuery->get()->map(function ($ec) {
-            // Occupancy = total members of families that are checked-in and not checked-out
-            $currentOccupancy = TypFldFamilyMember::query()
+            $ec->current_occupancy = TypFldFamilyMember::query()
                 ->join('typ_fld_families', 'typ_fld_families.id', '=', 'typ_fld_family_members.family_id')
                 ->where('typ_fld_families.evacuation_center_id', $ec->id)
                 ->whereNull('typ_fld_families.checked_out_at')
                 ->count();
-
-            $ec->current_occupancy = $currentOccupancy;
             return $ec;
         });
 
-        $baseFamiliesQuery = TypFldFamily::query();
-        $baseMembersQuery = TypFldFamilyMember::query();
+        // ─── GLOBAL stat queries (ALWAYS all schools, all user types) ────────────
+        $globalFamiliesQuery = TypFldFamily::query();
+        $globalMembersQuery  = TypFldFamilyMember::query();
 
-        if ($activeSchoolId) {
-            $centerIds = TypFldEvacuationCenter::where('school_id', $activeSchoolId)->pluck('id');
-            $baseFamiliesQuery->whereIn('evacuation_center_id', $centerIds);
-            $baseMembersQuery->whereIn('family_id', function ($q) use ($centerIds) {
-                $q->select('id')->from('typ_fld_families')->whereIn('evacuation_center_id', $centerIds);
-            });
-        } elseif ($user->role !== 'admin') {
-            // contributor with no assigned school => show empty
-            $baseFamiliesQuery->whereRaw('1=0');
-            $baseMembersQuery->whereRaw('1=0');
-        }
-
-        $activeFamiliesQuery = (clone $baseFamiliesQuery)->whereNull('checked_out_at');
+        $activeFamiliesQuery = (clone $globalFamiliesQuery)->whereNull('checked_out_at');
 
         $totalFamilies = (clone $activeFamiliesQuery)->count();
-        $totalEvacuees = (clone $baseMembersQuery)->join('typ_fld_families as f', 'f.id', '=', 'typ_fld_family_members.family_id')
+        $totalEvacuees = (clone $globalMembersQuery)
+            ->join('typ_fld_families as f', 'f.id', '=', 'typ_fld_family_members.family_id')
             ->whereNull('f.checked_out_at')
             ->count();
 
-        $missingCount = (clone $baseMembersQuery)->where('status', 'missing')->count();
-        $injuredCount = (clone $baseMembersQuery)->where('status', 'injured')->count();
-        $deceasedCount = (clone $baseMembersQuery)->where('status', 'deceased')->count();
+        $missingCount  = (clone $globalMembersQuery)->where('status', 'missing')->count();
+        $injuredCount  = (clone $globalMembersQuery)->where('status', 'injured')->count();
+        $deceasedCount = (clone $globalMembersQuery)->where('status', 'deceased')->count();
 
         $vulnerableCounts = [
             'pregnant' => (clone $activeFamiliesQuery)->where('has_pregnant', true)->count(),
-            'pwd' => (clone $activeFamiliesQuery)->where('has_pwd', true)->count(),
-            'senior' => (clone $activeFamiliesQuery)->where('has_senior', true)->count(),
+            'pwd'      => (clone $activeFamiliesQuery)->where('has_pwd', true)->count(),
+            'senior'   => (clone $activeFamiliesQuery)->where('has_senior', true)->count(),
         ];
 
-        // Latest monitoring snapshots (optional)
-        $activeCenter = $activeSchoolId
-            ? TypFldEvacuationCenter::where('school_id', $activeSchoolId)->first()
-            : null;
+        // All centers count (always global for header badge)
+        $openEvacuationCentersCount = TypFldEvacuationCenter::where('usage_status', '!=', 'cleared')->count();
 
+        // Latest monitoring snapshots (from contributor's active center, if any)
+        $activeCenter    = $contributorActiveSchoolId
+            ? TypFldEvacuationCenter::where('school_id', $contributorActiveSchoolId)->first()
+            : null;
         $floodMonitoring = null;
-        $typhoonSnapshot = null;
 
         if ($activeCenter) {
             $floodMonitoring = TypFldMonitoringSnapshot::where('evacuation_center_id', $activeCenter->id)
                 ->where('type', 'flood')
-                ->latest('recorded_at')
-                ->first();
-            $typhoonSnapshot = TypFldMonitoringSnapshot::where('evacuation_center_id', $activeCenter->id)
-                ->where('type', 'typhoon')
                 ->latest('recorded_at')
                 ->first();
         }
@@ -115,7 +105,6 @@ class TyphoonController extends Controller
                 $lat = 14.83;
                 $lon = 120.28;
                 $url = "https://api.open-meteo.com/v1/forecast?latitude={$lat}&longitude={$lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Asia%2FSingapore";
-                
                 $response = file_get_contents($url);
                 return json_decode($response, true);
             } catch (\Exception $e) {
@@ -125,47 +114,43 @@ class TyphoonController extends Controller
 
         $weatherDesc = 'Clear';
         if (isset($weatherData['current']['weather_code'])) {
-            $code = $weatherData['current']['weather_code'];
+            $code  = $weatherData['current']['weather_code'];
             $codes = [
-                0 => 'Clear Sky', 1 => 'Mainly Clear', 2 => 'Partly Cloudy', 3 => 'Overcast',
+                0  => 'Clear Sky', 1 => 'Mainly Clear', 2 => 'Partly Cloudy', 3 => 'Overcast',
                 45 => 'Fog', 48 => 'Depositing Rime Fog',
                 51 => 'Light Drizzle', 53 => 'Moderate Drizzle', 55 => 'Dense Drizzle',
                 61 => 'Slight Rain', 63 => 'Moderate Rain', 65 => 'Heavy Rain',
                 80 => 'Slight Rain Showers', 81 => 'Moderate Rain Showers', 82 => 'Violent Rain Showers',
-                95 => 'Thunderstorm', 96 => 'Thunderstorm with Hail', 99 => 'Heavy Thunderstorm'
+                95 => 'Thunderstorm', 96 => 'Thunderstorm with Hail', 99 => 'Heavy Thunderstorm',
             ];
             $weatherDesc = $codes[$code] ?? 'Cloudy';
         }
 
-        $rainfallTotal = $weatherData['current']['precipitation'] ?? 0.0;
         $dailyRainfallSum = $weatherData['daily']['precipitation_sum'][0] ?? 0.0;
 
         return view('typhoon.dashboard', [
-            'evacuationCenters' => $evacuationCenters,
-            'totalFamilies' => $totalFamilies,
-            'totalEvacuees' => $totalEvacuees,
-            'openEvacuationCentersCount' => $evacuationCenters->where('usage_status', '!=', 'cleared')->count(),
-            'incidentMonitoring' => [
-                'major' => 0, // Placeholder - usually requires incident reports table
-                'minor' => 0, // Placeholder
-            ],
+            'evacuationCenters'          => $evacuationCenters,
+            'totalFamilies'              => $totalFamilies,
+            'totalEvacuees'              => $totalEvacuees,
+            'openEvacuationCentersCount' => $openEvacuationCentersCount,
+            'incidentMonitoring'         => ['major' => 0, 'minor' => 0],
             'rainfall' => [
-                'bangal' => number_format($dailyRainfallSum * 0.95, 2), // Simulated per-station based on accurate city data
+                'bangal'   => number_format($dailyRainfallSum * 0.95, 2),
                 'kalaklan' => number_format($dailyRainfallSum * 1.05, 2),
             ],
-            'missingCount' => $missingCount,
-            'injuredCount' => $injuredCount,
-            'deceasedCount' => $deceasedCount,
-            'vulnerableCounts' => $vulnerableCounts,
-            'recentEvacuees' => $totalEvacuees > 0,
+            'missingCount'       => $missingCount,
+            'injuredCount'       => $injuredCount,
+            'deceasedCount'      => $deceasedCount,
+            'vulnerableCounts'   => $vulnerableCounts,
+            'recentEvacuees'     => $totalEvacuees > 0,
             'recentlyRegistered' => (clone $activeFamiliesQuery)->whereDate('created_at', Carbon::today())->count(),
-            'floodMonitoring' => $floodMonitoring ? (object) ($floodMonitoring->payload ?? []) : null,
-            'typhoonData' => (object) [
+            'floodMonitoring'    => $floodMonitoring ? (object) ($floodMonitoring->payload ?? []) : null,
+            'typhoonData'        => (object) [
                 'name' => $weatherDesc,
                 'temp' => $weatherData['current']['temperature_2m'] ?? '--',
                 'wind' => $weatherData['current']['wind_speed_10m'] ?? '--',
             ],
-            'activeSchoolId' => $activeSchoolId,
+            'activeSchoolId' => $contributorActiveSchoolId,
         ]);
     }
 

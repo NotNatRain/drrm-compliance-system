@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\FireSafetySchool;
+use App\Models\TypFldEvacuationCenter;
 use App\Models\Announcement;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -38,7 +39,7 @@ class DashboardController extends Controller
         $isAdmin = auth()->user()->role === 'admin';
 
         if ($isAdmin) {
-            $query = User::with('school');
+            $query = User::with(['school', 'typhoonSchool.school']);
 
             // Filters
             if ($request->filled('role')) {
@@ -56,17 +57,18 @@ class DashboardController extends Controller
 
             $users = $query->get();
         } else {
-            $users = User::with('school')->whereKey(auth()->id())->get();
+            $users = User::with(['school', 'typhoonSchool.school'])->whereKey(auth()->id())->get();
         }
 
         $schools = FireSafetySchool::all();
+        $typhoonSchools = TypFldEvacuationCenter::all();
         $adminCount = User::where('role', 'admin')->count();
 
         if ($request->expectsJson()) {
             return response()->json($users);
         }
 
-        return view('users.index', compact('users', 'schools', 'adminCount', 'isAdmin'));
+        return view('users.index', compact('users', 'schools', 'typhoonSchools', 'adminCount', 'isAdmin'));
     }
 
     public function storeUser(Request $request)
@@ -103,6 +105,8 @@ class DashboardController extends Controller
             'password' => Hash::make($request->password),
             'role' => $request->role,
             'module_access' => [], // Start empty
+            'needs_fs_registration' => ($request->role === 'contributor'),
+            'needs_tf_registration' => ($request->role === 'contributor'),
         ]);
 
         return response()->json(['success' => true, 'message' => 'User created successfully', 'user' => $user]);
@@ -187,7 +191,25 @@ class DashboardController extends Controller
         $user = User::findOrFail($id);
         
         $user->module_access = $request->modules ?? [];
-        $user->school_id = $request->school_id;
+        
+        // Fire Safety school assignment
+        if ($request->school_id === 'encode') {
+            $user->school_id = null;
+            $user->needs_fs_registration = true;
+        } else {
+            $user->school_id = $request->school_id;
+            $user->needs_fs_registration = false;
+        }
+
+        // Typhoon school assignment
+        if ($request->typhoon_school_id === 'encode') {
+            $user->typhoon_school_id = null;
+            $user->needs_tf_registration = true;
+        } else {
+            $user->typhoon_school_id = $request->typhoon_school_id;
+            $user->needs_tf_registration = false;
+        }
+
         $user->save();
 
         return response()->json(['success' => true, 'message' => 'Permissions updated successfully']);
@@ -196,6 +218,61 @@ class DashboardController extends Controller
     public function deleteUser($id)
     {
         return response()->json(['success' => false, 'message' => 'User deletion is disabled. Please deactivate the account instead.'], 400);
+    }
+
+    public function registerMySchool(Request $request)
+    {
+        $user = auth()->user();
+        if ($user->role !== 'contributor') {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'school_name' => 'required|string|max:255',
+            'school_id_number' => 'required|string|unique:firesafety_school_information,school_id',
+            'address' => 'required|string|max:2000',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        try {
+            DB::transaction(function () use ($request, &$user) {
+                // Create the base school record
+                $school = FireSafetySchool::create([
+                    'school_name' => $request->school_name,
+                    'school_id' => $request->school_id_number,
+                    'address' => $request->address,
+                    'status' => 'unconfigured',
+                ]);
+
+                // Link to Fire Safety if needed
+                if ($user->needs_fs_registration) {
+                    $user->school_id = $school->id;
+                    $user->needs_fs_registration = false;
+                }
+
+                // Link to Typhoon if needed
+                if ($user->needs_tf_registration) {
+                    // Create evacuation center record
+                    $ec = TypFldEvacuationCenter::create([
+                        'school_id' => $school->id,
+                        'identification' => $request->school_id_number,
+                        'location' => $request->address,
+                        'usage_status' => 'cleared',
+                    ]);
+                    $user->typhoon_school_id = $ec->id;
+                    $user->needs_tf_registration = false;
+                }
+
+                $user->save();
+            });
+
+            return response()->json(['success' => true, 'message' => 'Your school has been registered and assigned!']);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Registration failed: ' . $e->getMessage()], 500);
+        }
     }
 
     public function storeAnnouncement(Request $request)

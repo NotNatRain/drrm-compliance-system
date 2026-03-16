@@ -350,6 +350,106 @@
     </div>
 </div>
 
+    @if($user && ($user->needs_fs_registration || $user->needs_tf_registration))
+        <!-- Contributor School Registration Modal -->
+        <div class="modal fade" id="registrationModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="registrationModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content shadow-lg border-0">
+                    <div class="modal-header bg-dark text-white border-0">
+                        <h5 class="modal-title" id="registrationModalLabel">
+                            <i class="fas fa-school-flag me-2 text-warning"></i> Register Your School
+                        </h5>
+                    </div>
+                    <form id="registrationForm">
+                        @csrf
+                        <div class="modal-body p-4">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i> Before you can access the compliance modules, you need to provide your school's official information. This will automatically link your account to your newly created school.
+                            </div>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-8">
+                                    <label class="form-label fw-bold">Official School Name <span class="text-danger">*</span></label>
+                                    <input type="text" name="school_name" class="form-control" placeholder="e.g. San Isidro Central School" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">School ID / Code <span class="text-danger">*</span></label>
+                                    <input type="text" name="school_id_number" class="form-control" placeholder="e.g. 106883" required>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-bold">Complete School Address <span class="text-danger">*</span></label>
+                                    <textarea name="address" class="form-control" rows="3" placeholder="Enter full address..." required></textarea>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 p-3 rounded bg-light border">
+                                <h6 class="fw-bold mb-2"><i class="fas fa-check-double me-1 text-success"></i> Modules to activate:</h6>
+                                <div class="d-flex gap-3">
+                                    @if($user->needs_fs_registration)
+                                        <span class="badge bg-white text-dark border p-2"><i class="fas fa-fire me-1 text-danger"></i> Fire Safety Compliance</span>
+                                    @endif
+                                    @if($user->needs_tf_registration)
+                                        <span class="badge bg-white text-dark border p-2"><i class="fas fa-cloud-showers-heavy me-1 text-info"></i> Typhoon/Flooding</span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-0 p-4">
+                            <a href="{{ route('logout') }}" class="btn btn-link text-muted" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                Logout and Finish Later
+                            </a>
+                            <button type="submit" class="btn btn-dark px-4 py-2" id="submitReg">
+                                <i class="fas fa-save me-2"></i> Register and Continue
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const regModal = new bootstrap.Modal(document.getElementById('registrationModal'));
+                regModal.show();
+
+                document.getElementById('registrationForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const btn = document.getElementById('submitReg');
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Registering...';
+
+                    fetch("{{ route('register-school') }}", {
+                        method: 'POST',
+                        body: new FormData(this),
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success!',
+                                text: data.message,
+                                confirmButtonColor: '#212529'
+                            }).then(() => location.reload());
+                        } else {
+                            Swal.fire('Error', data.message, 'error');
+                            btn.disabled = false;
+                            btn.innerHTML = '<i class="fas fa-save me-2"></i> Register and Continue';
+                        }
+                    })
+                    .catch(e => {
+                        console.error(e);
+                        Swal.fire('Error', 'An unexpected error occurred.', 'error');
+                        btn.disabled = false;
+                    });
+                });
+            });
+        </script>
+    @endif
+
 <!-- No Access Modal -->
 <div class="modal fade" id="noModuleAccessModal" tabindex="-1" aria-labelledby="noModuleAccessModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">

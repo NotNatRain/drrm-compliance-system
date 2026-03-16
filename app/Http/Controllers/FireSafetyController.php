@@ -1386,7 +1386,7 @@ public function storeRoom(Request $request)
             'is_center_room' => $isCenterRoom,
             'host_room_id' => $hostRoomId,
             'host_room_code' => $hostRoomCode,
-            'building' => $room->building->building_no ?? 'N/A',
+            'building' => $room->building ? ($room->building->building_no . ($room->building->building_name ? ' - ' . $room->building->building_name : '')) : 'N/A',
             'extinguisher' => $extinguisher,
             'approval_status' => $room->approval_status,
             'last_inspector_id' => $room->last_inspector_id,

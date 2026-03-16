@@ -8,6 +8,7 @@ use App\Models\IncidentType;
 use App\Models\IncidentStatus;
 use App\Models\IncidentSchool;
 use App\Models\IncidentChecklist;
+use App\Models\FireSafetySchool;
 use App\Models\ActivityLog;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -71,12 +72,29 @@ class IncidentController extends Controller
             }
         }
 
+        // Yesterday's Checklist
+        $yesterdayDate = Carbon::yesterday()->toDateString();
+        $yesterdayItems = IncidentChecklist::where('user_id', $request->user()->id)
+            ->whereDate('checklist_date', $yesterdayDate)
+            ->get();
+
+        // Historical Checklist for Modal (Last 30 Days)
+        $historyData = IncidentChecklist::where('user_id', $request->user()->id)
+            ->whereDate('checklist_date', '<', $checklistDate)
+            ->whereDate('checklist_date', '>=', Carbon::today()->subDays(30))
+            ->orderBy('checklist_date', 'desc')
+            ->get()
+            ->groupBy('checklist_date');
+
         // Get all types and statuses for dropdowns
         $incidentTypes = IncidentType::orderBy('priority')->get();
         $incidentStatuses = IncidentStatus::orderBy('name')->get();
 
         // Get unique schools for autocomplete
         $schools = IncidentSchool::orderBy('name')->pluck('name')->toArray();
+
+        // Get Fire Safety Schools for dropdown
+        $fireSafetySchools = FireSafetySchool::orderBy('school_name')->get();
 
         return view('incidents.dashboard', compact(
             'calendarData',
@@ -85,10 +103,14 @@ class IncidentController extends Controller
             'incidentTypes',
             'incidentStatuses',
             'schools',
+            'fireSafetySchools',
             'year',
             'month',
             'checklistItems',
-            'checklistDate'
+            'checklistDate',
+            'yesterdayItems',
+            'yesterdayDate',
+            'historyData'
         ));
     }
 
@@ -449,7 +471,7 @@ class IncidentController extends Controller
      */
     private function getMonthlyStats($year, $month)
     {
-        $incidents = IncidentCalendar::forMonth($year, $month)->with('incidentType')->get();
+        $incidents = IncidentCalendar::forMonth($year, $month)->with(['incidentType', 'incidentStatus'])->get();
 
         $total = $incidents->count();
         $incidentCount = $incidents->where('entry_type', 'incident')->count();
@@ -467,6 +489,19 @@ class IncidentController extends Controller
             $typeName = optional($group->first()->incidentType)->name ?? 'Unspecified';
             $typeLabels[] = $typeName;
             $typeValues[] = $group->count();
+        }
+
+        // Compliance Status distribution (New for Bar Chart)
+        $complianceGroups = $incidents
+            ->where('entry_type', 'compliance')
+            ->groupBy('incident_status_id');
+
+        $complianceLabels = [];
+        $complianceValues = [];
+        foreach ($complianceGroups as $statusId => $group) {
+            $statusName = optional($group->first()->incidentStatus)->name ?? 'Unspecified';
+            $complianceLabels[] = $statusName;
+            $complianceValues[] = $group->count();
         }
 
         // Daily trend (incidents only) within the month
@@ -492,6 +527,10 @@ class IncidentController extends Controller
             'type_distribution' => [
                 'labels' => $typeLabels,
                 'values' => $typeValues,
+            ],
+            'compliance_distribution' => [
+                'labels' => $complianceLabels,
+                'values' => $complianceValues,
             ],
             'trend' => [
                 'labels' => $trendLabels,

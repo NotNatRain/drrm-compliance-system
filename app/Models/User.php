@@ -23,6 +23,9 @@ class User extends Authenticatable
         'password',
         'role',
         'school_id',
+        'typhoon_school_id',
+        'needs_fs_registration',
+        'needs_tf_registration',
         'module_access',
         'is_active',
     ];
@@ -38,11 +41,19 @@ class User extends Authenticatable
     ];
 
     /**
-     * Get the school that the user belongs to.
+     * Get the school that the user belongs to (Fire Safety).
      */
     public function school()
     {
         return $this->belongsTo(FireSafetySchool::class, 'school_id');
+    }
+
+    /**
+     * Get the evacuation center that the user belongs to (Typhoon).
+     */
+    public function typhoonSchool()
+    {
+        return $this->belongsTo(TypFldEvacuationCenter::class, 'typhoon_school_id');
     }
 
     /**

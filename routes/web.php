@@ -21,6 +21,7 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name
 
 // Main dashboard
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+Route::post('/register-school', [DashboardController::class, 'registerMySchool'])->name('register-school');
 
 // User account management
 Route::middleware(['auth'])->group(function () {

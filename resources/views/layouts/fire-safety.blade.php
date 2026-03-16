@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Fire Safety Checklist System')</title>
+    <title>@yield('title', 'Fire Safety Compliance System')</title>
     <link rel="icon" type="image/png" href="{{ asset('images/fire-safety-logo.png') }}">
     <link rel="apple-touch-icon" href="{{ asset('images/fire-safety-logo.png') }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -314,7 +314,7 @@
                     <a href="{{ route('dashboard') }}" class="text-white text-decoration-none d-flex align-items-center">
                         <i class="fas fa-arrow-left me-2"></i>
                         <img src="{{ asset('images/fire-safety-logo.png') }}" alt="Fire Safety" style="height: 24px; width: auto; margin-right: 8px;">
-                        <span class="fw-bold">Fire Safety Checklist System</span>
+                        <span class="fw-bold">Fire Safety Compliance System</span>
                     </a>
                 </div>
 

@@ -125,16 +125,44 @@
                                 @endif
                             </td>
                             <td>
-                                @if($user->school)
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-school text-primary me-2 shadow-sm p-1 rounded bg-light" style="font-size: 0.8rem;"></i>
-                                        <div>
-                                            <div class="fw-bold small">{{ $user->school->school_name }}</div>
-                                            <div class="text-muted" style="font-size: 0.7rem;">ID: {{ $user->school->school_id }}</div>
-                                        </div>
-                                    </div>
-                                @elseif($user->role === 'admin')
+                                @if($user->role === 'admin')
                                     <span class="badge bg-light text-dark border"><i class="fas fa-globe me-1"></i> Full Access</span>
+                                @else
+                                    <!-- Fire Safety School -->
+                                    <div class="mb-2">
+                                        <div class="small fw-bold text-muted mb-1 text-uppercase" style="font-size: 0.65rem;">Fire Safety:</div>
+                                        @if($user->school)
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-school text-primary me-2 shadow-sm p-1 rounded bg-light" style="font-size: 0.8rem;"></i>
+                                                <div>
+                                                    <div class="fw-bold small" style="font-size: 0.75rem;">{{ $user->school->school_name }}</div>
+                                                    <div class="text-muted" style="font-size: 0.65rem;">ID: {{ $user->school->school_id }}</div>
+                                                </div>
+                                            </div>
+                                        @elseif($user->needs_fs_registration)
+                                            <span class="badge bg-warning text-dark" style="font-size: 0.65rem;"><i class="fas fa-keyboard me-1"></i> To be encoded</span>
+                                        @else
+                                            <span class="text-muted small italic" style="font-size: 0.65rem;">Not assigned</span>
+                                        @endif
+                                    </div>
+
+                                    <!-- Typhoon School -->
+                                    <div>
+                                        <div class="small fw-bold text-muted mb-1 text-uppercase" style="font-size: 0.65rem;">Typhoon/Flood:</div>
+                                        @if($user->typhoonSchool)
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-cloud-showers-heavy text-info me-2 shadow-sm p-1 rounded bg-light" style="font-size: 0.8rem;"></i>
+                                                <div>
+                                                    <div class="fw-bold small" style="font-size: 0.75rem;">{{ $user->typhoonSchool->school->school_name }}</div>
+                                                    <div class="text-muted" style="font-size: 0.65rem;">{{ $user->typhoonSchool->identification ?: 'Evac Center' }}</div>
+                                                </div>
+                                            </div>
+                                        @elseif($user->needs_tf_registration)
+                                            <span class="badge bg-warning text-dark" style="font-size: 0.65rem;"><i class="fas fa-keyboard me-1"></i> To be encoded</span>
+                                        @else
+                                            <span class="text-muted small italic" style="font-size: 0.65rem;">Not assigned</span>
+                                        @endif
+                                    </div>
                                 @endif
                             </td>
                             <td>
@@ -302,10 +330,11 @@
                             <div id="schoolFS" class="ms-4 mt-2 d-none">
                                 <label class="small fw-bold">Assign School:</label>
                                 <select name="school_id" class="form-select form-select-sm school-select">
+                                    <option value="encode">Encode their own school first</option>
                                     @if($schools->isEmpty())
-                                        <option value="">Haven't created yet</option>
+                                        <option value="" disabled>-- No existing schools --</option>
                                     @else
-                                        <option value="">-- Select School --</option>
+                                        <option value="">-- Select Existing School --</option>
                                         @foreach($schools as $school)
                                             <option value="{{ $school->id }}">{{ $school->school_name }}</option>
                                         @endforeach
@@ -326,8 +355,16 @@
                             <!-- Note: Request says use respective tables, but they don't exist yet. Using FireSafety schools for now as placeholder as per instructions -->
                             <div id="schoolTF" class="ms-4 mt-2 d-none">
                                 <label class="small fw-bold">Assign School (Typhoon):</label>
-                                <select name="typhoon_school_id" class="form-select form-select-sm school-select" disabled>
-                                    <option value="">-- Resource Not Ready Yet --</option>
+                                <select name="typhoon_school_id" class="form-select form-select-sm school-select">
+                                    <option value="encode">Encode their own school first</option>
+                                    @if($typhoonSchools->isEmpty())
+                                        <option value="" disabled>-- No existing evacuation centers --</option>
+                                    @else
+                                        <option value="">-- Select Existing Evacuation Center --</option>
+                                        @foreach($typhoonSchools as $tSchool)
+                                            <option value="{{ $tSchool->id }}">{{ $tSchool->school ? $tSchool->school->school_name : ($tSchool->identification ?: 'ID: ' . $tSchool->id) }}</option>
+                                        @endforeach
+                                    @endif
                                 </select>
                             </div>
                         </div>
@@ -553,7 +590,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 const data = {
                     modules: modules,
-                    school_id: formData.get('school_id')
+                    school_id: formData.get('school_id'),
+                    typhoon_school_id: formData.get('typhoon_school_id')
                 };
 
                 fetch("{{ route('users.index') }}/" + userId + "/assign", {
@@ -661,7 +699,7 @@ function assignAccess(userId) {
                 }
             });
 
-            // For Admin, also disable selection if they have full access
+            // FS School selection
             const schoolSelect = assignForm.querySelector('select[name="school_id"]');
             if (schoolSelect) {
                 if (isAdmin) {
@@ -669,7 +707,27 @@ function assignAccess(userId) {
                     schoolSelect.disabled = true;
                 } else {
                     schoolSelect.disabled = false;
-                    schoolSelect.value = user.school_id || "";
+                    if (user.needs_fs_registration) {
+                        schoolSelect.value = "encode";
+                    } else {
+                        schoolSelect.value = user.school_id || "";
+                    }
+                }
+            }
+
+            // Typhoon School selection
+            const typhoonSelect = assignForm.querySelector('select[name="typhoon_school_id"]');
+            if (typhoonSelect) {
+                if (isAdmin) {
+                    typhoonSelect.value = "";
+                    typhoonSelect.disabled = true;
+                } else {
+                    typhoonSelect.disabled = false;
+                    if (user.needs_tf_registration) {
+                        typhoonSelect.value = "encode";
+                    } else {
+                        typhoonSelect.value = user.typhoon_school_id || "";
+                    }
                 }
             }
 

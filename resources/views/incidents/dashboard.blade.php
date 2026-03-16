@@ -311,6 +311,125 @@
         .day-tooltip .hover-item:last-child { border-bottom: none; }
         .day-tooltip .hover-type { font-weight: 600; color: #F2C94C; }
         .day-tooltip .hover-school { color: #ddd; font-size: 0.85em; }
+
+        /* Right Sidebar */
+        .right-sidebar {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 380px;
+            height: 100vh;
+            background: #fff;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.1);
+            z-index: 1040;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .right-sidebar.open {
+            right: 0;
+        }
+
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(2px);
+            z-index: 1035;
+            display: none;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+
+        .sidebar-content {
+            padding: 30px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .sidebar-header {
+            padding: 20px 30px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--incident-light);
+        }
+
+        .sidebar-close {
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #adb5bd;
+            transition: color 0.2s;
+        }
+
+        .sidebar-close:hover {
+            color: var(--incident-dark);
+        }
+
+        /* Yesterday Display */
+        .yesterday-section {
+            background: #f8f9fa;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 1px dashed #dee2e6;
+        }
+
+        .yesterday-item {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .yesterday-item i {
+            color: #1ed760;
+            margin-right: 10px;
+        }
+
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        .history-day-card {
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 12px;
+            padding: 12px;
+            height: 100%;
+        }
+
+        .history-day-title {
+            font-weight: 700;
+            font-size: 0.75rem;
+            color: var(--incident-dark);
+            margin-bottom: 8px;
+            border-bottom: 1px solid #f1f3f5;
+            padding-bottom: 5px;
+        }
+
+        .history-item {
+            font-size: 0.7rem;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .history-item i {
+            font-size: 0.6rem;
+            margin-top: 3px;
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
@@ -323,14 +442,79 @@
                 </a>
                 <div class="d-flex align-items-center mb-2">
                     <img src="{{ asset('images/incident-checklist-logo.png') }}" alt="Incident Checklist" style="height: 40px; width: auto; margin-right: 15px;">
-                    <h1>Incidents Dashboard</h1>
+                    <h1>Incidents Checklist Dashboard</h1>
                 </div>
                 <p>Real-time incident tracking and compliance monitoring system</p>
             </div>
-            <div class="header-actions">
+            <div class="header-actions d-flex gap-2">
                 <button class="btn btn-light btn-lg rounded-pill shadow-sm" data-bs-toggle="modal" data-bs-target="#logIncidentModal" style="color: var(--incident-orange); font-weight: 600;">
                     <i class="fas fa-plus-circle me-2"></i> Log New Incident
                 </button>
+                <button class="btn btn-warning btn-lg rounded-pill shadow-sm text-white" id="toggleChecklistSidebar" style="font-weight: 600;">
+                    <i class="fas fa-tasks me-2"></i> Quick Checklist
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Sidebar for Quick Checklist -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="right-sidebar" id="checklistSidebar">
+        <div class="sidebar-header">
+            <h5 class="fw-bold mb-0">
+                <i class="fas fa-shield-alt text-warning me-2"></i> Quick Checklist
+            </h5>
+            <div class="sidebar-close" id="closeSidebar">
+                <i class="fas fa-times"></i>
+            </div>
+        </div>
+        <div class="sidebar-content">
+            <p class="text-muted small mb-4">Today: {{ \Carbon\Carbon::parse($checklistDate)->format('M j, Y') }}</p>
+            <div id="checklistContainer" class="list-group list-group-flush bg-transparent mb-4">
+                @foreach($checklistItems as $item)
+                <div class="list-group-item bg-transparent border-0 px-0 py-2 d-flex align-items-center justify-content-between checklist-item-row" data-id="{{ $item->id }}">
+                    <div class="form-check flex-grow-1">
+                        <input class="form-check-input checklist-toggle" type="checkbox" id="checklist_{{ $item->id }}" {{ $item->is_completed ? 'checked' : '' }}>
+                        <label class="form-check-label fw-600 ms-1 small" for="checklist_{{ $item->id }}">{{ $item->label }}</label>
+                    </div>
+                    <button type="button" class="btn btn-sm text-danger ms-1 checklist-delete" title="Remove item" style="padding: 0 5px;">
+                        <i class="fas fa-trash small"></i>
+                    </button>
+                </div>
+                @endforeach
+            </div>
+
+            <!-- What you did yesterday -->
+            <div class="yesterday-section">
+                <h6 class="fw-bold mb-3 small text-uppercase text-muted">What you did yesterday</h6>
+                @php $checkedYesterday = ($yesterdayItems ?? collect())->where('is_completed', true); @endphp
+                @if($checkedYesterday->count() > 0)
+                    @foreach($checkedYesterday as $yItem)
+                        <div class="yesterday-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>{{ $yItem->label }}</span>
+                        </div>
+                    @endforeach
+                @else
+                    <p class="text-muted small italic mb-0">You didn’t check some tasks yesterday.</p>
+                @endif
+                <button class="btn btn-outline-secondary btn-sm w-100 mt-3 rounded-pill" data-bs-toggle="modal" data-bs-target="#activityHistoryModal">
+                    <i class="fas fa-history me-1"></i> Activity History
+                </button>
+            </div>
+
+            <div class="mt-auto">
+                <label class="form-label small fw-bold text-muted text-uppercase">Add New Task</label>
+                <div class="input-group">
+                    <input type="text" id="newChecklistLabel" class="form-control" placeholder="Type task here...">
+                    <button class="btn btn-warning text-white" type="button" id="addChecklistItemBtn">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                <div class="mt-4 p-3 rounded bg-light border">
+                    <small class="text-muted d-block mb-2"><i class="fas fa-info-circle me-1"></i> <strong>Note:</strong></small>
+                    <p class="mb-0 x-small text-muted" style="font-size: 0.75rem;">This checklist is reset daily. Ensure all critical monitoring tasks are completed before the end of the day.</p>
+                </div>
             </div>
         </div>
     </div>
@@ -372,7 +556,7 @@
                     <h6 class="modal-title" id="addIncidentStatusModalLabel">
                         <i class="fas fa-plus-circle me-1 text-warning"></i> New Status / Event
                     </h6>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                
                 </div>
                 <div class="modal-body py-3">
                     <form id="addIncidentStatusForm">
@@ -394,9 +578,9 @@
     </div>
 
     <div class="container-fluid px-4">
-        <div class="row">
-            <!-- Left Panel: Calendar (50%) -->
-            <div class="col-lg-6 mb-4">
+        <div class="row g-4">
+            <!-- Left Panel: Calendar (70%) -->
+            <div class="col-lg-8 mb-4" style="flex: 0 0 70%; max-width: 70%;">
                 <div class="glass-card calendar-container">
                     <div class="calendar-header">
                         <div class="calendar-title">
@@ -522,18 +706,18 @@
                 </div>
             </div>
 
-            <!-- Right Container (50%) -->
-            <div class="col-lg-6">
+            <!-- Right Container (30%) -->
+            <div class="col-lg-4" style="flex: 0 0 30%; max-width: 30%;">
                 <div class="row">
-                    <!-- Panel: Incident Specifics (35% of total, which is 70% of this container) -->
-                    <div class="col-lg-8 mb-4">
+                    <!-- Panel: Incident Specifics (Full width of the 30% container) -->
+                    <div class="col-lg-12 mb-4">
                         <div class="glass-card p-4">
                             <h5 class="fw-bold mb-4">
                                 <i class="fas fa-info-circle me-2 text-warning"></i>
                                 Monthly Incident Specifics
                             </h5>
-
-                            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            <!-- ... existing table structure ... -->
+                            <div class="table-responsive" style="max-height: 480px; overflow-y: auto;">
                                 <table class="custom-table">
                                     <tbody>
                                         @forelse($incidents ?? [] as $incident)
@@ -551,12 +735,17 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                <small class="text-truncate d-block" style="max-width: 100px; font-size: 0.75rem;">{{ Str::limit($incident->remarks, 30) }}</small>
+                                                <small class="text-truncate d-block" style="max-width: 150px; font-size: 0.75rem;">{{ Str::limit($incident->remarks, 50) }}</small>
+                                            </td>
+                                            <td class="text-end">
+                                                <button class="btn btn-sm btn-outline-secondary rounded-circle" onclick="viewIncidentDetails({{ $incident->id }})" title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
                                             </td>
                                         </tr>
                                         @empty
                                         <tr>
-                                            <td colspan="3" class="text-center py-5">
+                                            <td colspan="4" class="text-center py-5">
                                                 <div class="mb-3">
                                                     <i class="fas fa-folder-open fa-2x text-muted"></i>
                                                 </div>
@@ -572,48 +761,16 @@
                                 <div class="row text-center">
                                     <div class="col-4">
                                         <div class="stat-value" style="font-size: 1.2rem;">{{ $stats['total'] ?? 0 }}</div>
-                                        <div class="stat-label">Total</div>
+                                        <div class="stat-label">Total Logs</div>
                                     </div>
                                     <div class="col-4">
                                         <div class="stat-value text-danger" style="font-size: 1.2rem;">{{ $stats['incidents'] ?? 0 }}</div>
-                                        <div class="stat-label">Incident</div>
+                                        <div class="stat-label">Incidents</div>
                                     </div>
                                     <div class="col-4">
                                         <div class="stat-value text-success" style="font-size: 1.2rem;">{{ $stats['compliance'] ?? 0 }}</div>
-                                        <div class="stat-label">Events</div>
+                                        <div class="stat-label">Compliance</div>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Right Panel: Quick Compliance Checklist (15% of total, which is 30% of this container) -->
-                    <div class="col-lg-4 mb-4">
-                        <div class="glass-card p-4 overflow-hidden position-relative">
-                            <div style="position: absolute; top: -10px; right: -10px; font-size: 4rem; color: rgba(242, 201, 76, 0.05);">
-                                <i class="fas fa-shield-alt"></i>
-                            </div>
-                            <h5 class="fw-bold mb-1">Quick Checklist</h5>
-                            <p class="text-muted small mb-3">Today: {{ \Carbon\Carbon::parse($checklistDate)->format('M j, Y') }}</p>
-                            <div id="checklistContainer" class="list-group list-group-flush bg-transparent" style="max-height: 400px; overflow-y: auto;">
-                                @foreach($checklistItems as $item)
-                                <div class="list-group-item bg-transparent border-0 px-0 py-2 d-flex align-items-center justify-content-between checklist-item-row" data-id="{{ $item->id }}">
-                                    <div class="form-check flex-grow-1">
-                                        <input class="form-check-input checklist-toggle" type="checkbox" id="checklist_{{ $item->id }}" {{ $item->is_completed ? 'checked' : '' }}>
-                                        <label class="form-check-label fw-600 ms-1 small" for="checklist_{{ $item->id }}">{{ $item->label }}</label>
-                                    </div>
-                                    <button type="button" class="btn btn-sm text-danger ms-1 checklist-delete" title="Remove item" style="padding: 0 5px;">
-                                        <i class="fas fa-trash small"></i>
-                                    </button>
-                                </div>
-                                @endforeach
-                            </div>
-                            <div class="mt-3">
-                                <div class="input-group input-group-sm">
-                                    <input type="text" id="newChecklistLabel" class="form-control" placeholder="Add item...">
-                                    <button class="btn btn-warning" type="button" id="addChecklistItemBtn">
-                                        <i class="fas fa-plus"></i>
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -639,13 +796,13 @@
                                     </div>
                                 </div>
 
-                                <!-- Right Chart: Incident Trend (Daily) -->
+                                <!-- Right Chart: Compliance Status Distribution -->
                                 <div class="col-md-6 ps-md-4">
                                     <h6 class="text-muted text-uppercase mb-3" style="font-size: 10px; font-weight: 700;">
-                                        <i class="fas fa-chart-line me-1 text-warning"></i> Incident Trend (Daily)
+                                        <i class="fas fa-chart-bar me-1 text-warning"></i> Compliance Status / Events
                                     </h6>
                                     <div style="height: 200px; position: relative;">
-                                        <canvas id="incidentTrendChart"></canvas>
+                                        <canvas id="complianceDistributionChart"></canvas>
                                     </div>
                                 </div>
                             </div>
@@ -707,9 +864,33 @@
                                     </div>
 
                                     <div class="col-md-12 mb-3">
-                                        <label for="school_name" class="form-label">School Name *</label>
-                                        <input type="text" class="form-control" id="school_name" name="school_name"
-                                               placeholder="Start typing school name..." required>
+                                        <label class="form-label fw-bold">School Name *</label>
+                                        <div class="d-flex gap-3 mb-2">
+                                            <div class="form-check">
+                                                <input class="form-check-input incident-school-source" type="radio" name="incident_source_type" id="incident_source_existing" value="existing" checked>
+                                                <label class="form-check-label small fw-600" for="incident_source_existing">Use Existing Registered School</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input incident-school-source" type="radio" name="incident_source_type" id="incident_source_new" value="new">
+                                                <label class="form-check-label small fw-600" for="incident_source_new">Input New School Name</label>
+                                            </div>
+                                        </div>
+
+                                        <div id="incident_existing_school_container">
+                                            <select class="form-select" id="incident_school_existing_select" name="school_name_existing">
+                                                <option value="">-- Select Registered School --</option>
+                                                @foreach($fireSafetySchools as $fsSchool)
+                                                    <option value="{{ $fsSchool->school_name }}">{{ $fsSchool->school_name }}</option>
+                                                @endforeach
+                                            </select>
+                                            <small class="text-muted small">Choose a school from the Fire Safety module.</small>
+                                        </div>
+
+                                        <div id="incident_new_school_container" style="display: none;">
+                                            <input type="text" class="form-control" id="incident_school_name_manual" name="school_name_manual"
+                                                   placeholder="Enter new school name...">
+                                            <small class="text-muted small">Manually type the school name if not registered.</small>
+                                        </div>
                                     </div>
 
                                     <div class="col-md-6 mb-3">
@@ -769,9 +950,31 @@
                                     </div>
 
                                     <div class="col-md-12 mb-3">
-                                        <label for="compliance_school_name" class="form-label">School Name *</label>
-                                        <input type="text" class="form-control" id="compliance_school_name" name="school_name"
-                                               placeholder="Start typing school name..." required>
+                                        <label class="form-label fw-bold">School Name *</label>
+                                        <div class="d-flex gap-3 mb-2">
+                                            <div class="form-check">
+                                                <input class="form-check-input compliance-school-source" type="radio" name="compliance_source_type" id="compliance_source_existing" value="existing" checked>
+                                                <label class="form-check-label small fw-600" for="compliance_source_existing">Use Existing Registered School</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input compliance-school-source" type="radio" name="compliance_source_type" id="compliance_source_new" value="new">
+                                                <label class="form-check-label small fw-600" for="compliance_source_new">Input New School Name</label>
+                                            </div>
+                                        </div>
+
+                                        <div id="compliance_existing_school_container">
+                                            <select class="form-select" id="compliance_school_existing_select" name="compliance_school_name_existing">
+                                                <option value="">-- Select Registered School --</option>
+                                                @foreach($fireSafetySchools as $fsSchool)
+                                                    <option value="{{ $fsSchool->school_name }}">{{ $fsSchool->school_name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+
+                                        <div id="compliance_new_school_container" style="display: none;">
+                                            <input type="text" class="form-control" id="compliance_school_name_manual" name="compliance_school_name_manual"
+                                                   placeholder="Enter new school name...">
+                                        </div>
                                     </div>
 
                                     <div class="col-12 mb-3">
@@ -854,6 +1057,71 @@
         </div>
     </div>
 
+    <!-- Incident Detail Modal (Specific Item) -->
+    <div class="modal fade" id="incidentDetailInfoModal" tabindex="-1" aria-labelledby="incidentDetailInfoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-dark text-white p-4">
+                    <h5 class="modal-title fw-bold" id="incidentDetailInfoModalLabel">
+                        <i class="fas fa-info-circle text-warning me-2"></i> Log Details
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 bg-white" id="incidentDetailBody">
+                    <!-- Content populated by JS -->
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Activity History Modal -->
+    <div class="modal fade" id="activityHistoryModal" tabindex="-1" aria-labelledby="activityHistoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-dark text-white p-4">
+                    <h5 class="modal-title fw-bold" id="activityHistoryModalLabel">
+                        <i class="fas fa-history text-warning me-2"></i> Activity History (Last 30 Days)
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 bg-light" style="max-height: 70vh; overflow-y: auto;">
+                    <div class="history-grid">
+                        @foreach($historyData as $date => $items)
+                        <div class="history-day-card shadow-sm">
+                            <div class="history-day-title d-flex justify-content-between">
+                                <span>{{ \Carbon\Carbon::parse($date)->format('M d, Y') }}</span>
+                                <span class="text-muted" style="font-size: 0.65rem;">{{ \Carbon\Carbon::parse($date)->format('l') }}</span>
+                            </div>
+                            @foreach($items as $item)
+                            <div class="history-item">
+                                @if($item->is_completed)
+                                    <i class="fas fa-check-circle text-success"></i>
+                                @else
+                                    <i class="fas fa-times-circle text-muted"></i>
+                                @endif
+                                <span class="{{ $item->is_completed ? 'text-dark fw-bold' : 'text-muted' }}">{{ $item->label }}</span>
+                            </div>
+                            @endforeach
+                        </div>
+                        @endforeach
+                        @if($historyData->isEmpty())
+                        <div class="col-12 py-5 text-center">
+                            <i class="fas fa-clock-rotate-left fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No historical data available yet.</p>
+                        </div>
+                        @endif
+                    </div>
+                </div>
+                <div class="modal-footer bg-white border-0">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Close History</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script>
@@ -875,10 +1143,95 @@
             labels: @json($stats['type_distribution']['labels'] ?? []),
             values: @json($stats['type_distribution']['values'] ?? []),
         };
+        const complianceChartData = {
+            labels: @json($stats['compliance_distribution']['labels'] ?? []),
+            values: @json($stats['compliance_distribution']['values'] ?? []),
+        };
         const trendChartData = {
             labels: @json($stats['trend']['labels'] ?? []),
             values: @json($stats['trend']['values'] ?? []),
         };
+
+        const allIncidents = @json($incidents);
+        let incidentDetailModal = null;
+        let currentViewingIncidentId = null;
+
+        window.viewIncidentDetails = function(id) {
+            if (!incidentDetailModal) {
+                const modalEl = document.getElementById('incidentDetailInfoModal');
+                if (modalEl) incidentDetailModal = new bootstrap.Modal(modalEl);
+            }
+            const incident = allIncidents.find(i => i.id === id);
+            if (!incident) return;
+
+            currentViewingIncidentId = id;
+            const body = document.getElementById('incidentDetailBody');
+            const date = new Date(incident.incident_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            const time = new Date(incident.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+            let typeBadge = '';
+            const type = incident.incident_type || incident.incidentType;
+            const status = incident.incident_status || incident.incidentStatus;
+
+            if (incident.entry_type === 'incident' && type) {
+                typeBadge = `<span class="badge ${type.color_class}">${type.name}</span>`;
+            } else if (incident.entry_type === 'compliance' && status) {
+                typeBadge = `<span class="badge ${status.color_class}">${status.name}</span>`;
+            }
+
+            let attachmentHtml = '<p class="text-muted small italic">No attachment</p>';
+            if (incident.attachment_path) {
+                const url = `/storage/${incident.attachment_path}`;
+                attachmentHtml = `
+                    <div class="mt-2">
+                        <a href="${url}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill">
+                            <i class="fas fa-paperclip me-1"></i> View Attachment
+                        </a>
+                    </div>
+                `;
+            }
+
+            body.innerHTML = `
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="fw-bold mb-0 text-dark">${incident.school_name}</h4>
+                        ${typeBadge}
+                    </div>
+                    <div class="row g-3 mb-4">
+                        <div class="col-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Report Date</label>
+                            <span><i class="fas fa-calendar-day me-1 text-primary"></i> ${date}</span>
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Report Time</label>
+                            <span><i class="fas fa-clock me-1 text-primary"></i> ${time}</span>
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Category</label>
+                            <span class="text-capitalize">${incident.entry_type}</span>
+                        </div>
+                        <div class="col-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Reported By</label>
+                            <span>${incident.reported_by || 'Anonymous'}</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4 p-3 bg-light rounded shadow-sm border-start border-4 border-warning">
+                        <label class="text-muted small text-uppercase fw-bold d-block mb-2">Remarks / Details</label>
+                        <p class="mb-0" style="white-space: pre-wrap;">${incident.remarks}</p>
+                    </div>
+
+                    <div class="mb-0">
+                        <label class="text-muted small text-uppercase fw-bold d-block mb-1">Supporting Document</label>
+                        ${attachmentHtml}
+                    </div>
+                </div>
+            `;
+
+            incidentDetailModal.show();
+        };
+
+
 
         // Day hover: custom info box (Incident/Event Type + School name)
         let tooltipEl = null;
@@ -1049,6 +1402,29 @@
             const formData = new FormData(form);
             formData.append('_token', csrfToken);
 
+            // Handle school name based on source
+            if (!isCompliance) {
+                const source = form.querySelector('input[name="incident_source_type"]:checked').value;
+                if (source === 'existing') {
+                    formData.set('school_name', form.querySelector('#incident_school_existing_select').value);
+                } else {
+                    formData.set('school_name', form.querySelector('#incident_school_name_manual').value);
+                }
+            } else {
+                const source = form.querySelector('input[name="compliance_source_type"]:checked').value;
+                if (source === 'existing') {
+                    formData.set('school_name', form.querySelector('#compliance_school_existing_select').value);
+                } else {
+                    formData.set('school_name', form.querySelector('#compliance_school_name_manual').value);
+                }
+            }
+
+            // Validation
+            if (!formData.get('school_name')) {
+                alert('Please select or enter a school name.');
+                return;
+            }
+
             // Add attachment file
             const fileInput = form.querySelector('input[type="file"]');
             if (fileInput && fileInput.files.length > 0) {
@@ -1132,48 +1508,54 @@
             }, 300);
         }
 
-        // School autocomplete
-        const schoolInput = document.getElementById('school_name');
-        const complianceSchoolInput = document.getElementById('compliance_school_name');
-        const searchSchoolsUrl = '{{ route("incidents.search-schools") }}';
-        function showSchoolSuggestions(input, listId) {
-            const q = input.value.trim();
-            if (q.length < 2) { document.getElementById(listId).innerHTML = ''; return; }
-            fetch(searchSchoolsUrl + '?q=' + encodeURIComponent(q))
-                .then(r => r.json())
-                .then(schools => {
-                    const list = document.getElementById(listId);
-                    if (!schools.length) { list.innerHTML = ''; return; }
-                    list.innerHTML = schools.map(s => '<div class="autocomplete-item p-2 border-bottom" style="cursor:pointer">' + (s.name || s) + '</div>').join('');
-                    list.style.display = 'block';
-                    list.querySelectorAll('.autocomplete-item').forEach(el => {
-                        el.addEventListener('click', () => { input.value = el.textContent.trim(); list.innerHTML = ''; list.style.display = 'none'; });
-                    });
-                });
-        }
-        if (schoolInput) {
-            let acDiv = document.getElementById('school_autocomplete');
-            if (!acDiv) {
-                acDiv = document.createElement('div');
-                acDiv.id = 'school_autocomplete';
-                acDiv.className = 'autocomplete-items position-absolute';
-                acDiv.style.display = 'none';
-                schoolInput.parentNode.style.position = 'relative';
-                schoolInput.parentNode.appendChild(acDiv);
-            }
-            schoolInput.addEventListener('input', () => showSchoolSuggestions(schoolInput, 'school_autocomplete'));
-        }
-        if (complianceSchoolInput) {
-            let acDiv2 = document.getElementById('compliance_school_autocomplete');
-            if (!acDiv2) {
-                acDiv2 = document.createElement('div');
-                acDiv2.id = 'compliance_school_autocomplete';
-                acDiv2.className = 'autocomplete-items position-absolute';
-                acDiv2.style.display = 'none';
-                complianceSchoolInput.parentNode.style.position = 'relative';
-                complianceSchoolInput.parentNode.appendChild(acDiv2);
-            }
-            complianceSchoolInput.addEventListener('input', () => showSchoolSuggestions(complianceSchoolInput, 'compliance_school_autocomplete'));
+        // School selection toggles
+        document.querySelectorAll('.incident-school-source').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const existingContainer = document.getElementById('incident_existing_school_container');
+                const newContainer = document.getElementById('incident_new_school_container');
+                if (this.value === 'existing') {
+                    existingContainer.style.display = 'block';
+                    newContainer.style.display = 'none';
+                } else {
+                    existingContainer.style.display = 'none';
+                    newContainer.style.display = 'block';
+                }
+            });
+        });
+
+        document.querySelectorAll('.compliance-school-source').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const existingContainer = document.getElementById('compliance_existing_school_container');
+                const newContainer = document.getElementById('compliance_new_school_container');
+                if (this.value === 'existing') {
+                    existingContainer.style.display = 'block';
+                    newContainer.style.display = 'none';
+                } else {
+                    existingContainer.style.display = 'none';
+                    newContainer.style.display = 'block';
+                }
+            });
+        });
+
+        // Sidebar Toggle
+        const toggleBtn = document.getElementById('toggleChecklistSidebar');
+        const closeBtn = document.getElementById('closeSidebar');
+        const sidebar = document.getElementById('checklistSidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        if (toggleBtn && sidebar && overlay) {
+            toggleBtn.addEventListener('click', () => {
+                sidebar.classList.add('open');
+                overlay.classList.add('active');
+            });
+
+            const closeSidebar = () => {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('active');
+            };
+
+            closeBtn.addEventListener('click', closeSidebar);
+            overlay.addEventListener('click', closeSidebar);
         }
 
         // Charts
@@ -1209,46 +1591,39 @@
             });
         }
 
-        const trendCtx = document.getElementById('incidentTrendChart');
-        if (trendCtx && trendChartData.labels.length) {
-            new Chart(trendCtx, {
-                type: 'line',
+        const complianceCtx = document.getElementById('complianceDistributionChart');
+        if (complianceCtx && complianceChartData.labels.length) {
+            new Chart(complianceCtx, {
+                type: 'bar',
                 data: {
-                    labels: trendChartData.labels,
+                    labels: complianceChartData.labels,
                     datasets: [{
-                        label: 'Incidents',
-                        data: trendChartData.values,
-                        borderColor: '#F2994A',
-                        backgroundColor: 'rgba(242,153,74,0.15)',
-                        tension: 0.25,
-                        fill: true,
-                        pointRadius: 3, // Smaller points
-                        pointHoverRadius: 5,
-                        borderWidth: 2
+                        label: 'Events',
+                        data: complianceChartData.values,
+                        backgroundColor: '#1ed760',
+                        borderRadius: 8,
+                        borderWidth: 0,
+                        barThickness: 25,
                     }]
                 },
                 options: {
+                    indexAxis: 'y', // Horizontal bars look cleaner for labels
                     scales: {
                         x: {
-                            ticks: {
-                                autoSkip: true,
-                                maxTicksLimit: 8,
-                                font: { size: 9 }
-                            }
+                            beginAtZero: true,
+                            ticks: { font: { size: 9 } },
+                            grid: { display: false }
                         },
                         y: {
-                            beginAtZero: true,
-                            precision: 0,
-                            ticks: { font: { size: 9 } }
+                            ticks: { font: { size: 10, weight: '600' } },
+                            grid: { display: false }
                         }
                     },
                     plugins: {
-                        legend: {
-                            display: false
-                        }
+                        legend: { display: false }
                     },
                     responsive: true,
-                    maintainAspectRatio: true
+                    maintainAspectRatio: false
                 }
             });
         }

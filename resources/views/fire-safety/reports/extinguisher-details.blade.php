@@ -174,15 +174,16 @@
     <table>
         <thead>
             <tr>
-                <th style="width: 4%; text-align: center;">#</th>
-                <th style="width: 8%;">Room Code</th>
-                <th style="width: 15%;">Room Name</th>
-                <th style="width: 14%;">Building</th>
-                <th style="width: 5%; text-align: center;">Floor</th>
-                <th style="width: 18%;">Room Type</th>
-                <th style="width: 8%; text-align: center;">2nd Exit</th>
-                <th style="width: 10%; text-align: center;">Smoke Detector</th>
-                <th>Covered By</th>
+                <th style="width: 3%; text-align: center;">#</th>
+                <th style="width: 7%;">Room Code</th>
+                <th style="width: 13%;">Room Name</th>
+                <th style="width: 12%;">Building</th>
+                <th style="width: 4%; text-align: center;">Floor</th>
+                <th style="width: 13%;">Room Type</th>
+                <th style="width: 6%; text-align: center;">2nd Exit</th>
+                <th style="width: 8%; text-align: center;">Smoke Detector</th>
+                <th style="width: 14%;">Covered By</th>
+                <th>Remarks</th>
             </tr>
         </thead>
         <tbody>
@@ -196,7 +197,7 @@
                     <td style="text-align: center;">{{ $index + 1 }}</td>
                     <td>{{ $room->room_code ?: '—' }}</td>
                     <td>{{ $room->room_name }}</td>
-                    <td>{{ $room->building?->building_name ?? 'N/A' }}</td>
+                    <td>{{ $room->building ? ($room->building->building_no . ($room->building->building_name ? ' - ' . $room->building->building_name : '')) : 'N/A' }}</td>
                     <td style="text-align: center;">{{ $room->floor_no ?? '—' }}</td>
                     <td>{{ $room->roomTypeConfig?->name ?? $room->room_type }}</td>
                     <td style="text-align: center;">{{ $room->has_secondary_exit ? 'Yes' : 'No' }}</td>
@@ -216,10 +217,11 @@
                             @endforeach
                         @endif
                     </td>
+                    <td>{{ $room->remarks ?: '—' }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="9" style="text-align: center; padding: 20px;">No rooms recorded for this school.</td>
+                    <td colspan="10" style="text-align: center; padding: 20px;">No rooms recorded for this school.</td>
                 </tr>
             @endforelse
         </tbody>
