@@ -556,7 +556,7 @@
                     <h6 class="modal-title" id="addIncidentStatusModalLabel">
                         <i class="fas fa-plus-circle me-1 text-warning"></i> New Status / Event
                     </h6>
-                
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body py-3">
                     <form id="addIncidentStatusForm">
