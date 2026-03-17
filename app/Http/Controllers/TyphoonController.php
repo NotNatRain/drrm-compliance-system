@@ -128,6 +128,77 @@ class TyphoonController extends Controller
 
         $dailyRainfallSum = $weatherData['daily']['precipitation_sum'][0] ?? 0.0;
 
+        // ─── Active Typhoon near Philippine Sea (via GDACS) ──────────────────────
+        // Covers Philippine Sea basin: lat 5–25°N, lon 115–135°E (where Zambales/Olongapo sits)
+        $activeTyphoon = cache()->remember('gdacs_active_typhoon_ph', 1800, function () {
+            try {
+                // GDACS free API – active tropical cyclones, last 7 days
+                $url = 'https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH'
+                     . '?eventtypes=TC&fromdate=' . now()->subDays(7)->format('Y-m-d')
+                     . '&todate=' . now()->addDays(7)->format('Y-m-d')
+                     . '&alertlevel=&pagenumber=1&pagesize=50';
+
+                $ctx = stream_context_create(['http' => ['timeout' => 8]]);
+                $raw = @file_get_contents($url, false, $ctx);
+                if (!$raw) return null;
+
+                $data = json_decode($raw, true);
+                $features = $data['features'] ?? [];
+
+                // Philippine Sea bounding box: lat 5–25°N, lon 115–135°E
+                foreach ($features as $f) {
+                    $coords = $f['geometry']['coordinates'] ?? null;
+                    if (!$coords) continue;
+
+                    $lon = $coords[0];
+                    $lat = $coords[1];
+
+                    if ($lat >= 5 && $lat <= 25 && $lon >= 115 && $lon <= 135) {
+                        $props        = $f['properties'] ?? [];
+                        $rawName      = $props['name'] ?? ($props['htmldescription'] ?? 'Unnamed');
+                        $alertLevel   = strtolower($props['alertlevel'] ?? 'green');
+                        $windKph      = isset($props['maxwind']) ? round($props['maxwind'] * 3.6) : 0; // may be in m/s
+
+                        // PAGASA Signal Number mapping
+                        if ($windKph >= 221)      $signal = 5;
+                        elseif ($windKph >= 180)  $signal = 4;
+                        elseif ($windKph >= 120)  $signal = 3;
+                        elseif ($windKph >= 60)   $signal = 2;
+                        else {
+                            // Fall back to GDACS alert level
+                            $signal = $alertLevel === 'red' ? 3 : ($alertLevel === 'orange' ? 2 : 1);
+                        }
+
+                        // Determine typhoon category label (PAGASA style)
+                        if ($signal >= 5)       $category = 'Super Typhoon';
+                        elseif ($signal >= 4)   $category = 'Typhoon';
+                        elseif ($signal >= 3)   $category = 'Typhoon';
+                        elseif ($signal >= 2)   $category = 'Tropical Storm';
+                        else                    $category = 'Tropical Depression';
+
+                        // Clean up name (GDACS uses formats like "TC 2026001N11142")
+                        $cleanName = trim(preg_replace('/^TC\s*\d+[A-Z\d]+\s*/i', '', $rawName));
+                        if (empty($cleanName) || strlen($cleanName) < 2) {
+                            $cleanName = $props['eventid'] ?? 'Unnamed';
+                        }
+
+                        return [
+                            'name'     => strtoupper($cleanName),
+                            'category' => $category,
+                            'signal'   => $signal,
+                            'wind_kph' => $windKph,
+                            'lat'      => $lat,
+                            'lon'      => $lon,
+                        ];
+                    }
+                }
+
+                return null; // No active typhoon near Philippines
+            } catch (\Exception $e) {
+                return null;
+            }
+        });
+
         return view('typhoon.dashboard', [
             'evacuationCenters'          => $evacuationCenters,
             'totalFamilies'              => $totalFamilies,
@@ -151,6 +222,7 @@ class TyphoonController extends Controller
                 'wind' => $weatherData['current']['wind_speed_10m'] ?? '--',
             ],
             'activeSchoolId' => $contributorActiveSchoolId,
+            'activeTyphoon'  => $activeTyphoon,
         ]);
     }
 

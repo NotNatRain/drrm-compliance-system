@@ -96,7 +96,7 @@
                                             <i class="fas fa-user-circle text-primary me-2"></i>
                                             {{ Auth::user()->role === 'admin' ? 'User Accounts' : 'User Account' }}
                                         </a>
-                                        @if(Auth::user()->role !== 'contributor')
+                                        @if(Auth::user()->role === 'admin')
                                             <a class="dropdown-item py-2" href="{{ route('activity-logs.index') }}">
                                                 <i class="fas fa-clipboard-list text-info me-2"></i> Logs
                                             </a>

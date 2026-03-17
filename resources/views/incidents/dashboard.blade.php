@@ -112,6 +112,8 @@
             position: relative;
             border: 1px solid #f1f3f5;
             cursor: pointer;
+            contain: layout;
+            transition: background-color 0.15s ease-out, border-color 0.15s ease-out;
         }
 
         .calendar-day:hover {
@@ -316,19 +318,21 @@
         .right-sidebar {
             position: fixed;
             top: 0;
-            right: -400px;
+            right: 0;
             width: 380px;
             height: 100vh;
             background: #fff;
             box-shadow: -10px 0 30px rgba(0,0,0,0.1);
             z-index: 1040;
-            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            transform: translateX(100%);
+            transition: transform 0.3s ease-out;
             display: flex;
             flex-direction: column;
+            will-change: transform;
         }
 
         .right-sidebar.open {
-            right: 0;
+            transform: translateX(0);
         }
 
         .sidebar-overlay {
@@ -338,13 +342,15 @@
             width: 100vw;
             height: 100vh;
             background: rgba(0,0,0,0.3);
-            backdrop-filter: blur(2px);
             z-index: 1035;
             display: none;
+            opacity: 0;
+            transition: opacity 0.2s ease-out;
         }
 
         .sidebar-overlay.active {
             display: block;
+            opacity: 1;
         }
 
         .sidebar-content {
@@ -398,15 +404,35 @@
         .history-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
+            gap: 20px;
+        }
+
+        @media (max-width: 992px) {
+            .history-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 576px) {
+            .history-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         .history-day-card {
             background: #fff;
-            border: 1px solid #eee;
-            border-radius: 12px;
-            padding: 12px;
+            border: 1px solid rgba(0,0,0,0.05);
+            border-radius: 16px;
+            padding: 16px;
             height: 100%;
+            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+            will-change: transform, box-shadow;
+            contain: layout;
+        }
+
+        .history-day-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important;
         }
 
         .history-day-title {
@@ -475,11 +501,16 @@
                 <div class="list-group-item bg-transparent border-0 px-0 py-2 d-flex align-items-center justify-content-between checklist-item-row" data-id="{{ $item->id }}">
                     <div class="form-check flex-grow-1">
                         <input class="form-check-input checklist-toggle" type="checkbox" id="checklist_{{ $item->id }}" {{ $item->is_completed ? 'checked' : '' }}>
-                        <label class="form-check-label fw-600 ms-1 small" for="checklist_{{ $item->id }}">{{ $item->label }}</label>
+                        <label class="form-check-label fw-600 ms-1 small checklist-label" for="checklist_{{ $item->id }}">{{ $item->label }}</label>
                     </div>
-                    <button type="button" class="btn btn-sm text-danger ms-1 checklist-delete" title="Remove item" style="padding: 0 5px;">
-                        <i class="fas fa-trash small"></i>
-                    </button>
+                    <div class="d-flex align-items-center">
+                        <button type="button" class="btn btn-sm text-muted ms-1 checklist-edit" title="Edit task" style="padding: 0 5px;">
+                            <i class="fas fa-pen x-small" style="font-size: 0.7rem;"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm text-danger ms-1 checklist-delete" title="Remove item" style="padding: 0 5px;">
+                            <i class="fas fa-trash small"></i>
+                        </button>
+                    </div>
                 </div>
                 @endforeach
             </div>
@@ -844,6 +875,7 @@
                             <form id="incidentForm">
                                 @csrf
                                 <input type="hidden" name="entry_type" value="incident">
+                                <input type="hidden" name="incident_id" id="incident_update_id" value="">
                                 <input type="hidden" name="incident_date" id="incident_date" value="{{ date('Y-m-d') }}">
 
                                 <div class="row">
@@ -911,9 +943,15 @@
                                 </div>
                                 <div class="col-12 mb-3">
                                     <label for="incident_attachment" class="form-label">
-                                        Attachment/Evidence <span class="text-danger">*</span>
+                                        Attachment/Evidence <span class="text-danger" id="incident_attachment_required_asterisk">*</span>
                                         <small class="text-muted">(PDF, JPG, PNG - Max 10MB)</small>
                                     </label>
+                                    <div id="current_incident_attachment" class="mb-2 p-2 border rounded bg-light" style="display: none;">
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <span><i class="fas fa-paperclip me-2 text-warning"></i> <span id="incident_attachment_name" class="small fw-bold text-truncate" style="max-width: 200px;"></span></span>
+                                            <a id="incident_attachment_view" href="#" target="_blank" class="btn btn-sm btn-link text-warning p-0">View current</a>
+                                        </div>
+                                    </div>
                                     <input type="file" class="form-control" id="incident_attachment" name="attachment" accept=".pdf,.jpg,.jpeg,.png" required>
                                 </div>
                                 <div class="d-flex justify-content-end gap-2">
@@ -930,6 +968,7 @@
                             <form id="complianceForm">
                                 @csrf
                                 <input type="hidden" name="entry_type" value="compliance">
+                                <input type="hidden" name="compliance_id" id="compliance_update_id" value="">
                                 <input type="hidden" name="incident_date" id="compliance_incident_date" value="{{ date('Y-m-d') }}">
 
                                 <div class="row">
@@ -988,6 +1027,12 @@
                                         Attachment/Evidence
                                         <small class="text-muted">(Optional - PDF, JPG, PNG, Max 10MB)</small>
                                     </label>
+                                    <div id="current_compliance_attachment" class="mb-2 p-2 border rounded bg-light" style="display: none;">
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <span><i class="fas fa-paperclip me-2 text-success"></i> <span id="compliance_attachment_name" class="small fw-bold text-truncate" style="max-width: 200px;"></span></span>
+                                            <a id="compliance_attachment_view" href="#" target="_blank" class="btn btn-sm btn-link text-success p-0">View current</a>
+                                        </div>
+                                    </div>
                                     <input type="file" class="form-control" id="compliance_attachment" name="attachment" accept=".pdf,.jpg,.jpeg,.png">
                                 </div>
                                 <div class="d-flex justify-content-end gap-2">
@@ -1082,13 +1127,26 @@
         <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header bg-dark text-white p-4">
-                    <h5 class="modal-title fw-bold" id="activityHistoryModalLabel">
-                        <i class="fas fa-history text-warning me-2"></i> Activity History (Last 30 Days)
-                    </h5>
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center w-100 me-4">
+                        <h5 class="modal-title fw-bold mb-2 mb-md-0" id="activityHistoryModalLabel">
+                            <i class="fas fa-history text-warning me-2"></i> Activity History
+                        </h5>
+                        <div class="d-flex align-items-center gap-3 bg-secondary bg-opacity-25 rounded-pill px-3 py-1">
+                            <button type="button" class="btn btn-sm text-white p-0" id="prevHistoryMonth" title="Previous Month">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <span id="currentHistoryMonthLabel" class="fw-600 small" style="min-width: 120px; text-align: center;">
+                                {{ \Carbon\Carbon::today()->format('F Y') }}
+                            </span>
+                            <button type="button" class="btn btn-sm text-white p-0" id="nextHistoryMonth" title="Next Month">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body p-4 bg-light" style="max-height: 70vh; overflow-y: auto;">
-                    <div class="history-grid">
+                <div class="modal-body p-4 bg-light" style="max-height: 70vh; overflow-y: auto;" id="activityHistoryBody">
+                    <div class="history-grid" id="historyGridContainer">
                         @foreach($historyData as $date => $items)
                         <div class="history-day-card shadow-sm">
                             <div class="history-day-title d-flex justify-content-between">
@@ -1102,15 +1160,15 @@
                                 @else
                                     <i class="fas fa-times-circle text-muted"></i>
                                 @endif
-                                <span class="{{ $item->is_completed ? 'text-dark fw-bold' : 'text-muted' }}">{{ $item->label }}</span>
+                                <span class="{{ $item->is_completed ? 'text-dark fw-bold' : 'text-muted' }} text-truncate" title="{{ $item->label }}">{{ $item->label }}</span>
                             </div>
                             @endforeach
                         </div>
                         @endforeach
                         @if($historyData->isEmpty())
-                        <div class="col-12 py-5 text-center">
-                            <i class="fas fa-clock-rotate-left fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">No historical data available yet.</p>
+                        <div class="col-12 py-5 text-center w-100">
+                            <i class="fas fa-clipboard-list fa-3x text-muted mb-3 opacity-25"></i>
+                            <p class="text-muted">No activities recorded for this period.</p>
                         </div>
                         @endif
                     </div>
@@ -1137,6 +1195,7 @@
         const checklistIndexUrl = '{{ route("incidents.checklist.index") }}';
         const checklistStoreUrl = '{{ route("incidents.checklist.store") }}';
         const checklistUpdateBaseUrl = '{{ url("/incidents/checklist") }}';
+        const checklistHistoryUrl = '{{ route("incidents.checklist.history") }}';
         const checklistDate = '{{ $checklistDate }}';
 
         const typeChartData = {
@@ -1285,6 +1344,7 @@
                 fetch(incidentsDateUrl + '/' + date, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
                     .then(r => r.json())
                     .then(data => {
+                        window._currentDayData = data; // Store for edit access
                         const incList = document.getElementById('dayIncidentsList');
                         const compList = document.getElementById('dayComplianceList');
                         const toArray = (x) => Array.isArray(x) ? x : (x && typeof x === 'object' ? Object.values(x) : []);
@@ -1332,7 +1392,15 @@
                                         </div>
                                     ` : ''}
 
-                                    <div class="mt-2 text-end">
+                                    <div class="mt-2 d-flex justify-content-between align-items-center">
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-warning" onclick="editIncidentEntry(${i.id}, 'incident')">
+                                                <i class="fas fa-edit me-1"></i> Edit
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteIncidentEntry(${i.id})">
+                                                <i class="fas fa-trash me-1"></i>
+                                            </button>
+                                        </div>
                                         <small class="text-muted">
                                             <i class="fas fa-clock me-1"></i> ${new Date(i.created_at).toLocaleString()}
                                         </small>
@@ -1370,7 +1438,15 @@
                                         </div>
                                     ` : ''}
 
-                                    <div class="mt-2 text-end">
+                                    <div class="mt-2 d-flex justify-content-between align-items-center">
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-warning" onclick="editIncidentEntry(${c.id}, 'compliance')">
+                                                <i class="fas fa-edit me-1"></i> Edit
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteIncidentEntry(${c.id})">
+                                                <i class="fas fa-trash me-1"></i>
+                                            </button>
+                                        </div>
                                         <small class="text-muted">
                                             <i class="fas fa-clock me-1"></i> ${new Date(c.created_at).toLocaleString()}
                                         </small>
@@ -1402,16 +1478,29 @@
             const formData = new FormData(form);
             formData.append('_token', csrfToken);
 
+            // Handle ID for update
+            let updateId = isCompliance ? document.getElementById('compliance_update_id').value : document.getElementById('incident_update_id').value;
+            let method = 'POST';
+            let url = incidentsStoreUrl;
+
+            if (updateId) {
+                method = 'POST'; 
+                formData.append('_method', 'PUT');
+                url = incidentsStoreUrl.split('/store')[0] + '/' + updateId;
+            }
+
             // Handle school name based on source
             if (!isCompliance) {
-                const source = form.querySelector('input[name="incident_source_type"]:checked').value;
+                const sourceInput = form.querySelector('input[name="incident_source_type"]:checked');
+                const source = sourceInput ? sourceInput.value : 'existing';
                 if (source === 'existing') {
                     formData.set('school_name', form.querySelector('#incident_school_existing_select').value);
                 } else {
                     formData.set('school_name', form.querySelector('#incident_school_name_manual').value);
                 }
             } else {
-                const source = form.querySelector('input[name="compliance_source_type"]:checked').value;
+                const sourceInput = form.querySelector('input[name="compliance_source_type"]:checked');
+                const source = sourceInput ? sourceInput.value : 'existing';
                 if (source === 'existing') {
                     formData.set('school_name', form.querySelector('#compliance_school_existing_select').value);
                 } else {
@@ -1425,25 +1514,19 @@
                 return;
             }
 
-            // Add attachment file
-            const fileInput = form.querySelector('input[type="file"]');
-            if (fileInput && fileInput.files.length > 0) {
-                formData.append('attachment', fileInput.files[0]);
-            }
-
             const btn = form.querySelector('button[type="submit"]');
             const origText = btn.innerHTML;
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
 
-            fetch(incidentsStoreUrl, {
-                method: 'POST',
+            fetch(url, {
+                method: method,
                 headers: {
                     'X-CSRF-TOKEN': csrfToken,
                     'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: formData  // Use FormData instead of JSON
+                body: formData
             })
             .then(r => r.json())
             .then(resp => {
@@ -1462,6 +1545,149 @@
                 btn.innerHTML = origText;
             });
         }
+
+        window.editIncidentEntry = function(id, type) {
+            const data = window._currentDayData;
+            if (!data) return;
+
+            const list = type === 'incident' ? data.incidents : data.compliance;
+            const item = Object.values(list).find(i => i.id === id);
+            if (!item) return;
+
+            // Hide the details modal
+            bootstrap.Modal.getInstance(document.getElementById('dayDetailsModal')).hide();
+
+            setTimeout(() => {
+                const logModal = new bootstrap.Modal(document.getElementById('logIncidentModal'));
+                const modalTitle = document.getElementById('logIncidentModalLabel');
+                const tabs = document.getElementById('incidentTab');
+                
+                // Reset form first
+                document.getElementById('incidentForm').reset();
+                document.getElementById('complianceForm').reset();
+                
+                modalTitle.innerHTML = `<i class="fas fa-edit me-2"></i> Update ${type === 'incident' ? 'Incident' : 'Compliance Event'}`;
+                tabs.style.display = 'none'; // Hide tabs as requested
+
+                if (type === 'incident') {
+                    const form = document.getElementById('incidentForm');
+                    document.getElementById('incident-form').classList.add('show', 'active');
+                    document.getElementById('compliance-form').classList.remove('show', 'active');
+                    
+                    document.getElementById('incident_update_id').value = item.id;
+                    document.getElementById('incident_type_id').value = item.incident_type_id;
+                    document.getElementById('incident_date_input').value = item.incident_date.split('T')[0];
+                    document.getElementById('incident_date').value = item.incident_date.split('T')[0];
+                    
+                    // School handling
+                    const existingSelect = document.getElementById('incident_school_existing_select');
+                    const options = Array.from(existingSelect.options);
+                    const match = options.find(o => o.value === item.school_name);
+                    
+                    if (match) {
+                        document.getElementById('incident_source_existing').checked = true;
+                        existingSelect.value = item.school_name;
+                        document.getElementById('incident_existing_school_container').style.display = 'block';
+                        document.getElementById('incident_new_school_container').style.display = 'none';
+                    } else {
+                        document.getElementById('incident_source_new').checked = true;
+                        document.getElementById('incident_school_name_manual').value = item.school_name;
+                        document.getElementById('incident_existing_school_container').style.display = 'none';
+                        document.getElementById('incident_new_school_container').style.display = 'block';
+                    }
+                    
+                    document.getElementById('affected_personnel').value = item.affected_personnel;
+                    document.getElementById('affected_students').value = item.affected_students;
+                    document.getElementById('remarks').value = item.remarks;
+                    
+                    // Show current attachment if exists
+                    const currentAttach = document.getElementById('current_incident_attachment');
+                    if (item.attachment_path) {
+                        document.getElementById('incident_attachment_name').textContent = item.attachment_name;
+                        document.getElementById('incident_attachment_view').href = item.attachment_url;
+                        currentAttach.style.display = 'block';
+                        document.getElementById('incident_attachment_required_asterisk').style.display = 'none';
+                    } else {
+                        currentAttach.style.display = 'none';
+                        document.getElementById('incident_attachment_required_asterisk').style.display = 'inline';
+                    }
+                    
+                    // File is optional on update, remove required
+                    document.getElementById('incident_attachment').required = false;
+                    
+                } else {
+                    const form = document.getElementById('complianceForm');
+                    document.getElementById('compliance-form').classList.add('show', 'active');
+                    document.getElementById('incident-form').classList.remove('show', 'active');
+                    
+                    document.getElementById('compliance_update_id').value = item.id;
+                    document.getElementById('incident_status_id').value = item.incident_status_id;
+                    document.getElementById('compliance_date_input').value = item.incident_date.split('T')[0];
+                    document.getElementById('compliance_incident_date').value = item.incident_date.split('T')[0];
+                    
+                    // School handling
+                    const existingSelect = document.getElementById('compliance_school_existing_select');
+                    const options = Array.from(existingSelect.options);
+                    const match = options.find(o => o.value === item.school_name);
+                    
+                    if (match) {
+                        document.getElementById('compliance_source_existing').checked = true;
+                        existingSelect.value = item.school_name;
+                        document.getElementById('compliance_existing_school_container').style.display = 'block';
+                        document.getElementById('compliance_new_school_container').style.display = 'none';
+                    } else {
+                        document.getElementById('compliance_source_new').checked = true;
+                        document.getElementById('compliance_school_name_manual').value = item.school_name;
+                        document.getElementById('compliance_existing_school_container').style.display = 'none';
+                        document.getElementById('compliance_new_school_container').style.display = 'block';
+                    }
+                    
+                    document.getElementById('compliance_remarks').value = item.remarks;
+
+                    // Show current attachment if exists
+                    const currentAttach = document.getElementById('current_compliance_attachment');
+                    if (item.attachment_path) {
+                        document.getElementById('compliance_attachment_name').textContent = item.attachment_name;
+                        document.getElementById('compliance_attachment_view').href = item.attachment_url;
+                        currentAttach.style.display = 'block';
+                    } else {
+                        currentAttach.style.display = 'none';
+                    }
+                }
+
+                logModal.show();
+            }, 300);
+        };
+
+        window.deleteIncidentEntry = function(id) {
+            if (!confirm('Are you sure you want to delete this log?')) return;
+            
+            fetch(`${incidentsStoreUrl.replace('/store', '')}/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(r => r.json())
+            .then(resp => {
+                window.location.reload();
+            })
+            .catch(err => alert('Failed to delete.'));
+        };
+
+        // Reset modal on close
+        document.getElementById('logIncidentModal').addEventListener('hidden.bs.modal', function () {
+            document.getElementById('logIncidentModalLabel').innerHTML = '<i class="fas fa-plus-circle me-2"></i> Log New Incident/Event';
+            document.getElementById('incidentTab').style.display = 'flex';
+            document.getElementById('incident_update_id').value = '';
+            document.getElementById('compliance_update_id').value = '';
+            document.getElementById('incident_attachment').required = true;
+            document.getElementById('current_incident_attachment').style.display = 'none';
+            document.getElementById('current_compliance_attachment').style.display = 'none';
+            document.getElementById('incident_attachment_required_asterisk').style.display = 'inline';
+        });
 
         document.getElementById('incidentForm').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -1802,6 +2028,21 @@
             });
         });
 
+        document.querySelectorAll('#checklistContainer .checklist-edit').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const row = this.closest('.checklist-item-row');
+                const id = row.getAttribute('data-id');
+                const labelEl = row.querySelector('.checklist-label');
+                const oldLabel = labelEl.textContent;
+                const newLabel = prompt('Edit checklist task:', oldLabel);
+                
+                if (newLabel && newLabel.trim() !== '' && newLabel.trim() !== oldLabel) {
+                    updateChecklistItem(id, { label: newLabel.trim() });
+                    labelEl.textContent = newLabel.trim();
+                }
+            });
+        });
+
         // Export / Import backup
         const exportBtn = document.getElementById('exportIncidentsBtn');
         const importInput = document.getElementById('importIncidentsInput');
@@ -1870,11 +2111,16 @@
                 div.innerHTML = '' +
                     '<div class="form-check flex-grow-1">' +
                     '  <input class="form-check-input checklist-toggle" type="checkbox" id="checklist_' + item.id + '">' +
-                    '  <label class="form-check-label fw-600 ms-1" for="checklist_' + item.id + '">' + escapeHtml(item.label) + '</label>' +
+                    '  <label class="form-check-label fw-600 ms-1 small checklist-label" for="checklist_' + item.id + '">' + escapeHtml(item.label) + '</label>' +
                     '</div>' +
-                    '<button type="button" class="btn btn-sm btn-outline-danger ms-2 checklist-delete" title="Remove item">' +
-                    '  <i class="fas fa-trash"></i>' +
-                    '</button>';
+                    '<div class="d-flex align-items-center">' +
+                    '  <button type="button" class="btn btn-sm text-muted ms-1 checklist-edit" title="Edit task" style="padding: 0 5px;">' +
+                    '    <i class="fas fa-pen x-small" style="font-size: 0.7rem;"></i>' +
+                    '  </button>' +
+                    '  <button type="button" class="btn btn-sm text-danger ms-1 checklist-delete" title="Remove item" style="padding: 0 5px;">' +
+                    '    <i class="fas fa-trash small"></i>' +
+                    '  </button>' +
+                    '</div>';
                 container.appendChild(div);
                 input.value = '';
 
@@ -1904,10 +2150,93 @@
                         alert('Failed to delete checklist item.');
                     });
                 });
+                div.querySelector('.checklist-edit').addEventListener('click', function () {
+                    const row = this.closest('.checklist-item-row');
+                    const id = row.getAttribute('data-id');
+                    const labelEl = row.querySelector('.checklist-label');
+                    const oldLabel = labelEl.textContent;
+                    const newLabel = prompt('Edit checklist task:', oldLabel);
+                    
+                    if (newLabel && newLabel.trim() !== '' && newLabel.trim() !== oldLabel) {
+                        updateChecklistItem(id, { label: newLabel.trim() });
+                        labelEl.textContent = newLabel.trim();
+                    }
+                });
             }).catch(() => {
                 alert('Failed to add checklist item.');
             });
         });
+
+        // Activity History Modal Navigation
+        let currentHistoryDate = new Date();
+        currentHistoryDate.setDate(1); // Set to first of month
+
+        function fetchHistory(year, month) {
+            const container = document.getElementById('historyGridContainer');
+            container.innerHTML = '<div class="col-12 py-5 text-center w-100"><span class="spinner-border text-warning border-4"></span><p class="mt-3 fs-5 text-muted">Loading history...</p></div>';
+            
+            fetch(`${checklistHistoryUrl}?year=${year}&month=${month}`)
+                .then(r => r.json())
+                .then(resp => {
+                    if (resp.success) {
+                        document.getElementById('currentHistoryMonthLabel').textContent = resp.month_name;
+                        
+                        let html = '';
+                        const history = resp.history;
+                        const datesArray = Object.keys(history);
+                        
+                        if (datesArray.length === 0) {
+                            html = '<div class="col-12 py-5 text-center w-100">' +
+                                   '  <i class="fas fa-clipboard-list fa-3x text-muted mb-3 opacity-25"></i>' +
+                                   '  <p class="text-muted">No activities recorded for this period.</p>' +
+                                   '</div>';
+                        } else {
+                            datesArray.forEach(date => {
+                                const items = history[date];
+                                const d = new Date(date);
+                                const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+                                const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
+                                
+                                html += `<div class="history-day-card shadow-sm">
+                                            <div class="history-day-title d-flex justify-content-between">
+                                                <span>${dateStr}</span>
+                                                <span class="text-muted" style="font-size: 0.65rem;">${dayName}</span>
+                                            </div>`;
+                                
+                                items.forEach(item => {
+                                    html += `<div class="history-item">
+                                                <i class="fas ${item.is_completed ? 'fa-check-circle text-success' : 'fa-times-circle text-muted'}"></i>
+                                                <span class="${item.is_completed ? 'text-dark fw-bold' : 'text-muted'} text-truncate" title="${item.label}">${item.label}</span>
+                                            </div>`;
+                                });
+                                
+                                html += `</div>`;
+                            });
+                        }
+                        container.innerHTML = html;
+                    }
+                })
+                .catch(err => {
+                    container.innerHTML = '<div class="text-danger text-center w-100 py-4"><i class="fas fa-exclamation-triangle mb-2"></i><br>Failed to load history items.</div>';
+                });
+        }
+
+        const prevBtn = document.getElementById('prevHistoryMonth');
+        const nextBtn = document.getElementById('nextHistoryMonth');
+        
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                currentHistoryDate.setMonth(currentHistoryDate.getMonth() - 1);
+                fetchHistory(currentHistoryDate.getFullYear(), currentHistoryDate.getMonth() + 1);
+            });
+        }
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                currentHistoryDate.setMonth(currentHistoryDate.getMonth() + 1);
+                fetchHistory(currentHistoryDate.getFullYear(), currentHistoryDate.getMonth() + 1);
+            });
+        }
 
         function formatFileSize(bytes) {
             if (!bytes) return '0 B';

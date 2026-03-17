@@ -1,4 +1,4 @@
-﻿@extends('layouts.fire-safety')
+@extends('layouts.fire-safety')
 
 @section('title', 'Buildings - Fire Safety')
 @section('page_title', 'Buildings & Alarms')
@@ -372,6 +372,9 @@
                                                                 onclick="openBuildingAlarms({{ $building->id }})">
                                                             <i class="fas fa-bell me-2"></i> Manage Alarms
                                                         </button>
+                                                        <a href="{{ route('fire-safety.extinguishers') }}?building_id={{ $building->id }}" class="btn btn-sm btn-outline-primary shadow-sm mt-1">
+                                                            <i class="fas fa-fire-extinguisher me-2"></i> Manage Fire Extinguisher
+                                                        </a>
                                                         @endif
                                                     </div>
                                                 </div>

@@ -484,6 +484,13 @@
                                             </div>
                                         @endif
                                     </div>
+                                    <div class="card-footer bg-white border-top-0 pt-0 pb-4">
+                                        <div class="d-flex justify-content-center mt-3">
+                                            <a href="{{ route('fire-safety.evacuation-plans') }}" class="btn btn-outline-info shadow-sm px-4">
+                                                <i class="fas fa-map-marked-alt me-2"></i> See Plans & Map
+                                            </a>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -631,8 +638,8 @@
                         <input type="hidden" id="updateExtId" name="extinguisher_id">
 
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Extinguisher Code</label>
-                            <input type="text" class="form-control bg-light" id="updateExtCode" readonly>
+                            <label class="form-label fw-bold">Extinguisher Code *</label>
+                            <input type="text" class="form-control bg-white" name="code" id="updateExtCode" required>
                         </div>
 
                         <div class="alert alert-light border mb-3">
@@ -3362,5 +3369,33 @@
             const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
             modal.show();
         }
+
+        // Auto-open building based on query parameter
+        function handleBuildingAutoOpen() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const buildingId = urlParams.get('building_id');
+            const schoolId = "{{ $activeSchool->id ?? '' }}";
+            
+            if (buildingId && schoolId) {
+                const targetId = `collapse-${schoolId}-${buildingId}`;
+                const targetEl = document.getElementById(targetId);
+                
+                if (targetEl) {
+                    const accordion = bootstrap.Collapse.getOrCreateInstance(targetEl);
+                    accordion.show();
+                    
+                    // Scroll to the building
+                    setTimeout(() => {
+                        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 500);
+                }
+            }
+        }
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            initStatusCarousel();
+            handleBuildingAutoOpen();
+        });
     </script>
 @endsection

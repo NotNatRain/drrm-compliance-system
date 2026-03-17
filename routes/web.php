@@ -214,6 +214,7 @@ Route::middleware(['auth', 'module.access:incident_checklist'])->group(function 
     Route::get('/incidents/print', [IncidentController::class, 'printMonth'])->name('incidents.print')->middleware('role:admin');
     Route::post('/incidents/store', [IncidentController::class, 'store'])->name('incidents.store')->middleware('role:admin');
     Route::get('/incidents/date/{date}', [IncidentController::class, 'getDateIncidents'])->name('incidents.date');
+    Route::put('/incidents/{id}', [IncidentController::class, 'update'])->name('incidents.update')->middleware('role:admin');
     Route::delete('/incidents/{id}', [IncidentController::class, 'destroy'])->name('incidents.destroy')->middleware('role:admin');
     Route::get('/incidents/search-schools', [IncidentController::class, 'searchSchools'])->name('incidents.search-schools');
     Route::get('/incidents/export', [IncidentController::class, 'export'])->name('incidents.export')->middleware('role:admin');
@@ -224,6 +225,7 @@ Route::middleware(['auth', 'module.access:incident_checklist'])->group(function 
     Route::put('/incidents/statuses/{id}', [IncidentController::class, 'updateIncidentStatus'])->name('incidents.statuses.update')->middleware('role:admin');
     // Checklist APIs (view/update only for assigned users)
     Route::get('/incidents/checklist', [IncidentController::class, 'getChecklist'])->name('incidents.checklist.index');
+    Route::get('/incidents/checklist/history', [IncidentController::class, 'getHistory'])->name('incidents.checklist.history');
     Route::post('/incidents/checklist', [IncidentController::class, 'storeChecklistItem'])->name('incidents.checklist.store');
     Route::put('/incidents/checklist/{id}', [IncidentController::class, 'updateChecklistItem'])->name('incidents.checklist.update');
     Route::delete('/incidents/checklist/{id}', [IncidentController::class, 'destroyChecklistItem'])->name('incidents.checklist.destroy');

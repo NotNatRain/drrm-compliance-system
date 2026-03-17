@@ -361,6 +361,11 @@
                                 <a class="dropdown-item" href="{{ route('users.index') }}">
                                     <i class="fas fa-users-cog me-2"></i> {{ Auth::user()->role === 'admin' ? 'User Accounts' : 'User Account' }}
                                 </a>
+                                @if(Auth::user()->role === 'admin')
+                                <a class="dropdown-item" href="{{ route('activity-logs.index') }}">
+                                    <i class="fas fa-clipboard-list me-2"></i> Log
+                                </a>
+                                @endif
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="{{ route('logout') }}"
                                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();">

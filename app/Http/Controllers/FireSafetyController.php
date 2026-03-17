@@ -858,6 +858,12 @@ class FireSafetyController extends Controller
 
         // Pre-load recent updates for each school to avoid "Loading..." state on page load
         foreach ($schools as $school) {
+            // Sort extinguishers naturally by code for each building
+            foreach ($school->buildings as $building) {
+                $sortedExts = $building->fireExtinguishers->sortBy('code', SORT_NATURAL)->values();
+                $building->setRelation('fireExtinguishers', $sortedExts);
+            }
+
             $school->recent_inspections_data = FireSafetyExtinguisherInspection::whereHas('extinguisher', function($q) use ($school) {
                     $q->where('school_id', $school->id);
                 })
@@ -1723,7 +1729,8 @@ public function storeRoom(Request $request)
             // Get all extinguishers in this building with their covered rooms
             $extinguishers = FireSafetyExtinguisher::where('building_id', $buildingId)
                 ->with('coveredRooms')
-                ->get();
+                ->get()
+                ->sortBy('code', SORT_NATURAL);
 
             // Get all covered room IDs
             $coveredRoomIds = $extinguishers
@@ -1834,6 +1841,7 @@ public function storeRoom(Request $request)
         }
 
         $request->validate([
+            'code' => 'required|string|max:255',
             'status' => 'required|in:active,expired,maintenance,missing,purchase,decommissioned',
             'pressure_level' => 'required|integer|min:0|max:100',
             'notes' => 'required|string',
@@ -1846,6 +1854,18 @@ public function storeRoom(Request $request)
             DB::beginTransaction();
 
             $ext = FireSafetyExtinguisher::findOrFail($id);
+
+            // Ensure code is unique within the same school
+            $codeExists = FireSafetyExtinguisher::where('school_id', $ext->school_id)
+                ->where('code', $request->code)
+                ->where('id', '!=', $id)
+                ->exists();
+            if ($codeExists) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Extinguisher code already exists for this school.'
+                ], 422);
+            }
 
             // A room can host its own extinguisher even if it was previously covered by another extinguisher.
             // Shared Space rooms can host up to 2 extinguishers; all others can host 1.
@@ -1872,6 +1892,7 @@ public function storeRoom(Request $request)
                 }
             }
 
+            $ext->code = $request->code;
             $ext->status = $request->status;
             $ext->pressure_level = $request->pressure_level;
             $ext->date_checked = now();
@@ -4605,7 +4626,9 @@ public function storeRoom(Request $request)
         $school = FireSafetySchool::findOrFail($schoolId);
         $extinguishers = FireSafetyExtinguisher::where('school_id', $schoolId)
             ->with(['building', 'centerRoom', 'coveredRooms'])
-            ->get();
+            ->get()
+            ->sortBy('code', SORT_NATURAL)
+            ->values();
 
         $rooms = FireSafetyRoom::where('school_id', $schoolId)
             ->with(['building', 'roomTypeConfig', 'extinguishersCoveringThisRoom', 'hostedExtinguisher'])

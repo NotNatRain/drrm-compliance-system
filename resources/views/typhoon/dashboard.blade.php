@@ -129,6 +129,11 @@
     .text-muted {
         color: var(--text-muted) !important;
     }
+
+    @keyframes typhoonSpin {
+        from { transform: rotate(0deg); }
+        to   { transform: rotate(360deg); }
+    }
 </style>
 @endpush
 
@@ -296,6 +301,79 @@
         </div>
     </div>
 
+    {{-- ═══ Active Typhoon Alert Banner (only shown when a TC is near Philippines) ═══ --}}
+    @if(!empty($activeTyphoon))
+    @php
+        $signalColors = [
+            1 => ['bg' => '#f59e0b', 'border' => '#d97706', 'text' => '#78350f', 'badge' => '#fde68a'],
+            2 => ['bg' => '#f97316', 'border' => '#ea580c', 'text' => '#431407', 'badge' => '#fed7aa'],
+            3 => ['bg' => '#ef4444', 'border' => '#dc2626', 'text' => '#450a0a', 'badge' => '#fecaca'],
+            4 => ['bg' => '#9333ea', 'border' => '#7c3aed', 'text' => '#2e1065', 'badge' => '#e9d5ff'],
+            5 => ['bg' => '#0f172a', 'border' => '#00d2ff', 'text' => '#e2e8f0', 'badge' => '#00d2ff'],
+        ];
+        $sc = $signalColors[$activeTyphoon['signal']] ?? $signalColors[1];
+    @endphp
+    <div class="mb-4" style="border-radius: 14px; overflow: hidden; box-shadow: 0 0 40px {{ $sc['border'] }}55;">
+        <div style="background: linear-gradient(135deg, {{ $sc['bg'] }} 0%, {{ $sc['border'] }} 100%); padding: 0; position: relative; overflow: hidden;">
+            
+            {{-- Animated rotating storm background --}}
+            <div style="position:absolute; top:-60px; right:-60px; width:220px; height:220px; border-radius:50%;
+                        border: 3px solid rgba(255,255,255,0.1);
+                        animation: typhoonSpin 8s linear infinite; pointer-events:none; opacity:0.3;">
+            </div>
+            <div style="position:absolute; top:-30px; right:-30px; width:160px; height:160px; border-radius:50%;
+                        border: 3px solid rgba(255,255,255,0.15);
+                        animation: typhoonSpin 5s linear infinite reverse; pointer-events:none; opacity:0.4;">
+            </div>
+
+            <div style="position:relative; z-index:2; display:flex; align-items:center; justify-content:space-between; padding: 1.25rem 1.75rem; gap: 1.5rem; flex-wrap:wrap;">
+                
+                {{-- Left: Storm icon + label --}}
+                <div style="display:flex; align-items:center; gap:1rem;">
+                    <div style="font-size:3rem; animation: typhoonSpin 4s linear infinite; line-height:1;">
+                        🌀
+                    </div>
+                    <div>
+                        <div style="font-size:0.65rem; color:rgba(255,255,255,0.75); text-transform:uppercase; letter-spacing:2px; font-weight:700; margin-bottom:0.2rem;">
+                            ⚠ PAGASA Active Weather Alert — Philippine Area of Responsibility
+                        </div>
+                        <div style="font-family:'Rajdhani',sans-serif; font-size:1.65rem; font-weight:800; color:#fff; letter-spacing:1px; line-height:1.1;">
+                            Effects of <span style="color:rgba(255,255,255,0.75); font-weight:500;">{{ $activeTyphoon['category'] }}</span>
+                            "<span style="color:#fff; font-weight:900;">{{ $activeTyphoon['name'] }}"</span>
+                        </div>
+                        <div style="font-size:0.78rem; color:rgba(255,255,255,0.8); margin-top:0.3rem;">
+                            <i class="fas fa-map-marker-alt me-1"></i> Affecting: <strong>Zambales · Olongapo City</strong> &nbsp;|&nbsp;
+                            <i class="fas fa-wind me-1"></i> Max Wind: <strong>{{ $activeTyphoon['wind_kph'] > 0 ? $activeTyphoon['wind_kph'].' km/h' : '--' }}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Right: PAGASA Signal + source note --}}
+                <div style="text-align:center; flex-shrink:0;">
+                    <div style="font-size:0.6rem; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:1px; margin-bottom:0.3rem;">TCWS Level</div>
+                    <div style="background:rgba(255,255,255,0.15); border:2px solid rgba(255,255,255,0.4); border-radius:12px; padding:0.5rem 1.5rem; backdrop-filter:blur(6px);">
+                        <div style="font-family:'Rajdhani',sans-serif; font-size:2.5rem; font-weight:900; color:#fff; line-height:1;">
+                            #{{ $activeTyphoon['signal'] }}
+                        </div>
+                        <div style="font-size:0.65rem; color:rgba(255,255,255,0.7); letter-spacing:1px; text-transform:uppercase;">Signal No.</div>
+                    </div>
+                    <div style="font-size:0.55rem; color:rgba(255,255,255,0.5); margin-top:0.4rem;">
+                        Source: GDACS · Auto-refreshes every 30 min
+                    </div>
+                </div>
+            </div>
+
+            {{-- Bottom stripe --}}
+            <div style="background:rgba(0,0,0,0.25); padding:0.4rem 1.75rem; font-size:0.7rem; color:rgba(255,255,255,0.65); display:flex; align-items:center; gap:0.75rem;">
+                <i class="fas fa-exclamation-circle me-1" style="color:rgba(255,255,255,0.9);"></i>
+                <strong style="color:#fff;">DepEd Reminder:</strong>
+                Classes in affected areas are automatically suspended under Tropical Cyclone Wind Signal {{ $activeTyphoon['signal'] >= 1 ? '#'.$activeTyphoon['signal'] : '' }}.
+                All DepEd-Zambales schools must activate their DRRM protocols immediately.
+            </div>
+        </div>
+    </div>
+    @endif
+
     {{-- Bottom Row: Evacuation Centers Status --}}
     <div class="row g-4">
         <div class="col-12">
@@ -309,6 +387,7 @@
                             <span class="badge bg-success">CLEARED</span>
                             <span class="badge bg-primary">OCCUPIED</span>
                             <span class="badge bg-danger">FULL</span>
+                            <span class="badge text-white" style="background-color: #6f42c1;">DECAMP</span>
                         </div>
                     </div>
                     <div class="p-4" style="background: white;">
@@ -410,6 +489,7 @@
                             <span class="badge bg-success">CLEARED</span>
                             <span class="badge bg-primary">OCCUPIED</span>
                             <span class="badge bg-danger">FULL</span>
+                            <span class="badge text-white" style="background-color: #6f42c1;">DECAMP</span>
                         </div>
                     </div>
                     <div class="table-responsive">
