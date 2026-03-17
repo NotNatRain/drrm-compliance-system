@@ -128,7 +128,7 @@
 @section('content')
 <div class="container-fluid">
     {{-- Header --}}
-    <div class="d-flex justify-content-between align-items-center mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
         <div class="d-flex align-items-center">
             <a href="{{ route('typhoon.dashboard') }}" class="btn btn-outline-info border-0 me-3" title="Back">
                 <i class="fas fa-chevron-left fa-lg"></i>
@@ -158,6 +158,11 @@
                 <button type="button" class="btn btn-primary px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#updateCenterStatusModal">
                     <i class="fas fa-edit me-2"></i>Update Site
                 </button>
+                @if(auth()->user()->role === 'admin')
+                <button type="button" class="btn btn-secondary px-3" data-bs-toggle="modal" data-bs-target="#chooseSchoolModal" title="Choose Center">
+                    <i class="fas fa-school"></i>
+                </button>
+                @endif
             </div>
         </div>
     </div>
@@ -481,5 +486,6 @@
     }
 </script>
 @endpush
+    @include('typhoon.partials.choose-school-modal')
 @endsection
 

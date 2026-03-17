@@ -439,52 +439,114 @@
 
                                 <!-- TAB 2: EVACUATION MAP -->
                                 <div class="tab-pane fade" id="map-content-{{ $school->id }}" role="tabpanel" aria-labelledby="map-tab-{{ $school->id }}">
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <div>
-                                            <h6 class="fw-bold text-primary mb-1">
-
-                                                Visual Evacuation Map
-                                            </h6>
-                                            <small class="text-muted"><i class="fas fa-info-circle me-1"></i>Drag buildings to arrange layout. Click 'Edit Placement' to unlock.</small>
-                                        </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                                        <h6 class="m-0 fw-bold text-primary">
+                                            Evacuation Map Overview
+                                        </h6>
                                          <div>
-                                            @if(auth()->user()->role !== 'viewer')
-                                            <button class="btn btn-outline-success btn-sm me-2 no-print" onclick="openAddFacilityModal({{ $school->id }})">
-                                                <i class="fas fa-plus me-2"></i> Add Facility
-                                            </button>
-                                            <button class="btn btn-outline-secondary btn-sm me-2 no-print" onclick="printEvacuationMap({{ $school->id }})">
-                                                <i class="fas fa-print me-2"></i> Print Map
-                                            </button>
-                                            <button class="btn btn-outline-primary btn-sm me-2 no-print" id="edit-placement-btn-{{ $school->id }}" onclick="toggleMapEdit({{ $school->id }})">
-                                                <i class="fas fa-arrows-alt me-2"></i> Edit Placement
-                                            </button>
-                                            <button class="btn btn-outline-warning btn-sm me-2 no-print" onclick="openNotifyAdminModal({{ $school->id }})">
-                                                <i class="fas fa-bullhorn me-2"></i> Notify Administrator
-                                            </button>
-                                            @endif
+                                             @if(auth()->user()->role !== 'viewer')
+                                                 <div class="btn-group btn-group-sm no-print" role="group">
+                                                     <input type="radio" class="btn-check" name="mapViewMode-{{ $school->id }}" id="generatedMapView-{{ $school->id }}" autocomplete="off" checked onclick="toggleMapView('generated', {{ $school->id }})">
+                                                     <label class="btn btn-outline-primary" for="generatedMapView-{{ $school->id }}">Generated</label>
+                                                     <input type="radio" class="btn-check" name="mapViewMode-{{ $school->id }}" id="attachedMapView-{{ $school->id }}" autocomplete="off" onclick="toggleMapView('attached', {{ $school->id }})">
+                                                     <label class="btn btn-outline-primary" for="attachedMapView-{{ $school->id }}">Attached</label>
+                                                 </div>
+                                             @endif
+                                         </div>
+                                     </div>
+                                    
+                                    <div id="generated-map-view-{{ $school->id }}">
+                                        <div class="d-flex justify-content-between align-items-center mb-3 mt-3">
+                                            <div>
+                                                <h6 class="fw-bold text-primary mb-1">
+                                                    Visual Evacuation Map
+                                                </h6>
+                                                <small class="text-muted"><i class="fas fa-info-circle me-1"></i>Drag buildings to arrange layout. Click 'Edit Placement' to unlock.</small>
+                                            </div>
+                                             <div>
+                                                @if(auth()->user()->role !== 'viewer')
+                                                <button class="btn btn-outline-success btn-sm me-2 no-print" onclick="openAddFacilityModal({{ $school->id }})">
+                                                    <i class="fas fa-plus me-2"></i> Add Facility
+                                                </button>
+                                                <button class="btn btn-outline-secondary btn-sm me-2 no-print" onclick="printEvacuationMap({{ $school->id }})">
+                                                    <i class="fas fa-print me-2"></i> Print Map
+                                                </button>
+                                                <button class="btn btn-outline-primary btn-sm me-2 no-print" id="edit-placement-btn-{{ $school->id }}" onclick="toggleMapEdit({{ $school->id }})">
+                                                    <i class="fas fa-arrows-alt me-2"></i> Edit Placement
+                                                </button>
+                                                <button class="btn btn-outline-warning btn-sm me-2 no-print" onclick="openNotifyAdminModal({{ $school->id }})">
+                                                    <i class="fas fa-bullhorn me-2"></i> Notify Administrator
+                                                </button>
+                                                @endif
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div class="school-map-canvas-container" style="position: relative; width: 100%; height: 800px; background: #e9ecef; border: 2px solid #333; overflow: hidden; border-radius: 4px; box-shadow: inset 0 0 20px rgba(0,0,0,0.1);">
-                                        <div id="school-map-canvas-{{ $school->id }}" class="school-map-canvas" style="width: 100%; height: 100%; position: relative;">
-                                            <div class="text-center pt-5 text-muted">
-                                                <i class="fas fa-spinner fa-spin fa-3x mb-3"></i><br>Loading Map Data...
+                                        <div class="school-map-canvas-container" style="position: relative; width: 100%; height: 800px; background: #e9ecef; border: 2px solid #333; overflow: hidden; border-radius: 4px; box-shadow: inset 0 0 20px rgba(0,0,0,0.1);">
+                                            <div id="school-map-canvas-{{ $school->id }}" class="school-map-canvas" style="width: 100%; height: 100%; position: relative;">
+                                                <div class="text-center pt-5 text-muted">
+                                                    <i class="fas fa-spinner fa-spin fa-3x mb-3"></i><br>Loading Map Data...
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="mt-3 p-3 bg-white border rounded shadow-sm">
+                                            <h6 class="fw-bold fs-sm mb-2 text-dark border-bottom pb-2">Map Legend:</h6>
+                                            <div class="d-flex flex-wrap gap-4 text-secondary small">
+                                                <div class="d-flex align-items-center"><span style="width: 30px; height: 30px; background: white; border: 2px solid black; margin-right: 8px; display:inline-block;"></span> <strong>Building</strong></div>
+                                                <div class="d-flex align-items-center"><span style="width: 24px; height: 1px; background: black; margin-right: 8px; display:inline-block;"></span> <strong>Floor Divider</strong></div>
+                                                <div class="d-flex align-items-center"><span style="width: 15px; height: 15px; background: #f0f0f0; border: 1px solid #333; margin-right: 8px; display:inline-block;"></span> <strong>Room</strong></div>
+                                                <div class="d-flex align-items-center"><span style="font-size: 16px; margin-right: 8px;">🧯</span> <strong>Fire Extinguisher</strong></div>
+                                                <div class="d-flex align-items-center"><span style="font-size: 16px; margin-right: 8px;">🔔</span> <strong>Alarm System</strong></div>
+                                                <div class="d-flex align-items-center"><span style="font-size: 14px; margin-right: 8px;">⚪</span> <strong>Smoke Detector</strong></div>
+                                                <div class="d-flex align-items-center"><span style="background: green; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-right: 8px;">Plan OK</span> <strong>Evacuation Plan</strong></div>
+                                                <div class="d-flex align-items-center"><span style="width: 20px; height: 10px; background: #28a745; border: 1px solid rgba(0,0,0,0.2); margin-right: 8px; display:inline-block;"></span> <strong>Campus Facility</strong></div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div class="mt-3 p-3 bg-white border rounded shadow-sm">
-                                        <h6 class="fw-bold fs-sm mb-2 text-dark border-bottom pb-2">Map Legend:</h6>
-                                        <div class="d-flex flex-wrap gap-4 text-secondary small">
-                                            <div class="d-flex align-items-center"><span style="width: 30px; height: 30px; background: white; border: 2px solid black; margin-right: 8px; display:inline-block;"></span> <strong>Building</strong></div>
-                                            <div class="d-flex align-items-center"><span style="width: 24px; height: 1px; background: black; margin-right: 8px; display:inline-block;"></span> <strong>Floor Divider</strong></div>
-                                            <div class="d-flex align-items-center"><span style="width: 15px; height: 15px; background: #f0f0f0; border: 1px solid #333; margin-right: 8px; display:inline-block;"></span> <strong>Room</strong></div>
-                                            <div class="d-flex align-items-center"><span style="font-size: 16px; margin-right: 8px;">🧯</span> <strong>Fire Extinguisher</strong></div>
-                                            <div class="d-flex align-items-center"><span style="font-size: 16px; margin-right: 8px;">🔔</span> <strong>Alarm System</strong></div>
-                                            <div class="d-flex align-items-center"><span style="font-size: 14px; margin-right: 8px;">⚪</span> <strong>Smoke Detector</strong></div>
-                                            <div class="d-flex align-items-center"><span style="background: green; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-right: 8px;">Plan OK</span> <strong>Evacuation Plan</strong></div>
-                                            <div class="d-flex align-items-center"><span style="width: 20px; height: 10px; background: #28a745; border: 1px solid rgba(0,0,0,0.2); margin-right: 8px; display:inline-block;"></span> <strong>Campus Facility</strong></div>
+                                    <!-- ATTACHED VIEW -->
+                                    <div id="attached-map-view-{{ $school->id }}" style="display: none;">
+                                        <div class="d-flex justify-content-between align-items-center mb-3 mt-3">
+                                            <div>
+                                                <h6 class="fw-bold text-primary mb-1">
+                                                    Visual Evacuation Map
+                                                </h6>
+                                            </div>
                                         </div>
+                                        
+                                        @if($school->attached_evacuation_map)
+                                            <div class="border rounded p-3 text-center bg-light">
+                                                <img src="{{ asset('storage/' . $school->attached_evacuation_map) }}" class="img-fluid" alt="Attached Evacuation Map" style="max-height: 800px; width: auto;">
+                                                <div class="mt-3">
+                                                    @if(auth()->user()->role !== 'viewer')
+                                                        <form action="{{ route('fire-safety.school.upload-map', $school->id) }}" method="POST" enctype="multipart/form-data" class="d-inline-block">
+                                                            @csrf
+                                                            <input type="file" name="evacuation_map" id="mapUploadInput-{{ $school->id }}" accept=".jpg,.jpeg,.png" style="display: none;" onchange="this.form.submit()">
+                                                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="document.getElementById('mapUploadInput-{{ $school->id }}').click()">
+                                                                <i class="fas fa-upload me-1"></i> Update Attached Map
+                                                            </button>
+                                                        </form>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @else
+                                            <div class="text-center py-5 border rounded bg-light border-dashed" style="border-width: 2px !important; border-color: #dee2e6 !important;">
+                                                <i class="fas fa-map-marked-alt fa-3x text-muted mb-3"></i>
+                                                <h5>No attached map yet</h5>
+                                                @if(auth()->user()->role !== 'viewer')
+                                                    <p class="text-muted small mb-3">Upload your custom visual evacuation map here (JPEG/PNG).</p>
+                                                    <form action="{{ route('fire-safety.school.upload-map', $school->id) }}" method="POST" enctype="multipart/form-data">
+                                                        @csrf
+                                                        <input type="file" name="evacuation_map" id="mapUploadInput-{{ $school->id }}" accept=".jpg,.jpeg,.png" style="display: none;" onchange="this.form.submit()">
+                                                        <button type="button" class="btn btn-primary btn-sm mt-1" onclick="document.getElementById('mapUploadInput-{{ $school->id }}').click()">
+                                                            <i class="fas fa-upload me-1"></i> Attached Now
+                                                        </button>
+                                                    </form>
+                                                @else
+                                                    <p class="text-muted small mb-0">No custom visual evacuation map has been uploaded.</p>
+                                                @endif
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
                                 </div> <!-- End Tab Content -->
@@ -2423,6 +2485,18 @@
             bootstrap.Modal.getInstance(document.getElementById('editFacilityModal')).hide();
             const saveBtn = document.getElementById(`save-placement-btn-${currentSchoolId}`);
             if (saveBtn) saveBtn.disabled = false;
+        }
+        function toggleMapView(mode, id) {
+            const generatedView = document.getElementById('generated-map-view-' + id);
+            const attachedView = document.getElementById('attached-map-view-' + id);
+            
+            if (mode === 'generated') {
+                generatedView.style.display = 'block';
+                attachedView.style.display = 'none';
+            } else {
+                generatedView.style.display = 'none';
+                attachedView.style.display = 'block';
+            }
         }
 
         function togglePlanView(mode, schoolId) {

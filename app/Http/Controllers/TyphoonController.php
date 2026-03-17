@@ -325,7 +325,7 @@ class TyphoonController extends Controller
 
         // permission: contributor can only create under their school
         $user = auth()->user();
-        if ($user->role !== 'admin' && $user->school_id != $ec->school_id) {
+        if ($user->role !== 'admin' && $user->school_id != $ec->school_id && $user->typhoon_school_id != $ec->id) {
             return redirect()->back()->with('error', 'Unauthorized evacuation center.');
         }
 
@@ -370,7 +370,7 @@ class TyphoonController extends Controller
     {
         $ec = TypFldEvacuationCenter::with('school')->findOrFail($id);
         $user = auth()->user();
-        if ($user->role !== 'admin' && $user->school_id != $ec->school_id) {
+        if ($user->role !== 'admin' && $user->school_id != $ec->school_id && $user->typhoon_school_id != $ec->id) {
             abort(403, 'Unauthorized');
         }
 
@@ -389,11 +389,21 @@ class TyphoonController extends Controller
             ->whereNull('typ_fld_families.checked_out_at')
             ->count();
 
+        $evacuationCenters = TypFldEvacuationCenter::with('school')->get()->map(function ($center) {
+            $center->current_occupancy = TypFldFamilyMember::query()
+                ->join('typ_fld_families', 'typ_fld_families.id', '=', 'typ_fld_family_members.family_id')
+                ->where('typ_fld_families.evacuation_center_id', $center->id)
+                ->whereNull('typ_fld_families.checked_out_at')
+                ->count();
+            return $center;
+        });
+
         return view('typhoon.evacuation-center', [
             'ec' => $ec,
             'families' => $families,
             'lastUsedAt' => $lastUsedAt,
             'currentOccupancy' => $currentOccupancy,
+            'evacuationCenters' => $evacuationCenters,
         ]);
     }
 
@@ -465,7 +475,7 @@ class TyphoonController extends Controller
     {
         $ec = TypFldEvacuationCenter::with('school')->findOrFail($id);
         $user = auth()->user();
-        if ($user->role !== 'admin' && $user->school_id != $ec->school_id) {
+        if ($user->role !== 'admin' && $user->school_id != $ec->school_id && $user->typhoon_school_id != $ec->id) {
             abort(403, 'Unauthorized');
         }
 

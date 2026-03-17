@@ -4903,4 +4903,33 @@ public function storeRoom(Request $request)
 
         return response()->json(['success' => true, 'message' => 'Reply sent successfully!']);
     }
+    public function uploadMap(Request $request, $id)
+    {
+        $school = FireSafetySchool::findOrFail($id);
+
+        if (auth()->user()->role !== 'admin' && (int)auth()->user()->school_id !== (int)$school->id) {
+            return redirect()->back()->with('error', 'Unauthorized access.');
+        }
+
+        $request->validate([
+            'evacuation_map' => 'required|image|mimes:jpeg,png,jpg|max:5120',
+        ]);
+
+        if ($request->hasFile('evacuation_map')) {
+            if ($school->attached_evacuation_map) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($school->attached_evacuation_map);
+            }
+            $path = $request->file('evacuation_map')->store('evacuation_maps', 'public');
+            $school->attached_evacuation_map = $path;
+            $school->save();
+
+            \App\Models\ActivityLog::log('fire_safety', 'Uploaded Custom Evacuation Map', [
+                'school_id' => $school->id,
+            ]);
+
+            return redirect()->back()->with('success', 'Evacuation Map uploaded successfully.');
+        }
+
+        return redirect()->back()->with('error', 'Failed to upload image.');
+    }
 }

@@ -485,7 +485,7 @@
                                         @endif
                                     </div>
                                     <div class="card-footer bg-white border-top-0 pt-0 pb-4">
-                                        <div class="d-flex justify-content-center mt-3">
+                                        <div class="d-flex justify-content-end mt-3">
                                             <a href="{{ route('fire-safety.evacuation-plans') }}" class="btn btn-outline-info shadow-sm px-4">
                                                 <i class="fas fa-map-marked-alt me-2"></i> See Plans & Map
                                             </a>

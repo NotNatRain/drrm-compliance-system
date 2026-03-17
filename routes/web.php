@@ -125,6 +125,9 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     Route::post('/school', [FireSafetyController::class, 'storeSchool'])
         ->name('fire-safety.school.store')
         ->middleware('auth');
+    Route::post('/school/{id}/upload-map', [FireSafetyController::class, 'uploadMap'])
+        ->name('fire-safety.school.upload-map')
+        ->middleware('auth');
     Route::put('/school/{id}', [FireSafetyController::class, 'updateSchool'])
         ->name('fire-safety.school.update')
         ->middleware('auth');

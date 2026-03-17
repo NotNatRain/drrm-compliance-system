@@ -18,6 +18,7 @@ class FireSafetySchool extends Model
         'school_drrm_coordinator', 
         'status',
         'evacuation_map_layout',
+        'attached_evacuation_map',
         'alerts',
         'events'
     ];

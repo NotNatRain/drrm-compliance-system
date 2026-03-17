@@ -164,12 +164,14 @@
                 <button class="btn btn-success px-3 fw-bold" onclick="document.getElementById('socialPrintModal').style.display='flex'" title="Send to Social">
                     <i class="fas fa-share-alt me-2"></i>Send to Social
                 </button>
+                @if(auth()->user()->role === 'admin')
                 <button type="button" class="btn btn-primary px-3" data-bs-toggle="modal" data-bs-target="#createEvacCenterModal">
                     <i class="fas fa-plus-circle me-2"></i>Add Center
                 </button>
-                <button type="button" class="btn btn-secondary px-3" data-bs-toggle="modal" data-bs-target="#chooseSchoolModal">
+                <button type="button" class="btn btn-secondary px-3" data-bs-toggle="modal" data-bs-target="#chooseSchoolModal" title="Choose Center">
                     <i class="fas fa-school"></i>
                 </button>
+                @endif
             </div>
         </div>
     </div>
