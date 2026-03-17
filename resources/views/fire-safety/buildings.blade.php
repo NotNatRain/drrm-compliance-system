@@ -350,12 +350,14 @@
                                                                 @endforelse
                                                             </div>
                                                         </div>
-                                                        <small class="d-block mb-2">
-                                                            <i class="fas fa-fire-extinguisher text-primary me-1"></i> Extinguishers: <strong>{{ $extinguisherCount }}</strong>
-                                                        </small>
-                                                        <small class="d-block">
-                                                            <i class="fas fa-door-open text-warning me-1"></i> Exits: <strong>{{ $building->emergency_exits ?? 0 }}</strong>
-                                                        </small>
+                                                        <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                                                            <small class="text-truncate text-muted" title="Building Type">
+                                                                <i class="fas fa-city me-1"></i> {{ $building->building_type ?? 'Unknown Type' }}
+                                                            </small>
+                                                            <small class="text-nowrap" title="Fire Extinguishers Count">
+                                                                <i class="fas fa-fire-extinguisher text-primary me-1"></i> <strong>{{ $extinguisherCount }}</strong>
+                                                            </small>
+                                                        </div>
                                                     </div>
 
                                                     <div class="mt-3 d-grid gap-2">
@@ -562,7 +564,7 @@
                                     <label class="form-label fw-bold">Building Type *</label>
                                     <select class="form-control" name="building_type" id="building_type_select" required>
                                         <option value="">Select Type</option>
-                                        @foreach($buildingTypes as $type)
+                                        @foreach($buildingTypes->unique('name') as $type)
                                             <option value="{{ $type->name }}">{{ $type->name }} {{ in_array(strtolower($type->name), ['gymnasium', 'cafeteria']) ? '(1 Floor/1 Room)' : '' }}</option>
                                         @endforeach
                                     </select>
@@ -1934,7 +1936,7 @@
                 form.querySelector('[name="emergency_exits"]').value = building.emergency_exits || 0;
                 const typeSelect = form.querySelector('[name="building_type"]');
                 typeSelect.value = building.building_type || '';
-                typeSelect.disabled = true; // Building type can't be edited
+                typeSelect.disabled = false; // Building type CAN be edited now
 
                 form.querySelector('[name="description"]').value = building.description || '';
 
@@ -1960,7 +1962,7 @@
                 const saveBtn = editModalEl.querySelector('#btnSaveBuilding');
                 const originalOnClick = saveBtn.getAttribute('onclick');
                 saveBtn.innerHTML = '<i class="fas fa-save me-2"></i> Update Information';
-                saveBtn.setAttribute('onclick', `updateBuilding(${building.id}, '${building.building_no}')`);
+                saveBtn.setAttribute('onclick', `updateBuilding(${building.id}, '${building.building_no}', '${building.building_type}')`);
 
                 // Reset modal on hide
                 editModalEl.addEventListener('hidden.bs.modal', function() {
@@ -1995,24 +1997,30 @@
             }
         }
 
-        async function updateBuilding(buildingId, oldBuildingNo) {
+        async function updateBuilding(buildingId, oldBuildingNo, oldBuildingType) {
             const form = document.getElementById('addBuildingForm');
             const formData = new FormData(form);
             const newBuildingNo = formData.get('building_no');
-
-            if (newBuildingNo !== oldBuildingNo) {
-                const result = await Swal.fire({
-                    title: 'Confirmation',
-                    text: "Are sure you want to update Building Code?",
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#A8191F',
-                    confirmButtonText: 'Yes, update it!',
-                    cancelButtonText: 'No, cancel!'
-                });
-
-                 if (!result.isConfirmed) return;
+            const newBuildingType = formData.get('building_type');
+            
+            // Re-append the select value in case it is somehow disabled
+            if (!newBuildingType) {
+                 const typeSelect = form.querySelector('[name="building_type"]');
+                 formData.set('building_type', typeSelect.value);
             }
+
+            // Always ask for confirmation on edit
+            const result = await Swal.fire({
+                title: 'Confirm Update',
+                text: "Are you sure you want to update this building's information?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#A8191F',
+                confirmButtonText: 'Yes, update it!',
+                cancelButtonText: 'No, cancel!'
+            });
+
+            if (!result.isConfirmed) return;
 
             try {
                 const response = await fetch(form.action, {
@@ -4072,6 +4080,7 @@
                 showCancelButton: true,
                 confirmButtonColor: '#A8191F',
                 confirmButtonText: 'Permanently Delete Building',
+                target: document.getElementById('addBuildingModal') || document.body,
                 inputValidator: (value) => {
                     if (!value) return 'You need to write a reason!'
                 }
@@ -4110,7 +4119,7 @@
             modal.show();
 
             try {
-                const response = await fetch(`/fire-safety/building/history/${schoolId}`);
+                const response = await fetch(`/fire-safety/building/removed-history/${schoolId}`);
                 const history = await response.json();
 
                 if (history.length === 0) {

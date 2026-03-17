@@ -2318,7 +2318,7 @@ public function storeRoom(Request $request)
         }
 
         $activeSchool = $this->getActiveSchool($schools);
-        $buildingTypes = SystemConfiguration::where('config_type', 'building_type')->where('is_active', true)->orderBy('sort_order')->get();
+        $buildingTypes = SystemConfiguration::where('config_type', 'building_type')->where('is_active', true)->orderBy('sort_order')->get()->unique('name');
         $checklists = SystemConfiguration::where('config_type', 'inspection_checklist')->where('is_active', true)->orderBy('sort_order')->get();
         $observers = SystemConfiguration::where('config_type', 'inspection_observer')->where('is_active', true)->orderBy('sort_order')->get();
 
@@ -2472,6 +2472,7 @@ public function storeRoom(Request $request)
         $validated = $request->validate([
             'building_no' => 'required|string|max:50',
             'building_name' => 'nullable|string|max:100',
+            'building_type' => 'nullable|string|max:100',
             'floors' => 'nullable|integer|min:1',
             'rooms' => 'nullable|integer|min:1',
             'year_constructed' => 'nullable|integer|min:1900|max:' . date('Y'),
@@ -2501,8 +2502,10 @@ public function storeRoom(Request $request)
             }
         }
 
-        // Gymnasium & Cafeteria restriction is enforced at creation only
-        // Building type cannot be changed after creation
+        // Handle Building Type update
+        if (isset($validated['building_type']) && $validated['building_type'] !== $building->building_type) {
+            $building->building_type = $validated['building_type'];
+        }
 
         // Convert features array to comma-separated string
         if (isset($validated['features'])) {
@@ -2702,12 +2705,32 @@ public function storeRoom(Request $request)
             ]);
 
             // Cascade deletes manually to be safe
-            $building->alarmSystems()->delete();
+            // Archive and delete Alarms
+            $alarms = $building->alarmSystems()->get();
+            foreach ($alarms as $alarm) {
+                FireSafetyArchive::create([
+                    'school_id' => $alarm->school_id ?? $building->school_id,
+                    'type' => 'alarm',
+                    'item_id' => null, // Deleting
+                    'item_code' => $alarm->code,
+                    'item_data' => [
+                        'alarm_type' => $alarm->alarm_type,
+                        'status' => $alarm->status,
+                        'is_shared' => $alarm->is_shared ?? false,
+                        'building_name' => collect($alarm->buildings)->pluck('building_name')->implode(', ') ?: ($building->building_name ?? $building->building_no),
+                        'cascaded_from' => "Building {$building->building_no} Removal"
+                    ],
+                    'reason' => "Cascading removal: Building {$building->building_no} removed. Reason: " . $validated['reason'],
+                    'removed_at' => now()
+                ]);
+                $alarm->delete();
+            }
 
+            // Archive and delete Rooms (and Extinguishers)
             $rooms = FireSafetyRoom::where('building_id', $building->id)->get();
+            $cascadeReason = "Cascading removal: Building {$building->building_no} removed. Reason: " . $validated['reason'];
             foreach ($rooms as $room) {
-               FireSafetyExtinguisher::where('room_id', $room->id)->delete();
-               $room->delete();
+               $this->processRoomRemoval($room, $cascadeReason);
             }
 
             $schoolId = $building->school_id;
