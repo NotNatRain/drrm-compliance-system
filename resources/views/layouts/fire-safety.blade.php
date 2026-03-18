@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 70/30 Hybrid: Default to desktop view; prevent full mobile collapse -->
+    <meta name="viewport" content="width=1024">
     <title>@yield('title', 'Fire Safety Compliance System')</title>
     <link rel="icon" type="image/png" href="{{ asset('images/fire-safety-logo.png') }}">
     <link rel="apple-touch-icon" href="{{ asset('images/fire-safety-logo.png') }}">
@@ -76,7 +77,20 @@
             backdrop-filter: blur(2px);
         }
 
-        @media (max-width: 991.98px) {
+        /* ====================================================
+         * 70/30 HYBRID MOBILE APPROACH — Fire Safety Layout
+         *
+         * Desktop structure is PRESERVED. The sidebar stays
+         * at 250px and the layout is desktop-first.
+         * We only add minimal tweaks for narrow screens:
+         *  1. Hamburger menu slides the sidebar over content
+         *  2. Tables become horizontally scrollable
+         *  3. Buttons get a slightly larger tap target
+         *  4. Form column rows stack inside modals/forms
+         * ==================================================== */
+
+        /* ── Hamburger & Sidebar slide-over on narrow screens (>= 1024px viewport) ── */
+        @media (max-width: 1024.1px) {
             .sidebar-toggle {
                 display: block;
             }
@@ -92,11 +106,51 @@
             body.show-sidebar .sidebar-overlay {
                 display: block;
             }
-            .top-nav .col text-center h4 {
-                font-size: 1.1rem;
-            }
+            /* Hide the long system title text; keep logo */
             .top-nav .fw-bold {
                 display: none;
+            }
+
+            /* ── Scrollable Tables ── */
+            .table-responsive {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch;
+            }
+            /* Auto-wrap bare tables that aren't already in a .table-responsive */
+            .card-body > table,
+            .main-content > table {
+                display: block;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                max-width: 100%;
+            }
+
+            /* ── Slightly Larger Button Tap Targets ── */
+            .btn:not(.btn-sm):not(.btn-xs):not(.nav-link) {
+                min-height: 40px;
+                padding-top: 0.45rem !important;
+                padding-bottom: 0.45rem !important;
+            }
+
+            /* ── Stack Form Columns Only ── */
+            /* Targets col-md-* inside forms and modals */
+            .modal-body .row > [class*="col-md-"],
+            .modal-body .row > [class*="col-sm-"],
+            form .row > [class*="col-md-"],
+            form .row > [class*="col-sm-"] {
+                flex: 0 0 100% !important;
+                max-width: 100% !important;
+            }
+
+            /* ── Scrollable nav tabs (school tabs) ── */
+            .nav-tabs {
+                flex-wrap: nowrap !important;
+                overflow-x: auto !important;
+                overflow-y: hidden !important;
+                -webkit-overflow-scrolling: touch !important;
+            }
+            .nav-tabs .nav-link {
+                white-space: nowrap !important;
             }
         }
 
@@ -191,113 +245,7 @@
         }
 
 
-        /* Global Responsive Utilities */
-        @media (max-width: 767.98px) {
-            body { font-size: 0.85rem; }
-
-            /* Force stat cards to 2 columns on mobile (col-md-6 override) */
-            .stat-card .col-auto { display: none; } /* hide large icon on mobile */
-            .stat-card .card-body .row { display: block; }
-            .stat-card .card-body { padding: 8px !important; text-align: center; }
-            .stat-card .text-xs { font-size: 0.6rem !important; line-height: 1; margin-bottom: 2px !important; }
-            .stat-card .h2 { font-size: 1.1rem !important; margin-bottom: 0 !important; }
-
-            .main-content { padding: 10px; }
-
-            .card-header.d-flex, .card-header .d-flex {
-                flex-direction: column;
-                align-items: stretch !important;
-                gap: 8px;
-                padding: 10px !important;
-            }
-            .card-header h6 { font-size: 0.9rem !important; }
-
-            .card-header .btn-group, .card-header .d-flex {
-                width: 100%;
-                display: flex;
-                flex-direction: row !important;
-                flex-wrap: wrap;
-                gap: 5px;
-            }
-            .card-header .btn {
-                flex-grow: 1;
-                font-size: 0.75rem !important;
-                padding: 4px 8px !important;
-                margin-right: 0 !important;
-            }
-
-            /* Table Scaling */
-            .table { font-size: 0.75rem !important; }
-            .table th, .table td { padding: 6px 4px !important; }
-            .badge { font-size: 0.65rem !important; padding: 3px 6px !important; }
-
-            .h2 { font-size: 1.25rem !important; }
-            .h3 { font-size: 1.15rem !important; }
-            .h4 { font-size: 1rem !important; }
-            .h5 { font-size: 0.9rem !important; }
-            .h6 { font-size: 0.85rem !important; }
-
-            /* Compact Cards for Mobile */
-            .dashboard-card {
-                margin-bottom: 10px !important;
-            }
-            .dashboard-card .card-body { padding: 8px !important; }
-
-
-            .mobile-text-truncate {
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                max-width: 100%;
-            }
-
-            .mobile-stack {
-                flex-direction: column !important;
-                gap: 5px !important;
-            }
-
-            /* High Density Utilities - Mobile Only */
-            .mobile-card-body { padding: 8px !important; }
-            .mobile-compact-text { font-size: 0.75rem !important; }
-            .mobile-tiny-text { font-size: 0.65rem !important; }
-            .mobile-badge { font-size: 0.6rem !important; padding: 2px 4px !important; }
-            .mobile-h-80 { height: 80px !important; }
-            .mobile-mb-2 { margin-bottom: 0.5rem !important; }
-
-            /* Responsive Tabs */
-            .nav-tabs {
-                flex-wrap: nowrap !important;
-                overflow-x: auto !important;
-                overflow-y: hidden !important;
-                -webkit-overflow-scrolling: touch !important;
-                font-size: 0.75rem !important;
-            }
-            .nav-tabs .nav-link {
-                white-space: nowrap !important;
-                padding: 6px 10px !important;
-            }
-
-            /* Table Fitting Force */
-            .compact-mobile-table {
-                font-size: 0.65rem !important;
-                table-layout: fixed;
-                width: 100% !important;
-            }
-            .compact-mobile-table th, .compact-mobile-table td {
-                padding: 3px 2px !important;
-                word-wrap: break-word;
-                overflow-wrap: break-word;
-            }
-            .compact-mobile-table .badge {
-                font-size: 0.55rem !important;
-                padding: 1px 3px !important;
-            }
-
-            /* Admin Header Fix */
-            .settings-tabs .nav-link {
-                padding: 10px !important;
-            }
-        }
+        /* (Old aggressive mobile CSS removed — replaced by 70/30 hybrid approach above) */
 
         @yield('styles')
     </style>
@@ -808,7 +756,7 @@
             // Close sidebar on link click (mobile)
             document.querySelectorAll('.sidebar .nav-link').forEach(link => {
                 link.addEventListener('click', () => {
-                    if (window.innerWidth < 992) {
+                    if (window.innerWidth <= 1024.1) {
                         document.body.classList.remove('show-sidebar');
                     }
                 });

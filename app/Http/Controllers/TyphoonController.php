@@ -128,11 +128,15 @@ class TyphoonController extends Controller
 
         $dailyRainfallSum = $weatherData['daily']['precipitation_sum'][0] ?? 0.0;
 
-        // ─── Active Typhoon near Philippine Sea (via GDACS) ──────────────────────
-        // Covers Philippine Sea basin: lat 5–25°N, lon 115–135°E (where Zambales/Olongapo sits)
+        // ─── Active Typhoon near Olongapo City / Zambales (via GDACS) ───────────────
+        // Only alert if the typhoon's centre is within ~500 km of Olongapo City
         $activeTyphoon = cache()->remember('gdacs_active_typhoon_ph', 1800, function () {
+            // Olongapo City, Zambales coordinates
+            $targetLat = 14.838;
+            $targetLon = 120.282;
+            $radiusKm  = 500; // 500 km impact radius around Olongapo
+
             try {
-                // GDACS free API – active tropical cyclones, last 7 days
                 $url = 'https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH'
                      . '?eventtypes=TC&fromdate=' . now()->subDays(7)->format('Y-m-d')
                      . '&todate=' . now()->addDays(7)->format('Y-m-d')
@@ -142,58 +146,74 @@ class TyphoonController extends Controller
                 $raw = @file_get_contents($url, false, $ctx);
                 if (!$raw) return null;
 
-                $data = json_decode($raw, true);
+                $data     = json_decode($raw, true);
                 $features = $data['features'] ?? [];
 
-                // Philippine Sea bounding box: lat 5–25°N, lon 115–135°E
+                // Helper: Haversine distance in km between two lat/lon points
+                $haversine = function ($lat1, $lon1, $lat2, $lon2) {
+                    $R  = 6371; // Earth radius in km
+                    $dLat = deg2rad($lat2 - $lat1);
+                    $dLon = deg2rad($lon2 - $lon1);
+                    $a    = sin($dLat / 2) ** 2
+                            + cos(deg2rad($lat1)) * cos(deg2rad($lat2))
+                            * sin($dLon / 2) ** 2;
+                    return $R * 2 * atan2(sqrt($a), sqrt(1 - $a));
+                };
+
+                $closest     = null;
+                $closestDist = PHP_INT_MAX;
+
                 foreach ($features as $f) {
                     $coords = $f['geometry']['coordinates'] ?? null;
                     if (!$coords) continue;
 
-                    $lon = $coords[0];
-                    $lat = $coords[1];
+                    $lon = (float) $coords[0];
+                    $lat = (float) $coords[1];
 
-                    if ($lat >= 5 && $lat <= 25 && $lon >= 115 && $lon <= 135) {
-                        $props        = $f['properties'] ?? [];
-                        $rawName      = $props['name'] ?? ($props['htmldescription'] ?? 'Unnamed');
-                        $alertLevel   = strtolower($props['alertlevel'] ?? 'green');
-                        $windKph      = isset($props['maxwind']) ? round($props['maxwind'] * 3.6) : 0; // may be in m/s
+                    $distKm = $haversine($targetLat, $targetLon, $lat, $lon);
 
-                        // PAGASA Signal Number mapping
-                        if ($windKph >= 221)      $signal = 5;
-                        elseif ($windKph >= 180)  $signal = 4;
-                        elseif ($windKph >= 120)  $signal = 3;
-                        elseif ($windKph >= 60)   $signal = 2;
+                    // Only consider typhoons within the impact radius
+                    if ($distKm <= $radiusKm && $distKm < $closestDist) {
+                        $closestDist = $distKm;
+                        $props       = $f['properties'] ?? [];
+                        $rawName     = $props['name'] ?? ($props['htmldescription'] ?? 'Unnamed');
+                        $alertLevel  = strtolower($props['alertlevel'] ?? 'green');
+                        $windKph     = isset($props['maxwind']) ? round($props['maxwind'] * 3.6) : 0;
+
+                        // PAGASA TCWS Signal mapping
+                        if ($windKph >= 221)     $signal = 5;
+                        elseif ($windKph >= 180) $signal = 4;
+                        elseif ($windKph >= 120) $signal = 3;
+                        elseif ($windKph >= 60)  $signal = 2;
                         else {
-                            // Fall back to GDACS alert level
                             $signal = $alertLevel === 'red' ? 3 : ($alertLevel === 'orange' ? 2 : 1);
                         }
 
-                        // Determine typhoon category label (PAGASA style)
-                        if ($signal >= 5)       $category = 'Super Typhoon';
-                        elseif ($signal >= 4)   $category = 'Typhoon';
-                        elseif ($signal >= 3)   $category = 'Typhoon';
-                        elseif ($signal >= 2)   $category = 'Tropical Storm';
-                        else                    $category = 'Tropical Depression';
+                        // Typhoon category label (PAGASA style)
+                        if ($signal >= 5)      $category = 'Super Typhoon';
+                        elseif ($signal >= 3)  $category = 'Typhoon';
+                        elseif ($signal >= 2)  $category = 'Tropical Storm';
+                        else                   $category = 'Tropical Depression';
 
-                        // Clean up name (GDACS uses formats like "TC 2026001N11142")
+                        // Clean GDACS-style internal names (e.g. "TC 2026001N11142")
                         $cleanName = trim(preg_replace('/^TC\s*\d+[A-Z\d]+\s*/i', '', $rawName));
                         if (empty($cleanName) || strlen($cleanName) < 2) {
                             $cleanName = $props['eventid'] ?? 'Unnamed';
                         }
 
-                        return [
-                            'name'     => strtoupper($cleanName),
-                            'category' => $category,
-                            'signal'   => $signal,
-                            'wind_kph' => $windKph,
-                            'lat'      => $lat,
-                            'lon'      => $lon,
+                        $closest = [
+                            'name'        => strtoupper($cleanName),
+                            'category'    => $category,
+                            'signal'      => $signal,
+                            'wind_kph'    => $windKph,
+                            'distance_km' => round($distKm),
+                            'lat'         => $lat,
+                            'lon'         => $lon,
                         ];
                     }
                 }
 
-                return null; // No active typhoon near Philippines
+                return $closest; // null if nothing within 500 km of Olongapo
             } catch (\Exception $e) {
                 return null;
             }

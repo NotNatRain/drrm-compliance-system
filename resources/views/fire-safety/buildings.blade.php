@@ -567,7 +567,11 @@
                                         @foreach($buildingTypes->unique('name') as $type)
                                             <option value="{{ $type->name }}">{{ $type->name }} {{ in_array(strtolower($type->name), ['gymnasium', 'cafeteria']) ? '(1 Floor/1 Room)' : '' }}</option>
                                         @endforeach
+                                        <option value="Others">Others, Please Specify:</option>
                                     </select>
+                                    <div id="other_building_type_container" style="display: none;" class="mt-2">
+                                        <input type="text" class="form-control border-primary" name="other_building_type" id="other_building_type" placeholder="Enter building type...">
+                                    </div>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-bold">Min. Required Fire Extinguishers *</label>
@@ -1935,8 +1939,31 @@
                 form.querySelector('[name="last_renovation"]').value = building.last_renovation || '';
                 form.querySelector('[name="emergency_exits"]').value = building.emergency_exits || 0;
                 const typeSelect = form.querySelector('[name="building_type"]');
-                typeSelect.value = building.building_type || '';
-                typeSelect.disabled = false; // Building type CAN be edited now
+                const otherContainer = document.getElementById('other_building_type_container');
+                const otherInput = document.getElementById('other_building_type');
+
+                typeSelect.disabled = false;
+                
+                // Check if the building type exists in the predefined options
+                let typeExists = false;
+                for (let i = 0; i < typeSelect.options.length; i++) {
+                    if (typeSelect.options[i].value === building.building_type) {
+                        typeExists = true;
+                        break;
+                    }
+                }
+
+                if (typeExists || !building.building_type) {
+                    typeSelect.value = building.building_type || '';
+                    otherContainer.style.display = 'none';
+                    otherInput.value = '';
+                } else {
+                    typeSelect.value = 'Others';
+                    otherContainer.style.display = 'block';
+                    otherInput.value = building.building_type;
+                    // Ensure the listener logic for gym/canteen is applied if needed (though others won't trigger it)
+                    document.getElementById('roomFloorInputs').style.display = 'block';
+                }
 
                 form.querySelector('[name="description"]').value = building.description || '';
 
@@ -2001,7 +2028,12 @@
             const form = document.getElementById('addBuildingForm');
             const formData = new FormData(form);
             const newBuildingNo = formData.get('building_no');
-            const newBuildingType = formData.get('building_type');
+            
+            let newBuildingType = formData.get('building_type');
+            if (newBuildingType === 'Others') {
+                newBuildingType = formData.get('other_building_type');
+                formData.set('building_type', newBuildingType);
+            }
             
             // Re-append the select value in case it is somehow disabled
             if (!newBuildingType) {
@@ -2069,6 +2101,17 @@
             const floorsIn = document.getElementById('buildingFloorsInput');
             const btnIncRooms = document.getElementById('btnIncRooms');
             const btnIncFloors = document.getElementById('btnIncFloors');
+            const otherContainer = document.getElementById('other_building_type_container');
+            const otherInput = document.getElementById('other_building_type');
+
+            if (this.value === 'Others') {
+                otherContainer.style.display = 'block';
+                otherInput.setAttribute('required', 'required');
+                otherInput.focus();
+            } else {
+                otherContainer.style.display = 'none';
+                otherInput.removeAttribute('required');
+            }
 
             if (isMiniBldg) {
                 roomsIn.value = 1;
@@ -2678,6 +2721,16 @@
             }
 
             const formData = new FormData(form);
+
+            if (formData.get('building_type') === 'Others') {
+                const otherVal = formData.get('other_building_type');
+                if (!otherVal) {
+                    Swal.fire('Validation Error', 'Please specify the building type.', 'warning');
+                    return;
+                }
+                formData.set('building_type', otherVal);
+            }
+
             const yearConstructed = parseInt(formData.get('year_constructed')) || 0;
             const lastRenovation = parseInt(formData.get('last_renovation')) || 0;
 
@@ -2973,6 +3026,9 @@
 
                 // Enable building type select
                 document.getElementById('building_type_select').disabled = false;
+                document.getElementById('other_building_type_container').style.display = 'none';
+                document.getElementById('other_building_type').value = '';
+                document.getElementById('other_building_type').removeAttribute('required');
             }
         });
 

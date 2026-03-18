@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 70/30 Hybrid: Default to desktop view; prevent full mobile collapse -->
+    <meta name="viewport" content="width=1024">
     <title>Incidents Compliance Dashboard - DRRM</title>
     <link rel="icon" type="image/png" href="{{ asset('images/incident-checklist-logo.png') }}">
     <link rel="apple-touch-icon" href="{{ asset('images/incident-checklist-logo.png') }}">
@@ -455,6 +456,44 @@
             font-size: 0.6rem;
             margin-top: 3px;
             margin-right: 5px;
+        }
+
+        /* ====================================================
+         * 70/30 HYBRID MOBILE APPROACH — Incidents Dashboard
+         * Desktop structure is preserved. Minimal tweaks only:
+         *  1. Scrollable tables
+         *  2. Slightly larger button tap targets
+         *  3. Stack form columns only
+         * ==================================================== */
+        /* Triggered by 1024px viewport lock — desktop structure preserved but mobile enhancements active */
+        @media (max-width: 1024.1px) {
+            /* Scrollable Tables */
+            .table-responsive {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch;
+            }
+            table:not(.custom-table) {
+                display: block;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                max-width: 100%;
+            }
+
+            /* Slightly Larger Button Tap Targets */
+            .btn:not(.btn-sm):not(.btn-xs) {
+                min-height: 40px;
+                padding-top: 0.45rem !important;
+                padding-bottom: 0.45rem !important;
+            }
+
+            /* Stack Form Columns Only */
+            form .row > [class*="col-md-"],
+            form .row > [class*="col-sm-"],
+            .modal-body .row > [class*="col-md-"],
+            .modal-body .row > [class*="col-sm-"] {
+                flex: 0 0 100% !important;
+                max-width: 100% !important;
+            }
         }
     </style>
 </head>

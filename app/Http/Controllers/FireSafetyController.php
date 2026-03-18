@@ -48,374 +48,7 @@ class FireSafetyController extends Controller
 
         $schools = $query->get()
             ->map(function($school) {
-                // Initialize issues
-                $issues = [];
-                $isUnconfigured = false;
-
-                $buildingIssuesModules = [];
-                $alarmIssuesModules = [];
-                $roomIssuesModules = [];
-                $extinguisherIssuesModules = [];
-                $planIssuesModules = [];
-
-                $schoolConfig = [
-                    'has_buildings' => $school->buildings->count() > 0,
-                    'has_alarms' => false,
-                    'has_rooms' => false,
-                    'has_extinguishers' => false,
-                    'has_plans' => false,
-                    'needs_building' => $school->buildings->count() === 0,
-                    'needs_alarm' => false,
-                    'needs_room' => false,
-                    'needs_extinguisher' => false,
-                    'needs_plan' => false
-                ];
-
-                if ($school->buildings->count() === 0) {
-                    $isUnconfigured = true;
-                    $issues[] = 'Setup Needed';
-                } else {
-                    if ($schoolConfig['has_buildings']) {
-                        $buildingsWithAlarms = 0;
-                        $buildingsWithAllRooms = 0;
-                        $buildingsWithPlan = 0;
-                        $buildingsWithExtinguishers = 0;
-                        $totalBldgs = $school->buildings->count();
-
-                        foreach ($school->buildings as $b) {
-                            $bldAlarms = $b->alarmSystems->count();
-                            $schoolHasAlarm = $school->alarmSystems()->where('status','active')->exists();
-                            $bldRoomsReady = $b->rooms > 0 && $b->actualRooms->count() >= $b->rooms;
-                            $bldPlan = $b->evacuationPlan !== null;
-                            // if no specific building plan, but school has an active school-wide plan, count it
-                            if (!$bldPlan) {
-                                $bldPlan = FireSafetyEvacuationPlan::where('school_id', $school->id)
-                                    ->whereNull('building_id')
-                                    ->where('status','active')
-                                    ->exists();
-                            }
-                            $reqExt = $b->required_extinguishers_count;
-                            $bldExtReady = $b->fireExtinguishers->count() >= $reqExt;
-
-                            if ($bldAlarms > 0) $buildingsWithAlarms++;
-                            if ($bldRoomsReady) $buildingsWithAllRooms++;
-                            if ($bldPlan) $buildingsWithPlan++;
-                            if ($bldExtReady) $buildingsWithExtinguishers++;
-
-                            // Collect issues for Ongoing Improvement
-                            if (!$bldRoomsReady) $roomIssuesModules[] = $b->building_no;
-                            if ($bldAlarms === 0 && !$schoolHasAlarm) {
-                                // no alarms on this building and none available school-wide
-                                $alarmIssuesModules[] = $b->building_no;
-                            } else {
-                                $badAlarmStatuses = ['offline', 'broken', 'missing', 'jammed', 'under-repair', 'system-error'];
-                                if ($b->alarmSystems->whereIn('status', $badAlarmStatuses)->count() > 0) {
-                                    $alarmIssuesModules[] = $b->building_no;
-                                }
-                            }
-                            if (!$bldPlan) $planIssuesModules[] = $b->building_no;
-                            if (!$bldExtReady) {
-                                $extinguisherIssuesModules[] = $b->building_no;
-                            } else {
-                                $badExtStatuses = ['expired', 'broken', 'missing', 'for-purchase', 'empty'];
-                                if ($b->fireExtinguishers->whereIn('status', $badExtStatuses)->count() > 0) {
-                                    $extinguisherIssuesModules[] = $b->building_no;
-                                }
-                            }
-
-                            if ($this->calculateBuildingCompliance($b) < 80) {
-                                $buildingIssuesModules[] = $b->building_no;
-                            }
-                        }
-
-                        $schoolConfig['has_alarms'] = $buildingsWithAlarms > 0;
-                        $schoolConfig['has_rooms'] = $buildingsWithAllRooms > 0;
-                        $schoolConfig['has_extinguishers'] = $buildingsWithExtinguishers > 0;
-
-                        // treat school-wide plan as covering all buildings
-                        $schoolHasPlan = FireSafetyEvacuationPlan::where('school_id', $school->id)
-                            ->whereNull('building_id')
-                            ->where('status','active')
-                            ->exists();
-                        $schoolConfig['has_plans'] = $buildingsWithPlan > 0 || $schoolHasPlan;
-                        if ($schoolHasPlan) {
-                            $buildingsWithPlan = $totalBldgs;
-                        }
-
-                        $schoolConfig['needs_alarm'] = (!$schoolHasAlarm) && ($buildingsWithAlarms < $totalBldgs);
-                        $schoolConfig['needs_room'] = $buildingsWithAllRooms < $totalBldgs;
-                        $schoolConfig['needs_plan'] = !$schoolConfig['has_plans'];
-                        $schoolConfig['needs_extinguisher'] = $buildingsWithExtinguishers < $totalBldgs;
-                    } else {
-                        $schoolConfig['needs_alarm'] = true;
-                        $schoolConfig['needs_room'] = true;
-                        $schoolConfig['needs_plan'] = true;
-                        $schoolConfig['needs_extinguisher'] = true;
-                        $isUnconfigured = true;
-                    }
-                }
-
-                // Determine unconfigured status
-                if ($school->buildings->count() === 0 || (!$schoolConfig['has_alarms'] && !$schoolConfig['has_plans'] && !$schoolConfig['has_rooms'])) {
-                    $isUnconfigured = true;
-                    $issues = ['Setup Needed'];
-                } else {
-                    if (count($buildingIssuesModules) > 0) $issues[] = 'Building Issues';
-                    if (count($alarmIssuesModules) > 0) $issues[] = 'Alarm Issues';
-                    if (count($roomIssuesModules) > 0) $issues[] = 'Room Issues';
-                    if (count($extinguisherIssuesModules) > 0) $issues[] = 'Fire Extinguisher Issues';
-                    if (count($planIssuesModules) > 0) $issues[] = 'Evacuation Plan Issues';
-                }
-
-                if ($isUnconfigured) {
-                    $school->status = 'unconfigured';
-                } elseif (count($issues) > 0) {
-                    $school->status = 'warning'; // Ongoing Improvement
-                } else {
-                    $school->status = 'passed';
-                    $issues = ['None'];
-                }
-
-                $school->issues_list = $issues;
-                $school->issues_count = ($school->status === 'passed') ? 0 : count($issues);
-                $school->config_status = $schoolConfig;
-
-                // For the "Ongoing Improvement" details modal, provide specific counts/lists
-                // Build detailed issue data with severity levels
-                $buildingAlarmIssues = [];
-                $extRoomIssues = [];
-                $planIssuesList = [];
-                $totalBldgs = $school->buildings->count();
-
-                $allBuildingsCompliant = true;
-                $allAlarmsActive = true;
-                $allExtRoomsGood = true;
-
-                foreach ($school->buildings as $b) {
-                    $bCompliance = $this->calculateBuildingCompliance($b);
-
-                    // Building issues
-                    if ($bCompliance < 80) {
-                        $allBuildingsCompliant = false;
-                        $buildingAlarmIssues[] = [
-                            'text' => "Building {$b->building_no} — Non-Compliant",
-                            'severity' => 'red',
-                            'building' => $b->building_no,
-                        ];
-                    }
-
-                    // Alarm issues
-                    $schoolHasAlarm = $school->alarmSystems()->where('status','active')->exists();
-                    if ($b->alarmSystems->count() === 0 && !$schoolHasAlarm) {
-                        $allAlarmsActive = false;
-                        $buildingAlarmIssues[] = [
-                            'text' => "Building {$b->building_no} — No alarm installed",
-                            'severity' => 'yellow',
-                            'building' => $b->building_no,
-                        ];
-                    } else {
-                        $redAlarmStatuses = ['broken', 'missing', 'offline'];
-                        $yellowAlarmStatuses = ['not-installed', 'jammed', 'under-repair', 'system-error'];
-                        $redAlarms = $b->alarmSystems->whereIn('status', $redAlarmStatuses);
-                        $yellowAlarms = $b->alarmSystems->whereIn('status', $yellowAlarmStatuses);
-                        if ($redAlarms->count() > 0) {
-                            $allAlarmsActive = false;
-                            $buildingAlarmIssues[] = [
-                                'text' => "Building {$b->building_no} — Alarm: " . $redAlarms->pluck('status')->unique()->map(fn($s) => ucfirst(str_replace('-', ' ', $s)))->implode(', '),
-                                'severity' => 'red',
-                                'building' => $b->building_no,
-                            ];
-                        }
-                        if ($yellowAlarms->count() > 0) {
-                            $allAlarmsActive = false;
-                            $buildingAlarmIssues[] = [
-                                'text' => "Building {$b->building_no} — Alarm: " . $yellowAlarms->pluck('status')->unique()->map(fn($s) => ucfirst(str_replace('-', ' ', $s)))->implode(', '),
-                                'severity' => 'yellow',
-                                'building' => $b->building_no,
-                            ];
-                        }
-                    }
-
-                    // Extinguisher issues
-                    $redExtStatuses = ['missing', 'expired'];
-                    $yellowExtStatuses = ['maintenance', 'purchase', 'decommissioned'];
-                    $redExts = $b->fireExtinguishers->whereIn('status', $redExtStatuses);
-                    $yellowExts = $b->fireExtinguishers->whereIn('status', $yellowExtStatuses);
-                    if ($redExts->count() > 0) {
-                        $allExtRoomsGood = false;
-                        $extRoomIssues[] = [
-                            'text' => "Building {$b->building_no} — Ext: " . $redExts->pluck('status')->unique()->map(fn($s) => ucfirst(str_replace('-', ' ', $s)))->implode(', '),
-                            'severity' => 'red',
-                            'building' => $b->building_no,
-                        ];
-                    }
-                    if ($yellowExts->count() > 0) {
-                        $allExtRoomsGood = false;
-                        $extRoomIssues[] = [
-                            'text' => "Building {$b->building_no} — Ext: " . $yellowExts->pluck('status')->unique()->map(fn($s) => ucfirst(str_replace('-', ' ', $s)))->implode(', '),
-                            'severity' => 'yellow',
-                            'building' => $b->building_no,
-                        ];
-                    }
-
-                    // Room issues - uncovered rooms (red)
-                    $allRoomIds = $b->actualRooms->pluck('id')->toArray();
-                    $coveredRoomIds = [];
-                    foreach ($b->fireExtinguishers as $ext) {
-                        foreach ($ext->coveredRooms as $cr) {
-                            $coveredRoomIds[] = $cr->id;
-                        }
-                    }
-                    $coveredRoomIds = array_unique($coveredRoomIds);
-                    $uncoveredRooms = $b->actualRooms->whereNotIn('id', $coveredRoomIds);
-                    if ($uncoveredRooms->count() > 0) {
-                        $allExtRoomsGood = false;
-                        $extRoomIssues[] = [
-                            'text' => "Building {$b->building_no} — " . $uncoveredRooms->count() . " uncovered room(s)",
-                            'severity' => 'red',
-                            'building' => $b->building_no,
-                        ];
-                    }
-
-                    // Room issues - no secondary exit (yellow)
-                    $noSecExit = $b->actualRooms->where('has_secondary_exit', false);
-                    if ($noSecExit->count() > 0) {
-                        $allExtRoomsGood = false;
-                        $extRoomIssues[] = [
-                            'text' => "Building {$b->building_no} — " . $noSecExit->count() . " room(s) without secondary exit",
-                            'severity' => 'yellow',
-                            'building' => $b->building_no,
-                        ];
-                    }
-
-                    // Room issues - admin rooms with smoke_detector_required but no smoke detector (red)
-                    $adminRoomsMissingSmoke = $b->actualRooms->filter(function($room) {
-                        $typeName = strtolower($room->room_type ?? '');
-                        $isAdmin = str_contains($typeName, 'administration') || str_contains($typeName, 'office');
-                        return $isAdmin && $room->smoke_detector_required && !$room->has_smoke_detector;
-                    });
-                    if ($adminRoomsMissingSmoke->count() > 0) {
-                        $allExtRoomsGood = false;
-                        $extRoomIssues[] = [
-                            'text' => "Building {$b->building_no} — " . $adminRoomsMissingSmoke->count() . " admin room(s) missing smoke detector",
-                            'severity' => 'red',
-                            'building' => $b->building_no,
-                        ];
-                    }
-                }
-
-                // Evacuation plan issues
-                $schoolWidePlan = FireSafetyEvacuationPlan::where('school_id', $school->id)
-                    ->whereNull('building_id')
-                    ->where('status', 'active')
-                    ->exists();
-
-                $buildingsWithIndividualPlan = 0;
-                foreach ($school->buildings as $b) {
-                    if ($b->evacuationPlan !== null) {
-                        $buildingsWithIndividualPlan++;
-                    }
-                }
-
-                $allPlansGood = true;
-                if (!$schoolWidePlan && $buildingsWithIndividualPlan === 0) {
-                    $allPlansGood = false;
-                    $planIssuesList[] = [
-                        'text' => 'No evacuation plan at all',
-                        'severity' => 'red',
-                    ];
-                } elseif (!$schoolWidePlan) {
-                    $allPlansGood = false;
-                    $planIssuesList[] = [
-                        'text' => 'No entire school evacuation plan',
-                        'severity' => 'red',
-                    ];
-                }
-
-                if ($schoolWidePlan && $totalBldgs > 0) {
-                    $missingBldgPlans = $totalBldgs - $buildingsWithIndividualPlan;
-                    if ($missingBldgPlans > 0) {
-                        $allPlansGood = false;
-                        foreach ($school->buildings as $b) {
-                            if ($b->evacuationPlan === null) {
-                                $planIssuesList[] = [
-                                    'text' => "Building {$b->building_no} — No individual plan",
-                                    'severity' => 'yellow',
-                                    'building' => $b->building_no,
-                                ];
-                            }
-                        }
-                    }
-                } elseif (!$schoolWidePlan && $totalBldgs > 0) {
-                    foreach ($school->buildings as $b) {
-                        if ($b->evacuationPlan === null) {
-                            $planIssuesList[] = [
-                                'text' => "Building {$b->building_no} — No plan",
-                                'severity' => 'red',
-                                'building' => $b->building_no,
-                            ];
-                        }
-                    }
-                }
-
-                // Green status messages
-                $buildingAlarmGreenMsg = '';
-                if ($allBuildingsCompliant && $allAlarmsActive && count($buildingAlarmIssues) === 0) {
-                    $buildingAlarmGreenMsg = 'Building & Alarms compliant and active';
-                }
-
-                $extRoomGreenMsg = '';
-                if ($allExtRoomsGood && count($extRoomIssues) === 0) {
-                    $extRoomGreenMsg = 'Fire Extinguisher & Rooms active and covered';
-                }
-
-                $planGreenMsg = '';
-                if ($allPlansGood) {
-                    $planGreenMsg = 'Has entire school plan even individual ones';
-                } elseif ($schoolWidePlan && $buildingsWithIndividualPlan > 0 && $buildingsWithIndividualPlan < $totalBldgs) {
-                    // Has school plan but incomplete individual
-                    $planGreenMsg = ($totalBldgs > 1)
-                        ? 'Has entire school plan but individual building plans are incomplete'
-                        : 'Has entire school plan but doesn\'t have individual building plans';
-                } elseif ($schoolWidePlan && $buildingsWithIndividualPlan === 0) {
-                    $planGreenMsg = 'Has entire school plan but doesn\'t have individual building plans';
-                }
-
-                $school->module_issues = [
-                    'buildings_alarms' => [
-                        'issues' => $buildingAlarmIssues,
-                        'green_msg' => $buildingAlarmGreenMsg,
-                    ],
-                    'ext_rooms' => [
-                        'issues' => $extRoomIssues,
-                        'green_msg' => $extRoomGreenMsg,
-                    ],
-                    'plans' => [
-                        'issues' => $planIssuesList,
-                        'green_msg' => $planGreenMsg,
-                    ],
-                    // Keep legacy keys for backward compatibility
-                    'buildings' => $buildingIssuesModules,
-                    'alarms' => $alarmIssuesModules,
-                    'rooms' => $roomIssuesModules,
-                    'extinguishers' => $extinguisherIssuesModules,
-                ];
-
-                // Last Inspection / Real-time configuration date
-                // Check all relevant tables for latest update
-                $updates = [];
-                $updates[] = $school->updated_at;
-                foreach ($school->buildings as $b) {
-                    $updates[] = $b->updated_at;
-                    foreach ($b->fireExtinguishers as $e) $updates[] = $e->updated_at;
-                    foreach ($b->alarmSystems as $a) $updates[] = $a->updated_at;
-                    if ($b->evacuationPlan) $updates[] = $b->evacuationPlan->updated_at;
-                }
-
-                $lastConfig = collect($updates)->filter()->max();
-                $school->last_inspection_date = $lastConfig ? $lastConfig : null;
-
-                return $school;
+                return $this->calculateDetailedSchoolStatus($school);
             });
 
         // Pull only manually posted alerts and events from notifications table
@@ -471,6 +104,191 @@ class FireSafetyController extends Controller
             'allEvents' => $allEvents
         ]);
     }
+
+    private function calculateDetailedSchoolStatus($school)
+    {
+        // Initialize issues
+        $issues = [];
+        $isUnconfigured = false;
+
+        $buildingIssuesModules = [];
+        $alarmIssuesModules = [];
+        $roomIssuesModules = [];
+        $extinguisherIssuesModules = [];
+        $planIssuesModules = [];
+
+        $buildingAlarmIssues = [];
+        $extRoomIssues = [];
+        $planIssuesList = [];
+
+        $schoolConfig = [
+            'has_buildings' => $school->buildings->count() > 0,
+            'has_alarms' => false,
+            'has_rooms' => false,
+            'has_extinguishers' => false,
+            'has_plans' => false,
+            'needs_building' => $school->buildings->count() === 0,
+            'needs_alarm' => false,
+            'needs_room' => false,
+            'needs_extinguisher' => false,
+            'needs_plan' => false
+        ];
+
+        if ($school->buildings->count() === 0) {
+            $isUnconfigured = true;
+            $issues[] = 'Setup Needed';
+        } else {
+            if ($schoolConfig['has_buildings']) {
+                $buildingsWithAlarms = 0;
+                $buildingsWithAllRooms = 0;
+                $buildingsWithPlan = 0;
+                $buildingsWithExtinguishers = 0;
+                $totalBldgs = $school->buildings->count();
+
+                foreach ($school->buildings as $b) {
+                    $bldAlarms = $b->alarmSystems->count();
+                    $schoolHasAlarm = $school->alarmSystems()->where('status', 'active')->exists();
+                    $bldRoomsReady = $b->rooms > 0 && $b->actualRooms->count() >= $b->rooms;
+                    $bldPlan = $b->evacuationPlan !== null;
+                    if (!$bldPlan) {
+                        $bldPlan = FireSafetyEvacuationPlan::where('school_id', $school->id)
+                            ->whereNull('building_id')
+                            ->where('status', 'active')
+                            ->exists();
+                    }
+                    $reqExt = $b->required_extinguishers_count;
+                    $bldExtReady = $b->fireExtinguishers->count() >= $reqExt;
+
+                    if ($bldAlarms > 0) $buildingsWithAlarms++;
+                    if ($bldRoomsReady) $buildingsWithAllRooms++;
+                    if ($bldPlan) $buildingsWithPlan++;
+                    if ($bldExtReady) $buildingsWithExtinguishers++;
+
+                    if (!$bldRoomsReady) $roomIssuesModules[] = $b->building_no;
+                    if ($bldAlarms === 0 && !$schoolHasAlarm) {
+                        $alarmIssuesModules[] = $b->building_no;
+                        $buildingAlarmIssues[] = ['text' => "Building {$b->building_no} — No alarm installed", 'severity' => 'yellow', 'building' => $b->building_no];
+                    } else {
+                        $badAlarmStatuses = ['offline', 'broken', 'missing', 'jammed', 'under-repair', 'system-error'];
+                        if ($b->alarmSystems->whereIn('status', $badAlarmStatuses)->count() > 0) {
+                            $alarmIssuesModules[] = $b->building_no;
+                            $buildingAlarmIssues[] = ['text' => "Building {$b->building_no} — Alarm status: " . $b->alarmSystems->whereIn('status', $badAlarmStatuses)->pluck('status')->unique()->implode(', '), 'severity' => 'red', 'building' => $b->building_no];
+                        }
+                    }
+                    if (!$bldPlan) $planIssuesModules[] = $b->building_no;
+                    if (!$bldExtReady) {
+                        $extinguisherIssuesModules[] = $b->building_no;
+                    } else {
+                        $badExtStatuses = ['expired', 'broken', 'missing', 'for-purchase', 'empty'];
+                        if ($b->fireExtinguishers->whereIn('status', $badExtStatuses)->count() > 0) {
+                            $extinguisherIssuesModules[] = $b->building_no;
+                        }
+                    }
+
+                    if ($this->calculateBuildingCompliance($b) < 80) {
+                        $buildingIssuesModules[] = $b->building_no;
+                        $buildingAlarmIssues[] = ['text' => "Building {$b->building_no} — Non-Compliant", 'severity' => 'red', 'building' => $b->building_no];
+                    }
+
+                    // Extinguishers & Rooms detailed checks
+                    $redExtStatuses = ['missing', 'expired'];
+                    $redExts = $b->fireExtinguishers->whereIn('status', $redExtStatuses);
+                    if ($redExts->count() > 0) {
+                        $extRoomIssues[] = ['text' => "Building {$b->building_no} — Ext: " . $redExts->pluck('status')->unique()->map(fn($s) => ucfirst(str_replace('-', ' ', $s)))->implode(', '), 'severity' => 'red', 'building' => $b->building_no];
+                    }
+
+                    // Room issues - uncovered rooms
+                    $allRoomIds = $b->actualRooms->pluck('id')->toArray();
+                    $coveredRoomIds = [];
+                    foreach ($b->fireExtinguishers as $ext) {
+                        foreach ($ext->coveredRooms as $cr) $coveredRoomIds[] = $cr->id;
+                    }
+                    $uncoveredRoomsCount = count(array_diff($allRoomIds, array_unique($coveredRoomIds)));
+                    if ($uncoveredRoomsCount > 0) {
+                        $extRoomIssues[] = ['text' => "Building {$b->building_no} — {$uncoveredRoomsCount} uncovered room(s)", 'severity' => 'red', 'building' => $b->building_no];
+                    }
+                }
+
+                $schoolConfig['has_alarms'] = $buildingsWithAlarms > 0;
+                $schoolConfig['has_rooms'] = $buildingsWithAllRooms > 0;
+                $schoolConfig['has_extinguishers'] = $buildingsWithExtinguishers > 0;
+
+                $schoolHasPlan = FireSafetyEvacuationPlan::where('school_id', $school->id)
+                    ->whereNull('building_id')
+                    ->where('status', 'active')
+                    ->exists();
+                $schoolConfig['has_plans'] = $buildingsWithPlan > 0 || $schoolHasPlan;
+                if ($schoolHasPlan) {
+                    $buildingsWithPlan = $totalBldgs;
+                }
+
+                $schoolConfig['needs_alarm'] = (!$schoolHasAlarm) && ($buildingsWithAlarms < $totalBldgs);
+                $schoolConfig['needs_room'] = $buildingsWithAllRooms < $totalBldgs;
+                $schoolConfig['needs_plan'] = !$schoolConfig['has_plans'];
+                $schoolConfig['needs_extinguisher'] = $buildingsWithExtinguishers < $totalBldgs;
+
+                // Evacuation plan messages
+                if ($schoolHasPlan) {
+                    $planIssuesList[] = ['text' => 'Has entire school plan even individual ones', 'severity' => 'green'];
+                } else if ($totalBldgs > 0 && $buildingsWithPlan < $totalBldgs) {
+                    $planIssuesList[] = ['text' => 'Some buildings missing evacuation plans', 'severity' => 'red'];
+                }
+            } else {
+                $schoolConfig['needs_alarm'] = true;
+                $schoolConfig['needs_room'] = true;
+                $schoolConfig['needs_plan'] = true;
+                $schoolConfig['needs_extinguisher'] = true;
+                $isUnconfigured = true;
+            }
+        }
+
+        if ($school->buildings->count() === 0 || (!$schoolConfig['has_alarms'] && !$schoolConfig['has_plans'] && !$schoolConfig['has_rooms'])) {
+            $isUnconfigured = true;
+            $issues = ['Setup Needed'];
+        } else {
+            if (count($buildingIssuesModules) > 0) $issues[] = 'Building Issues';
+            if (count($alarmIssuesModules) > 0) $issues[] = 'Alarm Issues';
+            if (count($roomIssuesModules) > 0) $issues[] = 'Room Issues';
+            if (count($extinguisherIssuesModules) > 0) $issues[] = 'Fire Extinguisher Issues';
+            if (count($planIssuesModules) > 0) $issues[] = 'Evacuation Plan Issues';
+        }
+
+        if ($isUnconfigured) {
+            $school->status = 'unconfigured';
+        } elseif (count($issues) > 0) {
+            $school->status = 'warning'; // Ongoing Improvement
+        } else {
+            $school->status = 'passed';
+            $issues = ['None'];
+        }
+
+        $school->issues_list = $issues;
+        $school->issues_count = ($school->status === 'passed') ? 0 : count($issues);
+        $school->config_status = $schoolConfig;
+        $school->module_issues = [
+            'buildings_alarms' => ['issues' => $buildingAlarmIssues],
+            'ext_rooms' => ['issues' => $extRoomIssues],
+            'plans' => ['issues' => $planIssuesList],
+            'buildings' => $buildingIssuesModules,
+            'alarms' => $alarmIssuesModules,
+            'rooms' => $roomIssuesModules,
+            'extinguishers' => $extinguisherIssuesModules,
+        ];
+
+        // Last Inspection Date
+        $updates = [$school->updated_at];
+        foreach ($school->buildings as $b) {
+            $updates[] = $b->updated_at;
+            foreach ($b->fireExtinguishers as $e) $updates[] = $e->updated_at;
+            foreach ($b->alarmSystems as $a) $updates[] = $a->updated_at;
+            if ($b->evacuationPlan) $updates[] = $b->evacuationPlan->updated_at;
+        }
+        $lastConfig = collect($updates)->filter()->max();
+        $school->last_inspection_date = $lastConfig ? $lastConfig : null;
+
+        return $school;
+    }
+
 
     private function calculateStatus($school)
     {
@@ -2406,10 +2224,15 @@ public function storeRoom(Request $request)
             'last_renovation' => 'nullable|integer|min:1900|max:' . date('Y'),
             'emergency_exits' => 'nullable|integer|min:0',
             'building_type' => 'nullable|string',
+            'other_building_type' => 'nullable|string|max:100',
             'description' => 'nullable|string',
             'features' => 'nullable|array',
             'required_extinguishers' => 'nullable|integer|min:0'
         ]);
+
+        if ($request->building_type === 'Others' && $request->has('other_building_type')) {
+            $validated['building_type'] = $request->other_building_type;
+        }
 
         // Unique Building Code Check (Per School)
         $exists = FireSafetyBuilding::where('school_id', $validated['school_id'])
@@ -2479,6 +2302,7 @@ public function storeRoom(Request $request)
             'last_renovation' => 'nullable|integer|min:1900|max:' . date('Y'),
             'emergency_exits' => 'nullable|integer|min:0',
             'description' => 'nullable|string',
+            'other_building_type' => 'nullable|string|max:100',
             'features' => 'nullable|array',
             'removed_floor' => 'nullable|integer',
             'removed_room_id' => 'nullable|array',
@@ -2487,6 +2311,10 @@ public function storeRoom(Request $request)
             'room_removal_reason' => 'nullable|required_with:removed_room_id|string|max:500',
             'required_extinguishers' => 'nullable|integer|min:0'
         ]);
+
+        if ($request->building_type === 'Others' && $request->has('other_building_type')) {
+            $validated['building_type'] = $request->other_building_type;
+        }
 
         // Check uniqueness if building_no is changing
         if ($validated['building_no'] !== $building->building_no) {
@@ -3621,12 +3449,21 @@ public function storeRoom(Request $request)
             return redirect()->route('fire-safety.dashboard')->with('error', 'Unauthorized access.');
         }
 
+        $query = FireSafetySchool::with([
+            'buildings.actualRooms',
+            'buildings.alarmSystems',
+            'buildings.fireExtinguishers.coveredRooms',
+            'buildings.evacuationPlan'
+        ])->withCount(['buildings', 'rooms', 'alarmSystems', 'extinguishers as fire_extinguishers_count']);
+
         if ($user->role === 'admin') {
-            // Load all data for admin
-            $schools = FireSafetySchool::withCount(['buildings', 'rooms', 'alarmSystems', 'extinguishers as fire_extinguishers_count'])->get();
+            $schools = $query->get()->map(function($school) {
+                return $this->calculateDetailedSchoolStatus($school);
+            });
+
             $buildingTypes = SystemConfiguration::where('config_type', 'building_type')->orderBy('sort_order')->get()->unique('name');
             $alarmTypes = SystemConfiguration::where('config_type', 'alarm_type')->orderBy('id')->get()->unique('name');
-            $alarmStatusesByType = SystemConfiguration::where('config_type', 'alarm_status')->whereNotNull('parent_id')->get()->unique('name')->groupBy('parent_id');
+            $alarmStatusesByType = SystemConfiguration::where('config_type', 'alarm_status')->get()->unique('name')->groupBy('parent_id');
             $extinguisherTypes = SystemConfiguration::where('config_type', 'extinguisher_type')->get()->unique('name');
             $extinguisherStatuses = SystemConfiguration::where('config_type', 'extinguisher_status')->get()->unique('name');
             $safetyFeatures = SystemConfiguration::where('config_type', 'safety_feature')->orderBy('sort_order')->get()->unique('name');
@@ -3641,9 +3478,10 @@ public function storeRoom(Request $request)
                 'calculatedPriorities', 'roomTypes', 'inspectionChecklists', 'inspectionObservers'
             ));
         } else {
-            // For contributors, just load their school
-            $school = FireSafetySchool::withCount(['buildings', 'rooms', 'alarmSystems', 'extinguishers as fire_extinguishers_count'])
-                ->find($user->school_id);
+            $school = $query->find($user->school_id);
+            if ($school) {
+                $school = $this->calculateDetailedSchoolStatus($school);
+            }
 
             $schools = $school ? collect([$school]) : collect([]);
             return view('fire-safety.customization', compact('schools'));
@@ -4489,23 +4327,34 @@ public function storeRoom(Request $request)
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $schools = FireSafetySchool::all();
+        $schools = FireSafetySchool::with([
+            'buildings.actualRooms',
+            'buildings.alarmSystems',
+            'buildings.fireExtinguishers.coveredRooms',
+            'buildings.evacuationPlan'
+        ])->get()->map(function($school) {
+            return $this->calculateDetailedSchoolStatus($school);
+        });
+
         $filename = "schools_export_" . date('Y-m-d') . ".csv";
         $handle = fopen('php://output', 'w');
 
-        // Add CSV header
-        fputcsv($handle, ['ID', 'School ID', 'Name', 'Address', 'Head', 'DRRM Coordinator', 'Status', 'Last Updated']);
+        // Add CSV header (Remove ID, rename Last Updated to Last Inspection)
+        fputcsv($handle, ['School ID', 'Name', 'Address', 'Head', 'DRRM Coordinator', 'Status', 'Last Inspection']);
 
         foreach ($schools as $school) {
+            $statusText = 'Unconfigured';
+            if ($school->status === 'passed') $statusText = 'Passed';
+            if ($school->status === 'warning') $statusText = 'Ongoing Improvement';
+
             fputcsv($handle, [
-                $school->id,
                 $school->school_id,
                 $school->school_name,
                 $school->address,
                 $school->school_head,
                 $school->school_drrm_coordinator,
-                $school->status,
-                $school->updated_at
+                $statusText,
+                $school->last_inspection_date ? \Carbon\Carbon::parse($school->last_inspection_date)->format('M d, Y') : 'Never'
             ]);
         }
 

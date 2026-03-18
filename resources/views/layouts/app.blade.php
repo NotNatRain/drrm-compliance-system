@@ -2,7 +2,8 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- 70/30 Hybrid: Default to desktop view; prevent full mobile collapse -->
+    <meta name="viewport" content="width=1024">
 
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -28,6 +29,60 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @stack('styles')
+    <style>
+        /* ====================================================
+         * 70/30 HYBRID MOBILE APPROACH — app.blade.php scope
+         * Desktop structure stays intact. Only minimal tweaks
+         * for mobile usability without layout collapse.
+         * ==================================================== */
+
+        /* Make all Bootstrap tables horizontally scrollable on mobile (triggered by 1024px viewport lock) */
+        @media (max-width: 1024.1px) {
+            .table-responsive,
+            .table-responsive-md,
+            .table-responsive-sm {
+                overflow-x: auto !important;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* Auto-wrap non-.table-responsive tables */
+            .card-body table:not(.calendar-grid),
+            .card table {
+                display: block;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                max-width: 100%;
+            }
+
+            /* Increase button tap targets slightly for mobile */
+            .btn:not(.btn-sm):not(.btn-xs) {
+                min-height: 40px;
+                padding-top: 0.45rem !important;
+                padding-bottom: 0.45rem !important;
+            }
+
+            /* Stack form rows on mobile (col-md-* inside forms only) */
+            form .row > [class*="col-md-"],
+            form .row > [class*="col-sm-"] {
+                flex: 0 0 100% !important;
+                max-width: 100% !important;
+            }
+
+            /* Dashboard module cards: stack to 2 columns not 1 */
+            .col-md-4.mb-4 {
+                flex: 0 0 50%;
+                max-width: 50%;
+            }
+        }
+
+        @media (max-width: 575.98px) {
+            /* Full stack only on very small screens */
+            .col-md-4.mb-4 {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
     <div id="app">

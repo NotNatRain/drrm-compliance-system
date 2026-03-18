@@ -1542,9 +1542,9 @@
                 });
 
                 const maxRoomsOnFloor = Math.max(1, ...Object.values(roomsByFloor).map(rooms => rooms.length || 1));
-                const roomGap = 10;
-                const floorGap = 10;
-                const headerHeight = 30;
+                const roomGap = 12;
+                const floorGap = 40;
+                const headerHeight = 35;
                 const minRoomSize = 52;
 
                 let buildingWidth = Math.max(300, maxRoomsOnFloor * minRoomSize + roomGap * (maxRoomsOnFloor + 1));
@@ -1608,8 +1608,8 @@
                 } else if (bType.includes('gymnasium') || bType.includes('court')) {
                     headerColor = '#6f42c1'; // purple
                 } else {
-                    const colors = ['#17a2b8', '#fd7e14', '#e83e8c', '#6c757d', '#343a40'];
-                    headerColor = colors[building.id % colors.length]; // deterministic random
+                    // Default to gray for "Other" or unknown types as per legend
+                    headerColor = '#6c757d'; 
                 }
 
                 const headerDiv = document.createElement('div');
@@ -1710,7 +1710,7 @@
 
                             // Room number (top center)
                             const roomLabel = document.createElement('div');
-                            roomLabel.style.fontSize = '9px';
+                            roomLabel.style.fontSize = '14px';
                             roomLabel.style.fontWeight = 'bold';
                             roomLabel.style.color = '#333';
                             roomLabel.style.textAlign = 'center';

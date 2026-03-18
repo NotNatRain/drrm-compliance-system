@@ -170,7 +170,7 @@
                                                 <th>School ID</th>
                                                 <th>Status</th>
                                                 <th>Buildings</th>
-                                                <th>Last Updated</th>
+                                                <th>Last Inspection</th>
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
@@ -192,7 +192,7 @@
                                                     @endif
                                                 </td>
                                                 <td>{{ $school->buildings_count ?? 0 }}</td>
-                                                <td>{{ $school->updated_at ? $school->updated_at->format('Y-m-d') : 'N/A' }}</td>
+                                                <td>{{ $school->last_inspection_date ? \Carbon\Carbon::parse($school->last_inspection_date)->format('M d, Y') : 'Never' }}</td>
                                                 <td>
                                                     <button class="btn btn-sm btn-outline-primary edit-school-btn"
                                                             data-school-id="{{ $school->id }}"
@@ -226,12 +226,20 @@
                                 <div class="mb-4">
                                     <h6>Total Schools: {{ $schools->count() }}</h6>
                                     <div class="progress" style="height: 20px;">
-                                        <div class="progress-bar bg-success" style="width: {{ $schools->where('status', 'passed')->count() / max(1, $schools->count()) * 100 }}%">
-                                            Passed: {{ $schools->where('status', 'passed')->count() }}
+                                        <div class="progress-bar bg-success" style="width: {{ $schools->where('status', 'passed')->count() / max(1, $schools->count()) * 100 }}%" title="Passed">
+                                            {{ $schools->where('status', 'passed')->count() }}
                                         </div>
-                                        <div class="progress-bar bg-warning" style="width: {{ $schools->where('status', 'unconfigured')->count() / max(1, $schools->count()) * 100 }}%">
-                                            Unconfigured: {{ $schools->where('status', 'unconfigured')->count() }}
+                                        <div class="progress-bar bg-warning text-dark" style="width: {{ $schools->where('status', 'warning')->count() / max(1, $schools->count()) * 100 }}%" title="Ongoing Improvement">
+                                            {{ $schools->where('status', 'warning')->count() }}
                                         </div>
+                                        <div class="progress-bar bg-secondary" style="width: {{ $schools->where('status', 'unconfigured')->count() / max(1, $schools->count()) * 100 }}%" title="Unconfigured">
+                                            {{ $schools->where('status', 'unconfigured')->count() }}
+                                        </div>
+                                    </div>
+                                    <div class="d-flex justify-content-between mt-1 small text-muted">
+                                        <span><i class="fas fa-square text-success me-1"></i> Passed</span>
+                                        <span><i class="fas fa-square text-warning me-1"></i> Ongoing</span>
+                                        <span><i class="fas fa-square text-secondary me-1"></i> Unconfigured</span>
                                     </div>
                                 </div>
 
@@ -240,9 +248,6 @@
                                     <div class="d-grid gap-2">
                                         <button class="btn btn-sm btn-success" onclick="exportSchoolsData()">
                                             <i class="fas fa-file-export me-2"></i> Export Schools Data
-                                        </button>
-                                        <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#importSchoolsModal">
-                                            <i class="fas fa-file-import me-2"></i> Import Schools
                                         </button>
                                     </div>
                                 </div>
@@ -259,10 +264,10 @@
 
             <!-- System Customization Tab -->
             <div class="tab-pane fade" id="system-tab-pane">
-                <div class="row">
+                <div class="row align-items-start">
                     <!-- Building Types -->
                     <div class="col-md-6 mb-4">
-                        <div class="card dashboard-card h-100">
+                        <div class="card dashboard-card card-collapsed" id="building-types-card">
                             <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                 <h6 class="m-0 fw-bold text-primary">
                                     <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'building-types-card')"></i>
@@ -310,7 +315,7 @@
 
                     <!-- Alarm Types & Statuses -->
                     <div class="col-md-6 mb-4">
-                        <div class="card dashboard-card h-100">
+                        <div class="card dashboard-card card-collapsed" id="alarm-config-card">
                             <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                 <h6 class="m-0 fw-bold text-primary">
                                     <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'alarm-config-card')"></i>
@@ -323,9 +328,17 @@
                             <div class="card-body">
                                 <h6>Alarm Types &amp; Statuses</h6>
                                 <div id="alarmTypesList" class="row row-cols-1 row-cols-md-2 g-3">
-                                    @foreach($alarmTypes as $type)
+                                @foreach($alarmTypes as $type)
                                     <div class="col">
-                                        @php $typeStatuses = $alarmStatusesByType->get($type->id, collect()); @endphp
+                                        @php
+                                            $specificStatuses = $alarmStatusesByType->get($type->id, collect());
+                                            $generalStatuses = $alarmStatusesByType->get("", collect()); // empty/null parent_id
+                                            if ($generalStatuses->isEmpty()) {
+                                                // Try alternative empty key if null becomes "" in group
+                                                $generalStatuses = $alarmStatusesByType->get(null, collect());
+                                            }
+                                            $allTypeStatuses = $generalStatuses->merge($specificStatuses)->unique('name');
+                                        @endphp
                                         <div class="config-item h-100 mb-0">
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <strong>{{ $type->name }}</strong>
@@ -333,20 +346,20 @@
                                                     {{ $type->is_active ? 'Active' : 'Inactive' }}
                                                 </span>
                                             </div>
-                                            @if($typeStatuses->isNotEmpty())
+                                            @if($allTypeStatuses->isNotEmpty())
                                             <ul class="list-unstyled small mb-2 ms-3 mt-1">
-                                                @foreach($typeStatuses as $status)
+                                                @foreach($allTypeStatuses as $status)
                                                 <li><span class="badge {{ $status->color_class ?? 'bg-secondary' }} me-1">{{ $status->name }}</span></li>
                                                 @endforeach
                                             </ul>
                                             @endif
-                                            <div class="mt-2">
+                                            <div class="mt-2 text-end">
                                                 <button class="btn btn-sm btn-outline-primary edit-config-btn"
                                                         data-id="{{ $type->id }}"
                                                         data-type="alarm_type"
                                                         data-name="{{ $type->name }}"
                                                         data-is-active="{{ $type->is_active }}"
-                                                        data-statuses="{{ $typeStatuses->toJson() }}">
+                                                        data-statuses="{{ $specificStatuses->toJson() }}">
                                                     <i class="fas fa-edit"></i> Edit
                                                 </button>
                                             </div>
@@ -360,7 +373,7 @@
 
                     <!-- Fire Extinguisher Configuration -->
                     <div class="col-md-6 mb-4">
-                        <div class="card dashboard-card h-100">
+                        <div class="card dashboard-card card-collapsed" id="extinguisher-config-card">
                             <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                 <h6 class="m-0 fw-bold text-primary">
                                     <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'extinguisher-config-card')"></i>
@@ -411,11 +424,19 @@
                                                 <div class="d-flex justify-content-between align-items-center">
                                                     <div>
                                                         <strong>{{ $status->name }}</strong>
-                                                        @if($status->pressure_min !== null || $status->pressure_max !== null)
-                                                        <div class="small text-muted">Pressure: {{ $status->pressure_min !== null && $status->pressure_max !== null ? $status->pressure_min . ' - ' . $status->pressure_max : ($status->pressure_min ?? $status->pressure_max) }} (psi)</div>
-                                                        @else
-                                                        <div class="small text-muted">Pressure: —</div>
-                                                        @endif
+                                                        @php
+                                                            $statusRange = match(trim($status->name)) {
+                                                                'Active' => '70-100',
+                                                                'For Preventive Maintenance' => '20-69',
+                                                                'Used' => '0-19',
+                                                                'Used (Refill Request Needed)' => '0-19',
+                                                                'Missing' => '0-100',
+                                                                'For Purchased' => '0-100',
+                                                                'Decommissioned' => '0-100',
+                                                                default => null
+                                                            };
+                                                        @endphp
+                                                        <div class="small text-muted">{{ $statusRange ? 'Accuracy: ' . $statusRange . '%' : 'Pressure: —' }}</div>
                                                     </div>
                                                     <span class="badge config-badge {{ $status->color_class ?? 'bg-secondary' }}">{{ $status->category ?? '—' }}</span>
                                                 </div>
@@ -441,7 +462,7 @@
 
                     <!-- Safety Features -->
                     <div class="col-md-6 mb-4">
-                        <div class="card dashboard-card h-100">
+                        <div class="card dashboard-card card-collapsed" id="safety-features-card">
                             <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                 <h6 class="m-0 fw-bold text-primary">
                                     <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'safety-features-card')"></i>
@@ -485,7 +506,7 @@
 
                     <!-- Room Types & Calculated Priority -->
                     <div class="col-md-6 mb-4">
-                        <div class="card dashboard-card h-100">
+                        <div class="card dashboard-card card-collapsed" id="room-types-card">
                             <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                 <h6 class="m-0 fw-bold text-primary">
                                     <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'room-types-card')"></i>
@@ -543,12 +564,6 @@
                                                         <strong>{{ $rt->name }}</strong>
                                                         <div class="small text-muted">
                                                             Priority: {{ $p->name ?? '—' }}
-                                                            @if($p && $p->max_rooms_covered)
-                                                                (Up to {{ $p->max_rooms_covered }} rooms)
-                                                            @endif
-                                                            @if($p)
-                                                                • {{ $p->required_extinguishers ?? 1 }} extinguisher(s) required
-                                                            @endif
                                                         </div>
                                                     </div>
                                                 </div>
@@ -572,8 +587,8 @@
                     </div>
 
                     <!-- School Inspection Checklist -->
-                    <div class="col-md-6 mb-4">
-                        <div class="card dashboard-card h-100" id="inspection-checklist-card">
+                    <div class="col-md-6 mb-4" id="inspection-checklist-container">
+                        <div class="card dashboard-card card-collapsed" id="inspection-checklist-card">
                             <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                 <h6 class="m-0 fw-bold text-primary">
                                     <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'inspection-checklist-card')"></i>
@@ -593,18 +608,23 @@
                                                     <strong>{{ $item->name }}</strong>
                                                     <div class="text-muted small">{{ $item->description }}</div>
                                                 </div>
+                                                <span class="badge {{ $item->is_active ? 'bg-success' : 'bg-secondary' }}">
+                                                    {{ $item->is_active ? 'Active' : 'Inactive' }}
+                                                </span>
                                             </div>
                                             <div class="mt-2 text-end">
                                                 <button class="btn btn-sm btn-outline-primary edit-config-btn"
                                                         data-id="{{ $item->id }}"
                                                         data-type="inspection_checklist"
                                                         data-name="{{ $item->name }}"
-                                                        data-description="{{ $item->description }}">
+                                                        data-description="{{ $item->description }}"
+                                                        data-is-active="{{ $item->is_active }}">
                                                     <i class="fas fa-edit"></i> Edit
                                                 </button>
                                                 <button class="btn btn-sm btn-outline-danger delete-config-btn"
                                                         data-id="{{ $item->id }}"
-                                                        data-type="inspection_checklist">
+                                                        data-type="inspection_checklist"
+                                                        data-name="{{ $item->name }}">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </div>
@@ -617,8 +637,8 @@
                     </div>
 
                     <!-- Other Observers -->
-                    <div class="col-md-6 mb-4">
-                        <div class="card dashboard-card h-100" id="other-observers-card">
+                    <div class="col-md-6 mb-4" id="other-observers-container">
+                        <div class="card dashboard-card card-collapsed" id="other-observers-card">
                             <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                 <h6 class="m-0 fw-bold text-primary">
                                     <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'other-observers-card')"></i>
@@ -644,12 +664,14 @@
                                                         data-id="{{ $item->id }}"
                                                         data-type="inspection_observer"
                                                         data-name="{{ $item->name }}"
-                                                        data-description="{{ $item->description }}">
+                                                        data-description="{{ $item->description }}"
+                                                        data-is-active="{{ $item->is_active }}">
                                                     <i class="fas fa-edit"></i> Edit
                                                 </button>
                                                 <button class="btn btn-sm btn-outline-danger delete-config-btn"
                                                         data-id="{{ $item->id }}"
-                                                        data-type="inspection_observer">
+                                                        data-type="inspection_observer"
+                                                        data-name="{{ $item->name }}">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </div>
@@ -1567,17 +1589,53 @@
                     const configType = this.getAttribute('data-type');
                     const configName = this.getAttribute('data-name');
 
-                    const result = await Swal.fire({
-                        title: 'Are you sure?',
-                        text: `You are about to delete "${configName}". This action cannot be undone.`,
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#d33',
-                        confirmButtonText: 'Yes, delete it!'
-                    });
+                    if (configType === 'inspection_checklist' || configType === 'inspection_observer') {
+                        const result = await Swal.fire({
+                            title: 'Are you sure?',
+                            text: `This will mark "${configName}" as Inactive. It will still be available for reference but can be hidden in active lists.`,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#ffc107',
+                            confirmButtonText: 'Yes, mark Inactive'
+                        });
 
-                    if (result.isConfirmed) {
-                        deleteConfigItem(configId, configType);
+                        if (result.isConfirmed) {
+                            try {
+                                const fd = new FormData();
+                                fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+                                fd.append('_method', 'PUT');
+                                fd.append('is_active', 0);
+                                fd.append('name', configName);
+
+                                const resp = await fetch(`/fire-safety/config/${configType}/${configId}`, {
+                                    method: 'POST',
+                                    headers: { 'Accept': 'application/json' },
+                                    body: fd
+                                });
+                                const data = await resp.json();
+                                if (resp.ok && data.success) {
+                                    Swal.fire({ icon: 'success', title: 'Marked Inactive', timer: 1500, showConfirmButton: false }).then(() => location.reload());
+                                } else {
+                                    Swal.fire({ icon: 'error', title: 'Failed', text: data.message || 'Could not update status.' });
+                                }
+                            } catch (e) {
+                                console.error(e);
+                                Swal.fire({ icon: 'error', title: 'Error', text: 'System error occurred.' });
+                            }
+                        }
+                    } else {
+                        const result = await Swal.fire({
+                            title: 'Are you sure?',
+                            text: `You are about to delete "${configName}". This action cannot be undone.`,
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33',
+                            confirmButtonText: 'Yes, delete it!'
+                        });
+
+                        if (result.isConfirmed) {
+                            deleteConfigItem(configId, configType);
+                        }
                     }
                 });
             });

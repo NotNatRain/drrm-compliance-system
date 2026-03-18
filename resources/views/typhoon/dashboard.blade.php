@@ -134,6 +134,38 @@
         from { transform: rotate(0deg); }
         to   { transform: rotate(360deg); }
     }
+
+    /* ====================================================
+     * 70/30 HYBRID MOBILE APPROACH — Typhoon Dashboard
+     * Desktop layout preserved. Minimal tweaks only:
+     *  1. Scrollable tables
+     *  2. Slightly larger button tap targets
+     *  3. Stack form columns in modals/forms
+     * ==================================================== */
+    /* Triggered by 1024px viewport lock — desktop layout preserved but mobile enhancements active */
+    @media (max-width: 1024.1px) {
+        .table-responsive {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+        }
+        .table-custom {
+            display: block;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .btn:not(.btn-sm):not(.btn-xs):not(.btn-action) {
+            min-height: 40px;
+            padding-top: 0.45rem !important;
+            padding-bottom: 0.45rem !important;
+        }
+        form .row > [class*="col-md-"],
+        form .row > [class*="col-sm-"],
+        .modal-body .row > [class*="col-md-"],
+        .modal-body .row > [class*="col-sm-"] {
+            flex: 0 0 100% !important;
+            max-width: 100% !important;
+        }
+    }
 </style>
 @endpush
 
@@ -337,14 +369,15 @@
                     </div>
                     <div>
                         <div style="font-size:0.65rem; color:rgba(255,255,255,0.75); text-transform:uppercase; letter-spacing:2px; font-weight:700; margin-bottom:0.2rem;">
-                            ⚠ PAGASA Active Weather Alert — Philippine Area of Responsibility
+                            ⚠ PAGASA Active Weather Alert — Directly Affecting Olongapo City Area
                         </div>
                         <div style="font-family:'Rajdhani',sans-serif; font-size:1.65rem; font-weight:800; color:#fff; letter-spacing:1px; line-height:1.1;">
                             Effects of <span style="color:rgba(255,255,255,0.75); font-weight:500;">{{ $activeTyphoon['category'] }}</span>
                             "<span style="color:#fff; font-weight:900;">{{ $activeTyphoon['name'] }}"</span>
                         </div>
                         <div style="font-size:0.78rem; color:rgba(255,255,255,0.8); margin-top:0.3rem;">
-                            <i class="fas fa-map-marker-alt me-1"></i> Affecting: <strong>Zambales · Olongapo City</strong> &nbsp;|&nbsp;
+                            <i class="fas fa-map-marker-alt me-1"></i> Near <strong>Olongapo City · Zambales</strong>&nbsp;|&nbsp;
+                            <i class="fas fa-ruler-combined me-1"></i> Distance: <strong>~{{ $activeTyphoon['distance_km'] ?? '?' }} km from Olongapo</strong>&nbsp;|&nbsp;
                             <i class="fas fa-wind me-1"></i> Max Wind: <strong>{{ $activeTyphoon['wind_kph'] > 0 ? $activeTyphoon['wind_kph'].' km/h' : '--' }}</strong>
                         </div>
                     </div>
