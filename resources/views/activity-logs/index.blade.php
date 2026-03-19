@@ -2,6 +2,46 @@
 
 @section('title', 'Activity Log - DRRM Compliance')
 
+@push('styles')
+<style>
+    :root {
+        --fire-red: #A8191F;
+        --fire-dark-red: #8A1217;
+    }
+    /* Custom Pagination Styling */
+    .pagination {
+        gap: 5px;
+    }
+    .pagination .page-link {
+        color: var(--fire-red) !important;
+        border-radius: 6px !important;
+        border: 1px solid #dee2e6 !important;
+        padding: 0.25rem 0.6rem !important;
+        font-size: 0.8rem !important;
+        transition: all 0.2s !important;
+    }
+    .pagination .page-item.active .page-link {
+        background-color: var(--fire-red) !important;
+        border-color: var(--fire-red) !important;
+        color: white !important;
+    }
+    /* Small arrows */
+    .pagination .page-link i, 
+    .pagination .page-link svg {
+        width: 8px !important;
+        height: 8px !important;
+    }
+    .pagination .page-item:hover:not(.active):not(.disabled) .page-link {
+        background-color: var(--fire-dark-red) !important;
+        border-color: var(--fire-dark-red) !important;
+        color: white !important;
+    }
+    .pagination .page-item.disabled .page-link {
+        color: #adb5bd !important;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="container-fluid">
     <div class="row mb-4">

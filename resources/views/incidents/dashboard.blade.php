@@ -458,6 +458,74 @@
             margin-right: 5px;
         }
 
+        /* Custom Notification Modal */
+        .custom-notify-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.2s ease-out;
+        }
+        .custom-notify-overlay.show { opacity: 1; }
+        .custom-notify-box {
+            background: linear-gradient(135deg, var(--incident-yellow) 0%, var(--incident-orange) 100%);
+            border-radius: 20px;
+            padding: 30px 35px 25px;
+            max-width: 420px;
+            width: 90%;
+            color: #fff;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.25s ease-out;
+            text-align: center;
+        }
+        .custom-notify-overlay.show .custom-notify-box {
+            transform: scale(1) translateY(0);
+        }
+        .custom-notify-icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            opacity: 0.9;
+        }
+        .custom-notify-title {
+            font-weight: 700;
+            font-size: 1.15rem;
+            margin-bottom: 8px;
+        }
+        .custom-notify-message {
+            font-size: 0.92rem;
+            opacity: 0.95;
+            margin-bottom: 22px;
+            line-height: 1.5;
+            white-space: pre-line;
+        }
+        .custom-notify-btn {
+            background: rgba(255,255,255,0.25);
+            border: 2px solid rgba(255,255,255,0.5);
+            color: #fff;
+            font-weight: 700;
+            padding: 8px 32px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background 0.15s ease-out;
+            margin: 0 5px;
+        }
+        .custom-notify-btn:hover {
+            background: rgba(255,255,255,0.4);
+        }
+        .custom-notify-btn.cancel-btn {
+            background: rgba(0,0,0,0.15);
+            border-color: rgba(255,255,255,0.3);
+        }
+        .custom-notify-btn.cancel-btn:hover {
+            background: rgba(0,0,0,0.25);
+        }
+
         /* ====================================================
          * 70/30 HYBRID MOBILE APPROACH — Incidents Dashboard
          * Desktop structure is preserved. Minimal tweaks only:
@@ -991,7 +1059,8 @@
                                             <a id="incident_attachment_view" href="#" target="_blank" class="btn btn-sm btn-link text-warning p-0">View current</a>
                                         </div>
                                     </div>
-                                    <input type="file" class="form-control" id="incident_attachment" name="attachment" accept=".pdf,.jpg,.jpeg,.png" required>
+                                    <input type="file" class="form-control" id="incident_attachment" name="attachment" accept=".pdf,.jpg,.jpeg,.png">
+                                    <small class="text-muted fst-italic" id="incident_attachment_hint">You can attach evidence now or later during update.</small>
                                 </div>
                                 <div class="d-flex justify-content-end gap-2">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -1254,6 +1323,81 @@
         let incidentDetailModal = null;
         let currentViewingIncidentId = null;
 
+        /**
+         * Custom Notification Modal (replaces alert)
+         * @param {string} message - The message to show
+         * @param {string} title - Optional title
+         * @param {string} icon - FontAwesome icon class
+         */
+        window.showNotify = function(message, title = 'Notification', icon = 'fa-info-circle') {
+            return new Promise((resolve) => {
+                const overlay = document.createElement('div');
+                overlay.className = 'custom-notify-overlay';
+                overlay.innerHTML = `
+                    <div class="custom-notify-box">
+                        <div class="custom-notify-icon"><i class="fas ${icon}"></i></div>
+                        <div class="custom-notify-title">${title}</div>
+                        <div class="custom-notify-message">${message}</div>
+                        <button class="custom-notify-btn">OK</button>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+                
+                // Trigger animation
+                setTimeout(() => overlay.classList.add('show'), 10);
+                
+                const close = () => {
+                    overlay.classList.remove('show');
+                    setTimeout(() => {
+                        overlay.remove();
+                        resolve();
+                    }, 250);
+                };
+                
+                overlay.querySelector('.custom-notify-btn').onclick = close;
+                overlay.onclick = (e) => { if (e.target === overlay) close(); };
+            });
+        };
+
+        /**
+         * Custom Confirmation Modal (replaces confirm)
+         * @param {string} message - The question to ask
+         * @param {string} title - Optional title
+         * @returns {Promise<boolean>}
+         */
+        window.showConfirm = function(message, title = 'Are you sure?') {
+            return new Promise((resolve) => {
+                const overlay = document.createElement('div');
+                overlay.className = 'custom-notify-overlay';
+                overlay.innerHTML = `
+                    <div class="custom-notify-box">
+                        <div class="custom-notify-icon"><i class="fas fa-question-circle"></i></div>
+                        <div class="custom-notify-title">${title}</div>
+                        <div class="custom-notify-message">${message}</div>
+                        <div class="d-flex justify-content-center">
+                            <button class="custom-notify-btn cancel-btn">Cancel</button>
+                            <button class="custom-notify-btn confirm-btn">Yes, Proceed</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(overlay);
+                
+                setTimeout(() => overlay.classList.add('show'), 10);
+                
+                const handle = (result) => {
+                    overlay.classList.remove('show');
+                    setTimeout(() => {
+                        overlay.remove();
+                        resolve(result);
+                    }, 250);
+                };
+                
+                overlay.querySelector('.cancel-btn').onclick = () => handle(false);
+                overlay.querySelector('.confirm-btn').onclick = () => handle(true);
+                overlay.onclick = (e) => { if (e.target === overlay) handle(false); };
+            });
+        };
+
         window.viewIncidentDetails = function(id) {
             if (!incidentDetailModal) {
                 const modalEl = document.getElementById('incidentDetailInfoModal');
@@ -1513,7 +1657,7 @@
             return data;
         }
 
-        function submitIncidentForm(form, isCompliance) {
+        async function submitIncidentForm(form, isCompliance) {
             const formData = new FormData(form);
             formData.append('_token', csrfToken);
 
@@ -1549,8 +1693,31 @@
 
             // Validation
             if (!formData.get('school_name')) {
-                alert('Please select or enter a school name.');
+                await showNotify('Please select or enter a school name.', 'Missing Information', 'fa-school');
                 return;
+            }
+
+            // Attachment logic for incidents
+            if (!isCompliance) {
+                const fileInput = form.querySelector('#incident_attachment');
+                const hasNewFile = fileInput && fileInput.files && fileInput.files.length > 0;
+                const hasExistingAttachment = document.getElementById('current_incident_attachment').style.display !== 'none';
+                const isUpdate = !!updateId;
+
+                if (isUpdate && !hasExistingAttachment && !hasNewFile) {
+                    // First update with NO existing attachment: attachment is REQUIRED
+                    await showNotify('This incident has no evidence attached yet. Please attach a file before updating.', 'Evidence Required', 'fa-file-upload');
+                    fileInput.focus();
+                    return;
+                }
+
+                if (!isUpdate && !hasNewFile) {
+                    // New incident with no file: ask user to confirm
+                    if (!(await showConfirm('No evidence attached.\n\nLog incident now, attach evidence later?', 'Confirmation Required'))) {
+                        return;
+                    }
+                }
+                // If isUpdate && hasExistingAttachment && !hasNewFile -> optional, keep existing
             }
 
             const btn = form.querySelector('button[type="submit"]');
@@ -1568,18 +1735,18 @@
                 body: formData
             })
             .then(r => r.json())
-            .then(resp => {
+            .then(async resp => {
                 if (resp.success) {
                     bootstrap.Modal.getInstance(document.getElementById('logIncidentModal')).hide();
                     window.location.reload();
                 } else {
-                    alert(resp.message || 'Failed to save');
+                    await showNotify(resp.message || 'Failed to save', 'Error', 'fa-exclamation-triangle');
                     btn.disabled = false;
                     btn.innerHTML = origText;
                 }
             })
-            .catch(err => {
-                alert('Failed to save. Check your connection.');
+            .catch(async err => {
+                await showNotify('Failed to save. Check your connection.', 'Connection Error', 'fa-wifi');
                 btn.disabled = false;
                 btn.innerHTML = origText;
             });
@@ -1641,17 +1808,22 @@
                     
                     // Show current attachment if exists
                     const currentAttach = document.getElementById('current_incident_attachment');
+                    const attachHint = document.getElementById('incident_attachment_hint');
                     if (item.attachment_path) {
                         document.getElementById('incident_attachment_name').textContent = item.attachment_name;
                         document.getElementById('incident_attachment_view').href = item.attachment_url;
                         currentAttach.style.display = 'block';
                         document.getElementById('incident_attachment_required_asterisk').style.display = 'none';
+                        attachHint.textContent = 'Optional — a file is already attached. Upload to replace it.';
                     } else {
                         currentAttach.style.display = 'none';
                         document.getElementById('incident_attachment_required_asterisk').style.display = 'inline';
+                        attachHint.textContent = 'Required — no evidence attached yet.';
+                        attachHint.classList.add('text-danger');
+                        attachHint.classList.remove('text-muted');
                     }
                     
-                    // File is optional on update, remove required
+                    // File input is never HTML-required; JS handles the logic
                     document.getElementById('incident_attachment').required = false;
                     
                 } else {
@@ -1698,8 +1870,8 @@
             }, 300);
         };
 
-        window.deleteIncidentEntry = function(id) {
-            if (!confirm('Are you sure you want to delete this log?')) return;
+        window.deleteIncidentEntry = async function(id) {
+            if (!(await showConfirm('Are you sure you want to delete this log?', 'Confirm Deletion'))) return;
             
             fetch(`${incidentsStoreUrl.replace('/store', '')}/${id}`, {
                 method: 'DELETE',
@@ -1713,7 +1885,7 @@
             .then(resp => {
                 window.location.reload();
             })
-            .catch(err => alert('Failed to delete.'));
+            .catch(async err => await showNotify('Failed to delete.', 'Deletion Failed', 'fa-times-circle'));
         };
 
         // Reset modal on close
@@ -1722,10 +1894,14 @@
             document.getElementById('incidentTab').style.display = 'flex';
             document.getElementById('incident_update_id').value = '';
             document.getElementById('compliance_update_id').value = '';
-            document.getElementById('incident_attachment').required = true;
+            document.getElementById('incident_attachment').required = false;
             document.getElementById('current_incident_attachment').style.display = 'none';
             document.getElementById('current_compliance_attachment').style.display = 'none';
             document.getElementById('incident_attachment_required_asterisk').style.display = 'inline';
+            const attachHint = document.getElementById('incident_attachment_hint');
+            attachHint.textContent = 'You can attach evidence now or later during update.';
+            attachHint.classList.remove('text-danger');
+            attachHint.classList.add('text-muted');
         });
 
         document.getElementById('incidentForm').addEventListener('submit', function(e) {
@@ -1929,7 +2105,7 @@
                 });
             });
 
-            document.getElementById('saveIncidentTypeBtn').addEventListener('click', function () {
+            document.getElementById('saveIncidentTypeBtn').addEventListener('click', async function () {
                 const nameInput = document.getElementById('newIncidentTypeName');
                 const name = nameInput.value.trim();
                 if (!name) {
@@ -1949,14 +2125,14 @@
                         'X-Requested-With': 'XMLHttpRequest'
                     },
                     body: JSON.stringify({ name })
-                }).then(r => r.json()).then(resp => {
+                }).then(r => r.json()).then(async resp => {
                     if (!resp.success) {
-                        alert('Failed to save incident type.');
+                        await showNotify('Failed to save incident type.', 'Error', 'fa-exclamation-triangle');
                         return;
                     }
                     addIncidentTypeModal.hide();
                     location.reload();
-                }).catch(() => alert('Failed to save incident type.'));
+                }).catch(async () => await showNotify('Failed to save incident type.', 'Connection Error', 'fa-wifi'));
             });
         }
 
@@ -1984,7 +2160,7 @@
                 });
             });
 
-            document.getElementById('saveIncidentStatusBtn').addEventListener('click', function () {
+            document.getElementById('saveIncidentStatusBtn').addEventListener('click', async function () {
                 const nameInput = document.getElementById('newIncidentStatusName');
                 const name = nameInput.value.trim();
                 if (!name) {
@@ -2004,19 +2180,19 @@
                         'X-Requested-With': 'XMLHttpRequest'
                     },
                     body: JSON.stringify({ name })
-                }).then(r => r.json()).then(resp => {
+                }).then(r => r.json()).then(async resp => {
                     if (!resp.success) {
-                        alert('Failed to save status/event.');
+                        await showNotify('Failed to save status/event.', 'Error', 'fa-exclamation-triangle');
                         return;
                     }
                     addIncidentStatusModal.hide();
                     location.reload();
-                }).catch(() => alert('Failed to save status/event.'));
+                }).catch(async () => await showNotify('Failed to save status/event.', 'Connection Error', 'fa-wifi'));
             });
         }
 
         // Quick Compliance Checklist JS
-        function updateChecklistItem(id, payload) {
+        async function updateChecklistItem(id, payload) {
             fetch(checklistUpdateBaseUrl + '/' + id, {
                 method: 'PUT',
                 headers: {
@@ -2026,13 +2202,11 @@
                     'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: JSON.stringify(payload)
-            }).then(r => r.json()).then(resp => {
+            }).then(r => r.json()).then(async resp => {
                 if (!resp.success) {
-                    alert('Failed to update checklist item.');
+                    await showNotify('Failed to update checklist item.', 'Update Failed', 'fa-times');
                 }
-            }).catch(() => {
-                alert('Failed to update checklist item.');
-            });
+            }).catch(async () => await showNotify('Failed to update checklist item.', 'Connection Error', 'fa-wifi'));
         }
 
         document.querySelectorAll('#checklistContainer .checklist-toggle').forEach(cb => {
@@ -2044,26 +2218,21 @@
         });
 
         document.querySelectorAll('#checklistContainer .checklist-delete').forEach(btn => {
-            btn.addEventListener('click', function () {
+            btn.addEventListener('click', async function () {
+                if (!(await showConfirm('Remove this checklist item?', 'Delete Task'))) return;
                 const row = this.closest('.checklist-item-row');
                 const id = row.getAttribute('data-id');
-                if (!confirm('Remove this checklist item?')) return;
+                
                 fetch(checklistUpdateBaseUrl + '/' + id, {
                     method: 'DELETE',
-                    headers: {
-                        'X-CSRF-TOKEN': csrfToken,
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                }).then(r => r.json()).then(resp => {
+                    headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                }).then(r => r.json()).then(async resp => {
                     if (resp.success) {
                         row.remove();
                     } else {
-                        alert('Failed to delete checklist item.');
+                        await showNotify('Failed to delete checklist item.', 'Error', 'fa-exclamation-triangle');
                     }
-                }).catch(() => {
-                    alert('Failed to delete checklist item.');
-                });
+                }).catch(async () => await showNotify('Failed to delete checklist item.', 'Connection Error', 'fa-wifi'));
             });
         });
 
@@ -2093,35 +2262,47 @@
         }
 
         if (importInput) {
-            importInput.addEventListener('change', function () {
-                if (!this.files.length) return;
-                if (!confirm('Importing a backup will overwrite existing incident data. Continue?')) {
-                    this.value = '';
+            document.getElementById('importBackupBtn').addEventListener('click', async function() {
+                const fileInput = document.getElementById('importIncidentsInput');
+                if (fileInput.files.length === 0) return;
+
+                if (!(await showConfirm('Importing a backup will overwrite existing incident data. Continue?', 'Warning: Critical Action'))) {
+                    fileInput.value = '';
                     return;
                 }
-                const file = this.files[0];
-                const fd = new FormData();
-                fd.append('file', file);
-                fd.append('_token', csrfToken);
+
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+                formData.append('_token', csrfToken);
+
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Importing...';
+
                 fetch(incidentsImportUrl, {
                     method: 'POST',
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: fd
-                }).then(r => r.json()).then(resp => {
-                    if (!resp.success) {
-                        alert(resp.message || 'Failed to import backup.');
-                        return;
+                    headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                    body: formData
+                })
+                .then(r => r.json())
+                .then(async resp => {
+                    if (resp.success) {
+                        await showNotify('Backup imported successfully.', 'Success', 'fa-check-circle');
+                        window.location.reload();
+                    } else {
+                        await showNotify(resp.message || 'Failed to import backup.', 'Import Failed', 'fa-exclamation-triangle');
+                        this.disabled = false;
+                        this.innerHTML = '<i class="fas fa-file-import me-2"></i> Import History';
                     }
-                    alert('Backup imported successfully.');
-                    window.location.reload();
-                }).catch(() => alert('Failed to import backup.'));
+                })
+                .catch(async () => {
+                    await showNotify('Failed to import backup.', 'Connection Error', 'fa-wifi');
+                    this.disabled = false;
+                    this.innerHTML = '<i class="fas fa-file-import me-2"></i> Import History';
+                });
             });
         }
 
-        document.getElementById('addChecklistItemBtn').addEventListener('click', function () {
+        document.getElementById('addChecklistItemBtn').addEventListener('click', async function () {
             const input = document.getElementById('newChecklistLabel');
             const label = input.value.trim();
             if (!label) return;
@@ -2137,9 +2318,9 @@
                     checklist_date: checklistDate,
                     label: label
                 })
-            }).then(r => r.json()).then(resp => {
+            }).then(r => r.json()).then(async resp => {
                 if (!resp.success) {
-                    alert('Failed to add checklist item.');
+                    await showNotify('Failed to add checklist item.', 'Error', 'fa-times');
                     return;
                 }
                 const item = resp.item;
@@ -2168,26 +2349,21 @@
                     const id = row.getAttribute('data-id');
                     updateChecklistItem(id, { is_completed: this.checked ? 1 : 0 });
                 });
-                div.querySelector('.checklist-delete').addEventListener('click', function () {
+                div.querySelector('.checklist-delete').addEventListener('click', async function () {
+                    if (!(await showConfirm('Remove this checklist item?', 'Delete Task'))) return;
                     const row = this.closest('.checklist-item-row');
                     const id = row.getAttribute('data-id');
-                    if (!confirm('Remove this checklist item?')) return;
+                    
                     fetch(checklistUpdateBaseUrl + '/' + id, {
                         method: 'DELETE',
-                        headers: {
-                            'X-CSRF-TOKEN': csrfToken,
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest'
-                        }
-                    }).then(r => r.json()).then(resp => {
+                        headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                    }).then(r => r.json()).then(async resp => {
                         if (resp.success) {
                             row.remove();
                         } else {
-                            alert('Failed to delete checklist item.');
+                            await showNotify('Failed to delete checklist item.', 'Error', 'fa-exclamation-triangle');
                         }
-                    }).catch(() => {
-                        alert('Failed to delete checklist item.');
-                    });
+                    }).catch(async () => await showNotify('Failed to delete checklist item.', 'Connection Error', 'fa-wifi'));
                 });
                 div.querySelector('.checklist-edit').addEventListener('click', function () {
                     const row = this.closest('.checklist-item-row');
@@ -2201,8 +2377,8 @@
                         labelEl.textContent = newLabel.trim();
                     }
                 });
-            }).catch(() => {
-                alert('Failed to add checklist item.');
+            }).catch(async () => {
+                await showNotify('Failed to add checklist item.', 'Error', 'fa-times');
             });
         });
 

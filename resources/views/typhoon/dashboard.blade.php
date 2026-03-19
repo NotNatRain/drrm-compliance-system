@@ -166,6 +166,32 @@
             max-width: 100% !important;
         }
     }
+
+    /* System Status Pulse */
+    .status-pulse {
+        width: 12px;
+        height: 12px;
+        background: #22c55e;
+        border-radius: 50%;
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+    
+    .btn-circle {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+    }
 </style>
 @endpush
 
@@ -185,10 +211,17 @@
             </div>
         </div>
         <div class="d-flex align-items-center gap-3">
-            <div class="text-end me-3 d-none d-md-block">
-                <div class="small text-white-50">SYSTEM STATUS</div>
-                <div class="small fw-bold text-success"><i class="fas fa-circle me-1" style="font-size: 8px;"></i> ONLINE</div>
-            </div>
+            <a href="{{ route('typhoon.notifications') }}" class="btn btn-circle btn-info shadow-lg text-white" title="Notifications">
+                <i class="fas fa-bell"></i>
+                @php
+                    $unreadCount = \App\Models\FireSafetyNotification::forCompliance('typhoon_flood')->unread()->count();
+                @endphp
+                @if($unreadCount > 0)
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light" style="font-size: 0.6rem; padding: 0.35em 0.65em;">
+                        {{ $unreadCount > 99 ? '99+' : $unreadCount }}
+                    </span>
+                @endif
+            </a>
             <div class="badge bg-white text-dark border-0 p-3 shadow-sm">
                 <i class="fas fa-clock me-2 text-primary"></i> {{ now()->format('M d, Y | h:i A') }}
             </div>
@@ -197,6 +230,9 @@
                     <i class="fas fa-share-alt me-2"></i>Send to Social
                 </button>
                 @if(auth()->user()->role === 'admin')
+                <button type="button" class="btn btn-warning text-white px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#announceSomethingModal">
+                    <i class="fas fa-bullhorn me-2"></i>Announce
+                </button>
                 <button type="button" class="btn btn-primary px-3" data-bs-toggle="modal" data-bs-target="#createEvacCenterModal">
                     <i class="fas fa-plus-circle me-2"></i>Add Center
                 </button>
@@ -1041,5 +1077,45 @@
     }
 </script>
 @endpush
+@include('typhoon.partials.choose-school-modal')
 
+{{-- MODAL: QUICK ANNOUNCEMENT (Global for Admin) --}}
+<div class="modal fade" id="announceSomethingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ route('typhoon.announcements.store') }}">
+            @csrf
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header" style="background-color: var(--card-header-bg); color: white;">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-bullhorn me-2 text-info"></i>PUBLIC ANNOUNCEMENT</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 text-dark">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small">TITLE / SUBJECT</label>
+                        <input type="text" name="title" class="form-control" placeholder="e.g. System-wide Relief Distribution Notice" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small">URGENCY LEVEL</label>
+                        <select name="urgency" class="form-select">
+                            <option value="info">INFO - Standard Update</option>
+                            <option value="warning">WARNING - Important Notice</option>
+                            <option value="danger">URGENT - Critical Requirement</option>
+                        </select>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-bold text-muted small">MESSAGE CONTENT</label>
+                        <textarea name="message" rows="4" class="form-control" placeholder="Type your announcement details here..." required></textarea>
+                    </div>
+                    <div class="mt-3 small text-muted italic">
+                        <i class="fas fa-info-circle me-1"></i> This is a global announcement. It will be visible to ALL users across ALL evacuation centers.
+                    </div>
+                </div>
+                <div class="modal-footer bg-light shadow-sm">
+                    <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">CANCEL</button>
+                    <button type="submit" class="btn btn-info text-white px-5 fw-bold shadow-sm">POST ANNOUNCEMENT</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection

@@ -12,6 +12,7 @@ use App\Models\TypFldFamily;
 use App\Models\TypFldFamilyMember;
 use App\Models\TypFldMonitoringSnapshot;
 use App\Models\ActivityLog;
+use App\Models\FireSafetyNotification;
 
 class TyphoonController extends Controller
 {
@@ -243,6 +244,14 @@ class TyphoonController extends Controller
             ],
             'activeSchoolId' => $contributorActiveSchoolId,
             'activeTyphoon'  => $activeTyphoon,
+            'quickAnnouncements' => FireSafetyNotification::forCompliance('typhoon_flood')
+                ->where(function($q) use ($contributorActiveSchoolId) {
+                    $q->whereNull('school_id')->orWhere('school_id', $contributorActiveSchoolId);
+                })
+                ->where('type', 'announcement')
+                ->latest()
+                ->take(5)
+                ->get(),
         ]);
     }
 
@@ -418,12 +427,22 @@ class TyphoonController extends Controller
             return $center;
         });
 
+        $quickAnnouncements = FireSafetyNotification::forCompliance('typhoon_flood')
+            ->where(function($q) use ($ec) {
+                $q->whereNull('school_id')->orWhere('school_id', $ec->school_id);
+            })
+            ->where('type', 'announcement')
+            ->latest()
+            ->take(10)
+            ->get();
+
         return view('typhoon.evacuation-center', [
             'ec' => $ec,
             'families' => $families,
             'lastUsedAt' => $lastUsedAt,
             'currentOccupancy' => $currentOccupancy,
             'evacuationCenters' => $evacuationCenters,
+            'quickAnnouncements' => $quickAnnouncements,
         ]);
     }
 
@@ -514,12 +533,105 @@ class TyphoonController extends Controller
         $ec->reports_status = $request->reports_status;
         $ec->save();
 
+        // Create notification for site update
+        FireSafetyNotification::create([
+            'compliance_type' => 'typhoon_flood',
+            'module' => 'evacuation_center',
+            'school_id' => $ec->school_id,
+            'user_id' => $user->id,
+            'type' => 'update',
+            'title' => 'Site Intelligence Updated',
+            'message' => "Contributor {$user->name} updated site {$ec->school->school_name}. Status: " . strtoupper($ec->usage_status),
+            'action_type' => 'view_site',
+            'action_url' => route('typhoon.evacuation-center.show', $ec->id),
+            'is_read' => false,
+        ]);
+
         ActivityLog::log('typhoon_flood', 'Updated evacuation center: ' . $ec->identification, [
             'school_id' => $ec->school_id,
             'notes' => "Status: {$ec->usage_status}",
         ]);
 
         return redirect()->route('typhoon.evacuation-center.show', $ec->id)->with('success', 'Evacuation center updated.');
+    }
+
+    public function storeAnnouncement(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'title' => 'required|string|max:255',
+            'message' => 'required|string|max:2000',
+            'school_id' => 'nullable|integer|exists:firesafety_school_information,id',
+            'urgency' => 'required|in:info,warning,danger',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->with('error', $validator->errors()->first())->withInput();
+        }
+
+        $user = auth()->user();
+
+        FireSafetyNotification::create([
+            'compliance_type' => 'typhoon_flood',
+            'module' => 'announcement',
+            'school_id' => $request->school_id, // Null means all schools
+            'user_id' => $user->id,
+            'type' => 'announcement',
+            'title' => $request->title,
+            'message' => $request->message,
+            'action_type' => 'mark_read',
+            'is_read' => false,
+            'action_data' => ['urgency' => $request->urgency]
+        ]);
+
+        return redirect()->back()->with('success', 'Announcement posted successfully.');
+    }
+
+    public function notifications()
+    {
+        $user = auth()->user();
+        $query = FireSafetyNotification::forCompliance('typhoon_flood')
+            ->latest();
+
+        if ($user->role !== 'admin') {
+            // Conributors see:
+            // 1. Announcements (global: school_id is null)
+            // 2. Announcements for their assigned school
+            // 3. Their own updates
+            $query->where(function($q) use ($user) {
+                $q->whereNull('school_id')
+                  ->orWhere('school_id', $user->school_id)
+                  ->orWhere('user_id', $user->id);
+            });
+        }
+        // Admins see everything (no filter)
+
+        $notifications = $query->paginate(15);
+
+        return view('typhoon.notifications', compact('notifications'));
+    }
+
+    public function markNotificationRead($id)
+    {
+        $notification = FireSafetyNotification::findOrFail($id);
+        $notification->update(['is_read' => true]);
+        return response()->json(['success' => true]);
+    }
+
+    public function markAllNotificationsRead()
+    {
+        $user = auth()->user();
+        $query = FireSafetyNotification::forCompliance('typhoon_flood')->unread();
+
+        if ($user->role !== 'admin') {
+            $query->where(function($q) use ($user) {
+                $q->whereNull('school_id')
+                  ->orWhere('school_id', $user->school_id);
+            });
+        }
+
+        $query->update(['is_read' => true]);
+
+        return redirect()->back()->with('success', 'All notifications marked as read.');
     }
 
     public function realtime(Request $request)

@@ -313,31 +313,64 @@
                         </div>
                     </div>
 
-                    <!-- Alarm Types & Statuses -->
+                    <!-- Alarm Configuration: General Status -->
                     <div class="col-md-6 mb-4">
-                        <div class="card dashboard-card card-collapsed" id="alarm-config-card">
+                        <div class="card dashboard-card card-collapsed mb-4" id="general-alarm-status-card">
                             <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                 <h6 class="m-0 fw-bold text-primary">
-                                    <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'alarm-config-card')"></i>
-                                    <i class="fas fa-bell me-2"></i> Alarm Configuration
+                                    <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'general-alarm-status-card')"></i>
+                                    <i class="fas fa-list-ul me-2"></i> General Alarm Status
+                                </h6>
+                                <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#addAlarmStatusModal">
+                                    <i class="fas fa-plus"></i> Add Status
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div id="generalAlarmStatusesList" class="row row-cols-1 row-cols-md-2 g-3">
+                                    @php
+                                        $generalStatuses = $alarmStatusesByType->get("", collect());
+                                        if ($generalStatuses->isEmpty()) $generalStatuses = $alarmStatusesByType->get(null, collect());
+                                    @endphp
+                                    @foreach($generalStatuses as $status)
+                                    <div class="col">
+                                        <div class="config-item h-100 mb-0">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <strong>{{ $status->name }}</strong>
+                                                <span class="badge config-badge {{ $status->color_class ?? 'bg-secondary' }}">General</span>
+                                            </div>
+                                            <div class="mt-2 text-end">
+                                                <button class="btn btn-sm btn-outline-primary edit-config-btn"
+                                                        data-id="{{ $status->id }}"
+                                                        data-type="alarm_status"
+                                                        data-name="{{ $status->name }}"
+                                                        data-description="{{ $status->description }}"
+                                                        data-color-class="{{ $status->color_class ?? 'bg-secondary' }}">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card dashboard-card card-collapsed" id="alarm-types-specific-card">
+                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                                <h6 class="m-0 fw-bold text-primary">
+                                    <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'alarm-types-specific-card')"></i>
+                                    <i class="fas fa-bell me-2"></i> Alarm Types &amp; Specific Statuses
                                 </h6>
                                 <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addAlarmTypeModal">
                                     <i class="fas fa-plus"></i> Add Type
                                 </button>
                             </div>
                             <div class="card-body">
-                                <h6>Alarm Types &amp; Statuses</h6>
                                 <div id="alarmTypesList" class="row row-cols-1 row-cols-md-2 g-3">
                                 @foreach($alarmTypes as $type)
                                     <div class="col">
                                         @php
                                             $specificStatuses = $alarmStatusesByType->get($type->id, collect());
-                                            $generalStatuses = $alarmStatusesByType->get("", collect()); // empty/null parent_id
-                                            if ($generalStatuses->isEmpty()) {
-                                                // Try alternative empty key if null becomes "" in group
-                                                $generalStatuses = $alarmStatusesByType->get(null, collect());
-                                            }
-                                            $allTypeStatuses = $generalStatuses->merge($specificStatuses)->unique('name');
                                         @endphp
                                         <div class="config-item h-100 mb-0">
                                             <div class="d-flex justify-content-between align-items-center">
@@ -346,9 +379,9 @@
                                                     {{ $type->is_active ? 'Active' : 'Inactive' }}
                                                 </span>
                                             </div>
-                                            @if($allTypeStatuses->isNotEmpty())
+                                            @if($specificStatuses->isNotEmpty())
                                             <ul class="list-unstyled small mb-2 ms-3 mt-1">
-                                                @foreach($allTypeStatuses as $status)
+                                                @foreach($specificStatuses as $status)
                                                 <li><span class="badge {{ $status->color_class ?? 'bg-secondary' }} me-1">{{ $status->name }}</span></li>
                                                 @endforeach
                                             </ul>
@@ -1247,7 +1280,43 @@
         </div>
     </div>
 
-    <!-- School History Modal (Removed Schools) -->
+    <!-- Add Alarm Status Modal (General) -->
+    <div class="modal fade" id="addAlarmStatusModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
+                    <h5 class="modal-title"><i class="fas fa-plus me-2"></i> Add General Alarm Status</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addAlarmStatusForm">
+                        @csrf
+                        <div class="mb-3">
+                            <label class="form-label">Status Name *</label>
+                            <input type="text" class="form-control" name="name" required placeholder="e.g. Active">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" name="description" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Color Coding</label>
+                            <select class="form-control" name="color_class">
+                                <option value="bg-success">Green (Functional)</option>
+                                <option value="bg-danger">Red (Non-Functional)</option>
+                                <option value="bg-warning text-dark">Yellow (Maintenance)</option>
+                                <option value="bg-secondary" selected>Gray (Neutral)</option>
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveAlarmStatus()">Save Status</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="modal fade" id="schoolHistoryModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -2269,6 +2338,34 @@
             }
         }
 
+        async function saveAlarmStatus() {
+            const form = document.getElementById('addAlarmStatusForm');
+            if (!form || !form.checkValidity()) {
+                form?.reportValidity();
+                return;
+            }
+            const formData = new FormData(form);
+            try {
+                const response = await fetch('/fire-safety/config/alarm-status', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+                const data = await response.json();
+                if (response.ok && data.success) {
+                    Swal.fire({ icon: 'success', title: 'Saved', text: 'General alarm status added.', timer: 2000, showConfirmButton: false }).then(() => location.reload());
+                } else {
+                    Swal.fire({ icon: 'error', title: 'Notice', text: data.message || 'Failed to add status.' });
+                }
+            } catch (e) {
+                console.error(e);
+                Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to add alarm status.' });
+            }
+        }
+
         async function saveAlarmType() {
             const form = document.getElementById('addAlarmTypeForm');
             if (!form || !form.checkValidity()) {
@@ -2646,6 +2743,7 @@
             const isInspectionChecklist = (type === 'inspection_checklist');
             const isInspectionObserver = (type === 'inspection_observer');
             const isAlarmType = (type === 'alarm_type');
+            const isAlarmStatus = (type === 'alarm_status');
 
             let alarmStatusesHtml = '';
             if (isAlarmType) {
@@ -2704,6 +2802,17 @@
                     list.insertAdjacentHTML('beforeend', html);
                 };
             }
+            const alarmStatusColorHtml = isAlarmStatus ? `
+                                    <div class="mb-3">
+                                        <label class="form-label">Status Color</label>
+                                        <select class="form-control" name="color_class">
+                                            <option value="bg-success" ${event.currentTarget.dataset.colorClass === 'bg-success' ? 'selected' : ''}>Green (Functional)</option>
+                                            <option value="bg-danger" ${event.currentTarget.dataset.colorClass === 'bg-danger' ? 'selected' : ''}>Red (Non-Functional)</option>
+                                            <option value="bg-warning text-dark" ${event.currentTarget.dataset.colorClass === 'bg-warning text-dark' ? 'selected' : ''}>Yellow (Maintenance)</option>
+                                            <option value="bg-secondary" ${event.currentTarget.dataset.colorClass === 'bg-secondary' ? 'selected' : ''}>Gray</option>
+                                        </select>
+                                    </div>
+                                    ` : '';
             const pressureRangeHtml = isExtinguisherStatus ? `
                                     <div class="mb-3">
                                         <label class="form-label">Pressure level range (psi) *</label>
@@ -2787,6 +2896,7 @@
                                     ${roomTypePriorityHtml}
                                     ${buildingLimitsHtml}
                                     ${pressureRangeHtml}
+                                    ${alarmStatusColorHtml}
                                     ${isSafetyFeature && category !== null && category !== undefined ? `
                                     <div class="mb-3">
                                         <label class="form-label">Category</label>

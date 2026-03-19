@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Evacuation Center Details')
+@section('title', 'Evacuation Center Intelligence')
 @section('hide_main_nav', '1')
 
 @push('styles')
@@ -23,7 +23,7 @@
         font-family: 'Space Grotesk', 'Inter', sans-serif;
     }
 
-    h1, h2, h3, h4, h5, .card-header-custom, .stat-value, .fw-bold, .profile-property, .profile-value {
+    h1, h2, h3, h4, h5, .card-header-custom, .stat-value, .fw-bold {
         font-family: 'Rajdhani', sans-serif;
         letter-spacing: 0.5px;
     }
@@ -56,107 +56,113 @@
         border-bottom: 2px solid rgba(0,0,0,0.1);
     }
 
-    .card-header-custom i {
-        color: var(--accent-blue);
-        margin-right: 10px;
-        font-size: 1.1rem;
-    }
-
     .profile-property {
-        font-weight: 700;
         color: var(--text-muted);
-        font-size: 0.85rem;
+        font-weight: 600;
         text-transform: uppercase;
-        margin-bottom: 0.25rem;
+        font-size: 0.7rem;
+        letter-spacing: 1px;
     }
 
     .profile-value {
+        font-weight: 700;
         color: var(--text-dark);
-        font-weight: 600;
-        font-size: 1.1rem;
         margin-bottom: 1.25rem;
     }
 
-    .table-custom {
-        color: var(--text-dark);
-    }
-
-    .table-custom thead tr {
+    .table-custom thead th {
         background: #f8fafc;
-    }
-
-    .table-custom th {
-        color: var(--text-muted);
-        border-bottom: 1px solid #e2e8f0;
+        border-bottom: 2px solid #e2e8f0;
         text-transform: uppercase;
         font-size: 0.75rem;
-        letter-spacing: 1px;
-        font-weight: 600;
+        font-weight: 700;
+        color: var(--text-muted);
         padding: 1rem;
     }
 
-    .table-custom td {
-        border-bottom: 1px solid #f1f5f9;
+    .table-custom tbody td {
+        padding: 1rem;
         vertical-align: middle;
-        padding: 1rem;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 0.9rem;
     }
 
-    .btn-action {
-        background: #f1f5f9;
-        border: 1px solid #e2e8f0;
-        color: var(--text-dark);
-        transition: all 0.2s ease;
-        font-weight: 600;
+    .stat-icon-small {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
     }
 
-    .btn-action:hover {
-        background: var(--accent-blue);
-        color: white;
-        border-color: var(--accent-blue);
+    /* System Status Pulse */
+    .status-pulse {
+        width: 12px;
+        height: 12px;
+        background: #22c55e;
+        border-radius: 50%;
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+        animation: pulse 2s infinite;
     }
 
-    h1, h2, h3, h5 {
-        color: #ffffff !important;
+    @keyframes pulse {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
     }
-
-    .dashboard-card h1, .dashboard-card h2, .dashboard-card h3, .dashboard-card h5, .dashboard-card .h3 {
-        color: var(--text-dark) !important;
+    
+    .btn-circle {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
     }
 </style>
 @endpush
 
 @section('content')
 <div class="container-fluid">
-    {{-- Header --}}
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div class="d-flex align-items-center">
-            <a href="{{ route('typhoon.dashboard') }}" class="btn btn-outline-info border-0 me-3" title="Back">
-                <i class="fas fa-chevron-left fa-lg"></i>
-            </a>
-            <div>
-                <h1 class="h2 mb-0 fw-bold text-white">
-                    <i class="fas fa-satellite-dish me-2" style="color: var(--accent-blue);"></i>
-                    Evacuation Center - <span style="color: var(--accent-blue);">{{ $ec->school->school_name ?? $ec->identification ?? ('Center #' . $ec->id) }}</span>
-                </h1>
-                <div class="small text-white-50 mt-1">
-                    <i class="fas fa-info-circle me-1"></i> Detailed Intelligence & Managed Records
+    {{-- Unified Header --}}
+    <div class="row align-items-center mb-5">
+        <div class="col-md-6">
+            <div class="d-flex align-items-center gap-3">
+                <a href="{{ route('typhoon.dashboard') }}" class="btn btn-circle btn-outline-info border-0 shadow-sm">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                <div>
+                    <h1 class="h2 mb-0 fw-bold text-white">
+                        {{ $ec->school->school_name ?? 'NOT DEFINED' }}
+                    </h1>
+                    <div class="d-flex align-items-center gap-2 mt-1">
+                        <span class="badge bg-info bg-opacity-25 text-info px-2 py-1">EVACUATION HUB</span>
+                        <span class="text-white-50 small"><i class="fas fa-satellite-dish me-1"></i> Data Stream: Active & Synchronized</span>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="d-flex align-items-center gap-3">
-            <div class="text-end me-3 d-none d-md-block">
-                <div class="small text-white-50">SYSTEM STATUS</div>
-                <div class="small fw-bold text-success"><i class="fas fa-circle me-1" style="font-size: 8px;"></i> ONLINE</div>
-            </div>
-            <div class="badge bg-white text-dark border-0 p-3 shadow-sm">
-                <i class="fas fa-clock me-2 text-primary"></i> {{ now()->format('M d, Y | h:i A') }}
-            </div>
+        <div class="col-md-6 d-flex justify-content-end align-items-center gap-3">
+            <a href="{{ route('typhoon.notifications') }}" class="btn btn-circle btn-info shadow-lg text-white" title="Notifications">
+                <i class="fas fa-bell"></i>
+                @php
+                    $unreadCount = \App\Models\FireSafetyNotification::forCompliance('typhoon_flood')->unread()->count();
+                @endphp
+                @if($unreadCount > 0)
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light" style="font-size: 0.6rem; padding: 0.35em 0.65em;">
+                        {{ $unreadCount > 99 ? '99+' : $unreadCount }}
+                    </span>
+                @endif
+            </a>
+            
             <div class="btn-group shadow">
-                <button class="btn btn-success px-3 fw-bold" onclick="document.getElementById('evacPrintModal').style.display='flex'" title="Print Evacuation Center">
-                    <i class="fas fa-print me-2"></i>Print Evacuation Center
+                <button class="btn btn-success px-4 fw-bold" onclick="document.getElementById('evacPrintModal').style.display='flex'" title="Print Evacuation Center">
+                    <i class="fas fa-print me-2"></i>PRINT REPORT
                 </button>
-                <button type="button" class="btn btn-primary px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#updateCenterStatusModal">
-                    <i class="fas fa-edit me-2"></i>Update Site
+                <button type="button" class="btn btn-primary px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#updateCenterStatusModal">
+                    <i class="fas fa-edit me-2"></i>UPDATE SITE
                 </button>
                 @if(auth()->user()->role === 'admin')
                 <button type="button" class="btn btn-secondary px-3" data-bs-toggle="modal" data-bs-target="#chooseSchoolModal" title="Choose Center">
@@ -167,65 +173,105 @@
         </div>
     </div>
 
+    {{-- Profile Row (Full Width) --}}
     <div class="row g-4 mb-4">
-        <div class="col-lg-8">
-            <div class="dashboard-card mb-4">
-                <div class="card-header-custom"><i class="fas fa-info-circle"></i>Evacuation Center Profile</div>
-                <div class="p-4">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="profile-property">Identification Code</div>
-                            <div class="profile-value">{{ $ec->identification ?? '—' }}</div>
-                            
-                            <div class="profile-property">Location / Address</div>
-                            <div class="profile-value">{{ $ec->location ?? $ec->school->address ?? '—' }}</div>
-                            
-                            <div class="profile-property">Operational Status</div>
-                            <div class="profile-value">
-                                @if($ec->usage_status === 'full')
-                                    <span class="badge bg-danger shadow-sm px-3 py-2">AT CAPACITY</span>
-                                @elseif($ec->usage_status === 'occupied')
-                                    <span class="badge bg-primary shadow-sm px-3 py-2">OCCUPIED</span>
-                                @elseif($ec->usage_status === 'decamp')
-                                    <span class="badge text-white shadow-sm px-3 py-2" style="background-color: #6f42c1;">DECAMP</span>
-                                @else
-                                    <span class="badge bg-success shadow-sm px-3 py-2">CLEARED / READY</span>
-                                @endif
+        <div class="col-12">
+            <div class="dashboard-card border-0 shadow-lg" style="background: linear-gradient(135deg, #0f2154 0%, #1a3a8a 100%); color: white; border-radius: 16px; overflow: hidden;">
+                <div class="row g-0 align-items-stretch">
+                    <div class="col-md-3 p-4 border-end border-white-50 d-flex flex-column justify-content-center">
+                        <div class="d-flex align-items-center mb-4">
+                            <div class="bg-primary bg-opacity-25 p-3 rounded-circle me-3">
+                                <i class="fas fa-id-card-alt fa-2x text-info"></i>
+                            </div>
+                            <div>
+                                <div class="profile-property text-white-50 mb-0" style="font-size: 0.75rem; letter-spacing: 1px;">Identification Code</div>
+                                <div class="h5 mb-0 fw-bold text-white">{{ $ec->identification ?? '—' }}</div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="profile-property">Max Capacity</div>
-                            <div class="profile-value text-primary fs-3 fw-bold">{{ $ec->capacity ?? 0 }} <small class="text-muted fs-6">Individuals</small></div>
-                            
-                            <div class="profile-property">Current Load</div>
-                            <div class="profile-value fs-3 fw-bold">{{ $currentOccupancy }} <small class="text-muted fs-6">Individuals</small></div>
+                        <div class="d-flex align-items-center">
+                            <div class="bg-danger bg-opacity-25 p-3 rounded-circle me-3">
+                                <i class="fas fa-map-marker-alt fa-2x text-danger"></i>
+                            </div>
+                            <div>
+                                <div class="profile-property text-white-50 mb-0" style="font-size: 0.75rem; letter-spacing: 1px;">Location / Address</div>
+                                <div class="small mb-0 fw-bold text-white">{{ $ec->location ?? $ec->school->address ?? '—' }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 p-4 border-end border-white-50 d-flex flex-column justify-content-center text-center">
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <div class="profile-property text-white-50 mb-1" style="font-size: 0.8rem; letter-spacing: 1.5px;">Max Capacity</div>
+                                <div class="h2 mb-0 fw-bold text-white">{{ $ec->capacity ?? 0 }} <small class="text-white-50 fs-6">Individuals</small></div>
+                            </div>
+                            <div class="col-6">
+                                <div class="profile-property text-white-50 mb-1" style="font-size: 0.8rem; letter-spacing: 1.5px;">Current Load</div>
+                                <div class="h2 mb-0 fw-bold text-info">{{ $currentOccupancy }} <small class="text-white-50 fs-6">Individuals</small></div>
+                            </div>
+                        </div>
+                        <div class="px-4">
+                            @php
+                                $loadPercent = $ec->capacity > 0 ? min(round(($currentOccupancy / $ec->capacity) * 100), 100) : 0;
+                            @endphp
+                            <div class="progress" style="height: 14px; background: rgba(255,255,255,0.1); border-radius: 20px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">
+                                <div class="progress-bar bg-info progress-bar-striped progress-bar-animated" style="width: {{ $loadPercent }}%"></div>
+                            </div>
+                            <div class="d-flex justify-content-between mt-2 px-1">
+                                <div class="small text-white-50 fw-bold text-uppercase" style="font-size: 0.65rem;">Resource Utilization</div>
+                                <div class="small text-white-50 fw-bold text-uppercase" style="font-size: 0.65rem;">{{ $loadPercent }}% Capacity Limit</div>
+                            </div>
+                        </div>
+                    </div>
 
-                            <div class="profile-property">Resources Inventory</div>
-                            <div class="profile-value fs-6">{{ $ec->emergency_resources ?? 'No inventory data encoded yet.' }}</div>
+                    <div class="col-md-3 p-4 d-flex flex-column justify-content-center text-center bg-black bg-opacity-10">
+                        <div class="profile-property text-white-50 mb-2" style="font-size: 0.8rem; letter-spacing: 1.5px;">Site Readiness Status</div>
+                        @if($ec->usage_status === 'full')
+                            <div class="badge bg-danger shadow-sm px-4 py-3 h5 mb-3 w-100 fw-bold" style="border: 1px solid rgba(255,255,255,0.2);">AT CAPACITY</div>
+                        @elseif($ec->usage_status === 'occupied')
+                            <div class="badge bg-primary shadow-sm px-4 py-3 h5 mb-3 w-100 fw-bold" style="border: 1px solid rgba(255,255,255,0.2);">ACTIVE / OCCUPIED</div>
+                        @elseif($ec->usage_status === 'decamp')
+                            <div class="badge shadow-sm px-4 py-3 h5 mb-3 w-100 fw-bold" style="background-color: #6f42c1; border: 1px solid rgba(255,255,255,0.2);">DECAMP / CLOSING</div>
+                        @else
+                            <div class="badge bg-success shadow-sm px-4 py-3 h5 mb-3 w-100 fw-bold" style="border: 1px solid rgba(255,255,255,0.2);">CLEARED / READY</div>
+                        @endif
+                        
+                        <div class="bg-white bg-opacity-10 p-2 rounded small text-info fw-bold" style="border: 1px dashed rgba(255,255,255,0.2);">
+                            <i class="fas fa-boxes me-2"></i> {{ Str::limit($ec->emergency_resources ?? 'No inventory data encoded', 45) }}
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <div class="dashboard-card">
-                <div class="card-header-custom"><i class="fas fa-people-arrows"></i>Recent Family Registration History</div>
-                <div class="table-responsive">
+    <div class="row g-4 mb-4">
+        {{-- History Table (Larger and moved to Profile's old spot) --}}
+        <div class="col-lg-8">
+            <div class="dashboard-card h-100 shadow-lg border-0" style="min-height: 520px;">
+                <div class="card-header-custom py-3">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <span><i class="fas fa-people-arrows me-2"></i>Recent Master Registry History</span>
+                        <span class="badge bg-info bg-opacity-10 text-info px-3 py-2" style="font-size: 0.7rem;">MASTER DATABASE</span>
+                    </div>
+                </div>
+                <div class="table-responsive" style="height: calc(100% - 55px); overflow-y: auto;">
                     <table class="table table-custom table-hover mb-0">
-                        <thead>
+                        <thead class="sticky-top">
                             <tr>
-                                <th>Timestamp</th>
+                                <th class="ps-4">Timestamp</th>
                                 <th>Head of Family</th>
                                 <th class="text-center">Members</th>
                                 <th>Vulnerability Flags</th>
-                                <th>Collective Needs</th>
+                                <th class="pe-4">Collective Needs</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($families as $family)
                                 <tr>
-                                    <td><span class="fw-bold text-muted">{{ $family->created_at->format('M d, Y') }}</span><br><small>{{ $family->created_at->format('h:i A') }}</small></td>
-                                    <td><div class="fw-bold fs-6">{{ $family->head_family_name }}</div></td>
-                                    <td class="text-center"><span class="badge bg-light text-dark border">{{ $family->members_count }}</span></td>
+                                    <td class="ps-4"><span class="fw-bold text-muted">{{ $family->created_at->format('M d, Y') }}</span><br><small>{{ $family->created_at->format('h:i A') }}</small></td>
+                                    <td><div class="fw-bold fs-6 text-primary">{{ $family->head_family_name }}</div></td>
+                                    <td class="text-center"><span class="badge bg-light text-dark border p-2" style="min-width: 35px;">{{ $family->members_count }}</span></td>
                                     <td>
                                         @php $flags = []; @endphp
                                         @if($family->has_pregnant) @php $flags[] = 'Pregnant'; @endphp @endif
@@ -239,13 +285,13 @@
                                         @endforeach
                                         @if(empty($flags)) <small class="text-muted italic">None</small> @endif
                                     </td>
-                                    <td><small class="text-truncate d-block" style="max-width: 150px;">{{ $family->collective_needs ?? '—' }}</small></td>
+                                    <td class="pe-4"><small class="text-truncate d-block" style="max-width: 200px;" title="{{ $family->collective_needs }}">{{ $family->collective_needs ?? '—' }}</small></td>
                                 </tr>
                             @empty
                                 <tr>
                                     <td colspan="5" class="text-center py-5 opacity-50">
-                                        <i class="fas fa-users-slash fa-3x mb-3 text-muted"></i>
-                                        <p>No family registrations recorded for this site yet.</p>
+                                        <i class="fas fa-users-slash fa-4x mb-3 text-muted"></i>
+                                        <p class="h5">No family registrations recorded for this site yet.</p>
                                     </td>
                                 </tr>
                             @endforelse
@@ -256,38 +302,66 @@
         </div>
 
         <div class="col-lg-4">
-            <div class="dashboard-card mb-4">
-                <div class="card-header-custom"><i class="fas fa-history"></i>Site Activity Logs</div>
-                <div class="p-4">
+            {{-- Site Activity Logs (Half Height) --}}
+            <div class="dashboard-card mb-4 shadow-lg border-0" style="height: calc(50% - 12px);">
+                <div class="card-header-custom py-3"><i class="fas fa-history me-2"></i>Site Intelligence Feed</div>
+                <div class="p-4" style="height: calc(100% - 55px); overflow-y: auto;">
                     @if($lastUsedAt)
-                        <div class="mb-4">
-                            <div class="profile-property">Last Activation Date</div>
-                            <div class="fw-bold">{{ $lastUsedAt->format('F d, Y h:i A') }}</div>
+                        <div class="mb-4 d-flex align-items-center">
+                            <div class="stat-icon-small bg-primary bg-opacity-10 p-2 rounded text-primary me-3">
+                                <i class="fas fa-calendar-check"></i>
+                            </div>
+                            <div>
+                                <div class="profile-property mb-0" style="font-size: 0.7rem;">Last Activation Date</div>
+                                <div class="fw-bold">{{ $lastUsedAt->format('F d, Y') }} <small class="text-muted">{{ $lastUsedAt->format('h:i A') }}</small></div>
+                            </div>
                         </div>
                         <div>
-                            <div class="profile-property">Latest Situation Summary</div>
-                            <div class="p-3 bg-light rounded border">
-                                <p class="mb-0 small">{{ $ec->reports_status ?? 'No recent narrative reports submitted.' }}</p>
+                            <div class="profile-property mb-2" style="font-size: 0.7rem;">Latest Situation Summary (SITREP)</div>
+                            <div class="p-3 bg-light rounded border-start border-4 border-info">
+                                <p class="mb-0 small text-dark" style="line-height: 1.6;">{{ $ec->reports_status ?? 'No recent narrative reports submitted.' }}</p>
                             </div>
                         </div>
                     @else
                         <div class="text-center py-5 opacity-50">
-                            <i class="fas fa-calendar-times fa-3x mb-3"></i>
+                            <i class="fas fa-calendar-times fa-3x mb-3 text-muted"></i>
                             <p>This station has no recorded usage history.</p>
                         </div>
                     @endif
                 </div>
             </div>
             
-            <div class="dashboard-card">
-                <div class="card-header-custom"><i class="fas fa-bullhorn"></i>Quick Announcements</div>
-                <div class="p-4">
-                    <div class="alert alert-info border-0 shadow-sm small">
-                        <i class="fas fa-info-circle me-2"></i> Ensure all evacuees are provided with hygiene kits upon entry.
-                    </div>
-                    <div class="alert alert-warning border-0 shadow-sm small">
-                        <i class="fas fa-exclamation-triangle me-2"></i> Report any infrastructure damage to the DRRM office immediately.
-                    </div>
+            {{-- Quick Announcements (Other Half Height) --}}
+            <div class="dashboard-card shadow-lg border-0" style="height: calc(50% - 12px);">
+                <div class="card-header-custom d-flex justify-content-between align-items-center py-3">
+                    <span><i class="fas fa-bullhorn me-2"></i>Quick Announcements</span>
+                    <button class="btn btn-sm btn-info text-white fw-bold px-3 shadow-sm" style="font-size: 0.7rem;" data-bs-toggle="modal" data-bs-target="#announceSomethingModal">
+                        <i class="fas fa-plus me-1"></i> ANNOUNCE
+                    </button>
+                </div>
+                <div class="p-4" style="height: calc(100% - 55px); overflow-y: auto;">
+                    @forelse($quickAnnouncements as $ann)
+                        <div class="alert mb-3 border-0 shadow-sm small p-3 d-flex gap-3 {{ (isset($ann->action_data['urgency']) && $ann->action_data['urgency'] === 'danger') ? 'alert-danger' : ((isset($ann->action_data['urgency']) && $ann->action_data['urgency'] === 'warning') ? 'alert-warning' : 'alert-info') }}" style="border-radius: 12px; position: relative;">
+                            <div class="bg-white bg-opacity-25 p-2 rounded-circle flex-shrink-0 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                <i class="fas {{ (isset($ann->action_data['urgency']) && $ann->action_data['urgency'] === 'danger') ? 'fa-exclamation-triangle' : 'fa-info-circle' }}"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <strong class="text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.5px;">{{ $ann->title }}</strong>
+                                    <span class="text-muted fw-bold" style="font-size: 0.6rem;">{{ $ann->created_at->diffForHumans() }}</span>
+                                </div>
+                                <div class="text-dark">{{ $ann->message }}</div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="alert alert-info border-0 shadow-sm small p-3" style="border-radius: 12px;">
+                            <i class="fas fa-info-circle me-2"></i> No active announcements for this center today.
+                        </div>
+                        <div class="text-center py-4 opacity-25">
+                            <i class="fas fa-comment-slash fa-2x mb-2 text-muted"></i>
+                            <p class="small mb-0 text-muted">Announcements will appear here</p>
+                        </div>
+                    @endforelse
                 </div>
             </div>
         </div>
@@ -305,7 +379,7 @@
                     <h5 class="modal-title fw-bold"><i class="fas fa-sync-alt me-2 text-info"></i>UPDATE SITE INTELLIGENCE</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body p-4">
+                <div class="modal-body p-4 text-dark">
                     <div class="mb-4">
                         <label class="form-label fw-bold text-muted small">SITE OPERATIONAL STATUS</label>
                         <select name="usage_status" class="form-select form-select-lg">
@@ -319,14 +393,55 @@
                         <label class="form-label fw-bold text-muted small">RESOURCE INVENTORY SUMMARY</label>
                         <textarea name="emergency_resources" rows="2" class="form-control" placeholder="e.g. 50 Hygiene Kits, 100 Blankets">{{ old('emergency_resources', $ec->emergency_resources) }}</textarea>
                     </div>
-                    <div class="mb-3">
+                    <div class="mb-0">
                         <label class="form-label fw-bold text-muted small">LATEST SITUATION REPORT (SITREP)</label>
                         <textarea name="reports_status" rows="3" class="form-control" placeholder="Describe current issues, damages, or requests...">{{ old('reports_status', $ec->reports_status) }}</textarea>
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">CANCEL</button>
-                    <button type="submit" class="btn btn-primary px-4 fw-bold shadow-sm">SAVE CHANGES</button>
+                    <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">CANCEL</button>
+                    <button type="submit" class="btn btn-primary px-5 fw-bold shadow-sm">SAVE CHANGES</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- MODAL: QUICK ANNOUNCEMENT --}}
+<div class="modal fade" id="announceSomethingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" action="{{ route('typhoon.announcements.store') }}">
+            @csrf
+            <div class="modal-content shadow-lg border-0">
+                <div class="modal-header" style="background-color: var(--card-header-bg); color: white;">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-bullhorn me-2 text-info"></i>PUBLIC ANNOUNCEMENT</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 text-dark">
+                    <input type="hidden" name="school_id" value="{{ $ec->school_id }}">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small">TITLE / SUBJECT</label>
+                        <input type="text" name="title" class="form-control" placeholder="e.g. Relief Distribution Notice" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold text-muted small">URGENCY LEVEL</label>
+                        <select name="urgency" class="form-select">
+                            <option value="info">INFO - Standard Update</option>
+                            <option value="warning">WARNING - Important Notice</option>
+                            <option value="danger">URGENT - Critical Requirement</option>
+                        </select>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-bold text-muted small">MESSAGE CONTENT</label>
+                        <textarea name="message" rows="4" class="form-control" placeholder="Type your announcement details here..." required></textarea>
+                    </div>
+                    <div class="mt-3 small text-muted italic">
+                        <i class="fas fa-info-circle me-1"></i> This announcement will be visible to all users assigned to this site and on the notifications page.
+                    </div>
+                </div>
+                <div class="modal-footer bg-light shadow-sm">
+                    <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">CANCEL</button>
+                    <button type="submit" class="btn btn-info text-white px-5 fw-bold shadow-sm">POST ANNOUNCEMENT</button>
                 </div>
             </div>
         </form>
@@ -443,7 +558,7 @@
         </div>
 
         {{-- Footer --}}
-        <div style="margin-top:2rem; padding-top:1rem; border-top:1px solid rgba(0,210,255,0.12); display:flex; justify-content:space-between; align-items:center; font-size:0.7rem; color:#4a5568;">
+        <div style="margin-top:2rem; padding-top:1rem; border-top:1px solid rgba(0,210,255,0.12); display:flex; justify-content:space-between; align-items:center; font-size:0.7rem; color:#8892b0;">
             <span>Validated by: ________________________ (DRRM Center Lead)</span>
             <span>Electronic Copy • Printed: {{ now()->format('M d, Y h:i A') }}</span>
         </div>
@@ -486,6 +601,5 @@
     }
 </script>
 @endpush
-    @include('typhoon.partials.choose-school-modal')
+@include('typhoon.partials.choose-school-modal')
 @endsection
-

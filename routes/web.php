@@ -205,6 +205,10 @@ Route::prefix('typhoon')->middleware(['auth', 'module.access:typhoon_flood'])->g
     Route::post('/evacuation-center', [TyphoonController::class, 'storeEvacuationCenter'])->name('typhoon.evacuation-center.store');
     Route::put('/evacuation-center/{id}', [TyphoonController::class, 'updateEvacuationCenter'])->name('typhoon.evacuation-center.update');
     Route::get('/realtime', [TyphoonController::class, 'realtime'])->name('typhoon.realtime');
+    Route::get('/notifications', [TyphoonController::class, 'notifications'])->name('typhoon.notifications');
+    Route::post('/notifications/{id}/mark-read', [TyphoonController::class, 'markNotificationRead'])->name('typhoon.notification.mark-read');
+    Route::post('/notifications/mark-all-read', [TyphoonController::class, 'markAllNotificationsRead'])->name('typhoon.notifications.mark-all-read');
+    Route::post('/announcements', [TyphoonController::class, 'storeAnnouncement'])->name('typhoon.announcements.store');
     // Add other typhoon routes here
 });
 

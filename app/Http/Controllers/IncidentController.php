@@ -469,7 +469,7 @@ class IncidentController extends Controller
             'affected_personnel' => 'nullable|integer|min:0',
             'affected_students' => 'nullable|integer|min:0',
             'attachment' => [
-                $request->input('entry_type') === 'incident' ? 'required' : 'nullable',
+                'nullable',
                 'file',
                 'mimes:pdf,jpg,jpeg,png',
                 'max:10240', // 10MB in KB
