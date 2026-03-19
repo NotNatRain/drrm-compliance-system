@@ -111,6 +111,66 @@
     .dashboard-card h1, .dashboard-card h2, .dashboard-card h3, .dashboard-card h5, .dashboard-card .h3 {
         color: var(--text-dark) !important;
     }
+
+    /* Centered Navigation */
+    .header-nav-center {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 0.5rem 2rem;
+        border-radius: 50px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+    }
+
+    .nav-link-custom {
+        color: rgba(255, 255, 255, 0.7);
+        text-decoration: none;
+        font-family: 'Rajdhani', sans-serif;
+        font-weight: 700;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        background: none;
+        border: none;
+        padding: 0.5rem 0.25rem;
+    }
+
+    .nav-link-custom:hover {
+        color: var(--accent-blue);
+    }
+
+    .nav-link-custom.active {
+        color: var(--accent-blue);
+        text-shadow: 0 0 15px rgba(0, 210, 255, 0.5);
+    }
+
+    .notif-btn-custom {
+        position: relative;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 1.25rem;
+        transition: all 0.3s ease;
+    }
+
+    .notif-btn-custom:hover, .notif-btn-custom.active {
+        color: var(--accent-blue);
+    }
+
+    .school-btn-custom {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 1.25rem;
+        transition: all 0.3s ease;
+        background: none;
+        border: none;
+    }
+
+    .school-btn-custom:hover, .school-btn-custom.active {
+        color: var(--accent-blue);
+    }
 </style>
 @endpush
 
@@ -119,22 +179,45 @@
     <div class="notification-page-wrapper">
         {{-- Header --}}
         <div class="d-flex justify-content-between align-items-center mb-5">
-            <div class="d-flex align-items-center">
+            {{-- Left Side --}}
+            <div class="d-flex align-items-center" style="width: 30%;">
                 <a href="{{ route('typhoon.dashboard') }}" class="btn btn-outline-info border-0 me-3 shadow-sm" style="background: rgba(255,255,255,0.05);" title="Back">
                     <i class="fas fa-chevron-left fa-lg text-white"></i>
                 </a>
                 <div>
-                    <h1 class="h2 mb-0 fw-bold text-white">
-                        <i class="fas fa-bell me-2" style="color: var(--accent-blue);"></i>
-                        Typhoon/Flood <span style="color: var(--accent-blue);">Notifications hub</span>
+                    <h1 class="h3 mb-0 fw-bold text-white">
+                        Typhoon/Flood Notifications hub
                     </h1>
-                    <div class="small text-white-50 mt-1">Live dispatch and system intelligence stream</div>
+                    <div class="small text-white-50 mt-1">Live dispatch & system intelligence</div>
                 </div>
             </div>
-            <div class="d-flex align-items-center gap-3">
+
+            {{-- Centered Navigation --}}
+            <div class="header-nav-center">
+                <a href="{{ route('typhoon.dashboard') }}" class="nav-link-custom">
+                    Dashboard
+                </a>
+                <a href="{{ route('typhoon.notifications') }}" class="notif-btn-custom active" title="Notifications">
+                    <i class="fas fa-bell"></i>
+                    @php
+                        $unreadCount = \App\Models\FireSafetyNotification::forCompliance('typhoon_flood')->unread()->count();
+                    @endphp
+                    @if($unreadCount > 0)
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light" style="font-size: 0.6rem; padding: 0.35em 0.65em;">
+                            {{ $unreadCount > 99 ? '99+' : $unreadCount }}
+                        </span>
+                    @endif
+                </a>
+                <button type="button" class="school-btn-custom" data-bs-toggle="modal" data-bs-target="#chooseSchoolModal" title="Choose Evacuation Center">
+                    <i class="fas fa-school"></i>
+                </button>
+            </div>
+
+            {{-- Right Side --}}
+            <div class="d-flex align-items-center gap-3 justify-content-end" style="width: 30%;">
                  <form action="{{ route('typhoon.notifications.mark-all-read') }}" method="POST">
                     @csrf
-                    <button type="submit" class="btn btn-primary px-4 fw-bold shadow-lg h-100 py-3" style="border-radius: 8px;">
+                    <button type="submit" class="btn btn-primary px-4 fw-bold shadow-lg" style="border-radius: 8px;">
                         <i class="fas fa-check-double me-2"></i> MARK ALL AS READ
                     </button>
                 </form>

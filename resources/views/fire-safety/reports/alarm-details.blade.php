@@ -130,10 +130,12 @@
                 <tr>
                     <td><strong>{{ $alarm->code }}</strong></td>
                     <td>
-                        @if($alarm->buildings && $alarm->buildings->count() > 0)
-                            {{ $alarm->buildings->map(function($b) { return $b->building_no . ($b->building_name ? ' (' . $b->building_name . ')' : ''); })->join(', ') }}
-                        @else
-                            N/A
+                        {{ $alarm->building ? $alarm->building->building_no : 'N/A' }}
+                        @php
+                            $others = $alarm->buildings->filter(fn($b) => $b->id !== $alarm->building_id);
+                        @endphp
+                        @if($others->count() > 0)
+                            ({{ $others->pluck('building_no')->implode(' & ') }})
                         @endif
                     </td>
                     <td>{{ $alarm->alarm_type }}</td>

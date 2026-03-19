@@ -3396,6 +3396,29 @@
         document.addEventListener('DOMContentLoaded', () => {
             initStatusCarousel();
             handleBuildingAutoOpen();
+
+            // Persistence for accordions
+            const opened = JSON.parse(localStorage.getItem('opened_buildings') || '[]');
+            opened.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    bootstrap.Collapse.getOrCreateInstance(el).show();
+                }
+            });
+
+            // Listen for changes
+            document.querySelectorAll('.accordion-collapse').forEach(el => {
+                el.addEventListener('shown.bs.collapse', () => {
+                    let list = JSON.parse(localStorage.getItem('opened_buildings') || '[]');
+                    if (!list.includes(el.id)) list.push(el.id);
+                    localStorage.setItem('opened_buildings', JSON.stringify(list));
+                });
+                el.addEventListener('hidden.bs.collapse', () => {
+                    let list = JSON.parse(localStorage.getItem('opened_buildings') || '[]');
+                    list = list.filter(id => id !== el.id);
+                    localStorage.setItem('opened_buildings', JSON.stringify(list));
+                });
+            });
         });
     </script>
 @endsection

@@ -313,60 +313,26 @@
                         </div>
                     </div>
 
-                    <!-- Alarm Configuration: General Status -->
+                    <!-- Alarm Configuration: Types & Statuses -->
                     <div class="col-md-6 mb-4">
-                        <div class="card dashboard-card card-collapsed mb-4" id="general-alarm-status-card">
-                            <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                                <h6 class="m-0 fw-bold text-primary">
-                                    <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'general-alarm-status-card')"></i>
-                                    <i class="fas fa-list-ul me-2"></i> General Alarm Status
-                                </h6>
-                                <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#addAlarmStatusModal">
-                                    <i class="fas fa-plus"></i> Add Status
-                                </button>
-                            </div>
-                            <div class="card-body">
-                                <div id="generalAlarmStatusesList" class="row row-cols-1 row-cols-md-2 g-3">
-                                    @php
-                                        $generalStatuses = $alarmStatusesByType->get("", collect());
-                                        if ($generalStatuses->isEmpty()) $generalStatuses = $alarmStatusesByType->get(null, collect());
-                                    @endphp
-                                    @foreach($generalStatuses as $status)
-                                    <div class="col">
-                                        <div class="config-item h-100 mb-0">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <strong>{{ $status->name }}</strong>
-                                                <span class="badge config-badge {{ $status->color_class ?? 'bg-secondary' }}">General</span>
-                                            </div>
-                                            <div class="mt-2 text-end">
-                                                <button class="btn btn-sm btn-outline-primary edit-config-btn"
-                                                        data-id="{{ $status->id }}"
-                                                        data-type="alarm_status"
-                                                        data-name="{{ $status->name }}"
-                                                        data-description="{{ $status->description }}"
-                                                        data-color-class="{{ $status->color_class ?? 'bg-secondary' }}">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                        </div>
-
                         <div class="card dashboard-card card-collapsed" id="alarm-types-specific-card">
                             <div class="card-header py-3 d-flex justify-content-between align-items-center">
                                 <h6 class="m-0 fw-bold text-primary">
                                     <i class="fas fa-chevron-down toggle-icon" onclick="toggleDivision(this, 'alarm-types-specific-card')"></i>
-                                    <i class="fas fa-bell me-2"></i> Alarm Types &amp; Specific Statuses
+                                    <i class="fas fa-bell me-2"></i> Alarm Types &amp; Statuses
                                 </h6>
-                                <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addAlarmTypeModal">
-                                    <i class="fas fa-plus"></i> Add Type
-                                </button>
+                                <div>
+                                    <button class="btn btn-sm btn-primary me-1" data-bs-toggle="modal" data-bs-target="#addAlarmTypeModal">
+                                        <i class="fas fa-plus"></i> Add Type
+                                    </button>
+                                    <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#addAlarmStatusModal">
+                                        <i class="fas fa-plus"></i> Add Status
+                                    </button>
+                                </div>
                             </div>
                             <div class="card-body">
-                                <div id="alarmTypesList" class="row row-cols-1 row-cols-md-2 g-3">
+                                <h6 class="fw-bold mb-3 text-secondary border-bottom pb-2">Alarm Types &amp; Specific Statuses</h6>
+                                <div id="alarmTypesList" class="row row-cols-1 row-cols-md-2 g-3 mb-4">
                                 @foreach($alarmTypes as $type)
                                     <div class="col">
                                         @php
@@ -381,18 +347,60 @@
                                             </div>
                                             @if($specificStatuses->isNotEmpty())
                                             <ul class="list-unstyled small mb-2 ms-3 mt-1">
-                                                @foreach($specificStatuses as $status)
-                                                <li><span class="badge {{ $status->color_class ?? 'bg-secondary' }} me-1">{{ $status->name }}</span></li>
+                                                @foreach($specificStatuses as $alarmStatus)
+                                                <li><span class="badge {{ $alarmStatus->color_class ?? 'bg-secondary' }} me-1">{{ $alarmStatus->name }}</span></li>
                                                 @endforeach
                                             </ul>
                                             @endif
                                             <div class="mt-2 text-end">
+                                                <button class="btn btn-sm {{ $type->is_active ? 'btn-outline-warning' : 'btn-outline-success' }} toggle-active-btn me-1"
+                                                        data-id="{{ $type->id }}"
+                                                        data-type="alarm_type"
+                                                        data-name="{{ $type->name }}"
+                                                        data-is-active="{{ $type->is_active }}">
+                                                    <i class="fas {{ $type->is_active ? 'fa-ban' : 'fa-check-circle' }}"></i> {{ $type->is_active ? 'Inactive' : 'Active' }}
+                                                </button>
                                                 <button class="btn btn-sm btn-outline-primary edit-config-btn"
                                                         data-id="{{ $type->id }}"
                                                         data-type="alarm_type"
                                                         data-name="{{ $type->name }}"
                                                         data-is-active="{{ $type->is_active }}"
                                                         data-statuses="{{ $specificStatuses->toJson() }}">
+                                                    <i class="fas fa-edit"></i> Edit
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endforeach
+                                </div>
+
+                                <h6 class="fw-bold mb-3 text-secondary border-bottom pb-2 mt-2">General Statuses</h6>
+                                <div id="generalAlarmStatusesList" class="row row-cols-1 row-cols-md-2 g-3">
+                                    @php
+                                        $generalStatuses = $alarmStatusesByType->get("", collect());
+                                        if ($generalStatuses->isEmpty()) $generalStatuses = $alarmStatusesByType->get(null, collect());
+                                    @endphp
+                                    @foreach($generalStatuses as $generalStatus)
+                                    <div class="col">
+                                        <div class="config-item h-100 mb-0">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <strong>{{ $generalStatus->name }}</strong>
+                                                <span class="badge config-badge {{ $generalStatus->color_class ?? 'bg-secondary' }}">General</span>
+                                            </div>
+                                            <div class="mt-2 text-end">
+                                                <button class="btn btn-sm {{ $generalStatus->is_active ? 'btn-outline-warning' : 'btn-outline-success' }} toggle-active-btn me-1"
+                                                        data-id="{{ $generalStatus->id }}"
+                                                        data-type="alarm_status"
+                                                        data-name="{{ $generalStatus->name }}"
+                                                        data-is-active="{{ $generalStatus->is_active }}">
+                                                    <i class="fas {{ $generalStatus->is_active ? 'fa-ban' : 'fa-check-circle' }}"></i> {{ $generalStatus->is_active ? 'Inactive' : 'Active' }}
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-primary edit-config-btn"
+                                                        data-id="{{ $generalStatus->id }}"
+                                                        data-type="alarm_status"
+                                                        data-name="{{ $generalStatus->name }}"
+                                                        data-description="{{ $generalStatus->description }}"
+                                                        data-color-class="{{ $generalStatus->color_class ?? 'bg-secondary' }}">
                                                     <i class="fas fa-edit"></i> Edit
                                                 </button>
                                             </div>
@@ -1618,38 +1626,49 @@
             });
 
             // Set up edit config buttons
-            document.querySelectorAll('.edit-config-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const configId = this.getAttribute('data-id');
-                    const configType = this.getAttribute('data-type');
-                    const configName = this.getAttribute('data-name');
-                    const configDescription = this.getAttribute('data-description');
-                    const configIsActive = this.getAttribute('data-is-active');
-                    const configMinFloors = this.getAttribute('data-min-floors');
-                    const configTotalRooms = this.getAttribute('data-total-rooms');
-                    const configPressureMin = this.getAttribute('data-pressure-min');
-                    const configPressureMax = this.getAttribute('data-pressure-max');
-                    const configCategory = this.getAttribute('data-category');
-                    const configParentId = this.getAttribute('data-parent-id');
-                    const configMaxRooms = this.getAttribute('data-max-rooms');
-                    const configRequiredExtinguishers = this.getAttribute('data-required-extinguishers');
-                    editConfigItem(
-                        configId,
-                        configType,
-                        configName,
-                        configDescription,
-                        configIsActive,
-                        configMinFloors,
-                        configTotalRooms,
-                        configPressureMin,
-                        configPressureMax,
-                        configCategory,
-                        configParentId,
-                        configMaxRooms,
-                        configRequiredExtinguishers
-                    );
-                });
-            });
+                                    document.querySelectorAll('.edit-config-btn').forEach(button => {
+                                        button.addEventListener('click', function() {
+                                            const configId = this.getAttribute('data-id');
+                                            const configType = this.getAttribute('data-type');
+                                            const configName = this.getAttribute('data-name');
+                                            const configDescription = this.getAttribute('data-description');
+                                            const configIsActive = this.getAttribute('data-is-active');
+                                            const configMinFloors = this.getAttribute('data-min-floors');
+                                            const configTotalRooms = this.getAttribute('data-total-rooms');
+                                            const configPressureMin = this.getAttribute('data-pressure-min');
+                                            const configPressureMax = this.getAttribute('data-pressure-max');
+                                            const configCategory = this.getAttribute('data-category');
+                                            const configParentId = this.getAttribute('data-parent-id');
+                                            const configMaxRooms = this.getAttribute('data-max-rooms');
+                                            const configRequiredExtinguishers = this.getAttribute('data-required-extinguishers');
+                                            editConfigItem(
+                                                configId,
+                                                configType,
+                                                configName,
+                                                configDescription,
+                                                configIsActive,
+                                                configMinFloors,
+                                                configTotalRooms,
+                                                configPressureMin,
+                                                configPressureMax,
+                                                configCategory,
+                                                configParentId,
+                                                configMaxRooms,
+                                                configRequiredExtinguishers
+                                            );
+                                        });
+                                    });
+
+                                    // Set up toggle active buttons
+                                    document.querySelectorAll('.toggle-active-btn').forEach(button => {
+                                        button.addEventListener('click', function() {
+                                            const id = this.getAttribute('data-id');
+                                            const type = this.getAttribute('data-type');
+                                            const name = this.getAttribute('data-name');
+                                            const isActive = this.getAttribute('data-is-active') === '1';
+                                            toggleConfigActive(id, type, name, isActive);
+                                        });
+                                    });
 
             // Set up delete config buttons
             document.querySelectorAll('.delete-config-btn').forEach(button => {
@@ -1771,8 +1790,7 @@
                         icon: 'success',
                         title: 'Success!',
                         text: 'School added successfully!',
-                        timer: 2000,
-                        showConfirmButton: false
+                        confirmButtonText: 'OK'
                     }).then(() => {
                         location.reload();
                     });
@@ -2300,7 +2318,7 @@
                 });
                 const data = await response.json();
                 if (response.ok && data.success) {
-                    Swal.fire({ icon: 'success', title: 'Saved', text: 'Extinguisher type added.', timer: 2000, showConfirmButton: false }).then(() => location.reload());
+                    Swal.fire({ icon: 'success', title: 'Saved', text: 'Extinguisher type added.', confirmButtonText: 'OK' }).then(() => location.reload());
                 } else {
                     Swal.fire({ icon: 'error', title: 'Notice', text: data.message || 'Failed to add type.' });
                 }
@@ -2328,7 +2346,7 @@
                 });
                 const data = await response.json();
                 if (response.ok && data.success) {
-                    Swal.fire({ icon: 'success', title: 'Saved', text: 'Extinguisher status added.', timer: 2000, showConfirmButton: false }).then(() => location.reload());
+                    Swal.fire({ icon: 'success', title: 'Saved', text: 'Extinguisher status added.', confirmButtonText: 'OK' }).then(() => location.reload());
                 } else {
                     Swal.fire({ icon: 'error', title: 'Notice', text: data.message || 'Failed to add status.' });
                 }
@@ -2356,7 +2374,7 @@
                 });
                 const data = await response.json();
                 if (response.ok && data.success) {
-                    Swal.fire({ icon: 'success', title: 'Saved', text: 'General alarm status added.', timer: 2000, showConfirmButton: false }).then(() => location.reload());
+                    Swal.fire({ icon: 'success', title: 'Saved', text: 'General alarm status added.', confirmButtonText: 'OK' }).then(() => location.reload());
                 } else {
                     Swal.fire({ icon: 'error', title: 'Notice', text: data.message || 'Failed to add status.' });
                 }
@@ -2395,7 +2413,7 @@
                 });
                 const data = await response.json();
                 if (response.ok && data.success) {
-                    Swal.fire({ icon: 'success', title: 'Saved', text: 'Alarm type added successfully!', timer: 2000, showConfirmButton: false }).then(() => location.reload());
+                    Swal.fire({ icon: 'success', title: 'Saved', text: 'Alarm type added successfully!', confirmButtonText: 'OK' }).then(() => location.reload());
                 } else {
                     Swal.fire({ icon: 'error', title: 'Notice', text: data.message || 'Failed to add alarm type.' });
                 }
@@ -2496,8 +2514,7 @@
                         icon: 'success',
                         title: 'Created!',
                         text: 'User created successfully!',
-                        timer: 2000,
-                        showConfirmButton: false
+                        confirmButtonText: 'OK'
                     }).then(() => {
                         location.reload();
                     });
@@ -2675,8 +2692,7 @@
                         icon: 'success',
                         title: 'Information Updated',
                         text: 'School information updated successfully!',
-                        timer: 2000,
-                        showConfirmButton: false
+                        confirmButtonText: 'OK'
                     }).then(() => {
                         location.reload();
                     });
@@ -2987,8 +3003,51 @@
             }
         }
 
-        // Delete config item
-        async function deleteConfigItem(configId, configType) {
+        // Toggle config item's status (Active/Inactive)
+                async function toggleConfigActive(id, type, name, currentStatus) {
+                    const newStatus = !currentStatus;
+                    const result = await Swal.fire({
+                        title: `${newStatus ? 'Activate' : 'Deactivate'} Configuration?`,
+                        text: `Are you sure you want to ${newStatus ? 'activate' : 'deactivate'} "${name}"?`,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, proceed'
+                    });
+
+                    if (!result.isConfirmed) return;
+
+                    try {
+                        const fd = new FormData();
+                        fd.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+                        fd.append('_method', 'PUT');
+                        fd.append('is_active', newStatus ? '1' : '0');
+                        fd.append('name', name); // Required by validation
+
+                        const response = await fetch(`/fire-safety/config/${type}/${id}`, {
+                            method: 'POST',
+                            headers: { 'Accept': 'application/json' },
+                            body: fd
+                        });
+
+                        const data = await response.json();
+                        if (data.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Updated!',
+                                text: `Item "${name}" has been ${newStatus ? 'activated' : 'deactivated'}.`,
+                                confirmButtonText: 'OK'
+                            }).then(() => location.reload());
+                        } else {
+                            Swal.fire({ icon: 'error', title: 'Failed', text: data.message || 'Could not update status.' });
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'System error occurred.' });
+                    }
+                }
+
+                // Delete config item
+                async function deleteConfigItem(configId, configType) {
             try {
                 const response = await fetch(`/fire-safety/config/${configType}/${configId}`, {
                     method: 'DELETE',

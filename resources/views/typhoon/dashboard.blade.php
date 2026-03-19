@@ -192,6 +192,66 @@
         justify-content: center;
         padding: 0;
     }
+
+    /* Centered Navigation */
+    .header-nav-center {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 0.5rem 2rem;
+        border-radius: 50px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+    }
+
+    .nav-link-custom {
+        color: rgba(255, 255, 255, 0.7);
+        text-decoration: none;
+        font-family: 'Rajdhani', sans-serif;
+        font-weight: 700;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        background: none;
+        border: none;
+        padding: 0.5rem 0.25rem;
+    }
+
+    .nav-link-custom:hover {
+        color: var(--accent-blue);
+    }
+
+    .nav-link-custom.active {
+        color: var(--accent-blue);
+        text-shadow: 0 0 15px rgba(0, 210, 255, 0.5);
+    }
+
+    .notif-btn-custom {
+        position: relative;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 1.25rem;
+        transition: all 0.3s ease;
+    }
+
+    .notif-btn-custom:hover, .notif-btn-custom.active {
+        color: var(--accent-blue);
+    }
+
+    .school-btn-custom {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 1.25rem;
+        transition: all 0.3s ease;
+        background: none;
+        border: none;
+    }
+
+    .school-btn-custom:hover, .school-btn-custom.active {
+        color: var(--accent-blue);
+    }
 </style>
 @endpush
 
@@ -199,19 +259,25 @@
 <div class="container-fluid">
     {{-- Header --}}
     <div class="d-flex justify-content-between align-items-center mb-5">
-        <div class="d-flex align-items-center">
+        {{-- Left Side --}}
+        <div class="d-flex align-items-center" style="width: 30%;">
             <a href="{{ route('dashboard') }}" class="btn btn-outline-info border-0 me-3" title="Back">
                 <i class="fas fa-chevron-left fa-lg"></i>
             </a>
             <div>
-                <h1 class="h2 mb-0 fw-bold text-white">
+                <h1 class="h3 mb-0 fw-bold text-white">
                     <i class="fas fa-satellite-dish me-2" style="color: var(--accent-blue);"></i>
-                    Typhoon & Flood <span style="color: var(--accent-blue);">Reporting System</span>
+                    Typhoon & Flood Reporting System
                 </h1>
             </div>
         </div>
-        <div class="d-flex align-items-center gap-3">
-            <a href="{{ route('typhoon.notifications') }}" class="btn btn-circle btn-info shadow-lg text-white" title="Notifications">
+
+        {{-- Centered Navigation --}}
+        <div class="header-nav-center">
+            <a href="{{ route('typhoon.dashboard') }}" class="nav-link-custom active">
+                Dashboard
+            </a>
+            <a href="{{ route('typhoon.notifications') }}" class="notif-btn-custom" title="Notifications">
                 <i class="fas fa-bell"></i>
                 @php
                     $unreadCount = \App\Models\FireSafetyNotification::forCompliance('typhoon_flood')->unread()->count();
@@ -222,22 +288,27 @@
                     </span>
                 @endif
             </a>
-            <div class="badge bg-white text-dark border-0 p-3 shadow-sm">
-                <i class="fas fa-clock me-2 text-primary"></i> {{ now()->format('M d, Y | h:i A') }}
+            <button type="button" class="school-btn-custom" data-bs-toggle="modal" data-bs-target="#chooseSchoolModal" title="Choose Evacuation Center">
+                <i class="fas fa-school"></i>
+            </button>
+        </div>
+
+        {{-- Right Side --}}
+        <div class="d-flex align-items-center gap-3 justify-content-end" style="width: 30%;">
+            <div class="text-white-50 small text-end">
+                <div class="fw-bold text-white">{{ now()->format('M d, Y') }}</div>
+                <div>{{ now()->format('h:i A') }}</div>
             </div>
-            <div class="btn-group shadow">
+            <div class="btn-group shadow-lg">
                 <button class="btn btn-success px-3 fw-bold" onclick="document.getElementById('socialPrintModal').style.display='flex'" title="Send to Social">
-                    <i class="fas fa-share-alt me-2"></i>Send to Social
+                    <i class="fas fa-share-alt"></i>
                 </button>
                 @if(auth()->user()->role === 'admin')
                 <button type="button" class="btn btn-warning text-white px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#announceSomethingModal">
-                    <i class="fas fa-bullhorn me-2"></i>Announce
+                    <i class="fas fa-bullhorn"></i>
                 </button>
                 <button type="button" class="btn btn-primary px-3" data-bs-toggle="modal" data-bs-target="#createEvacCenterModal">
-                    <i class="fas fa-plus-circle me-2"></i>Add Center
-                </button>
-                <button type="button" class="btn btn-secondary px-3" data-bs-toggle="modal" data-bs-target="#chooseSchoolModal" title="Choose Center">
-                    <i class="fas fa-school"></i>
+                    <i class="fas fa-plus-circle me-1"></i> Add Center
                 </button>
                 @endif
             </div>
@@ -353,8 +424,8 @@
         <div class="col-lg-4">
             <div class="dashboard-card d-flex flex-column">
                 <div class="card-header-custom"><i class="fas fa-chart-pie"></i>Occupancy Overview</div>
-                <div class="p-4 flex-grow-1 d-flex flex-column">
-                    <div class="flex-grow-1" style="min-height: 250px; position: relative;">
+                <div class="p-2 flex-grow-1 d-flex flex-column">
+                    <div class="flex-grow-1" style="min-height: 220px; position: relative;">
                         <canvas id="occupancyChart"></canvas>
                     </div>
                     <div class="mt-4">

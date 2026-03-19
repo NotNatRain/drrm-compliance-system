@@ -38,6 +38,7 @@ class FireSafetyController extends Controller
         $query = FireSafetySchool::with([
             'buildings.actualRooms',
             'buildings.alarmSystems',
+            'buildings.alarmSystemsMany',
             'buildings.fireExtinguishers.coveredRooms',
             'buildings.evacuationPlan'
         ])->withCount(['extinguishers', 'alarmSystems', 'buildings', 'evacuationPlans']);
@@ -487,6 +488,8 @@ class FireSafetyController extends Controller
             'notes' => 'nullable|string',
             'manufacturer' => 'nullable|string|max:100',
             'installation_date' => 'nullable|date',
+            'building_id' => 'nullable|exists:firesafety_buildings,id',
+            'floor_id' => 'nullable|string',
             'building_ids' => 'nullable|array',
             'building_ids.*' => 'exists:firesafety_buildings,id'
         ]);
@@ -531,6 +534,8 @@ class FireSafetyController extends Controller
         if ($alarm->isDirty('notes')) $changes[] = 'Notes updated';
         if ($alarm->isDirty('last_test')) $changes[] = 'Last Test: ' . ($validated['last_test'] ?? 'N/A');
         if ($alarm->isDirty('installation_date')) $changes[] = 'Installation Date: ' . ($validated['installation_date'] ?? 'N/A');
+        if ($alarm->isDirty('building_id')) $changes[] = 'Primary Building changed';
+        if ($alarm->isDirty('floor_id')) $changes[] = 'Floor Level changed';
 
         $alarm->save();
 
@@ -2121,7 +2126,13 @@ public function storeRoom(Request $request)
 
     public function buildings()
     {
-        $query = FireSafetySchool::with(['buildings', 'buildings.alarmSystems', 'buildings.fireExtinguishers']);
+        $query = FireSafetySchool::with([
+            'buildings.actualRooms',
+            'buildings.fireExtinguishers.coveredRooms',
+            'buildings.alarmSystems',
+            'buildings.alarmSystemsMany', // Fixed: Preload covering alarms
+            'buildings.evacuationPlan'
+        ]);
 
         if (auth()->user()->role !== 'admin') {
             if (auth()->user()->role === 'viewer' && !isset(auth()->user()->school_id)) {
@@ -2141,7 +2152,8 @@ public function storeRoom(Request $request)
         $observers = SystemConfiguration::where('config_type', 'inspection_observer')->where('is_active', true)->orderBy('sort_order')->get();
 
         $alarmTypes = SystemConfiguration::where('config_type', 'alarm_type')->where('is_active', true)->orderBy('sort_order')->get();
-        $alarmStatusesByType = SystemConfiguration::where('config_type', 'alarm_status')->where('is_active', true)->whereNotNull('parent_id')->get()->groupBy('parent_id');
+        $alarmStatusesByType = SystemConfiguration::where('config_type', 'alarm_status')->where('is_active', true)->get()->groupBy('parent_id');
+        $safetyFeatures = SystemConfiguration::where('config_type', 'safety_feature')->orderBy('sort_order')->get()->unique('name');
 
         return view('fire-safety.buildings',[
             'schools' => $schools,
@@ -2151,6 +2163,7 @@ public function storeRoom(Request $request)
             'observers' => $observers,
             'alarmTypes' => $alarmTypes,
             'alarmStatusesByType' => $alarmStatusesByType,
+            'safetyFeatures' => $safetyFeatures,
             'isViewer' => auth()->user()->role === 'viewer'
         ]);
     }
@@ -3700,8 +3713,9 @@ public function storeRoom(Request $request)
             // Capture FULL snapshot of school data before deletion
             $fullSchoolData = FireSafetySchool::with([
                 'buildings.actualRooms',
-                'buildings.fireExtinguishers',
-                'buildings.alarmSystemsMany',
+                'buildings.fireExtinguishers.coveredRooms',
+                'buildings.alarmSystems',
+                'buildings.alarmSystemsMany', // Fixed: Preload covering alarms
                 'buildings.evacuationPlan',
                 'alarmSystems',
                 'extinguishers',
@@ -4102,10 +4116,10 @@ public function storeRoom(Request $request)
         $update = [
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
+            'is_active' => $request->has('is_active') ? ($request->is_active == 'on' || $request->is_active == '1' || $request->is_active == 'true') : false,
+            'color_class' => $request->input('color_class') ?? $config->color_class,
+            'code' => $request->input('code') ?? $config->code,
         ];
-        if (in_array($configType, ['building_type', 'alarm_type'], true)) {
-            $update['is_active'] = $request->has('is_active') ? ($request->is_active == 'on' || $request->is_active == '1') : false;
-        }
         if ($configType === 'building_type') {
             $v = $request->input('min_floors');
             $update['min_floors'] = ($v !== '' && $v !== null) ? (int) $v : null;

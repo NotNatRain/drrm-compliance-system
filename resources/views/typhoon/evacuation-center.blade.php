@@ -121,31 +121,92 @@
         justify-content: center;
         padding: 0;
     }
+
+    /* Centered Navigation */
+    .header-nav-center {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 0.5rem 2rem;
+        border-radius: 50px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+    }
+
+    .nav-link-custom {
+        color: rgba(255, 255, 255, 0.7);
+        text-decoration: none;
+        font-family: 'Rajdhani', sans-serif;
+        font-weight: 700;
+        font-size: 1.1rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        background: none;
+        border: none;
+        padding: 0.5rem 0.25rem;
+    }
+
+    .nav-link-custom:hover {
+        color: var(--accent-blue);
+    }
+
+    .nav-link-custom.active {
+        color: var(--accent-blue);
+        text-shadow: 0 0 15px rgba(0, 210, 255, 0.5);
+    }
+
+    .notif-btn-custom {
+        position: relative;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 1.25rem;
+        transition: all 0.3s ease;
+    }
+
+    .notif-btn-custom:hover, .notif-btn-custom.active {
+        color: var(--accent-blue);
+    }
+
+    .school-btn-custom {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 1.25rem;
+        transition: all 0.3s ease;
+        background: none;
+        border: none;
+    }
+
+    .school-btn-custom:hover, .school-btn-custom.active {
+        color: var(--accent-blue);
+    }
 </style>
 @endpush
 
 @section('content')
 <div class="container-fluid">
     {{-- Unified Header --}}
-    <div class="row align-items-center mb-5">
-        <div class="col-md-6">
-            <div class="d-flex align-items-center gap-3">
-                <a href="{{ route('typhoon.dashboard') }}" class="btn btn-circle btn-outline-info border-0 shadow-sm">
-                    <i class="fas fa-chevron-left"></i>
-                </a>
-                <div>
-                    <h1 class="h2 mb-0 fw-bold text-white">
-                        {{ $ec->school->school_name ?? 'NOT DEFINED' }}
-                    </h1>
-                    <div class="d-flex align-items-center gap-2 mt-1">
-                        <span class="badge bg-info bg-opacity-25 text-info px-2 py-1">EVACUATION HUB</span>
-                        <span class="text-white-50 small"><i class="fas fa-satellite-dish me-1"></i> Data Stream: Active & Synchronized</span>
-                    </div>
-                </div>
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        {{-- Left Side --}}
+        <div class="d-flex align-items-center" style="width: 30%;">
+            <a href="{{ route('typhoon.dashboard') }}" class="btn btn-outline-info border-0 me-3 shadow-sm" style="background: rgba(255,255,255,0.05);">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+            <div>
+                <h1 class="h3 mb-0 fw-bold text-white">
+                    {{ $ec->school->school_name ?? 'NOT DEFINED' }}
+                </h1>
+                <div class="small text-info opacity-75 fw-bold text-uppercase tracking-wider">EVACUATION HUB</div>
             </div>
         </div>
-        <div class="col-md-6 d-flex justify-content-end align-items-center gap-3">
-            <a href="{{ route('typhoon.notifications') }}" class="btn btn-circle btn-info shadow-lg text-white" title="Notifications">
+
+        {{-- Centered Navigation --}}
+        <div class="header-nav-center">
+            <a href="{{ route('typhoon.dashboard') }}" class="nav-link-custom">
+                Dashboard
+            </a>
+            <a href="{{ route('typhoon.notifications') }}" class="notif-btn-custom" title="Notifications">
                 <i class="fas fa-bell"></i>
                 @php
                     $unreadCount = \App\Models\FireSafetyNotification::forCompliance('typhoon_flood')->unread()->count();
@@ -156,20 +217,19 @@
                     </span>
                 @endif
             </a>
-            
-            <div class="btn-group shadow">
-                <button class="btn btn-success px-4 fw-bold" onclick="document.getElementById('evacPrintModal').style.display='flex'" title="Print Evacuation Center">
-                    <i class="fas fa-print me-2"></i>PRINT REPORT
-                </button>
-                <button type="button" class="btn btn-primary px-4 fw-bold" data-bs-toggle="modal" data-bs-target="#updateCenterStatusModal">
-                    <i class="fas fa-edit me-2"></i>UPDATE SITE
-                </button>
-                @if(auth()->user()->role === 'admin')
-                <button type="button" class="btn btn-secondary px-3" data-bs-toggle="modal" data-bs-target="#chooseSchoolModal" title="Choose Center">
-                    <i class="fas fa-school"></i>
-                </button>
-                @endif
-            </div>
+            <button type="button" class="school-btn-custom active" data-bs-toggle="modal" data-bs-target="#chooseSchoolModal" title="Choose Evacuation Center">
+                <i class="fas fa-school"></i>
+            </button>
+        </div>
+
+        {{-- Right Side --}}
+        <div class="d-flex align-items-center gap-3 justify-content-end" style="width: 30%;">
+            <button class="btn btn-success px-3 fw-bold shadow-lg" onclick="document.getElementById('evacPrintModal').style.display='flex'" title="Print Evacuation Center">
+                <i class="fas fa-print me-2"></i>PRINT REPORT
+            </button>
+            <button type="button" class="btn btn-primary px-3 fw-bold shadow-lg" data-bs-toggle="modal" data-bs-target="#updateCenterStatusModal">
+                <i class="fas fa-edit me-2"></i>UPDATE SITE
+            </button>
         </div>
     </div>
 

@@ -332,12 +332,7 @@
                                                             <div class="d-flex flex-wrap gap-1">
                                                                 @forelse($alarms as $alarm)
                                                                     @php
-                                                                        $locationLabel = null;
-                                                                        if ((int) $alarm->building_id === (int) $building->id) {
-                                                                            $locationLabel = 'Installed Here';
-                                                                        } elseif ($alarm->buildings && $alarm->buildings->contains('id', $building->id)) {
-                                                                            $locationLabel = 'Covering';
-                                                                        }
+                                                                        $locationLabel = ((int) $alarm->building_id === (int) $building->id) ? 'Installed Here' : 'Covering';
                                                                     @endphp
                                                                     <span class="badge bg-white text-dark border small" style="font-size: 0.7rem;">
                                                                         {{ $alarm->code }} - {{ $alarm->alarm_type }} ({{ ucfirst($alarm->status) }})
@@ -365,7 +360,7 @@
                                                                 data-building-id="{{ $building->id }}"
                                                                 data-bs-toggle="modal"
                                                                 data-bs-target="#viewBuildingModal">
-                                                            <i class="fas fa-eye me-2"></i> View Details / Update
+                                                            <i class="fas fa-eye me-2"></i> View Details
                                                         </button>
                                                         @if(auth()->user()->role !== 'viewer')
                                                         <button class="btn btn-sm btn-outline-info manage-alarms-btn"
@@ -375,7 +370,7 @@
                                                             <i class="fas fa-bell me-2"></i> Manage Alarms
                                                         </button>
                                                         <a href="{{ route('fire-safety.extinguishers') }}?building_id={{ $building->id }}" class="btn btn-sm btn-outline-primary shadow-sm mt-1">
-                                                            <i class="fas fa-fire-extinguisher me-2"></i> Manage Fire Extinguisher
+                                                            <i class="fas fa-fire-extinguisher me-2"></i> Manage Fire Extinguisher / Rooms
                                                         </a>
                                                         @endif
                                                     </div>
@@ -544,71 +539,77 @@
                             <h6 class="fw-bold text-primary border-bottom pb-2 mb-3">Required Information</h6>
 
                             <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">Building Number/Code *</label>
-                                    <input type="text" class="form-control border-left-primary" name="building_no" id="building_no" placeholder="e.g., BLDG-001" required>
-                                </div>
-                                <div class="col-md-6 mb-3" id="secondaryExitContainer" style="display: none;">
-                                    <label class="form-label fw-bold">Secondary Exits Available (2–4 Storey Buildings) *</label>
-                                    <select class="form-control" name="emergency_exits" id="emergencyExitsSelect">
-                                        <option value="" disabled selected>Select option</option>
-                                        <option value="1">No</option>
-                                        <option value="2">Yes</option>
-                                    </select>
-                                    <small class="text-muted">For buildings with more than 1 floor, choose Yes or No.</small>
-                                </div>
-                            </div>
+                                 <div class="col-md-6 mb-3">
+                                     <label class="form-label fw-bold">Building Number/Code *</label>
+                                     <input type="text" class="form-control border-left-primary" name="building_no" id="building_no" placeholder="e.g., BLDG-001" required>
+                                 </div>
+                                 <div class="col-md-6 mb-3" id="secondaryExitContainer" style="display: none;">
+                                     <label class="form-label fw-bold small">Secondary Exits Available (2–4 Storey Buildings) *</label>
+                                     <div id="secondaryExitContainerWrapper" class="bg-light rounded p-1">
+                                         <select class="form-control" name="emergency_exits" id="emergencyExitsSelect">
+                                             <option value="" disabled selected>Select option</option>
+                                             <option value="1">No</option>
+                                             <option value="2">Yes</option>
+                                         </select>
+                                     </div>
+                                 </div>
+                             </div>
 
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">Building Type *</label>
-                                    <select class="form-control" name="building_type" id="building_type_select" required>
-                                        <option value="">Select Type</option>
-                                        @foreach($buildingTypes->unique('name') as $type)
-                                            <option value="{{ $type->name }}">{{ $type->name }} {{ in_array(strtolower($type->name), ['gymnasium', 'cafeteria']) ? '(1 Floor/1 Room)' : '' }}</option>
-                                        @endforeach
-                                        <option value="Others">Others, Please Specify:</option>
-                                    </select>
-                                    <div id="other_building_type_container" style="display: none;" class="mt-2">
-                                        <input type="text" class="form-control border-primary" name="other_building_type" id="other_building_type" placeholder="Enter building type...">
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold">Min. Required Fire Extinguishers *</label>
-                                    <input type="number" class="form-control" name="required_extinguishers" id="buildingReqExt" min="0" value="0" required>
-                                </div>
-                            </div>
+                             <div class="row g-3">
+                                 <div class="col-md-6">
+                                     <div class="p-3 bg-light rounded h-100">
+                                         <label class="form-label fw-bold">Number of Floors *</label>
+                                         <div class="input-group">
+                                             <button class="btn btn-outline-danger" type="button" id="btnDecFloors" onclick="openReduceFloorsModal()" style="display: none;"><i class="fas fa-minus"></i></button>
+                                             <input type="number" class="form-control" name="floors" id="buildingFloorsInput" min="1" max="50" value="1" readonly required>
+                                             <button class="btn btn-outline-secondary" type="button" id="btnIncFloors" onclick="incrementFloor()"><i class="fas fa-plus"></i></button>
+                                         </div>
+                                         <div id="floorActionMessage" class="small text-danger mt-1 fw-bold" style="display: none;"></div>
+                                     </div>
+                                 </div>
+                                 
+                                 <div class="col-md-6">
+                                     <div class="p-3 h-100">
+                                         <label class="form-label fw-bold">Min. Required Fire Extinguishers *</label>
+                                         <input type="number" class="form-control" name="required_extinguishers" id="buildingReqExt" min="0" value="0" required>
+                                     </div>
+                                 </div>
 
-                            <div id="roomFloorInputs" class="p-3 bg-light rounded mb-3">
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label fw-bold">Number of Floors *</label>
-                                        <div class="input-group">
-                                            <button class="btn btn-outline-danger" type="button" id="btnDecFloors" onclick="openReduceFloorsModal()" style="display: none;"><i class="fas fa-minus"></i></button>
-                                            <input type="number" class="form-control" name="floors" id="buildingFloorsInput" min="1" max="50" value="1" readonly required>
-                                            <button class="btn btn-outline-secondary" type="button" id="btnIncFloors" onclick="incrementFloor()"><i class="fas fa-plus"></i></button>
-                                        </div>
-                                        <div id="floorActionMessage" class="small text-danger mt-1 fw-bold" style="display: none;"></div>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label fw-bold">Total Rooms *</label>
-                                        <div class="input-group">
-                                            <button class="btn btn-outline-danger" type="button" id="btnDecRooms" onclick="decrementRoom()" style="display: none;"><i class="fas fa-minus"></i></button>
-                                            <input type="number" class="form-control" name="rooms" id="buildingRoomsInput" min="1" value="1" readonly required>
-                                            <button class="btn btn-outline-secondary" type="button" id="btnIncRooms" onclick="incrementRoom()"><i class="fas fa-plus"></i></button>
-                                        </div>
-                                        <div id="roomActionMessage" class="small text-danger mt-1 fw-bold" style="display: none;"></div>
-                                    </div>
-                                </div>
-                                <div id="roomReductionContainer" style="display: none;" class="mt-3 p-3 bg-white border border-danger rounded">
-                                    <h6 class="text-danger fw-bold"><i class="fas fa-exclamation-triangle me-1"></i> Rooms to Remove</h6>
-                                    <p class="small text-muted mb-2">You are reducing the total rooms by <span id="reduceRoomCountSpan" class="fw-bold">0</span>. Please select which specific room(s) to remove (if any are currently active).</p>
-                                    <div class="list-group mb-2" id="inlineReduceRoomsList" style="max-height: 150px; overflow-y: auto;">
-                                        <!-- populated via js -->
-                                    </div>
-                                    <label class="form-label fw-bold small text-danger mt-2">Reason for removal *</label>
-                                    <textarea class="form-control" name="room_removal_reason" id="inlineRoomRemovalReason" rows="2" placeholder="Explain why these rooms are being removed..."></textarea>
-                                </div>
+                                 <div class="col-md-6">
+                                     <div class="p-3 bg-light rounded h-100">
+                                         <label class="form-label fw-bold">Building Type *</label>
+                                         <select class="form-control" name="building_type" id="building_type_select" required>
+                                             <option value="">Select Type</option>
+                                             @foreach($buildingTypes->unique('name') as $type)
+                                                 <option value="{{ $type->name }}">{{ $type->name }} {{ in_array(strtolower($type->name), ['gymnasium', 'cafeteria']) ? '(1 Floor/1 Room)' : '' }}</option>
+                                             @endforeach
+                                             <option value="Others">Others, Please Specify:</option>
+                                         </select>
+                                         <div id="other_building_type_container" style="display: none;" class="mt-2">
+                                             <input type="text" class="form-control border-primary" name="other_building_type" id="other_building_type" placeholder="Enter building type...">
+                                         </div>
+                                     </div>
+                                 </div>
+
+                                 <div class="col-md-6">
+                                     <div class="p-3 bg-light rounded h-100">
+                                         <label class="form-label fw-bold">Total Rooms *</label>
+                                         <div class="input-group">
+                                             <button class="btn btn-outline-danger" type="button" id="btnDecRooms" onclick="decrementRoom()" style="display: none;"><i class="fas fa-minus"></i></button>
+                                             <input type="number" class="form-control" name="rooms" id="buildingRoomsInput" min="1" value="1" readonly required>
+                                             <button class="btn btn-outline-secondary" type="button" id="btnIncRooms" onclick="incrementRoom()"><i class="fas fa-plus"></i></button>
+                                         </div>
+                                         <div id="roomActionMessage" class="small text-danger mt-1 fw-bold" style="display: none;"></div>
+                                     </div>
+                                 </div>
+                             </div>
+
+                            <div id="roomReductionContainer" style="display: none;" class="mt-3 p-3 bg-white border border-danger rounded">
+                                <h6 class="text-danger fw-bold text-sm"><i class="fas fa-exclamation-triangle me-1"></i> Rooms to Remove</h6>
+                                <p class="small text-muted mb-2">Select which specific room(s) to remove.</p>
+                                <div class="list-group mb-2" id="inlineReduceRoomsList" style="max-height: 120px; overflow-y: auto;"></div>
+                                <label class="form-label fw-bold small text-danger">Reason for removal *</label>
+                                <textarea class="form-control form-control-sm" name="room_removal_reason" id="inlineRoomRemovalReason" rows="2" placeholder="Explain removal..."></textarea>
                             </div>
                         </div>
 
@@ -637,32 +638,22 @@
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label">Safety Features Installed</label>
+                                <label class="form-label fw-bold">Safety Features Installed</label>
                                 <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="features[]" value="sprinklers" id="sprinklers">
-                                            <label class="form-check-label" for="sprinklers">Sprinkler System</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="features[]" value="emergency_lights" id="emergencyLights">
-                                            <label class="form-check-label" for="emergencyLights">Emergency Lighting</label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="features[]" value="exit_signs" id="exitSigns">
-                                            <label class="form-check-label" for="exitSigns">Exit Signs</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="features[]" value="fire_doors" id="fireDoors">
-                                            <label class="form-check-label" for="fireDoors">Fire Doors</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="features[]" value="two_stairways" id="twoStairways">
-                                            <label class="form-check-label" for="twoStairways">Two Stairways</label>
-                                        </div>
-                                    </div>
+                                    @if(isset($safetyFeatures) && $safetyFeatures->count() > 0)
+                                        @foreach($safetyFeatures->chunk(ceil($safetyFeatures->count() / 2)) as $chunk)
+                                            <div class="col-md-6">
+                                                @foreach($chunk as $feature)
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" name="features[]" value="{{ $feature->name }}" id="feature_{{ \Illuminate\Support\Str::slug($feature->name) }}">
+                                                        <label class="form-check-label" for="feature_{{ \Illuminate\Support\Str::slug($feature->name) }}">{{ $feature->name }}</label>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endforeach
+                                    @else
+                                        <div class="col-12 text-muted small">No safety features configured. Add them in Customization page.</div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -1093,7 +1084,14 @@
                                 <select class="form-control" name="status" id="addStatusSelect" required>
                                     <option value="active">Active</option>
                                      @foreach($alarmStatusesByType as $parentId => $statuses)
-                                        <optgroup label="{{ \App\Models\SystemConfiguration::find($parentId)->name }}" data-parent-id="{{ $parentId }}">
+                                        @php
+                                            $lbl = 'General Statuses';
+                                            if($parentId) {
+                                                $p = \App\Models\SystemConfiguration::find($parentId);
+                                                if($p) $lbl = $p->name;
+                                            }
+                                        @endphp
+                                        <optgroup label="{{ $lbl }}" data-parent-id="{{ $parentId }}">
                                             @foreach($statuses as $status)
                                                 <option value="{{ $status->name }}">{{ $status->name }}</option>
                                             @endforeach
@@ -1980,7 +1978,10 @@
                 document.getElementById('buildingReqExt').value = building.required_extinguishers || 0;
 
                 // Handle checkboxes
-                const features = building.features ? building.features.split(',') : [];
+                const featuresRaw = building.features || '';
+                const features = (typeof featuresRaw === 'string') ? featuresRaw.split(',') : (Array.isArray(featuresRaw) ? featuresRaw : []);
+                
+                // Clear all features first
                 form.querySelectorAll('[name="features[]"]').forEach(cb => {
                     cb.checked = features.includes(cb.value);
                 });
@@ -2796,10 +2797,9 @@
 
                     Swal.fire({
                         title: 'Success!',
-                        text: 'Building added successfully!',
+                        text: 'Building added/updated successfully!',
                         icon: 'success',
-                        timer: 1500,
-                        showConfirmButton: false
+                        confirmButtonText: 'OK'
                     }).then(() => {
                         location.reload();
                     });
@@ -3496,19 +3496,17 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    Swal.fire({
+                    await Swal.fire({
                          title: 'Success',
                          text: 'Alarm system added successfully!',
                          icon: 'success',
-                         timer: 1500,
-                         showConfirmButton: false
+                         confirmButtonText: 'OK'
                     });
 
                     const modal = bootstrap.Modal.getInstance(document.getElementById('addAlarmModal'));
-                    modal.hide();
+                    if (modal) modal.hide();
 
-                    // Reload buildings to update dashboard cards and modal list
-                     location.reload();
+                    location.reload();
                      // Ideally we would just reload the list, but dashboard cards need updating too.
                      // Or we can just call loadBuildingAlarms(buildingId) if we didn't confirm reload.
                 } else {
@@ -3612,9 +3610,17 @@
                 // Populate Status Select (re-use the HTML from Add modal or clone it)
                  const statusSelect = document.getElementById('updateStatusSelect');
                  const addStatusSelect = document.getElementById('addStatusSelect');
-                 if(addStatusSelect && statusSelect.options.length === 0) {
+                 if(addStatusSelect && (statusSelect.options.length === 0 || statusSelect.innerHTML === '')) {
                      statusSelect.innerHTML = addStatusSelect.innerHTML;
                  }
+
+                 // Sync hidden inputs for building and floor if they exist
+                 if (document.getElementById('updateAlarmBuildingId')) {
+                     document.getElementById('updateAlarmBuildingId').value = alarm.building_id;
+                 }
+                 if (document.getElementById('updateAlarmFloorId')) {
+                     document.getElementById('updateAlarmFloorId').value = alarm.floor_id;
+                 }        }
 
                  // Filter statuses based on current alarm type name
                  const currentAlarmTypeName = alarm.alarm_type;
@@ -3629,7 +3635,8 @@
                  }
 
                  Array.from(statusSelect.querySelectorAll('optgroup')).forEach(optgroup => {
-                     if (optgroup.getAttribute('data-parent-id') === targetParentId) {
+                     const optParentId = optgroup.getAttribute('data-parent-id');
+                     if (optParentId === String(targetParentId) || !optParentId) {
                          optgroup.style.display = '';
                          optgroup.disabled = false;
                      } else {
@@ -3721,13 +3728,18 @@
                 });
                 const data = await response.json();
 
-                 if (data.success) {
-                    Swal.fire('Success', 'Alarm system updated!', 'success').then(() => {
-                        location.reload();
-                    });
-                } else {
-                    Swal.fire('Error', data.message, 'error');
-                }
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Updated!',
+                            text: 'Alarm system updated!',
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire('Error', data.message, 'error');
+                    }
             } catch (error) {
                 Swal.fire('Error', 'Failed to update alarm.', 'error');
             }
@@ -3906,7 +3918,8 @@
 
                 // Loop through optgroups and hide/show based on parent ID
                 Array.from(statusSelect.querySelectorAll('optgroup')).forEach(optgroup => {
-                    if (optgroup.getAttribute('data-parent-id') === selectedTypeId) {
+                    const optParentId = optgroup.getAttribute('data-parent-id');
+                    if (optParentId === String(selectedTypeId) || !optParentId) {
                         optgroup.style.display = '';
                         optgroup.disabled = false;
                         if (!firstVisibleOption && optgroup.firstElementChild) {

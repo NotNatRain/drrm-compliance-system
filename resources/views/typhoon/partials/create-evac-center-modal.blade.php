@@ -14,7 +14,7 @@
                         <label class="form-label fw-bold">Use Existing Registered School</label>
                         <select name="existing_school_id" id="cec_existing_school_id" class="form-select">
                             <option value="">-- None / Create New --</option>
-                            @foreach(\App\Models\FireSafetySchool::orderBy('school_name')->get() as $school)
+                            @foreach($unregisteredSchools ?? [] as $school)
                                 <option value="{{ $school->id }}">{{ $school->school_name }}</option>
                             @endforeach
                         </select>

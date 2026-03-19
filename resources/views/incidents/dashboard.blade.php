@@ -1004,7 +1004,7 @@
 
                                     <div class="col-md-12 mb-3">
                                         <label class="form-label fw-bold">School Name *</label>
-                                        <div class="d-flex gap-3 mb-2">
+                                        <div class="d-flex flex-wrap gap-3 mb-2">
                                             <div class="form-check">
                                                 <input class="form-check-input incident-school-source" type="radio" name="incident_source_type" id="incident_source_existing" value="existing" checked>
                                                 <label class="form-check-label small fw-600" for="incident_source_existing">Use Existing Registered School</label>
@@ -1012,6 +1012,10 @@
                                             <div class="form-check">
                                                 <input class="form-check-input incident-school-source" type="radio" name="incident_source_type" id="incident_source_new" value="new">
                                                 <label class="form-check-label small fw-600" for="incident_source_new">Input New School Name</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input incident-school-source" type="radio" name="incident_source_type" id="incident_source_all" value="all">
+                                                <label class="form-check-label small fw-600" for="incident_source_all">All Schools</label>
                                             </div>
                                         </div>
 
@@ -1098,7 +1102,7 @@
 
                                     <div class="col-md-12 mb-3">
                                         <label class="form-label fw-bold">School Name *</label>
-                                        <div class="d-flex gap-3 mb-2">
+                                        <div class="d-flex flex-wrap gap-3 mb-2">
                                             <div class="form-check">
                                                 <input class="form-check-input compliance-school-source" type="radio" name="compliance_source_type" id="compliance_source_existing" value="existing" checked>
                                                 <label class="form-check-label small fw-600" for="compliance_source_existing">Use Existing Registered School</label>
@@ -1106,6 +1110,10 @@
                                             <div class="form-check">
                                                 <input class="form-check-input compliance-school-source" type="radio" name="compliance_source_type" id="compliance_source_new" value="new">
                                                 <label class="form-check-label small fw-600" for="compliance_source_new">Input New School Name</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input compliance-school-source" type="radio" name="compliance_source_type" id="compliance_source_all" value="all">
+                                                <label class="form-check-label small fw-600" for="compliance_source_all">All Schools</label>
                                             </div>
                                         </div>
 
@@ -1676,7 +1684,9 @@
             if (!isCompliance) {
                 const sourceInput = form.querySelector('input[name="incident_source_type"]:checked');
                 const source = sourceInput ? sourceInput.value : 'existing';
-                if (source === 'existing') {
+                if (source === 'all') {
+                    formData.set('school_name', 'All Schools');
+                } else if (source === 'existing') {
                     formData.set('school_name', form.querySelector('#incident_school_existing_select').value);
                 } else {
                     formData.set('school_name', form.querySelector('#incident_school_name_manual').value);
@@ -1684,7 +1694,9 @@
             } else {
                 const sourceInput = form.querySelector('input[name="compliance_source_type"]:checked');
                 const source = sourceInput ? sourceInput.value : 'existing';
-                if (source === 'existing') {
+                if (source === 'all') {
+                    formData.set('school_name', 'All Schools');
+                } else if (source === 'existing') {
                     formData.set('school_name', form.querySelector('#compliance_school_existing_select').value);
                 } else {
                     formData.set('school_name', form.querySelector('#compliance_school_name_manual').value);
@@ -1790,7 +1802,11 @@
                     const options = Array.from(existingSelect.options);
                     const match = options.find(o => o.value === item.school_name);
                     
-                    if (match) {
+                    if (item.school_name === 'All Schools') {
+                        document.getElementById('incident_source_all').checked = true;
+                        document.getElementById('incident_existing_school_container').style.display = 'none';
+                        document.getElementById('incident_new_school_container').style.display = 'none';
+                    } else if (match) {
                         document.getElementById('incident_source_existing').checked = true;
                         existingSelect.value = item.school_name;
                         document.getElementById('incident_existing_school_container').style.display = 'block';
@@ -1841,7 +1857,11 @@
                     const options = Array.from(existingSelect.options);
                     const match = options.find(o => o.value === item.school_name);
                     
-                    if (match) {
+                    if (item.school_name === 'All Schools') {
+                        document.getElementById('compliance_source_all').checked = true;
+                        document.getElementById('compliance_existing_school_container').style.display = 'none';
+                        document.getElementById('compliance_new_school_container').style.display = 'none';
+                    } else if (match) {
                         document.getElementById('compliance_source_existing').checked = true;
                         existingSelect.value = item.school_name;
                         document.getElementById('compliance_existing_school_container').style.display = 'block';
@@ -1957,9 +1977,12 @@
                 if (this.value === 'existing') {
                     existingContainer.style.display = 'block';
                     newContainer.style.display = 'none';
-                } else {
+                } else if (this.value === 'new') {
                     existingContainer.style.display = 'none';
                     newContainer.style.display = 'block';
+                } else {
+                    existingContainer.style.display = 'none';
+                    newContainer.style.display = 'none';
                 }
             });
         });
@@ -1971,9 +1994,12 @@
                 if (this.value === 'existing') {
                     existingContainer.style.display = 'block';
                     newContainer.style.display = 'none';
-                } else {
+                } else if (this.value === 'new') {
                     existingContainer.style.display = 'none';
                     newContainer.style.display = 'block';
+                } else {
+                    existingContainer.style.display = 'none';
+                    newContainer.style.display = 'none';
                 }
             });
         });
@@ -2262,21 +2288,25 @@
         }
 
         if (importInput) {
-            document.getElementById('importBackupBtn').addEventListener('click', async function() {
-                const fileInput = document.getElementById('importIncidentsInput');
-                if (fileInput.files.length === 0) return;
+            importInput.addEventListener('change', async function() {
+                if (this.files.length === 0) return;
 
                 if (!(await showConfirm('Importing a backup will overwrite existing incident data. Continue?', 'Warning: Critical Action'))) {
-                    fileInput.value = '';
+                    this.value = '';
                     return;
                 }
 
                 const formData = new FormData();
-                formData.append('file', fileInput.files[0]);
+                formData.append('file', this.files[0]);
                 formData.append('_token', csrfToken);
 
-                this.disabled = true;
-                this.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Importing...';
+                // Find the label or link that triggered this to show loading state if possible
+                const triggerLabel = document.querySelector('label[for="importIncidentsInput"]') || document.createElement('div');
+                const origHtml = triggerLabel.innerHTML;
+                if (triggerLabel.innerHTML) {
+                    triggerLabel.style.pointerEvents = 'none';
+                    triggerLabel.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Importing...';
+                }
 
                 fetch(incidentsImportUrl, {
                     method: 'POST',
@@ -2290,14 +2320,18 @@
                         window.location.reload();
                     } else {
                         await showNotify(resp.message || 'Failed to import backup.', 'Import Failed', 'fa-exclamation-triangle');
-                        this.disabled = false;
-                        this.innerHTML = '<i class="fas fa-file-import me-2"></i> Import History';
+                        if (triggerLabel.innerHTML) {
+                            triggerLabel.style.pointerEvents = 'auto';
+                            triggerLabel.innerHTML = origHtml;
+                        }
                     }
                 })
                 .catch(async () => {
                     await showNotify('Failed to import backup.', 'Connection Error', 'fa-wifi');
-                    this.disabled = false;
-                    this.innerHTML = '<i class="fas fa-file-import me-2"></i> Import History';
+                    if (triggerLabel.innerHTML) {
+                        triggerLabel.style.pointerEvents = 'auto';
+                        triggerLabel.innerHTML = origHtml;
+                    }
                 });
             });
         }
@@ -2386,6 +2420,12 @@
         let currentHistoryDate = new Date();
         currentHistoryDate.setDate(1); // Set to first of month
 
+        document.getElementById('activityHistoryModal').addEventListener('show.bs.modal', function () {
+            currentHistoryDate = new Date(); 
+            currentHistoryDate.setDate(1);
+            fetchHistory(currentHistoryDate.getFullYear(), currentHistoryDate.getMonth() + 1);
+        });
+
         function fetchHistory(year, month) {
             const container = document.getElementById('historyGridContainer');
             container.innerHTML = '<div class="col-12 py-5 text-center w-100"><span class="spinner-border text-warning border-4"></span><p class="mt-3 fs-5 text-muted">Loading history...</p></div>';
@@ -2440,14 +2480,19 @@
         const nextBtn = document.getElementById('nextHistoryMonth');
         
         if (prevBtn) {
-            prevBtn.addEventListener('click', () => {
+            // Remove previous event listeners by cloning
+            const newPrevBtn = prevBtn.cloneNode(true);
+            prevBtn.parentNode.replaceChild(newPrevBtn, prevBtn);
+            newPrevBtn.addEventListener('click', () => {
                 currentHistoryDate.setMonth(currentHistoryDate.getMonth() - 1);
                 fetchHistory(currentHistoryDate.getFullYear(), currentHistoryDate.getMonth() + 1);
             });
         }
 
         if (nextBtn) {
-            nextBtn.addEventListener('click', () => {
+            const newNextBtn = nextBtn.cloneNode(true);
+            nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+            newNextBtn.addEventListener('click', () => {
                 currentHistoryDate.setMonth(currentHistoryDate.getMonth() + 1);
                 fetchHistory(currentHistoryDate.getFullYear(), currentHistoryDate.getMonth() + 1);
             });

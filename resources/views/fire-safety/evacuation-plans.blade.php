@@ -454,6 +454,46 @@
                                                     <button class="btn btn-outline-success btn-sm no-print" onclick="openAddFacilityModal({{ $school->id }})">
                                                         <i class="fas fa-plus me-1"></i> Add Facility
                                                     </button>
+                                                    <div class="dropdown no-print">
+                                                        <button class="btn btn-outline-info btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="btn-specifics-{{ $school->id }}" style="display: none;">
+                                                            <i class="fas fa-th me-1"></i> Specifics
+                                                        </button>
+                                                        <div class="dropdown-menu p-3 shadow-lg" style="min-width: 250px;">
+                                                            <h6 class="dropdown-header px-0 mb-2 border-bottom">Drag items to Map</h6>
+                                                            <div class="row g-2 text-center" id="specifics-list-{{ $school->id }}">
+                                                                <div class="col-4">
+                                                                    <div class="specific-item p-2 border rounded" style="cursor: pointer;" onclick="addSpecificToMap('door', {{ $school->id }})">
+                                                                        <i class="fas fa-door-open fa-lg mb-1"></i><br><small>Door</small>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-4">
+                                                                    <div class="specific-item p-2 border rounded" style="cursor: pointer;" onclick="addSpecificToMap('stairs', {{ $school->id }})">
+                                                                        <i class="fas fa-stairs fa-lg mb-1"></i><br><small>Stairs</small>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-4">
+                                                                    <div class="specific-item p-2 border rounded" style="cursor: pointer;" onclick="addSpecificToMap('table', {{ $school->id }})">
+                                                                        <i class="fas fa-table-list fa-lg mb-1"></i><br><small>Table</small>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-4">
+                                                                    <div class="specific-item p-2 border rounded" style="cursor: pointer;" onclick="addSpecificToMap('chair', {{ $school->id }})">
+                                                                        <i class="fas fa-chair fa-lg mb-1"></i><br><small>Chair</small>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-4">
+                                                                    <div class="specific-item p-2 border rounded" style="cursor: pointer;" onclick="addSpecificToMap('medical', {{ $school->id }})">
+                                                                        <i class="fas fa-kit-medical fa-lg mb-1 text-danger"></i><br><small>First Aid</small>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-4">
+                                                                    <div class="specific-item p-2 border rounded" style="cursor: pointer;" onclick="addSpecificToMap('arrow', {{ $school->id }})">
+                                                                        <i class="fas fa-arrow-right fa-lg mb-1"></i><br><small>Arrow</small>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                     <button class="btn btn-outline-primary btn-sm no-print" id="edit-placement-btn-{{ $school->id }}" onclick="toggleMapEdit({{ $school->id }})">
                                                         <i class="fas fa-arrows-alt me-1"></i> Edit Place
                                                     </button>
@@ -1396,7 +1436,7 @@
         }
 
         function loadingSwal(text) { Swal.fire({ title: text, allowOutsideClick: false, didOpen: () => Swal.showLoading() }); }
-        function successSwal(text, callback) { Swal.fire({ icon: 'success', title: 'Success', text: text, timer: 1500, showConfirmButton: false }).then(callback); }
+        function successSwal(text, callback) { Swal.fire({ icon: 'success', title: 'Success', text: text, confirmButtonText: 'OK' }).then(callback); }
         function errorSwal(text) { Swal.fire({ icon: 'error', title: 'Error', text: text }); }
 
 
@@ -1486,6 +1526,12 @@
                 Object.keys(savedLayout).forEach(id => {
                     if (id && String(id).startsWith('facility_')) {
                         school.facilities.push({
+                            id: id,
+                            ...savedLayout[id]
+                        });
+                    } else if (id && String(id).startsWith('specific_')) {
+                        if (!school.specifics) school.specifics = [];
+                        school.specifics.push({
                             id: id,
                             ...savedLayout[id]
                         });
@@ -1830,7 +1876,103 @@
                 renderFacility(facility, schoolId, savedLayout);
             });
 
+            // Render specifics
+            const specifics = school.specifics || [];
+            specifics.forEach(spec => {
+                renderSpecific(spec, schoolId);
+            });
+
             applyMapFit(schoolId);
+        }
+
+        function renderSpecific(spec, schoolId) {
+            const canvas = document.getElementById(`school-map-canvas-${schoolId}`);
+            if (!canvas) return;
+
+            const specDiv = document.createElement('div');
+            specDiv.className = 'map-element specific-element';
+            specDiv.id = spec.id;
+            specDiv.dataset.id = spec.id;
+            specDiv.dataset.type = 'specific';
+            specDiv.dataset.subType = spec.subType;
+            specDiv.dataset.schoolId = schoolId;
+            specDiv.dataset.rotation = spec.rotation || 0;
+            specDiv.dataset.baseWidth = spec.width || 40;
+            specDiv.dataset.baseHeight = spec.height || 40;
+
+            specDiv.style.position = 'absolute';
+            specDiv.style.width = `${specDiv.dataset.baseWidth}px`;
+            specDiv.style.height = `${specDiv.dataset.baseHeight}px`;
+            specDiv.style.left = (spec.x || 300) + 'px';
+            specDiv.style.top = (spec.y || 300) + 'px';
+            specDiv.style.display = 'flex';
+            specDiv.style.alignItems = 'center';
+            specDiv.style.justifyContent = 'center';
+            specDiv.style.background = 'white';
+            specDiv.style.border = '1px solid #333';
+            specDiv.style.borderRadius = '4px';
+            specDiv.style.zIndex = '100';
+            specDiv.style.fontSize = '20px';
+
+            if (spec.rotation) {
+                specDiv.style.transform = `rotate(${spec.rotation}deg)`;
+            }
+
+            const iconMap = {
+                door: 'fa-door-open',
+                stairs: 'fa-stairs',
+                table: 'fa-table-list',
+                chair: 'fa-chair',
+                window: 'fa-window-maximize',
+                toilet: 'fa-toilet',
+                medical: 'fa-kit-medical',
+                arrow: 'fa-arrow-right'
+            };
+
+            const iconClass = iconMap[spec.subType] || 'fa-question';
+            const iconColor = spec.subType === 'medical' ? 'color:red;' : '';
+            specDiv.innerHTML = `<i class="fas ${iconClass}" style="${iconColor}"></i>`;
+
+            // Delete button on specifics
+            const delBtn = document.createElement('div');
+            delBtn.className = 'delete-specific no-print';
+            delBtn.innerHTML = '×';
+            delBtn.style.cssText = 'position:absolute; top:-10px; right:-10px; width:18px; height:18px; background:red; color:white; border-radius:50%; font-size:12px; line-height:16px; text-align:center; cursor:pointer; display:' + (isMapEditable[schoolId] ? 'block' : 'none') + ';';
+            delBtn.onclick = (e) => {
+                e.stopPropagation();
+                if (isMapEditable[schoolId]) specDiv.remove();
+            };
+            specDiv.appendChild(delBtn);
+
+            canvas.appendChild(specDiv);
+            makeDraggable(specDiv, schoolId);
+            makeResizable(specDiv, schoolId);
+
+            // Double click to rotate specifics
+            specDiv.ondblclick = (e) => {
+                if (!isMapEditable[schoolId]) return;
+                const rot = (parseInt(specDiv.dataset.rotation || 0) + 90) % 360;
+                specDiv.dataset.rotation = rot;
+                specDiv.style.transform = `rotate(${rot}deg)`;
+            };
+        }
+
+        function addSpecificToMap(subType, schoolId) {
+            if (!isMapEditable[schoolId]) {
+                Swal.fire('Edit Mode Required', 'Please click "Edit Place" first before adding map specifics.', 'info');
+                return;
+            }
+            const id = 'specific_' + Date.now();
+            const spec = {
+                id: id,
+                subType: subType,
+                x: 150,
+                y: 150,
+                width: 40,
+                height: 40,
+                rotation: 0
+            };
+            renderSpecific(spec, schoolId);
         }
 
         function renderFacility(facility, schoolId, savedLayout) {
@@ -1896,8 +2038,20 @@
                 const left = parseFloat(el.style.left);
                 const top = parseFloat(el.style.top);
                 const isFacility = el.classList.contains('facility-element');
-                const bw = isFacility ? parseFloat(el.dataset.baseWidth || el.style.width || 200) : parseFloat(el.dataset.baseWidth || 300);
-                const bh = isFacility ? parseFloat(el.dataset.baseHeight || el.style.height || 100) : parseFloat(el.dataset.baseHeight || 150);
+                const isSpecific = el.classList.contains('specific-element');
+                
+                let bw, bh;
+                if (isFacility) {
+                    bw = parseFloat(el.dataset.baseWidth || el.style.width || 200);
+                    bh = parseFloat(el.dataset.baseHeight || el.style.height || 100);
+                } else if (isSpecific) {
+                    bw = parseFloat(el.dataset.baseWidth || 40);
+                    bh = parseFloat(el.dataset.baseHeight || 40);
+                } else {
+                    bw = parseFloat(el.dataset.baseWidth || 300);
+                    bh = parseFloat(el.dataset.baseHeight || 150);
+                }
+                
                 const rotation = parseInt(el.dataset.rotation || 0);
 
                 const isRotated = (rotation % 180 !== 0);
@@ -2116,33 +2270,53 @@
         }
 
         function toggleMapEdit(schoolId) {
-            isMapEditable[schoolId] = !isMapEditable[schoolId];
-            const btn = document.getElementById(`edit-placement-btn-${schoolId}`);
+            const canvas = document.getElementById(`school-map-canvas-${schoolId}`);
+            const editBtn = document.getElementById(`edit-placement-btn-${schoolId}`);
             const saveBtn = document.getElementById(`save-placement-btn-${schoolId}`);
+            const specificsPanel = document.getElementById(`specifics-panel-${schoolId}`);
 
-            if (isMapEditable[schoolId]) {
-                btn.innerHTML = '<i class="fas fa-save me-2"></i> Save Layout';
-                btn.classList.remove('btn-outline-primary', 'btn-warning');
-                btn.classList.add('btn-success');
-                btn.setAttribute('onclick', `saveMapLayout(${schoolId})`);
+            if (!isMapEditable[schoolId]) { // Entering edit mode
+                isMapEditable[schoolId] = true;
+                editBtn.innerHTML = '<i class="fas fa-save me-1"></i> Save Layout';
+                editBtn.classList.remove('btn-outline-primary');
+                editBtn.classList.add('btn-primary');
                 if (saveBtn) saveBtn.disabled = false;
 
-                document.querySelectorAll(`#school-map-canvas-${schoolId} .map-element`).forEach(el => {
+                // Show Specifics button and panel
+                const specificsBtn = document.getElementById(`btn-specifics-${schoolId}`);
+                if (specificsBtn) specificsBtn.style.display = 'block';
+                if (specificsPanel) specificsPanel.style.display = 'block';
+
+                // Enable dragging/resizing
+                const els = canvas.querySelectorAll('.map-element');
+                els.forEach(el => {
+                    el.classList.add('map-edit-mode');
                     el.style.cursor = 'move';
                     el.style.borderColor = '#ffc107';
+                    const delBtn = el.querySelector('.delete-specific');
+                    if (delBtn) delBtn.style.display = 'block';
                 });
                 // remove fit while editing
                 applyMapFit(schoolId);
             } else {
-                btn.innerHTML = '<i class="fas fa-arrows-alt me-2"></i> Edit Placement';
-                btn.classList.remove('btn-success', 'btn-warning');
-                btn.classList.add('btn-outline-primary');
-                btn.setAttribute('onclick', `toggleMapEdit(${schoolId})`);
+                saveMapLayout(schoolId); // Save layout when exiting edit mode
+                isMapEditable[schoolId] = false;
+                editBtn.innerHTML = '<i class="fas fa-arrows-alt me-2"></i> Edit Placement';
+                editBtn.classList.remove('btn-primary');
+                editBtn.classList.add('btn-outline-primary');
                 if (saveBtn) saveBtn.disabled = true;
 
+                // Hide Specifics button and panel
+                const specificsBtn = document.getElementById(`btn-specifics-${schoolId}`);
+                if (specificsBtn) specificsBtn.style.display = 'none';
+                if (specificsPanel) specificsPanel.style.display = 'none';
+
                 document.querySelectorAll(`#school-map-canvas-${schoolId} .map-element`).forEach(el => {
+                    el.classList.remove('map-edit-mode');
                     el.style.cursor = 'default';
                     el.style.borderColor = 'black';
+                    const delBtn = el.querySelector('.delete-specific');
+                    if (delBtn) delBtn.style.display = 'none';
                 });
                 // re-fit when locked
                 applyMapFit(schoolId);
@@ -2158,6 +2332,7 @@
                 if (!isMapEditable[schoolId]) return;
                 if (element.dataset.isResizing === '1') return;
                 if (e.button !== 0) return;
+                if (e.target.classList.contains('delete-specific')) return;
 
                 e.preventDefault();
                 pos3 = e.clientX;
@@ -2194,11 +2369,12 @@
         function makeResizable(element, schoolId) {
             const isBuilding = element.classList.contains('building-element');
             const isFacility = element.classList.contains('facility-element');
-            if (!isBuilding && !isFacility) return;
+            const isSpecific = element.classList.contains('specific-element');
+            if (!isBuilding && !isFacility && !isSpecific) return;
 
             const edge = 10;
-            const minW = isFacility ? 120 : 220;
-            const minH = isFacility ? 60 : 140;
+            const minW = isSpecific ? 20 : (isFacility ? 120 : 220);
+            const minH = isSpecific ? 20 : (isFacility ? 60 : 140);
             let resizeDir = null;
 
             function getResizeDirection(e) {
@@ -2337,6 +2513,16 @@
                         width: Number(el.dataset.baseWidth || parseFloat(el.style.width) || 200),
                         height: Number(el.dataset.baseHeight || parseFloat(el.style.height) || 100)
                     };
+                } else if (el.classList.contains('specific-element')) {
+                    layout[id] = {
+                        type: 'specific',
+                        subType: el.dataset.subType,
+                        x: parseFloat(el.style.left),
+                        y: parseFloat(el.style.top),
+                        rotation: Number(el.dataset.rotation || 0),
+                        width: Number(el.dataset.baseWidth || parseFloat(el.style.width) || 40),
+                        height: Number(el.dataset.baseHeight || parseFloat(el.style.height) || 40)
+                    };
                 } else {
                     layout[id] = {
                         x: parseFloat(el.style.left),
@@ -2464,7 +2650,7 @@
                     icon: 'success',
                     title: 'Facility Saved to Map',
                     text: 'Now drag the rectangle to its correct location and click "Save Layout".',
-                    timer: 3000
+                    confirmButtonText: 'OK'
                 });
             } catch (err) {
                 console.error('Internal Error in createNewFacility:', err);

@@ -1173,7 +1173,7 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(async response => {
                 const data = await response.json();
                 if (response.ok && data.success) {
-                    Swal.fire({ icon: 'success', title: 'Success!', text: 'School added successfully!', timer: 2000, showConfirmButton: false })
+                    Swal.fire({ icon: 'success', title: 'Success!', text: 'School added successfully!', confirmButtonText: 'OK' })
                     .then(() => location.reload());
                 } else {
                     let errorMsg = data.message || 'Failed to add school.';

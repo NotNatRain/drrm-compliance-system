@@ -244,6 +244,7 @@ class TyphoonController extends Controller
             ],
             'activeSchoolId' => $contributorActiveSchoolId,
             'activeTyphoon'  => $activeTyphoon,
+            'unregisteredSchools' => FireSafetySchool::whereDoesntHave('typhoonEvacuationCenter')->orderBy('school_name')->get(),
             'quickAnnouncements' => FireSafetyNotification::forCompliance('typhoon_flood')
                 ->where(function($q) use ($contributorActiveSchoolId) {
                     $q->whereNull('school_id')->orWhere('school_id', $contributorActiveSchoolId);

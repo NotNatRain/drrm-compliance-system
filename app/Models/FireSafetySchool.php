@@ -70,6 +70,11 @@ class FireSafetySchool extends Model
     {
         return $this->hasMany(FireSafetyEvacuationDrill::class, 'school_id');
     }
+
+    public function typhoonEvacuationCenter(): HasOne
+    {
+        return $this->hasOne(TypFldEvacuationCenter::class, 'school_id');
+    }
     
     // Helper methods for evacuation plans page
     public function getBuildingsWithPlansCountAttribute(): int
