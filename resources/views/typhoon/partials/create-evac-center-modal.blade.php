@@ -25,28 +25,28 @@
                         <hr>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Identification (School ID / Code)</label>
-                            <input type="text" name="identification" class="form-control" placeholder="e.g. ES-001">
+                            <input type="text" name="identification" id="cec_identification" class="form-control" placeholder="e.g. ES-001" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">School Name (for new school)</label>
-                            <input type="text" name="school_name" class="form-control" placeholder="e.g. San Isidro Elementary School">
+                            <input type="text" name="school_name" id="cec_school_name" class="form-control" placeholder="e.g. San Isidro Elementary School" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Location</label>
-                            <textarea name="location" rows="2" class="form-control" placeholder="Barangay, Municipality, Province"></textarea>
+                            <textarea name="location" id="cec_location" rows="2" class="form-control" placeholder="Barangay, Municipality, Province" required></textarea>
                         </div>
                     </div>
 
                     <hr>
                     <div class="mb-3">
                         <label class="form-label fw-bold">Capacity (Max Individuals)</label>
-                        <input type="number" name="capacity" class="form-control" placeholder="e.g. 500" min="0" value="0">
+                        <input type="number" name="capacity" class="form-control" placeholder="e.g. 500" min="0" value="0" required>
                         <small class="text-muted">Set to 0 for unlimited or unknown.</small>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label fw-bold">Initial Usage Status</label>
-                        <select name="usage_status" class="form-select">
+                        <select name="usage_status" class="form-select" required>
                             <option value="cleared">Cleared</option>
                             <option value="occupied">Occupied</option>
                             <option value="full">Full</option>
@@ -70,13 +70,21 @@
     document.addEventListener('DOMContentLoaded', function() {
         const select = document.getElementById('cec_existing_school_id');
         const fields = document.getElementById('cec_new_school_fields');
+        const identification = document.getElementById('cec_identification');
+        const schoolName = document.getElementById('cec_school_name');
+        const location = document.getElementById('cec_location');
         if (select && fields) {
             function toggleFields() {
                 if (select.value) {
                     fields.style.display = 'none';
-                    // Optional: clear fields or remove required
+                    if (identification) identification.required = false;
+                    if (schoolName) schoolName.required = false;
+                    if (location) location.required = false;
                 } else {
                     fields.style.display = 'block';
+                    if (identification) identification.required = true;
+                    if (schoolName) schoolName.required = true;
+                    if (location) location.required = true;
                 }
             }
             select.addEventListener('change', toggleFields);

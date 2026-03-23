@@ -24,6 +24,7 @@ class User extends Authenticatable
         'role',
         'school_id',
         'typhoon_school_id',
+        'incident_school_id',
         'needs_fs_registration',
         'needs_tf_registration',
         'module_access',
@@ -54,6 +55,14 @@ class User extends Authenticatable
     public function typhoonSchool()
     {
         return $this->belongsTo(TypFldEvacuationCenter::class, 'typhoon_school_id');
+    }
+
+    /**
+     * Get the incident school assigned to the user.
+     */
+    public function incidentSchool()
+    {
+        return $this->belongsTo(IncidentSchool::class, 'incident_school_id');
     }
 
     /**

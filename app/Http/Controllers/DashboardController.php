@@ -6,9 +6,11 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\FireSafetySchool;
 use App\Models\TypFldEvacuationCenter;
+use App\Models\IncidentSchool;
 use App\Models\Announcement;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -39,7 +41,7 @@ class DashboardController extends Controller
         $isAdmin = auth()->user()->role === 'admin';
 
         if ($isAdmin) {
-            $query = User::with(['school', 'typhoonSchool.school']);
+            $query = User::with(['school', 'typhoonSchool.school', 'incidentSchool']);
 
             // Filters
             if ($request->filled('role')) {
@@ -57,18 +59,19 @@ class DashboardController extends Controller
 
             $users = $query->get();
         } else {
-            $users = User::with(['school', 'typhoonSchool.school'])->whereKey(auth()->id())->get();
+            $users = User::with(['school', 'typhoonSchool.school', 'incidentSchool'])->whereKey(auth()->id())->get();
         }
 
         $schools = FireSafetySchool::all();
-        $typhoonSchools = TypFldEvacuationCenter::all();
+        $typhoonSchools = TypFldEvacuationCenter::with('school')->get();
+        $incidentSchools = IncidentSchool::orderBy('name')->get();
         $adminCount = User::where('role', 'admin')->count();
 
         if ($request->expectsJson()) {
             return response()->json($users);
         }
 
-        return view('users.index', compact('users', 'schools', 'typhoonSchools', 'adminCount', 'isAdmin'));
+        return view('users.index', compact('users', 'schools', 'typhoonSchools', 'incidentSchools', 'adminCount', 'isAdmin'));
     }
 
     public function storeUser(Request $request)
@@ -119,7 +122,7 @@ class DashboardController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $user = User::with('school')->findOrFail($id);
+        $user = User::with(['school', 'incidentSchool'])->findOrFail($id);
         return response()->json($user);
     }
 
@@ -209,6 +212,9 @@ class DashboardController extends Controller
             $user->typhoon_school_id = $request->typhoon_school_id;
             $user->needs_tf_registration = false;
         }
+
+        // Incident Checklist school assignment
+        $user->incident_school_id = $request->incident_school_id ?: null;
 
         $user->save();
 

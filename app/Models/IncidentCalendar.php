@@ -10,6 +10,8 @@ class IncidentCalendar extends Model
     protected $table = 'incident_calendars';
 
     protected $fillable = [
+        'status',
+        'contributor_id',
         'incident_date',
         'school_name',
         'entry_type',
@@ -44,6 +46,11 @@ class IncidentCalendar extends Model
     public function incidentStatus()
     {
         return $this->belongsTo(IncidentStatus::class);
+    }
+
+    public function contributor()
+    {
+        return $this->belongsTo(User::class, 'contributor_id');
     }
 
     protected function dayName(): Attribute

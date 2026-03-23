@@ -526,6 +526,14 @@
             background: rgba(0,0,0,0.25);
         }
 
+        .incident-theme-header {
+            background: linear-gradient(135deg, var(--incident-yellow) 0%, var(--incident-orange) 100%);
+            color: #fff;
+        }
+        .incident-theme-header .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
         /* ====================================================
          * 70/30 HYBRID MOBILE APPROACH — Incidents Dashboard
          * Desktop structure is preserved. Minimal tweaks only:
@@ -579,7 +587,15 @@
                 </div>
                 <p>Real-time incident tracking and compliance monitoring system</p>
             </div>
-            <div class="header-actions d-flex gap-2">
+            <div class="header-actions d-flex align-items-center gap-2">
+                @if(auth()->user()->role === 'admin')
+                <button class="btn btn-outline-light btn-lg rounded-pill shadow-sm position-relative me-2" id="adminNotifBtn" title="Pending Reports">
+                    <i class="fas fa-bell"></i>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" id="pendingNotifCount">
+                        0
+                    </span>
+                </button>
+                @endif
                 <button class="btn btn-light btn-lg rounded-pill shadow-sm" data-bs-toggle="modal" data-bs-target="#logIncidentModal" style="color: var(--incident-orange); font-weight: 600;">
                     <i class="fas fa-plus-circle me-2"></i> Log New Incident
                 </button>
@@ -952,214 +968,56 @@
     </div>
 
 
-    <!-- Log Incident Modal -->
-    <div class="modal fade" id="logIncidentModal" tabindex="-1" aria-labelledby="logIncidentModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content incident-modal">
-                <div class="modal-header bg-warning text-white">
-                    <h5 class="modal-title" id="logIncidentModalLabel">
-                        <i class="fas fa-plus-circle me-2"></i> Log New Incident/Event
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+    @include('incidents.partials.log-modal')
+
+    <!-- Pending Reports Modal for Admin -->
+    <div class="modal fade" id="pendingReportsModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header incident-theme-header">
+                    <h5 class="modal-title"><i class="fas fa-clipboard-check me-2"></i> Pending Contributor Reports</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4">Date</th>
+                                    <th>Contributor</th>
+                                    <th>School</th>
+                                    <th>Type</th>
+                                    <th>Remarks</th>
+                                    <th class="text-end pe-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pendingReportsTable">
+                                <!-- Loaded via AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="pendingEmptyState" class="text-center py-5 d-none">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3 opacity-25"></i>
+                        <p class="text-muted">No pending reports to review.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rejection Reason Modal -->
+    <div class="modal fade" id="rejectionReasonModal" tabindex="-1">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white py-2">
+                    <h6 class="modal-title">Reason for Rejection</h6>
                 </div>
                 <div class="modal-body">
-                    <ul class="nav nav-tabs" id="incidentTab" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="incident-tab" data-bs-toggle="tab" data-bs-target="#incident-form" type="button" role="tab">
-                                <i class="fas fa-exclamation-triangle me-2"></i> Incident
-                            </button>
-                        </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="compliance-tab" data-bs-toggle="tab" data-bs-target="#compliance-form" type="button" role="tab">
-                                <i class="fas fa-calendar-check me-2"></i> Compliance Status/Event
-                            </button>
-                        </li>
-                    </ul>
-
-                    <div class="tab-content mt-4">
-                        <!-- Incident Form -->
-                        <div class="tab-pane fade show active" id="incident-form" role="tabpanel">
-                            <form id="incidentForm">
-                                @csrf
-                                <input type="hidden" name="entry_type" value="incident">
-                                <input type="hidden" name="incident_id" id="incident_update_id" value="">
-                                <input type="hidden" name="incident_date" id="incident_date" value="{{ date('Y-m-d') }}">
-
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="incident_type_id" class="form-label">Incident Type *</label>
-                                        <select class="form-select" id="incident_type_id" name="incident_type_id" required>
-                                            <option value="">Select Incident Type</option>
-                                            @foreach($incidentTypes as $type)
-                                                <option value="{{ $type->id }}">{{ $type->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-
-                                    <div class="col-md-6 mb-3">
-                                        <label for="incident_date_input" class="form-label">Date *</label>
-                                        <input type="date" class="form-control" id="incident_date_input" name="incident_date_input" required
-                                               value="{{ date('Y-m-d') }}">
-                                    </div>
-
-                                    <div class="col-md-12 mb-3">
-                                        <label class="form-label fw-bold">School Name *</label>
-                                        <div class="d-flex flex-wrap gap-3 mb-2">
-                                            <div class="form-check">
-                                                <input class="form-check-input incident-school-source" type="radio" name="incident_source_type" id="incident_source_existing" value="existing" checked>
-                                                <label class="form-check-label small fw-600" for="incident_source_existing">Use Existing Registered School</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input incident-school-source" type="radio" name="incident_source_type" id="incident_source_new" value="new">
-                                                <label class="form-check-label small fw-600" for="incident_source_new">Input New School Name</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input incident-school-source" type="radio" name="incident_source_type" id="incident_source_all" value="all">
-                                                <label class="form-check-label small fw-600" for="incident_source_all">All Schools</label>
-                                            </div>
-                                        </div>
-
-                                        <div id="incident_existing_school_container">
-                                            <select class="form-select" id="incident_school_existing_select" name="school_name_existing">
-                                                <option value="">-- Select Registered School --</option>
-                                                @foreach($fireSafetySchools as $fsSchool)
-                                                    <option value="{{ $fsSchool->school_name }}">{{ $fsSchool->school_name }}</option>
-                                                @endforeach
-                                            </select>
-                                            <small class="text-muted small">Choose a school from the Fire Safety module.</small>
-                                        </div>
-
-                                        <div id="incident_new_school_container" style="display: none;">
-                                            <input type="text" class="form-control" id="incident_school_name_manual" name="school_name_manual"
-                                                   placeholder="Enter new school name...">
-                                            <small class="text-muted small">Manually type the school name if not registered.</small>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-md-6 mb-3">
-                                        <label for="affected_personnel" class="form-label">Affected Personnel <small class="text-muted">(optional, leave empty or 0)</small></label>
-                                        <input type="number" class="form-control" id="affected_personnel" name="affected_personnel" min="0" placeholder="0" value="">
-                                    </div>
-
-                                    <div class="col-md-6 mb-3">
-                                        <label for="affected_students" class="form-label">Affected Students <small class="text-muted">(optional, leave empty or 0)</small></label>
-                                        <input type="number" class="form-control" id="affected_students" name="affected_students" min="0" placeholder="0" value="">
-                                    </div>
-
-                                    <div class="col-12 mb-3">
-                                        <label for="remarks" class="form-label">Remarks/Description *</label>
-                                        <textarea class="form-control" id="remarks" name="remarks" rows="3"
-                                                  placeholder="Provide detailed description of the incident..." required></textarea>
-                                    </div>
-                                </div>
-                                <div class="col-12 mb-3">
-                                    <label for="incident_attachment" class="form-label">
-                                        Attachment/Evidence <span class="text-danger" id="incident_attachment_required_asterisk">*</span>
-                                        <small class="text-muted">(PDF, JPG, PNG - Max 10MB)</small>
-                                    </label>
-                                    <div id="current_incident_attachment" class="mb-2 p-2 border rounded bg-light" style="display: none;">
-                                        <div class="d-flex align-items-center justify-content-between">
-                                            <span><i class="fas fa-paperclip me-2 text-warning"></i> <span id="incident_attachment_name" class="small fw-bold text-truncate" style="max-width: 200px;"></span></span>
-                                            <a id="incident_attachment_view" href="#" target="_blank" class="btn btn-sm btn-link text-warning p-0">View current</a>
-                                        </div>
-                                    </div>
-                                    <input type="file" class="form-control" id="incident_attachment" name="attachment" accept=".pdf,.jpg,.jpeg,.png">
-                                    <small class="text-muted fst-italic" id="incident_attachment_hint">You can attach evidence now or later during update.</small>
-                                </div>
-                                <div class="d-flex justify-content-end gap-2">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                    <button type="submit" class="btn btn-warning">
-                                        <i class="fas fa-save me-2"></i> Save Incident
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-
-                        <!-- Compliance Form -->
-                        <div class="tab-pane fade" id="compliance-form" role="tabpanel">
-                            <form id="complianceForm">
-                                @csrf
-                                <input type="hidden" name="entry_type" value="compliance">
-                                <input type="hidden" name="compliance_id" id="compliance_update_id" value="">
-                                <input type="hidden" name="incident_date" id="compliance_incident_date" value="{{ date('Y-m-d') }}">
-
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label for="incident_status_id" class="form-label">Compliance Status/Event *</label>
-                                        <select class="form-select" id="incident_status_id" name="incident_status_id" required>
-                                            <option value="">Select Status/Event</option>
-                                            @foreach($incidentStatuses as $status)
-                                                <option value="{{ $status->id }}">{{ $status->name }}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-
-                                    <div class="col-md-6 mb-3">
-                                        <label for="compliance_date_input" class="form-label">Date *</label>
-                                        <input type="date" class="form-control" id="compliance_date_input" name="incident_date_input" required
-                                               value="{{ date('Y-m-d') }}">
-                                    </div>
-
-                                    <div class="col-md-12 mb-3">
-                                        <label class="form-label fw-bold">School Name *</label>
-                                        <div class="d-flex flex-wrap gap-3 mb-2">
-                                            <div class="form-check">
-                                                <input class="form-check-input compliance-school-source" type="radio" name="compliance_source_type" id="compliance_source_existing" value="existing" checked>
-                                                <label class="form-check-label small fw-600" for="compliance_source_existing">Use Existing Registered School</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input compliance-school-source" type="radio" name="compliance_source_type" id="compliance_source_new" value="new">
-                                                <label class="form-check-label small fw-600" for="compliance_source_new">Input New School Name</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input compliance-school-source" type="radio" name="compliance_source_type" id="compliance_source_all" value="all">
-                                                <label class="form-check-label small fw-600" for="compliance_source_all">All Schools</label>
-                                            </div>
-                                        </div>
-
-                                        <div id="compliance_existing_school_container">
-                                            <select class="form-select" id="compliance_school_existing_select" name="compliance_school_name_existing">
-                                                <option value="">-- Select Registered School --</option>
-                                                @foreach($fireSafetySchools as $fsSchool)
-                                                    <option value="{{ $fsSchool->school_name }}">{{ $fsSchool->school_name }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-
-                                        <div id="compliance_new_school_container" style="display: none;">
-                                            <input type="text" class="form-control" id="compliance_school_name_manual" name="compliance_school_name_manual"
-                                                   placeholder="Enter new school name...">
-                                        </div>
-                                    </div>
-
-                                    <div class="col-12 mb-3">
-                                        <label for="compliance_remarks" class="form-label">Remarks/Description *</label>
-                                        <textarea class="form-control" id="compliance_remarks" name="remarks" rows="3"
-                                                  placeholder="Provide details about the compliance status/event..." required></textarea>
-                                    </div>
-                                </div>
-                                <div class="col-12 mb-3">
-                                    <label for="compliance_attachment" class="form-label">
-                                        Attachment/Evidence
-                                        <small class="text-muted">(Optional - PDF, JPG, PNG, Max 10MB)</small>
-                                    </label>
-                                    <div id="current_compliance_attachment" class="mb-2 p-2 border rounded bg-light" style="display: none;">
-                                        <div class="d-flex align-items-center justify-content-between">
-                                            <span><i class="fas fa-paperclip me-2 text-success"></i> <span id="compliance_attachment_name" class="small fw-bold text-truncate" style="max-width: 200px;"></span></span>
-                                            <a id="compliance_attachment_view" href="#" target="_blank" class="btn btn-sm btn-link text-success p-0">View current</a>
-                                        </div>
-                                    </div>
-                                    <input type="file" class="form-control" id="compliance_attachment" name="attachment" accept=".pdf,.jpg,.jpeg,.png">
-                                </div>
-                                <div class="d-flex justify-content-end gap-2">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                    <button type="submit" class="btn btn-warning">
-                                        <i class="fas fa-save me-2"></i> Save Compliance Event
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+                    <textarea id="rejectionReasonText" class="form-control" rows="3" placeholder="Explain why this was rejected..."></textarea>
+                </div>
+                <div class="modal-footer py-2">
+                    <button class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button class="btn btn-sm btn-danger" id="confirmRejectBtn">Reject Report</button>
                 </div>
             </div>
         </div>
@@ -1550,7 +1408,7 @@
                                             <span class="badge bg-danger mb-2">INCIDENT</span>
                                             <h6 class="fw-bold mb-2">${escapeHtml(i.incident_type?.name || 'Incident')}</h6>
                                         </div>
-                                        <small class="text-muted">Reported: ${escapeHtml(i.reported_by || 'Unknown')}</small>
+                                        <small class="text-muted">Reported by: ${escapeHtml(i.contributor?.name || i.reported_by || 'Unknown')}</small>
                                     </div>
 
                                     <div class="mb-2">
@@ -1609,7 +1467,7 @@
                                             <span class="badge bg-success mb-2">COMPLIANCE EVENT</span>
                                             <h6 class="fw-bold mb-2">${escapeHtml(c.incident_status?.name || 'Event')}</h6>
                                         </div>
-                                        <small class="text-muted">Reported: ${escapeHtml(c.reported_by || 'Unknown')}</small>
+                                        <small class="text-muted">Reported by: ${escapeHtml(c.contributor?.name || c.reported_by || 'Unknown')}</small>
                                     </div>
 
                                     <div class="mb-2">
@@ -2505,6 +2363,155 @@
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
         }
+
+        // --- Admin Report Approval Logic ---
+        @if(auth()->user()->role === 'admin')
+        const adminNotifBtn = document.getElementById('adminNotifBtn');
+        const pendingNotifCount = document.getElementById('pendingNotifCount');
+        const pendingReportsModal = new bootstrap.Modal(document.getElementById('pendingReportsModal'));
+        const pendingReportsTable = document.getElementById('pendingReportsTable');
+        const pendingEmptyState = document.getElementById('pendingEmptyState');
+
+        async function refreshPendingCount() {
+            try {
+                const r = await fetch('{{ route("incidents.pending") }}');
+                const resp = await r.json();
+                if (resp.success) {
+                    if (resp.count > 0) {
+                        pendingNotifCount.textContent = resp.count;
+                        pendingNotifCount.classList.remove('d-none');
+                    } else {
+                        pendingNotifCount.classList.add('d-none');
+                    }
+                }
+            } catch (e) {}
+        }
+
+        adminNotifBtn.addEventListener('click', async () => {
+            await loadPendingReports();
+            pendingReportsModal.show();
+        });
+
+        async function loadPendingReports() {
+            pendingReportsTable.innerHTML = '<tr><td colspan="6" class="text-center py-4"><span class="spinner-border spinner-border-sm me-2"></span>Loading...</td></tr>';
+            pendingEmptyState.classList.add('d-none');
+            
+            try {
+                const r = await fetch('{{ route("incidents.pending") }}');
+                const resp = await r.json();
+                if (resp.success && resp.reports.length > 0) {
+                    let html = '';
+                    resp.reports.forEach(report => {
+                        const date = new Date(report.incident_date).toLocaleDateString('en-PH', { month: 'short', day: '2-digit', year: 'numeric' });
+                        const type = report.entry_type === 'incident' ? 
+                            `<span class="badge bg-warning text-dark"><i class="fas fa-exclamation-triangle me-1"></i> ${report.incident_type?.name || 'Incident'}</span>` :
+                            `<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> ${report.incident_status?.name || 'Compliance'}</span>`;
+                            
+                        html += `
+                            <tr>
+                                <td class="ps-4 fw-bold text-muted small">${date}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="rounded-circle bg-light d-flex align-items-center justify-content-center p-2 me-2" style="width:30px;height:30px;">
+                                            <i class="fas fa-user-circle text-secondary"></i>
+                                        </div>
+                                        <span class="small fw-600">${report.contributor?.name || 'Unknown'}</span>
+                                    </div>
+                                </td>
+                                <td><span class="small">${report.school_name}</span></td>
+                                <td>${type}</td>
+                                <td><p class="mb-0 small text-truncate" style="max-width: 250px;" title="${report.remarks}">${report.remarks}</p></td>
+                                <td class="text-end pe-4">
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-outline-success" onclick="approveReport(${report.id})" title="Accept">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="initiateRejection(${report.id})" title="Reject">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    pendingReportsTable.innerHTML = html;
+                    pendingEmptyState.classList.add('d-none');
+                } else {
+                    pendingReportsTable.innerHTML = '';
+                    pendingEmptyState.classList.remove('d-none');
+                }
+            } catch (e) {
+                pendingReportsTable.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-danger">Failed to load reports.</td></tr>';
+            }
+        }
+
+        window.approveReport = async (id) => {
+            if (!(await showConfirm('Accept this report and log it to the calendar?', 'Approve Report'))) return;
+            
+            try {
+                const r = await fetch(`{{ url("incidents") }}/${id}/accept`, {
+                    method: 'POST',
+                    headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' }
+                });
+                const resp = await r.json();
+                if (resp.success) {
+                    await showNotify(resp.message, 'Success', 'fa-check-circle');
+                    await loadPendingReports();
+                    await refreshPendingCount();
+                    // Optional: reload calendar if admin was on dashboard
+                    if (typeof window.location.reload === 'function') setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    await showNotify(resp.message || 'Action failed', 'Error', 'fa-times-circle');
+                }
+            } catch (e) {
+                await showNotify('Connection failed', 'Error', 'fa-wifi');
+            }
+        };
+
+        let activeRejectionId = null;
+        const rejectModal = new bootstrap.Modal(document.getElementById('rejectionReasonModal'));
+
+        window.initiateRejection = (id) => {
+            activeRejectionId = id;
+            document.getElementById('rejectionReasonText').value = '';
+            rejectModal.show();
+        };
+
+        document.getElementById('confirmRejectBtn').addEventListener('click', async () => {
+            const reason = document.getElementById('rejectionReasonText').value.trim();
+            if (!reason) {
+                await showNotify('Please provide a reason for rejection.', 'Reason Required', 'fa-info-circle');
+                return;
+            }
+            
+            try {
+                const r = await fetch(`{{ url("incidents") }}/${activeRejectionId}/reject`, {
+                    method: 'POST',
+                    headers: { 
+                        'X-CSRF-TOKEN': csrfToken, 
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ reason })
+                });
+                const resp = await r.json();
+                if (resp.success) {
+                    rejectModal.hide();
+                    await showNotify(resp.message, 'Rejected', 'fa-times-circle');
+                    await loadPendingReports();
+                    await refreshPendingCount();
+                } else {
+                    await showNotify(resp.message || 'Action failed', 'Error', 'fa-times-circle');
+                }
+            } catch (e) {
+                await showNotify('Connection failed', 'Error', 'fa-wifi');
+            }
+        });
+
+        // Initial check and set interval for notification badge
+        refreshPendingCount();
+        setInterval(refreshPendingCount, 60000); // Every minute
+        @endif
     </script>
 </body>
 </html>

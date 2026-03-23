@@ -33,6 +33,48 @@ class IncidentController extends Controller
         $year = (int) $request->input('year', date('Y'));
         $month = (int) $request->input('month', date('n'));
 
+        // Role-based redirection
+        $user = auth()->user();
+        if (in_array($user->role, ['contributor', 'viewer'], true)) {
+            $user->load('incidentSchool');
+            $assignedIncidentSchoolName = $user->incidentSchool?->name;
+
+            $weekOffset = (int) $request->input('week_offset', 0);
+            $weekStart = Carbon::now()->startOfWeek(Carbon::MONDAY)->addWeeks($weekOffset)->startOfDay();
+            $weekEnd = (clone $weekStart)->endOfWeek(Carbon::SUNDAY)->endOfDay();
+
+            $myReports = IncidentCalendar::where('contributor_id', $user->id)
+                ->with(['incidentType', 'incidentStatus'])
+                ->whereBetween('incident_date', [$weekStart->toDateString(), $weekEnd->toDateString()])
+                ->orderBy('incident_date', 'desc')
+                ->get();
+            
+            // Re-using same logic for dropdowns
+            $incidentTypes = IncidentType::orderBy('priority')->get();
+            $incidentStatuses = IncidentStatus::orderBy('name')->get();
+            $fireSafetySchools = collect();
+
+            if (!$assignedIncidentSchoolName) {
+                $fireSafetySchools = IncidentSchool::orderBy('name')
+                    ->get(['name'])
+                    ->map(function ($school) {
+                        return (object) ['school_name' => $school->name];
+                    });
+            }
+
+            return view('incidents.reporting_dashboard', compact(
+                'myReports',
+                'incidentTypes',
+                'incidentStatuses',
+                'fireSafetySchools',
+                'assignedIncidentSchoolName',
+                'weekOffset',
+                'weekStart',
+                'weekEnd'
+            ));
+        }
+
+        // Admin/Viewer Logic
         // Get calendar data
         $calendarData = $this->getCalendarData($year, $month);
 
@@ -453,17 +495,24 @@ class IncidentController extends Controller
     public function store(Request $request)
     {
         // Allow empty/blank affected personnel and students (treat as 0)
+        $incidentTypeRaw = $request->input('incident_type_id');
+        $incidentStatusRaw = $request->input('incident_status_id');
+
         $request->merge([
             'affected_personnel' => $request->filled('affected_personnel') ? (int) $request->input('affected_personnel') : 0,
             'affected_students' => $request->filled('affected_students') ? (int) $request->input('affected_students') : 0,
+            'incident_type_id' => $incidentTypeRaw === 'others' ? null : $incidentTypeRaw,
+            'incident_status_id' => $incidentStatusRaw === 'others' ? null : $incidentStatusRaw,
         ]);
 
         $validated = $request->validate([
             'incident_date' => 'required|date',
             'school_name' => 'required|string|max:255',
             'entry_type' => 'required|in:incident,compliance',
-            'incident_type_id' => 'required_if:entry_type,incident|nullable|exists:incident_types,id',
-            'incident_status_id' => 'required_if:entry_type,compliance|nullable|exists:incident_statuses,id',
+            'incident_type_id' => 'nullable|exists:incident_types,id',
+            'incident_status_id' => 'nullable|exists:incident_statuses,id',
+            'incident_other_type' => 'nullable|string|max:255',
+            'compliance_other_status' => 'nullable|string|max:255',
             'remarks' => 'required|string|max:1000',
             'reported_by' => 'nullable|string|max:255',
             'affected_personnel' => 'nullable|integer|min:0',
@@ -476,29 +525,94 @@ class IncidentController extends Controller
             ],
         ]);
 
-        // Add reported by (current user)
-        $validated['reported_by'] = auth()->user()->name;
-
-        // Handle file upload
-        if ($request->hasFile('attachment')) {
-            $file = $request->file('attachment');
-            $path = $file->store('incident-attachments/' . date('Y/m'), 'public');
-            $validated['attachment_path'] = $path;
-            $validated['attachment_name'] = $file->getClientOriginalName();
-            $validated['attachment_size'] = $file->getSize();
-            $validated['attachment_mime'] = $file->getMimeType();
+        if ($validated['entry_type'] === 'incident' && empty($validated['incident_type_id']) && empty($validated['incident_other_type'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please select an Incident Type or choose Others and specify.',
+            ], 422);
         }
+
+        if ($validated['entry_type'] === 'compliance' && empty($validated['incident_status_id']) && empty($validated['compliance_other_status'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please select a Compliance Status/Event or choose Others and specify.',
+            ], 422);
+        }
+
+        // Add contributor info and status
+        $user = auth()->user();
+        $user->load('incidentSchool');
+        $validated['contributor_id'] = $user->id;
+        $validated['status'] = 'accepted';
+
+        // Extract school name if using existing school
+        if ($request->input('incident_source_type') === 'existing') {
+            $validated['school_name'] = $request->input('school_name_existing');
+        } elseif ($request->input('incident_source_type') === 'all') {
+             $validated['school_name'] = 'All Schools';
+        } else {
+            $validated['school_name'] = $request->input('school_name_manual');
+        }
+
+        // Compliance extraction fixes as well for source
+        if ($validated['entry_type'] === 'compliance') {
+             if ($request->input('compliance_source_type') === 'existing') {
+                $validated['school_name'] = $request->input('compliance_school_name_existing');
+            } elseif ($request->input('compliance_source_type') === 'all') {
+                 $validated['school_name'] = 'All Schools';
+            } else {
+                $validated['school_name'] = $request->input('compliance_school_name_manual');
+            }
+        }
+
+        // Contributors/viewers with Incident Checklist access must report only to assigned incident school.
+        if ($user->role !== 'admin') {
+            if (!$user->incidentSchool) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No Incident Checklist school is assigned to your account. Please contact an administrator.',
+                ], 422);
+            }
+
+            $validated['school_name'] = $user->incidentSchool->name;
+        }
+
+        if (empty($validated['school_name'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Please select a school before submitting.',
+            ], 422);
+        }
+
+        if ($user->role !== 'admin' && Carbon::parse($validated['incident_date'])->isAfter(Carbon::today())) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Future dates are not allowed for logging incidents/compliance events.',
+            ], 422);
+        }
+
+        if (!empty($validated['incident_other_type']) && $validated['entry_type'] === 'incident') {
+            $validated['remarks'] = '[Other Incident Type: ' . trim($validated['incident_other_type']) . '] ' . $validated['remarks'];
+        }
+
+        if (!empty($validated['compliance_other_status']) && $validated['entry_type'] === 'compliance') {
+            $validated['remarks'] = '[Other Compliance Status/Event: ' . trim($validated['compliance_other_status']) . '] ' . $validated['remarks'];
+        }
+
+        unset($validated['incident_other_type'], $validated['compliance_other_status']);
 
         // Store the incident
         $incident = IncidentCalendar::create($validated);
 
-        ActivityLog::log('incident_checklist', 'Logged incident: ' . ($incident->incidentType?->name ?? 'Incident') . ' at ' . $incident->school_name, [
+        ActivityLog::log('incident_checklist', 'Logged ' . $incident->entry_type . ': ' . ($incident->incidentType?->name ?? $incident->incidentStatus?->name ?? 'Entry') . ' at ' . $incident->school_name, [
             'school_name' => $incident->school_name,
             'notes' => $incident->remarks,
         ]);
 
-        // Update or create school record
-        $this->updateSchoolRecord($validated['school_name']);
+        // Update or create school record (only if it's a real school name)
+        if ($validated['school_name'] !== 'All Schools') {
+            $this->updateSchoolRecord($validated['school_name']);
+        }
 
         return response()->json([
             'success' => true,
@@ -573,7 +687,7 @@ class IncidentController extends Controller
     public function getDateIncidents($date)
     {
         $incidents = IncidentCalendar::forDate($date)
-            ->with(['incidentType', 'incidentStatus'])
+            ->with(['incidentType', 'incidentStatus', 'contributor'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -611,8 +725,9 @@ class IncidentController extends Controller
         $startOfMonth = $date->copy()->startOfMonth();
         $endOfMonth = $date->copy()->endOfMonth();
 
-        // Get all incidents for the month
+        // Get all accepted incidents for the month
         $incidents = IncidentCalendar::whereBetween('incident_date', [$startOfMonth, $endOfMonth])
+            ->where('status', 'accepted')
             ->with(['incidentType', 'incidentStatus'])
             ->get()
             ->groupBy(function($item) {
@@ -658,7 +773,10 @@ class IncidentController extends Controller
      */
     private function getMonthlyStats($year, $month)
     {
-        $incidents = IncidentCalendar::forMonth($year, $month)->with(['incidentType', 'incidentStatus'])->get();
+        $incidents = IncidentCalendar::forMonth($year, $month)
+            ->where('status', 'accepted')
+            ->with(['incidentType', 'incidentStatus'])
+            ->get();
 
         $total = $incidents->count();
         $incidentCount = $incidents->where('entry_type', 'incident')->count();
@@ -930,8 +1048,57 @@ class IncidentController extends Controller
         }
 
         // HTML fallback if PhpWord is not installed
-        $monthName = Carbon::create($year, $month, 1)->format('F Y');
-
         return view('incidents.print-html', compact('records', 'year', 'month', 'monthName'));
+    }
+
+    /**
+     * API: Get pending reports for admin review.
+     */
+    public function getPendingReports()
+    {
+        $pending = IncidentCalendar::where('status', 'pending')
+            ->with(['incidentType', 'incidentStatus', 'contributor'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'count' => $pending->count(),
+            'reports' => $pending
+        ]);
+    }
+
+    /**
+     * API: Accept a contributor report.
+     */
+    public function acceptReport($id)
+    {
+        $report = IncidentCalendar::findOrFail($id);
+        $report->status = 'accepted';
+        $report->save();
+
+        // No need for explicit activity log if already using status
+        // ActivityLog::log...
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Report accepted and added to calendar.'
+        ]);
+    }
+
+    /**
+     * API: Reject a contributor report.
+     */
+    public function rejectReport(Request $request, $id)
+    {
+        $report = IncidentCalendar::findOrFail($id);
+        $report->status = 'rejected';
+        $report->rejection_reason = $request->input('reason');
+        $report->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Report rejected and contributor notified.'
+        ]);
     }
 }

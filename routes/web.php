@@ -219,7 +219,7 @@ Route::prefix('typhoon')->middleware(['auth', 'module.access:typhoon_flood'])->g
 Route::middleware(['auth', 'module.access:incident_checklist'])->group(function () {
     Route::get('/incidents/dashboard', [IncidentController::class, 'dashboard'])->name('incidents.dashboard');
     Route::get('/incidents/print', [IncidentController::class, 'printMonth'])->name('incidents.print')->middleware('role:admin');
-    Route::post('/incidents/store', [IncidentController::class, 'store'])->name('incidents.store')->middleware('role:admin');
+    Route::post('/incidents/store', [IncidentController::class, 'store'])->name('incidents.store');
     Route::get('/incidents/date/{date}', [IncidentController::class, 'getDateIncidents'])->name('incidents.date');
     Route::put('/incidents/{id}', [IncidentController::class, 'update'])->name('incidents.update')->middleware('role:admin');
     Route::delete('/incidents/{id}', [IncidentController::class, 'destroy'])->name('incidents.destroy')->middleware('role:admin');
@@ -230,6 +230,13 @@ Route::middleware(['auth', 'module.access:incident_checklist'])->group(function 
     Route::put('/incidents/types/{id}', [IncidentController::class, 'updateIncidentType'])->name('incidents.types.update')->middleware('role:admin');
     Route::post('/incidents/statuses', [IncidentController::class, 'storeIncidentStatus'])->name('incidents.statuses.store')->middleware('role:admin');
     Route::put('/incidents/statuses/{id}', [IncidentController::class, 'updateIncidentStatus'])->name('incidents.statuses.update')->middleware('role:admin');
+
+    // Approval Routes
+    Route::middleware(['role:admin'])->group(function() {
+        Route::get('/incidents/pending', [IncidentController::class, 'getPendingReports'])->name('incidents.pending');
+        Route::post('/incidents/{id}/accept', [IncidentController::class, 'acceptReport'])->name('incidents.accept');
+        Route::post('/incidents/{id}/reject', [IncidentController::class, 'rejectReport'])->name('incidents.reject');
+    });
     // Checklist APIs (view/update only for assigned users)
     Route::get('/incidents/checklist', [IncidentController::class, 'getChecklist'])->name('incidents.checklist.index');
     Route::get('/incidents/checklist/history', [IncidentController::class, 'getHistory'])->name('incidents.checklist.history');

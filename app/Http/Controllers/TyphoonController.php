@@ -260,33 +260,37 @@ class TyphoonController extends Controller
     {
         $user = auth()->user();
 
-        $schoolsQuery = FireSafetySchool::query();
-        if ($user->role !== 'admin' && $user->school_id) {
-            $schoolsQuery->where('id', $user->school_id);
+        $centersQuery = TypFldEvacuationCenter::query()->with('school');
+        if ($user->role !== 'admin') {
+            if ($user->typhoon_school_id) {
+                $centersQuery->where('id', $user->typhoon_school_id);
+            } elseif ($user->school_id) {
+                $centersQuery->where('school_id', $user->school_id);
+            } else {
+                $centersQuery->whereRaw('1=0');
+            }
         }
 
-        $schools = $schoolsQuery->get()->map(function ($s) {
-            $ec = TypFldEvacuationCenter::firstOrCreate(
-                ['school_id' => $s->id],
-                [
-                    'identification' => $s->school_id ?? null,
-                    'location' => $s->address ?? null,
-                    'capacity' => 0,
-                    'occupancy_safety' => 'safe',
-                    'operational_status' => 'operational',
-                    'monitoring_status' => 'Active',
-                ]
-            );
-
+        $schools = $centersQuery->get()->map(function ($ec) {
             $occupancy = TypFldFamilyMember::query()
                 ->join('typ_fld_families', 'typ_fld_families.id', '=', 'typ_fld_family_members.family_id')
                 ->where('typ_fld_families.evacuation_center_id', $ec->id)
                 ->whereNull('typ_fld_families.checked_out_at')
                 ->count();
 
-            $s->typ_ec = $ec;
-            $s->typ_ec_current_occupancy = $occupancy;
-            return $s;
+            $school = $ec->school;
+            if (!$school) {
+                $school = new FireSafetySchool([
+                    'id' => $ec->school_id,
+                    'school_name' => $ec->identification ?: ('Center #' . $ec->id),
+                    'school_id' => $ec->identification,
+                    'address' => $ec->location,
+                ]);
+            }
+
+            $school->typ_ec = $ec;
+            $school->typ_ec_current_occupancy = $occupancy;
+            return $school;
         });
 
         $activeSchoolId = session('typhoon_active_school_id');
@@ -456,12 +460,12 @@ class TyphoonController extends Controller
 
         $validator = Validator::make($request->all(), [
             'existing_school_id' => 'nullable|integer|exists:firesafety_school_information,id',
-            'identification' => 'nullable|string|max:255',
-            'school_name' => 'nullable|string|max:255',
-            'location' => 'nullable|string|max:2000',
+            'identification' => 'required_without:existing_school_id|string|max:255',
+            'school_name' => 'required_without:existing_school_id|string|max:255',
+            'location' => 'required_without:existing_school_id|string|max:2000',
             'usage_status' => 'required|string|in:cleared,occupied,full,decamp',
             'emergency_resources' => 'nullable|string|max:2000',
-            'capacity' => 'nullable|integer|min:0',
+            'capacity' => 'required|integer|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -469,28 +473,44 @@ class TyphoonController extends Controller
         }
 
         $schoolId = $request->existing_school_id;
+        $identification = $request->identification;
+        $location = $request->location;
+        $displaySchoolName = $request->school_name ?: $request->identification;
 
         if (!$schoolId) {
             // Create minimal FireSafetySchool entry for new school
+            $encodedBy = trim((string) ($user->name ?? 'System User'));
             $school = FireSafetySchool::create([
                 'school_name' => $request->school_name ?: ($request->identification ?: 'New Evacuation School'),
                 'school_id' => $request->identification ?: ('EVAC-' . strtoupper(uniqid())),
                 'address' => $request->location,
-                'school_head' => null,
-                'school_drrm_coordinator' => null,
+                'school_head' => $encodedBy,
+                'school_drrm_coordinator' => $encodedBy,
                 'status' => 'unconfigured',
                 'evacuation_map_layout' => null,
                 'alerts' => null,
                 'events' => null,
             ]);
             $schoolId = $school->id;
+            $displaySchoolName = $school->school_name;
+            $identification = $identification ?: $school->school_id;
+            $location = $location ?: $school->address;
+        } else {
+            $existingSchool = FireSafetySchool::find($schoolId);
+            $displaySchoolName = $existingSchool?->school_name ?: $displaySchoolName;
+            $identification = $identification ?: ($existingSchool?->school_id);
+            $location = $location ?: ($existingSchool?->address);
+        }
+
+        if (empty($identification) || empty($location)) {
+            return redirect()->back()->with('error', 'Identification and location are required.')->withInput();
         }
 
         TypFldEvacuationCenter::firstOrCreate(
             ['school_id' => $schoolId],
             [
-                'identification' => $request->identification,
-                'location' => $request->location,
+                'identification' => $identification,
+                'location' => $location,
                 'capacity' => $request->capacity ?? 0,
                 'operational_status' => 'operational',
                 'needs_summary' => null,
@@ -504,7 +524,7 @@ class TyphoonController extends Controller
 
         session(['typhoon_active_school_id' => $schoolId]);
 
-        ActivityLog::log('typhoon_flood', 'Created evacuation center: ' . ($request->school_name ?: $request->identification), [
+        ActivityLog::log('typhoon_flood', 'Created evacuation center: ' . $displaySchoolName, [
             'school_id' => $schoolId,
         ]);
 
@@ -608,7 +628,32 @@ class TyphoonController extends Controller
 
         $notifications = $query->paginate(15);
 
-        return view('typhoon.notifications', compact('notifications'));
+        $evacuationCentersQuery = TypFldEvacuationCenter::query()->with('school');
+        if ($user->role !== 'admin') {
+            if ($user->typhoon_school_id) {
+                $assignedCenter = TypFldEvacuationCenter::find($user->typhoon_school_id);
+                if ($assignedCenter) {
+                    $evacuationCentersQuery->where('school_id', $assignedCenter->school_id);
+                } else {
+                    $evacuationCentersQuery->whereRaw('1=0');
+                }
+            } elseif ($user->school_id) {
+                $evacuationCentersQuery->where('school_id', $user->school_id);
+            } else {
+                $evacuationCentersQuery->whereRaw('1=0');
+            }
+        }
+
+        $evacuationCenters = $evacuationCentersQuery->get()->map(function ($ec) {
+            $ec->current_occupancy = TypFldFamilyMember::query()
+                ->join('typ_fld_families', 'typ_fld_families.id', '=', 'typ_fld_family_members.family_id')
+                ->where('typ_fld_families.evacuation_center_id', $ec->id)
+                ->whereNull('typ_fld_families.checked_out_at')
+                ->count();
+            return $ec;
+        });
+
+        return view('typhoon.notifications', compact('notifications', 'evacuationCenters'));
     }
 
     public function markNotificationRead($id)

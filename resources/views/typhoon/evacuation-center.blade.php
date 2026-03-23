@@ -181,6 +181,48 @@
     .school-btn-custom:hover, .school-btn-custom.active {
         color: var(--accent-blue);
     }
+
+    .profile-menu-btn {
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.06);
+        color: #fff;
+        border-radius: 999px;
+        padding: 0.45rem 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+    }
+
+    .profile-menu-btn:hover,
+    .profile-menu-btn:focus {
+        color: var(--accent-blue);
+        border-color: rgba(0, 210, 255, 0.55);
+    }
+
+    .profile-menu .dropdown-menu {
+        background: #0f1b3f;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 12px;
+        min-width: 210px;
+    }
+
+    .profile-menu .dropdown-item {
+        color: #dbeafe;
+        font-weight: 600;
+    }
+
+    .profile-menu .dropdown-item:hover {
+        background: rgba(0, 210, 255, 0.15);
+        color: #fff;
+    }
+
+    .header-action-btn {
+        min-height: 46px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
 </style>
 @endpush
 
@@ -224,12 +266,32 @@
 
         {{-- Right Side --}}
         <div class="d-flex align-items-center gap-3 justify-content-end" style="width: 30%;">
-            <button class="btn btn-success px-3 fw-bold shadow-lg" onclick="document.getElementById('evacPrintModal').style.display='flex'" title="Print Evacuation Center">
+            <button class="btn btn-success px-3 fw-bold shadow-lg header-action-btn me-1" onclick="document.getElementById('evacPrintModal').style.display='flex'" title="Print Evacuation Center">
                 <i class="fas fa-print me-2"></i>PRINT REPORT
             </button>
-            <button type="button" class="btn btn-primary px-3 fw-bold shadow-lg" data-bs-toggle="modal" data-bs-target="#updateCenterStatusModal">
+            <button type="button" class="btn btn-primary px-3 fw-bold shadow-lg header-action-btn" data-bs-toggle="modal" data-bs-target="#updateCenterStatusModal">
                 <i class="fas fa-edit me-2"></i>UPDATE SITE
             </button>
+            <div class="dropdown profile-menu">
+                <button class="btn profile-menu-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-bars"></i>
+                    <span>{{ auth()->user()->name }}</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                        <a class="dropdown-item" href="{{ route('users.index') }}">
+                            <i class="fas fa-user-cog me-2"></i>User Account
+                        </a>
+                    </li>
+                    @if(auth()->user()->role === 'admin')
+                        <li>
+                            <a class="dropdown-item" href="{{ route('activity-logs.index') }}">
+                                <i class="fas fa-history me-2"></i>Logs
+                            </a>
+                        </li>
+                    @endif
+                </ul>
+            </div>
         </div>
     </div>
 

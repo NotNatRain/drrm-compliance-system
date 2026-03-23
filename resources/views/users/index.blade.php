@@ -128,41 +128,62 @@
                                 @if($user->role === 'admin')
                                     <span class="badge bg-light text-dark border"><i class="fas fa-globe me-1"></i> Full Access</span>
                                 @else
-                                    <!-- Fire Safety School -->
-                                    <div class="mb-2">
-                                        <div class="small fw-bold text-muted mb-1 text-uppercase" style="font-size: 0.65rem;">Fire Safety:</div>
-                                        @if($user->school)
-                                            <div class="d-flex align-items-center">
-                                                <i class="fas fa-school text-primary me-2 shadow-sm p-1 rounded bg-light" style="font-size: 0.8rem;"></i>
-                                                <div>
-                                                    <div class="fw-bold small" style="font-size: 0.75rem;">{{ $user->school->school_name }}</div>
-                                                    <div class="text-muted" style="font-size: 0.65rem;">ID: {{ $user->school->school_id }}</div>
-                                                </div>
-                                            </div>
-                                        @elseif($user->needs_fs_registration)
-                                            <span class="badge bg-warning text-dark" style="font-size: 0.65rem;"><i class="fas fa-keyboard me-1"></i> To be encoded</span>
-                                        @else
-                                            <span class="text-muted small italic" style="font-size: 0.65rem;">Not assigned</span>
-                                        @endif
-                                    </div>
+                                    @php
+                                        $assignedModules = $user->module_access ?? [];
+                                    @endphp
 
-                                    <!-- Typhoon School -->
-                                    <div>
-                                        <div class="small fw-bold text-muted mb-1 text-uppercase" style="font-size: 0.65rem;">Typhoon/Flood:</div>
-                                        @if($user->typhoonSchool)
-                                            <div class="d-flex align-items-center">
-                                                <i class="fas fa-cloud-showers-heavy text-info me-2 shadow-sm p-1 rounded bg-light" style="font-size: 0.8rem;"></i>
-                                                <div>
-                                                    <div class="fw-bold small" style="font-size: 0.75rem;">{{ $user->typhoonSchool->school->school_name }}</div>
-                                                    <div class="text-muted" style="font-size: 0.65rem;">{{ $user->typhoonSchool->identification ?: 'Evac Center' }}</div>
+                                    @if(in_array('fire_safety', $assignedModules, true))
+                                        <div class="mb-2">
+                                            <div class="small fw-bold text-muted mb-1 text-uppercase" style="font-size: 0.65rem;">Fire Safety:</div>
+                                            @if($user->school)
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fas fa-school text-primary me-2 shadow-sm p-1 rounded bg-light" style="font-size: 0.8rem;"></i>
+                                                    <div>
+                                                        <div class="fw-bold small" style="font-size: 0.75rem;">{{ $user->school->school_name }}</div>
+                                                        <div class="text-muted" style="font-size: 0.65rem;">ID: {{ $user->school->school_id }}</div>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        @elseif($user->needs_tf_registration)
-                                            <span class="badge bg-warning text-dark" style="font-size: 0.65rem;"><i class="fas fa-keyboard me-1"></i> To be encoded</span>
-                                        @else
-                                            <span class="text-muted small italic" style="font-size: 0.65rem;">Not assigned</span>
-                                        @endif
-                                    </div>
+                                            @elseif($user->needs_fs_registration)
+                                                <span class="badge bg-warning text-dark" style="font-size: 0.65rem;"><i class="fas fa-keyboard me-1"></i> To be encoded</span>
+                                            @endif
+                                        </div>
+                                    @endif
+
+                                    @if(in_array('typhoon_flood', $assignedModules, true))
+                                        <div class="mb-2">
+                                            <div class="small fw-bold text-muted mb-1 text-uppercase" style="font-size: 0.65rem;">Typhoon/Flood:</div>
+                                            @if($user->typhoonSchool)
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fas fa-cloud-showers-heavy text-info me-2 shadow-sm p-1 rounded bg-light" style="font-size: 0.8rem;"></i>
+                                                    <div>
+                                                        <div class="fw-bold small" style="font-size: 0.75rem;">{{ $user->typhoonSchool->school->school_name }}</div>
+                                                        <div class="text-muted" style="font-size: 0.65rem;">{{ $user->typhoonSchool->identification ?: 'Evac Center' }}</div>
+                                                    </div>
+                                                </div>
+                                            @elseif($user->needs_tf_registration)
+                                                <span class="badge bg-warning text-dark" style="font-size: 0.65rem;"><i class="fas fa-keyboard me-1"></i> To be encoded</span>
+                                            @endif
+                                        </div>
+                                    @endif
+
+                                    @if(in_array('incident_checklist', $assignedModules, true))
+                                        <div>
+                                            <div class="small fw-bold text-muted mb-1 text-uppercase" style="font-size: 0.65rem;">Incident Checklist:</div>
+                                            @if($user->incidentSchool)
+                                                <div class="d-flex align-items-center">
+                                                    <i class="fas fa-clipboard-list text-warning me-2 shadow-sm p-1 rounded bg-light" style="font-size: 0.8rem;"></i>
+                                                    <div>
+                                                        <div class="fw-bold small" style="font-size: 0.75rem;">{{ $user->incidentSchool->name }}</div>
+                                                        <div class="text-muted" style="font-size: 0.65rem;">Assigned Incident School</div>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    @endif
+
+                                    @if(empty($assignedModules))
+                                        <span class="text-muted small italic">No module school assignments</span>
+                                    @endif
                                 @endif
                             </td>
                             <td>
@@ -371,12 +392,21 @@
 
                         <!-- Incident Checklist -->
                         <div class="list-group-item">
-                            <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
                                 <div class="form-check">
-                                    <input class="form-check-input module-check incident-check" type="checkbox" name="modules[]" value="incident_checklist" id="checkIC">
+                                    <input class="form-check-input module-check" type="checkbox" name="modules[]" value="incident_checklist" id="checkIC">
                                     <label class="form-check-label fw-bold" for="checkIC">Incident Checklist</label>
                                 </div>
-                                <span class="badge bg-warning text-dark">Confirmation Required</span>
+                                <span class="badge bg-secondary">Active</span>
+                            </div>
+                            <div id="schoolIC" class="ms-4 mt-2 d-none">
+                                <label class="small fw-bold">Assign School (Incident):</label>
+                                <select name="incident_school_id" class="form-select form-select-sm school-select">
+                                    <option value="">-- Select Incident School --</option>
+                                    @foreach($incidentSchools as $incidentSchool)
+                                        <option value="{{ $incidentSchool->id }}">{{ $incidentSchool->name }}</option>
+                                    @endforeach
+                                </select>
                             </div>
                         </div>
 
@@ -418,24 +448,6 @@
     </div>
 </div>
 @endif
-
-<!-- Incident Confirmation Modal -->
-<div class="modal fade" id="incidentConfirmModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-warning">
-                <h5 class="modal-title fw-bold"><i class="fas fa-exclamation-triangle"></i> Confirmation Required</h5>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to grant <strong>Incident Checklist</strong> access? Any user (including Contributors) assigned to this will only have <strong>VIEWING</strong> capabilities.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" id="cancelIC">Actually, no</button>
-                <button type="button" class="btn btn-warning fw-bold text-dark" id="confirmIC">Yes, Grant Access</button>
-            </div>
-        </div>
-    </div>
-</div>
 
 @endsection
 
@@ -490,38 +502,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-
-    // Incident Checklist Confirmation
-    const icCheck = document.querySelector('.incident-check');
-    const confirmModalEl = document.getElementById('incidentConfirmModal');
-    if (icCheck && confirmModalEl) {
-        const confirmModal = new bootstrap.Modal(confirmModalEl);
-
-        icCheck.addEventListener('click', function(e) {
-            if (!this.checked) {
-                return;
-            }
-            e.preventDefault();
-            confirmModal.show();
-        });
-
-        const confirmBtn = document.getElementById('confirmIC');
-        const cancelBtn = document.getElementById('cancelIC');
-
-        if (confirmBtn) {
-            confirmBtn.addEventListener('click', function() {
-                icCheck.checked = true;
-                confirmModal.hide();
-            });
-        }
-
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', function() {
-                icCheck.checked = false;
-                confirmModal.hide();
-            });
-        }
-    }
 
     // Form Submissions
     if (isAdminView) {
@@ -591,7 +571,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = {
                     modules: modules,
                     school_id: formData.get('school_id'),
-                    typhoon_school_id: formData.get('typhoon_school_id')
+                    typhoon_school_id: formData.get('typhoon_school_id'),
+                    incident_school_id: formData.get('incident_school_id')
                 };
 
                 fetch("{{ route('users.index') }}/" + userId + "/assign", {
@@ -728,6 +709,18 @@ function assignAccess(userId) {
                     } else {
                         typhoonSelect.value = user.typhoon_school_id || "";
                     }
+                }
+            }
+
+            // Incident School selection
+            const incidentSelect = assignForm.querySelector('select[name="incident_school_id"]');
+            if (incidentSelect) {
+                if (isAdmin) {
+                    incidentSelect.value = "";
+                    incidentSelect.disabled = true;
+                } else {
+                    incidentSelect.disabled = false;
+                    incidentSelect.value = user.incident_school_id || "";
                 }
             }
 
