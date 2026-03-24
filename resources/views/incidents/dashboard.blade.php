@@ -935,10 +935,20 @@
                 <div class="row">
                     <div class="col-12 mb-4">
                         <div class="glass-card p-4">
-                            <h5 class="fw-bold mb-3">
-                                <i class="fas fa-chart-bar me-2 text-warning"></i>
-                                Analytics Distribution & Trend
-                            </h5>
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                                <h5 class="fw-bold mb-0">
+                                    <i class="fas fa-chart-bar me-2 text-warning"></i>
+                                    Analytics Distribution & Trend
+                                </h5>
+                                <div class="d-flex align-items-center gap-2">
+                                    <a href="{{ route('incidents.analytics.print', ['type' => 'incident_type', 'year' => $calYear, 'month' => $calMonth]) }}" class="btn btn-sm btn-outline-secondary analytics-print-btn" data-chart-target="incidentTypeChart" title="Print Incident Type Distribution">
+                                        <i class="fas fa-print me-1"></i> Print Incident Type
+                                    </a>
+                                    <a href="{{ route('incidents.analytics.print', ['type' => 'compliance_status', 'year' => $calYear, 'month' => $calMonth]) }}" class="btn btn-sm btn-outline-secondary analytics-print-btn" data-chart-target="complianceDistributionChart" title="Print Compliance Status / Events">
+                                        <i class="fas fa-print me-1"></i> Print Compliance Status
+                                    </a>
+                                </div>
+                            </div>
                             <div class="row g-3">
                                 <!-- Left Chart: Incident Type Distribution -->
                                 <div class="col-md-6 border-end">
@@ -2355,6 +2365,36 @@
                 fetchHistory(currentHistoryDate.getFullYear(), currentHistoryDate.getMonth() + 1);
             });
         }
+
+        // Print analytics chart image (actual rendered chart canvas)
+        document.querySelectorAll('.analytics-print-btn').forEach((btn) => {
+            btn.addEventListener('click', function (event) {
+                const targetCanvasId = this.getAttribute('data-chart-target');
+                const canvas = targetCanvasId ? document.getElementById(targetCanvasId) : null;
+
+                if (!canvas) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                let chartImageData = '';
+                try {
+                    chartImageData = canvas.toDataURL('image/png');
+                } catch (error) {
+                    chartImageData = '';
+                }
+
+                const printUrl = new URL(this.href, window.location.origin);
+                if (chartImageData) {
+                    const chartKey = `incident_chart_print_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+                    localStorage.setItem(chartKey, chartImageData);
+                    printUrl.searchParams.set('chart_key', chartKey);
+                }
+
+                window.open(printUrl.toString(), '_blank', 'noopener');
+            });
+        });
 
         function formatFileSize(bytes) {
             if (!bytes) return '0 B';

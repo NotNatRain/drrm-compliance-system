@@ -64,7 +64,11 @@ class DashboardController extends Controller
 
         $schools = FireSafetySchool::all();
         $typhoonSchools = TypFldEvacuationCenter::with('school')->get();
-        $incidentSchools = IncidentSchool::orderBy('name')->get();
+        $this->syncIncidentSchoolsFromSources();
+        $incidentSchools = IncidentSchool::selectRaw('MIN(id) as id, name')
+            ->groupBy('name')
+            ->orderBy('name')
+            ->get();
         $adminCount = User::where('role', 'admin')->count();
 
         if ($request->expectsJson()) {
@@ -72,6 +76,45 @@ class DashboardController extends Controller
         }
 
         return view('users.index', compact('users', 'schools', 'typhoonSchools', 'incidentSchools', 'adminCount', 'isAdmin'));
+    }
+
+    /**
+     * Keep IncidentSchool options in sync with Fire Safety and Typhoon/Flood sources.
+     */
+    private function syncIncidentSchoolsFromSources(): void
+    {
+        $sourceNames = collect();
+
+        $sourceNames = $sourceNames
+            ->merge(FireSafetySchool::whereNotNull('school_name')->pluck('school_name'))
+            ->merge(IncidentSchool::whereNotNull('name')->pluck('name'))
+            ->merge(
+                TypFldEvacuationCenter::with('school:id,school_name')
+                    ->get()
+                    ->map(function ($center) {
+                        return $center->school?->school_name ?: $center->identification;
+                    })
+            );
+
+        $normalized = [];
+        foreach ($sourceNames as $name) {
+            $clean = trim((string) $name);
+            if ($clean === '') {
+                continue;
+            }
+
+            $key = mb_strtolower(preg_replace('/\s+/', ' ', $clean));
+            if (!isset($normalized[$key])) {
+                $normalized[$key] = $clean;
+            }
+        }
+
+        foreach ($normalized as $schoolName) {
+            IncidentSchool::firstOrCreate(
+                ['name' => $schoolName, 'district' => 'Unknown'],
+                ['division' => null, 'region' => null, 'school_id' => null]
+            );
+        }
     }
 
     public function storeUser(Request $request)

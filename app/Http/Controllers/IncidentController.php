@@ -9,6 +9,7 @@ use App\Models\IncidentStatus;
 use App\Models\IncidentSchool;
 use App\Models\IncidentChecklist;
 use App\Models\FireSafetySchool;
+use App\Models\TypFldEvacuationCenter;
 use App\Models\ActivityLog;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -52,15 +53,9 @@ class IncidentController extends Controller
             // Re-using same logic for dropdowns
             $incidentTypes = IncidentType::orderBy('priority')->get();
             $incidentStatuses = IncidentStatus::orderBy('name')->get();
-            $fireSafetySchools = collect();
-
-            if (!$assignedIncidentSchoolName) {
-                $fireSafetySchools = IncidentSchool::orderBy('name')
-                    ->get(['name'])
-                    ->map(function ($school) {
-                        return (object) ['school_name' => $school->name];
-                    });
-            }
+            $fireSafetySchools = !$assignedIncidentSchoolName
+                ? $this->getUnifiedIncidentSchoolOptions()
+                : collect();
 
             return view('incidents.reporting_dashboard', compact(
                 'myReports',
@@ -190,8 +185,8 @@ class IncidentController extends Controller
         // Get unique schools for autocomplete
         $schools = IncidentSchool::orderBy('name')->pluck('name')->toArray();
 
-        // Get Fire Safety Schools for dropdown
-        $fireSafetySchools = FireSafetySchool::orderBy('school_name')->get();
+        // Unified schools for dropdown (Fire Safety + Typhoon/Flood centers + Incident inputs)
+        $fireSafetySchools = $this->getUnifiedIncidentSchoolOptions();
 
         return view('incidents.dashboard', compact(
             'calendarData',
@@ -860,6 +855,52 @@ class IncidentController extends Controller
     }
 
     /**
+     * Build deduplicated school options for Incident Checklist selectors.
+     */
+    private function getUnifiedIncidentSchoolOptions()
+    {
+        $sourceNames = collect();
+
+        $sourceNames = $sourceNames
+            ->merge(FireSafetySchool::whereNotNull('school_name')->pluck('school_name'))
+            ->merge(IncidentSchool::whereNotNull('name')->pluck('name'))
+            ->merge(
+                TypFldEvacuationCenter::with('school:id,school_name')
+                    ->get()
+                    ->map(function ($center) {
+                        return $center->school?->school_name ?: $center->identification;
+                    })
+            );
+
+        $normalized = [];
+        foreach ($sourceNames as $name) {
+            $clean = trim((string) $name);
+            if ($clean === '') {
+                continue;
+            }
+
+            $key = mb_strtolower(preg_replace('/\s+/', ' ', $clean));
+            if (!isset($normalized[$key])) {
+                $normalized[$key] = $clean;
+            }
+        }
+
+        foreach ($normalized as $schoolName) {
+            IncidentSchool::firstOrCreate(
+                ['name' => $schoolName, 'district' => 'Unknown'],
+                ['division' => null, 'region' => null, 'school_id' => null]
+            );
+        }
+
+        return collect(array_values($normalized))
+            ->sort()
+            ->values()
+            ->map(function ($name) {
+                return (object) ['school_name' => $name];
+            });
+    }
+
+    /**
      * Search schools for autocomplete.
      */
     public function searchSchools(Request $request)
@@ -988,6 +1029,7 @@ class IncidentController extends Controller
     {
         $year = (int) $request->input('year', date('Y'));
         $month = (int) $request->input('month', date('n'));
+        $monthName = Carbon::create($year, $month, 1)->format('F Y');
 
         $records = IncidentCalendar::forMonth($year, $month)
             ->with(['incidentType', 'incidentStatus'])
@@ -1049,6 +1091,118 @@ class IncidentController extends Controller
 
         // HTML fallback if PhpWord is not installed
         return view('incidents.print-html', compact('records', 'year', 'month', 'monthName'));
+    }
+
+    /**
+     * Print analytics distribution for incident type or compliance status/events.
+     */
+    public function printAnalytics(Request $request)
+    {
+        $validated = $request->validate([
+            'type' => 'required|in:incident_type,compliance_status',
+            'year' => 'nullable|integer|min:2000|max:2100',
+            'month' => 'nullable|integer|min:1|max:12',
+        ]);
+
+        $chartKey = $request->input('chart_key');
+
+        $year = (int) ($validated['year'] ?? date('Y'));
+        $month = (int) ($validated['month'] ?? date('n'));
+        $monthName = Carbon::create($year, $month, 1)->format('F Y');
+        $stats = $this->getMonthlyStats($year, $month);
+
+        $isIncidentType = $validated['type'] === 'incident_type';
+        $chartData = $isIncidentType
+            ? ($stats['type_distribution'] ?? ['labels' => [], 'values' => []])
+            : ($stats['compliance_distribution'] ?? ['labels' => [], 'values' => []]);
+
+        $labels = $chartData['labels'] ?? [];
+        $values = $chartData['values'] ?? [];
+        $total = array_sum($values);
+
+        $rows = collect($labels)->map(function ($label, $index) use ($values, $total) {
+            $count = (int) ($values[$index] ?? 0);
+            $percent = $total > 0 ? round(($count / $total) * 100, 2) : 0;
+
+            return [
+                'label' => $label,
+                'count' => $count,
+                'percent' => $percent,
+            ];
+        })->sortByDesc('count')->values();
+
+        $reportTitle = $isIncidentType
+            ? 'Incident Type Distribution'
+            : 'Compliance Status / Events Distribution';
+
+        return view('incidents.print-analytics', compact(
+            'year',
+            'month',
+            'monthName',
+            'reportTitle',
+            'rows',
+            'total',
+            'chartKey'
+        ));
+    }
+
+    /**
+     * Print contributor report for daily, weekly, or monthly periods.
+     */
+    public function printContributorReport(Request $request)
+    {
+        $validated = $request->validate([
+            'period' => 'required|in:daily,weekly,monthly',
+            'date' => 'nullable|date',
+        ]);
+
+        $period = $validated['period'];
+        $baseDate = Carbon::parse($validated['date'] ?? now()->toDateString());
+
+        if ($period === 'daily') {
+            $start = $baseDate->copy()->startOfDay();
+            $end = $baseDate->copy()->endOfDay();
+            $periodLabel = 'Daily';
+        } elseif ($period === 'weekly') {
+            $start = $baseDate->copy()->startOfWeek(Carbon::MONDAY)->startOfDay();
+            $end = $baseDate->copy()->endOfWeek(Carbon::SUNDAY)->endOfDay();
+            $periodLabel = 'Weekly';
+        } else {
+            $start = $baseDate->copy()->startOfMonth()->startOfDay();
+            $end = $baseDate->copy()->endOfMonth()->endOfDay();
+            $periodLabel = 'Monthly';
+        }
+
+        $user = $request->user();
+
+        $records = IncidentCalendar::where('contributor_id', $user->id)
+            ->with(['incidentType', 'incidentStatus'])
+            ->whereBetween('incident_date', [$start->toDateString(), $end->toDateString()])
+            ->orderBy('incident_date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $summary = [
+            'total' => $records->count(),
+            'incidents' => $records->where('entry_type', 'incident')->count(),
+            'compliance' => $records->where('entry_type', 'compliance')->count(),
+            'accepted' => $records->where('status', 'accepted')->count(),
+            'pending' => $records->where('status', 'pending')->count(),
+            'rejected' => $records->where('status', 'rejected')->count(),
+        ];
+
+        $rangeLabel = $period === 'daily'
+            ? $start->format('F d, Y')
+            : $start->format('F d, Y') . ' - ' . $end->format('F d, Y');
+
+        return view('incidents.print-contributor-report', compact(
+            'records',
+            'period',
+            'periodLabel',
+            'rangeLabel',
+            'summary',
+            'user'
+        ));
     }
 
     /**

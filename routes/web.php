@@ -6,7 +6,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FireSafetyController;
 use App\Http\Controllers\TyphoonController;
 use App\Http\Controllers\IncidentController;
-
+use App\Http\Controllers\ComprehensiveSchoolSafetyController;
 Route::get('/', function () {
     return view('welcome');
 });
@@ -214,11 +214,12 @@ Route::prefix('typhoon')->middleware(['auth', 'module.access:typhoon_flood'])->g
 
 
 
-
 //Incident Routes
 Route::middleware(['auth', 'module.access:incident_checklist'])->group(function () {
     Route::get('/incidents/dashboard', [IncidentController::class, 'dashboard'])->name('incidents.dashboard');
     Route::get('/incidents/print', [IncidentController::class, 'printMonth'])->name('incidents.print')->middleware('role:admin');
+    Route::get('/incidents/analytics/print', [IncidentController::class, 'printAnalytics'])->name('incidents.analytics.print')->middleware('role:admin');
+    Route::get('/incidents/reporting/print', [IncidentController::class, 'printContributorReport'])->name('incidents.reporting.print');
     Route::post('/incidents/store', [IncidentController::class, 'store'])->name('incidents.store');
     Route::get('/incidents/date/{date}', [IncidentController::class, 'getDateIncidents'])->name('incidents.date');
     Route::put('/incidents/{id}', [IncidentController::class, 'update'])->name('incidents.update')->middleware('role:admin');
@@ -245,12 +246,28 @@ Route::middleware(['auth', 'module.access:incident_checklist'])->group(function 
     Route::delete('/incidents/checklist/{id}', [IncidentController::class, 'destroyChecklistItem'])->name('incidents.checklist.destroy');
 });
 
-// Comprehensive School Safety (placeholder – replace with real controller when module is ready)
-Route::middleware(['auth'])->group(function () {
-    Route::get('/comprehensive-school-safety/dashboard', function () {
-        return redirect()->route('dashboard')->with('info', 'Comprehensive School Safety module is under development.');
-    })->name('comprehensive-school-safety.dashboard');
-});
+// Comprehensive School Safety Routes
+Route::prefix('comprehensive-school-safety')
+    ->name('comprehensive-school-safety.')
+    ->middleware(['auth', 'module.access:comprehensive_school_safety'])
+    ->group(function () {
+        Route::get('/dashboard', [ComprehensiveSchoolSafetyController::class, 'dashboard'])->name('dashboard');
+
+        Route::get('/schools', [ComprehensiveSchoolSafetyController::class, 'schools'])->name('schools.index');
+        Route::get('/schools/create', [ComprehensiveSchoolSafetyController::class, 'createSchool'])->name('schools.create');
+        Route::post('/schools', [ComprehensiveSchoolSafetyController::class, 'storeSchool'])->name('schools.store');
+
+        Route::get('/schools/register-existing', [ComprehensiveSchoolSafetyController::class, 'registerExistingForm'])->name('schools.register-existing');
+        Route::post('/schools/register-existing', [ComprehensiveSchoolSafetyController::class, 'registerExistingStore'])->name('schools.register-existing.store');
+
+        // School-specific routes
+        Route::get('/schools/{schoolId}/dashboard', [ComprehensiveSchoolSafetyController::class, 'schoolDashboard'])->name('school.dashboard');
+        Route::get('/schools/{schoolId}/assessments', [ComprehensiveSchoolSafetyController::class, 'schoolAssessments'])->name('school.assessments');
+        Route::get('/schools/{schoolId}/assessments/new', [ComprehensiveSchoolSafetyController::class, 'newSafetyAssessmentForm'])->name('school.assessments.new');
+        Route::get('/schools/{schoolId}/students', [ComprehensiveSchoolSafetyController::class, 'schoolStudents'])->name('school.students');
+        Route::get('/schools/{schoolId}/facilities', [ComprehensiveSchoolSafetyController::class, 'schoolFacilities'])->name('school.facilities');
+        Route::get('/schools/{schoolId}/reports', [ComprehensiveSchoolSafetyController::class, 'schoolReports'])->name('school.reports');
+    });
 
 // Hazard Mapping (placeholder – replace with real controller when module is ready)
 Route::middleware(['auth'])->group(function () {
@@ -258,3 +275,4 @@ Route::middleware(['auth'])->group(function () {
         return redirect()->route('dashboard')->with('info', 'Hazard Mapping module is under development.');
     })->name('hazard-mapping.dashboard');
 });
+

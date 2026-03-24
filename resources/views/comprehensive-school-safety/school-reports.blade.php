@@ -1,0 +1,115 @@
+@extends('comprehensive-school-safety.layouts.app')
+@section('activeMenu', 'reports')
+
+@section('content')
+<h2 class="csss-section-title mb-1">Analytics &amp; Reports</h2>
+<p class="csss-muted mb-4">{{ $school->name }}</p>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="csss-card p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <p class="csss-muted small mb-1">Assessments Completed</p>
+                    <h3 class="fw-bold m-0">{{ $reportStats['assessments_completed'] }}</h3>
+                </div>
+                <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-check-circle text-white" style="font-size: 1.5rem;"></i>
+                </div>
+            </div>
+            <small class="csss-muted">of {{ $reportStats['total_assessments'] }} total</small>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="csss-card p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <p class="csss-muted small mb-1">Total Students</p>
+                    <h3 class="fw-bold m-0">{{ $reportStats['total_students'] }}</h3>
+                </div>
+                <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-users text-white" style="font-size: 1.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="csss-card p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <p class="csss-muted small mb-1">School Facilities</p>
+                    <h3 class="fw-bold m-0">{{ $reportStats['total_facilities'] }}</h3>
+                </div>
+                <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-building text-white" style="font-size: 1.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="csss-card p-4">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div>
+                    <p class="csss-muted small mb-1">Total Assessments</p>
+                    <h3 class="fw-bold m-0">{{ $reportStats['total_assessments'] }}</h3>
+                </div>
+                <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #6f42c1 0%, #9b6ad1 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-chart-bar text-white" style="font-size: 1.5rem;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Reports Section -->
+<div class="csss-card p-4">
+    <h5 class="fw-bold mb-4">Available Reports</h5>
+
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="card border-0" style="border-radius: 12px; background: linear-gradient(135deg, rgba(92, 64, 51, 0.05) 0%, rgba(139, 111, 71, 0.05) 100%); border-left: 4px solid var(--csss-primary);">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold mb-2">
+                        <i class="fas fa-file-pdf" style="color: var(--csss-primary);"></i> Assessment Report
+                    </h6>
+                    <p class="text-muted small mb-3">Comprehensive assessment compliance summary for this school.</p>
+                    <button type="button" class="btn btn-sm btn-outline-dark" disabled>
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0" style="border-radius: 12px; background: linear-gradient(135deg, rgba(92, 64, 51, 0.05) 0%, rgba(139, 111, 71, 0.05) 100%); border-left: 4px solid var(--csss-primary);">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold mb-2">
+                        <i class="fas fa-chart-pie" style="color: var(--csss-primary);"></i> Safety Index
+                    </h6>
+                    <p class="text-muted small mb-3">Current safety compliance index and rating for the school.</p>
+                    <button type="button" class="btn btn-sm btn-outline-dark" disabled>
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0" style="border-radius: 12px; background: linear-gradient(135deg, rgba(92, 64, 51, 0.05) 0%, rgba(139, 111, 71, 0.05) 100%); border-left: 4px solid var(--csss-primary);">
+                <div class="card-body p-4">
+                    <h6 class="fw-bold mb-2">
+                        <i class="fas fa-calendar-alt" style="color: var(--csss-primary);"></i> Timeline
+                    </h6>
+                    <p class="text-muted small mb-3">Assessment history and timeline of changes over time.</p>
+                    <button type="button" class="btn btn-sm btn-outline-dark" disabled>
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection

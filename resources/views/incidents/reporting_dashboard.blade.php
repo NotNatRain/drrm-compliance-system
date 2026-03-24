@@ -195,6 +195,15 @@
                     <a href="{{ route('incidents.dashboard', ['week_offset' => ($weekOffset ?? 0) + 1]) }}" class="btn btn-outline-secondary btn-sm rounded-pill" title="Next Week">
                         <i class="fas fa-chevron-right"></i>
                     </a>
+                    <a href="{{ route('incidents.reporting.print', ['period' => 'daily', 'date' => now()->toDateString()]) }}" class="btn btn-outline-secondary btn-sm rounded-pill" title="Print Daily Report">
+                        <i class="fas fa-print me-1"></i> Daily
+                    </a>
+                    <a href="{{ route('incidents.reporting.print', ['period' => 'weekly', 'date' => ($weekStart ?? now())->format('Y-m-d')]) }}" class="btn btn-outline-secondary btn-sm rounded-pill" title="Print Weekly Report">
+                        <i class="fas fa-print me-1"></i> Weekly
+                    </a>
+                    <a href="{{ route('incidents.reporting.print', ['period' => 'monthly', 'date' => ($weekStart ?? now())->format('Y-m-d')]) }}" class="btn btn-outline-secondary btn-sm rounded-pill" title="Print Monthly Report">
+                        <i class="fas fa-print me-1"></i> Monthly
+                    </a>
                 </div>
             </div>
 
