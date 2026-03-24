@@ -49,7 +49,7 @@ class IncidentController extends Controller
                 ->whereBetween('incident_date', [$weekStart->toDateString(), $weekEnd->toDateString()])
                 ->orderBy('incident_date', 'desc')
                 ->get();
-            
+
             // Re-using same logic for dropdowns
             $incidentTypes = IncidentType::orderBy('priority')->get();
             $incidentStatuses = IncidentStatus::orderBy('name')->get();
@@ -84,7 +84,7 @@ class IncidentController extends Controller
 
         // Quick Compliance Checklist for current user & day
         $checklistDate = Carbon::today()->toDateString();
-        
+
         // Default checklist items
         $defaultLabels = [
             'Daily Monitoring Report Submitted',
@@ -92,7 +92,7 @@ class IncidentController extends Controller
             'Victim Assistance Log Updated',
             'School Head Confirmation Received',
         ];
-        
+
         // 1. Get today's non-deleted items
         $checklistItems = IncidentChecklist::where('user_id', $request->user()->id)
             ->whereDate('checklist_date', $checklistDate)
@@ -100,27 +100,27 @@ class IncidentController extends Controller
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get();
-            
+
         // 2. If it's a new day (no items yet), bring over yesterday's non-deleted custom items
         //    and create missing default items
         if (IncidentChecklist::where('user_id', $request->user()->id)->whereDate('checklist_date', $checklistDate)->count() == 0) {
-            
+
             $yesterdayDate = Carbon::yesterday()->toDateString();
-            
+
             // Get yesterday's non-deleted items (both default and custom)
             $yesterdayItems = IncidentChecklist::where('user_id', $request->user()->id)
                 ->whereDate('checklist_date', $yesterdayDate)
                 ->where('is_deleted', false)
                 ->orderBy('sort_order')
                 ->get();
-                
+
             $carriedOverLabels = [];
             $nextSortOrder = 0;
-            
+
             foreach ($yesterdayItems as $item) {
                 // Determine if it was a default item (even if is_default wasn't properly set before, check by label)
                 $isDefault = in_array($item->label, $defaultLabels) || $item->is_default;
-                
+
                 $checklistItems->push(
                     IncidentChecklist::create([
                         'user_id' => $request->user()->id,
@@ -134,13 +134,13 @@ class IncidentController extends Controller
                 );
                 $carriedOverLabels[] = $item->label;
             }
-            
-            // Ensure any default labels that weren't carried over (perhaps deleted previously but need to come back if requested? 
-            // Wait, the user said: "the default task are going to be real time too so if i delete that it will no longer appear until I added a task similar to that again". 
+
+            // Ensure any default labels that weren't carried over (perhaps deleted previously but need to come back if requested?
+            // Wait, the user said: "the default task are going to be real time too so if i delete that it will no longer appear until I added a task similar to that again".
             // So if they were deleted yesterday, they SHOULD NOT reappear automatically today.
             // But if this user has ZERO history (first time login), we should create all defaults.
             $hasAnyHistory = IncidentChecklist::where('user_id', $request->user()->id)->exists();
-            
+
             if (!$hasAnyHistory) {
                 foreach ($defaultLabels as $label) {
                     if (!in_array($label, $carriedOverLabels)) {
@@ -310,7 +310,7 @@ class IncidentController extends Controller
         ]);
 
         $date = $request->input('date');
-        
+
         $defaultLabels = [
             'Daily Monitoring Report Submitted',
             'Incident Verification Completed',
@@ -326,21 +326,21 @@ class IncidentController extends Controller
             ->get();
 
         if (IncidentChecklist::where('user_id', $request->user()->id)->whereDate('checklist_date', $date)->count() == 0) {
-            
+
             $yesterdayDate = Carbon::parse($date)->subDay()->toDateString();
-            
+
             $yesterdayItems = IncidentChecklist::where('user_id', $request->user()->id)
                 ->whereDate('checklist_date', $yesterdayDate)
                 ->where('is_deleted', false)
                 ->orderBy('sort_order')
                 ->get();
-                
+
             $carriedOverLabels = [];
             $nextSortOrder = 0;
-            
+
             foreach ($yesterdayItems as $item) {
                 $isDefault = in_array($item->label, $defaultLabels) || $item->is_default;
-                
+
                 $items->push(
                     IncidentChecklist::create([
                         'user_id' => $request->user()->id,
@@ -354,9 +354,9 @@ class IncidentController extends Controller
                 );
                 $carriedOverLabels[] = $item->label;
             }
-            
+
             $hasAnyHistory = IncidentChecklist::where('user_id', $request->user()->id)->exists();
-            
+
             if (!$hasAnyHistory) {
                 foreach ($defaultLabels as $label) {
                     if (!in_array($label, $carriedOverLabels)) {
@@ -444,7 +444,7 @@ class IncidentController extends Controller
     {
         $item = IncidentChecklist::where('user_id', $request->user()->id)->findOrFail($id);
         $label = $item->label;
-        
+
         $item->is_deleted = true;
         $item->save();
 
@@ -622,7 +622,7 @@ class IncidentController extends Controller
     public function update(Request $request, $id)
     {
         $incident = IncidentCalendar::findOrFail($id);
-        
+
         // Allow empty/blank affected personnel and students (treat as 0)
         $request->merge([
             'affected_personnel' => $request->filled('affected_personnel') ? (int) $request->input('affected_personnel') : 0,
@@ -653,7 +653,7 @@ class IncidentController extends Controller
             if ($incident->attachment_path && Storage::disk('public')->exists($incident->attachment_path)) {
                 Storage::disk('public')->delete($incident->attachment_path);
             }
-            
+
             $file = $request->file('attachment');
             $path = $file->store('incident-attachments/' . date('Y/m'), 'public');
             $validated['attachment_path'] = $path;
@@ -1233,7 +1233,7 @@ class IncidentController extends Controller
 
         // No need for explicit activity log if already using status
         // ActivityLog::log...
-        
+
         return response()->json([
             'success' => true,
             'message' => 'Report accepted and added to calendar.'

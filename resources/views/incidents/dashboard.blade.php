@@ -1218,10 +1218,10 @@
                     </div>
                 `;
                 document.body.appendChild(overlay);
-                
+
                 // Trigger animation
                 setTimeout(() => overlay.classList.add('show'), 10);
-                
+
                 const close = () => {
                     overlay.classList.remove('show');
                     setTimeout(() => {
@@ -1229,7 +1229,7 @@
                         resolve();
                     }, 250);
                 };
-                
+
                 overlay.querySelector('.custom-notify-btn').onclick = close;
                 overlay.onclick = (e) => { if (e.target === overlay) close(); };
             });
@@ -1257,9 +1257,9 @@
                     </div>
                 `;
                 document.body.appendChild(overlay);
-                
+
                 setTimeout(() => overlay.classList.add('show'), 10);
-                
+
                 const handle = (result) => {
                     overlay.classList.remove('show');
                     setTimeout(() => {
@@ -1267,7 +1267,7 @@
                         resolve(result);
                     }, 250);
                 };
-                
+
                 overlay.querySelector('.cancel-btn').onclick = () => handle(false);
                 overlay.querySelector('.confirm-btn').onclick = () => handle(true);
                 overlay.onclick = (e) => { if (e.target === overlay) handle(false); };
@@ -1543,7 +1543,7 @@
             let url = incidentsStoreUrl;
 
             if (updateId) {
-                method = 'POST'; 
+                method = 'POST';
                 formData.append('_method', 'PUT');
                 url = incidentsStoreUrl.split('/store')[0] + '/' + updateId;
             }
@@ -1647,11 +1647,11 @@
                 const logModal = new bootstrap.Modal(document.getElementById('logIncidentModal'));
                 const modalTitle = document.getElementById('logIncidentModalLabel');
                 const tabs = document.getElementById('incidentTab');
-                
+
                 // Reset form first
                 document.getElementById('incidentForm').reset();
                 document.getElementById('complianceForm').reset();
-                
+
                 modalTitle.innerHTML = `<i class="fas fa-edit me-2"></i> Update ${type === 'incident' ? 'Incident' : 'Compliance Event'}`;
                 tabs.style.display = 'none'; // Hide tabs as requested
 
@@ -1659,17 +1659,17 @@
                     const form = document.getElementById('incidentForm');
                     document.getElementById('incident-form').classList.add('show', 'active');
                     document.getElementById('compliance-form').classList.remove('show', 'active');
-                    
+
                     document.getElementById('incident_update_id').value = item.id;
                     document.getElementById('incident_type_id').value = item.incident_type_id;
                     document.getElementById('incident_date_input').value = item.incident_date.split('T')[0];
                     document.getElementById('incident_date').value = item.incident_date.split('T')[0];
-                    
+
                     // School handling
                     const existingSelect = document.getElementById('incident_school_existing_select');
                     const options = Array.from(existingSelect.options);
                     const match = options.find(o => o.value === item.school_name);
-                    
+
                     if (item.school_name === 'All Schools') {
                         document.getElementById('incident_source_all').checked = true;
                         document.getElementById('incident_existing_school_container').style.display = 'none';
@@ -1685,11 +1685,11 @@
                         document.getElementById('incident_existing_school_container').style.display = 'none';
                         document.getElementById('incident_new_school_container').style.display = 'block';
                     }
-                    
+
                     document.getElementById('affected_personnel').value = item.affected_personnel;
                     document.getElementById('affected_students').value = item.affected_students;
                     document.getElementById('remarks').value = item.remarks;
-                    
+
                     // Show current attachment if exists
                     const currentAttach = document.getElementById('current_incident_attachment');
                     const attachHint = document.getElementById('incident_attachment_hint');
@@ -1706,25 +1706,25 @@
                         attachHint.classList.add('text-danger');
                         attachHint.classList.remove('text-muted');
                     }
-                    
+
                     // File input is never HTML-required; JS handles the logic
                     document.getElementById('incident_attachment').required = false;
-                    
+
                 } else {
                     const form = document.getElementById('complianceForm');
                     document.getElementById('compliance-form').classList.add('show', 'active');
                     document.getElementById('incident-form').classList.remove('show', 'active');
-                    
+
                     document.getElementById('compliance_update_id').value = item.id;
                     document.getElementById('incident_status_id').value = item.incident_status_id;
                     document.getElementById('compliance_date_input').value = item.incident_date.split('T')[0];
                     document.getElementById('compliance_incident_date').value = item.incident_date.split('T')[0];
-                    
+
                     // School handling
                     const existingSelect = document.getElementById('compliance_school_existing_select');
                     const options = Array.from(existingSelect.options);
                     const match = options.find(o => o.value === item.school_name);
-                    
+
                     if (item.school_name === 'All Schools') {
                         document.getElementById('compliance_source_all').checked = true;
                         document.getElementById('compliance_existing_school_container').style.display = 'none';
@@ -1740,7 +1740,7 @@
                         document.getElementById('compliance_existing_school_container').style.display = 'none';
                         document.getElementById('compliance_new_school_container').style.display = 'block';
                     }
-                    
+
                     document.getElementById('compliance_remarks').value = item.remarks;
 
                     // Show current attachment if exists
@@ -1760,7 +1760,7 @@
 
         window.deleteIncidentEntry = async function(id) {
             if (!(await showConfirm('Are you sure you want to delete this log?', 'Confirm Deletion'))) return;
-            
+
             fetch(`${incidentsStoreUrl.replace('/store', '')}/${id}`, {
                 method: 'DELETE',
                 headers: {
@@ -2116,7 +2116,7 @@
                 if (!(await showConfirm('Remove this checklist item?', 'Delete Task'))) return;
                 const row = this.closest('.checklist-item-row');
                 const id = row.getAttribute('data-id');
-                
+
                 fetch(checklistUpdateBaseUrl + '/' + id, {
                     method: 'DELETE',
                     headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
@@ -2137,7 +2137,7 @@
                 const labelEl = row.querySelector('.checklist-label');
                 const oldLabel = labelEl.textContent;
                 const newLabel = prompt('Edit checklist task:', oldLabel);
-                
+
                 if (newLabel && newLabel.trim() !== '' && newLabel.trim() !== oldLabel) {
                     updateChecklistItem(id, { label: newLabel.trim() });
                     labelEl.textContent = newLabel.trim();
@@ -2255,7 +2255,7 @@
                     if (!(await showConfirm('Remove this checklist item?', 'Delete Task'))) return;
                     const row = this.closest('.checklist-item-row');
                     const id = row.getAttribute('data-id');
-                    
+
                     fetch(checklistUpdateBaseUrl + '/' + id, {
                         method: 'DELETE',
                         headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
@@ -2273,7 +2273,7 @@
                     const labelEl = row.querySelector('.checklist-label');
                     const oldLabel = labelEl.textContent;
                     const newLabel = prompt('Edit checklist task:', oldLabel);
-                    
+
                     if (newLabel && newLabel.trim() !== '' && newLabel.trim() !== oldLabel) {
                         updateChecklistItem(id, { label: newLabel.trim() });
                         labelEl.textContent = newLabel.trim();
@@ -2289,7 +2289,7 @@
         currentHistoryDate.setDate(1); // Set to first of month
 
         document.getElementById('activityHistoryModal').addEventListener('show.bs.modal', function () {
-            currentHistoryDate = new Date(); 
+            currentHistoryDate = new Date();
             currentHistoryDate.setDate(1);
             fetchHistory(currentHistoryDate.getFullYear(), currentHistoryDate.getMonth() + 1);
         });
@@ -2297,17 +2297,17 @@
         function fetchHistory(year, month) {
             const container = document.getElementById('historyGridContainer');
             container.innerHTML = '<div class="col-12 py-5 text-center w-100"><span class="spinner-border text-warning border-4"></span><p class="mt-3 fs-5 text-muted">Loading history...</p></div>';
-            
+
             fetch(`${checklistHistoryUrl}?year=${year}&month=${month}`)
                 .then(r => r.json())
                 .then(resp => {
                     if (resp.success) {
                         document.getElementById('currentHistoryMonthLabel').textContent = resp.month_name;
-                        
+
                         let html = '';
                         const history = resp.history;
                         const datesArray = Object.keys(history);
-                        
+
                         if (datesArray.length === 0) {
                             html = '<div class="col-12 py-5 text-center w-100">' +
                                    '  <i class="fas fa-clipboard-list fa-3x text-muted mb-3 opacity-25"></i>' +
@@ -2319,20 +2319,20 @@
                                 const d = new Date(date);
                                 const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
                                 const dayName = d.toLocaleDateString('en-US', { weekday: 'long' });
-                                
+
                                 html += `<div class="history-day-card shadow-sm">
                                             <div class="history-day-title d-flex justify-content-between">
                                                 <span>${dateStr}</span>
                                                 <span class="text-muted" style="font-size: 0.65rem;">${dayName}</span>
                                             </div>`;
-                                
+
                                 items.forEach(item => {
                                     html += `<div class="history-item">
                                                 <i class="fas ${item.is_completed ? 'fa-check-circle text-success' : 'fa-times-circle text-muted'}"></i>
                                                 <span class="${item.is_completed ? 'text-dark fw-bold' : 'text-muted'} text-truncate" title="${item.label}">${item.label}</span>
                                             </div>`;
                                 });
-                                
+
                                 html += `</div>`;
                             });
                         }
@@ -2346,7 +2346,7 @@
 
         const prevBtn = document.getElementById('prevHistoryMonth');
         const nextBtn = document.getElementById('nextHistoryMonth');
-        
+
         if (prevBtn) {
             // Remove previous event listeners by cloning
             const newPrevBtn = prevBtn.cloneNode(true);
@@ -2435,7 +2435,7 @@
         async function loadPendingReports() {
             pendingReportsTable.innerHTML = '<tr><td colspan="6" class="text-center py-4"><span class="spinner-border spinner-border-sm me-2"></span>Loading...</td></tr>';
             pendingEmptyState.classList.add('d-none');
-            
+
             try {
                 const r = await fetch('{{ route("incidents.pending") }}');
                 const resp = await r.json();
@@ -2443,10 +2443,10 @@
                     let html = '';
                     resp.reports.forEach(report => {
                         const date = new Date(report.incident_date).toLocaleDateString('en-PH', { month: 'short', day: '2-digit', year: 'numeric' });
-                        const type = report.entry_type === 'incident' ? 
+                        const type = report.entry_type === 'incident' ?
                             `<span class="badge bg-warning text-dark"><i class="fas fa-exclamation-triangle me-1"></i> ${report.incident_type?.name || 'Incident'}</span>` :
                             `<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> ${report.incident_status?.name || 'Compliance'}</span>`;
-                            
+
                         html += `
                             <tr>
                                 <td class="ps-4 fw-bold text-muted small">${date}</td>
@@ -2487,7 +2487,7 @@
 
         window.approveReport = async (id) => {
             if (!(await showConfirm('Accept this report and log it to the calendar?', 'Approve Report'))) return;
-            
+
             try {
                 const r = await fetch(`{{ url("incidents") }}/${id}/accept`, {
                     method: 'POST',
@@ -2523,12 +2523,12 @@
                 await showNotify('Please provide a reason for rejection.', 'Reason Required', 'fa-info-circle');
                 return;
             }
-            
+
             try {
                 const r = await fetch(`{{ url("incidents") }}/${activeRejectionId}/reject`, {
                     method: 'POST',
-                    headers: { 
-                        'X-CSRF-TOKEN': csrfToken, 
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
                         'Accept': 'application/json',
                         'Content-Type': 'application/json'
                     },

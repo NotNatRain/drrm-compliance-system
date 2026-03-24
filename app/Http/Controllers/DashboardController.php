@@ -200,7 +200,7 @@ class DashboardController extends Controller
         if ($isAdmin) {
             $user->role = $request->role;
         }
-        
+
         if ($request->filled('password')) {
             $user->password = Hash::make($request->password);
         }
@@ -235,9 +235,9 @@ class DashboardController extends Controller
         }
 
         $user = User::findOrFail($id);
-        
+
         $user->module_access = $request->modules ?? [];
-        
+
         // Fire Safety school assignment
         if ($request->school_id === 'encode') {
             $user->school_id = null;
