@@ -10,10 +10,10 @@
             <p class="text-muted mb-0">All schools currently registered in the Comprehensive School Safety module.</p>
         </div>
         <div class="d-flex gap-2">
-            <a href="{{ route('comprehensive-school-safety.schools.create') }}" class="btn btn-primary">
+                <a href="{{ route('comprehensive-school-safety.dashboard') }}#schoolsDirectory" class="btn btn-primary">
                 <i class="fas fa-plus me-1"></i> Create New School
             </a>
-            <a href="{{ route('comprehensive-school-safety.schools.register-existing') }}" class="btn btn-success">
+            <a href="{{ route('comprehensive-school-safety.dashboard') }}#schoolsDirectory" class="btn btn-success">
                 <i class="fas fa-download me-1"></i> Register Existing School
             </a>
         </div>

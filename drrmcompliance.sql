@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 23, 2026 at 02:54 AM
+-- Generation Time: Mar 25, 2026 at 09:42 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -300,7 +300,8 @@ INSERT INTO `activity_logs` (`id`, `user_id`, `role`, `activity`, `school_id`, `
 (253, 1, 'admin', 'Created extinguisher: EXT-001', 15, 'Amelia Heights ES', 'fire_safety', NULL, '2026-03-19 08:01:51', '2026-03-19 08:01:51'),
 (254, 1, 'admin', 'Created evacuation center: ', 11, 'Iram I Elementary School', 'typhoon_flood', NULL, '2026-03-23 01:13:43', '2026-03-23 01:13:43'),
 (255, 1, 'admin', 'Created evacuation center: West Ridge Secondary School', 22, 'West Ridge Secondary School', 'typhoon_flood', NULL, '2026-03-23 01:41:39', '2026-03-23 01:41:39'),
-(256, 7, 'contributor', 'Logged incident: Violence/Conflict at Integrated School at the Mabini High School', NULL, 'Integrated School at the Mabini High School', 'incident_checklist', 'This Love', '2026-03-23 01:44:08', '2026-03-23 01:44:08');
+(256, 7, 'contributor', 'Logged incident: Violence/Conflict at Integrated School at the Mabini High School', NULL, 'Integrated School at the Mabini High School', 'incident_checklist', 'This Love', '2026-03-23 01:44:08', '2026-03-23 01:44:08'),
+(257, 1, 'admin', 'Logged compliance: Fire Drilling at Integrated School at the Mabini High School', NULL, 'Integrated School at the Mabini High School', 'incident_checklist', 'oks', '2026-03-23 15:43:12', '2026-03-23 15:43:12');
 
 -- --------------------------------------------------------
 
@@ -327,6 +328,121 @@ CREATE TABLE `announcements` (
 INSERT INTO `announcements` (`id`, `what`, `when`, `where`, `why`, `image_path`, `is_active`, `created_at`, `updated_at`) VALUES
 (1, 'Diwata', '2026-02-20 09:00:00', 'Subic Gymn', 'Diwata Adventure (Dance Evolution)\" is a stage play featured by the Hiraya Theater Production for the School Year 2025–2026.', 'announcements/gaZ3Wo3TEDN4L8VxiXKnhxPfQx4DUwzdPnOorwHP.jpg', 1, '2026-02-11 18:34:19', '2026-02-11 18:34:19'),
 (2, 'Fire Drill', '2026-02-16 22:00:00', 'Banicain School', 'School Safety Measure Practices in drilling', 'announcements/42djBvTKA9wnTI2pSw5aKVSv2igbscrb1yYLAgeZ.jpg', 1, '2026-02-11 20:03:51', '2026-02-11 20:03:51');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `cmpr_schl_sfty_assessments`
+--
+
+CREATE TABLE `cmpr_schl_sfty_assessments` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `school_id` bigint(20) UNSIGNED NOT NULL,
+  `date_visited` date NOT NULL,
+  `assessed_by` varchar(255) DEFAULT NULL,
+  `total_score` decimal(8,2) NOT NULL DEFAULT 0.00,
+  `status` varchar(255) NOT NULL DEFAULT 'draft',
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `cmpr_schl_sfty_assessment_items`
+--
+
+CREATE TABLE `cmpr_schl_sfty_assessment_items` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `assessment_id` bigint(20) UNSIGNED NOT NULL,
+  `category` varchar(255) NOT NULL,
+  `criteria` text NOT NULL,
+  `is_compliant` tinyint(1) DEFAULT NULL,
+  `points` int(11) NOT NULL DEFAULT 0,
+  `remarks` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `cmpr_schl_sfty_facilities`
+--
+
+CREATE TABLE `cmpr_schl_sfty_facilities` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `school_id` bigint(20) UNSIGNED NOT NULL,
+  `type` varchar(255) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `condition` varchar(255) NOT NULL DEFAULT 'good',
+  `remarks` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `cmpr_schl_sfty_schools`
+--
+
+CREATE TABLE `cmpr_schl_sfty_schools` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `school_id_number` varchar(255) DEFAULT NULL,
+  `name` varchar(255) NOT NULL,
+  `address` varchar(255) DEFAULT NULL,
+  `district` varchar(255) DEFAULT NULL,
+  `division` varchar(255) DEFAULT NULL,
+  `region` varchar(255) DEFAULT NULL,
+  `school_head` varchar(255) DEFAULT NULL,
+  `contact_number` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `cmpr_schl_sfty_schools`
+--
+
+INSERT INTO `cmpr_schl_sfty_schools` (`id`, `school_id_number`, `name`, `address`, `district`, `division`, `region`, `school_head`, `contact_number`, `created_at`, `updated_at`) VALUES
+(1, '107121', 'Iram I Elementary School', 'Iram resettlement Area New Cabalan', NULL, NULL, NULL, 'Mr. Raymund F Camacho', NULL, '2026-03-23 08:07:20', '2026-03-23 08:07:20');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `cmpr_schl_sfty_students`
+--
+
+CREATE TABLE `cmpr_schl_sfty_students` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `school_id` bigint(20) UNSIGNED NOT NULL,
+  `student_lrn` varchar(255) DEFAULT NULL,
+  `name` varchar(255) NOT NULL,
+  `grade_level` varchar(255) DEFAULT NULL,
+  `section` varchar(255) DEFAULT NULL,
+  `guardian_name` varchar(255) DEFAULT NULL,
+  `guardian_contact` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `cmpr_schl_sfty_student_pathways`
+--
+
+CREATE TABLE `cmpr_schl_sfty_student_pathways` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `student_id` bigint(20) UNSIGNED NOT NULL,
+  `pathway_score` int(11) NOT NULL,
+  `observation_date` date NOT NULL,
+  `remarks` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1287,7 +1403,8 @@ INSERT INTO `incident_calendars` (`id`, `status`, `contributor_id`, `incident_da
 (17, 'accepted', NULL, '2026-03-20', NULL, 'All School', 'compliance', NULL, 1, 'Eid\'l Fitr day', NULL, NULL, NULL, NULL, 'Adan Kristopher B. Dumpit', 0, NULL, NULL, 0, 0, NULL, '2026-03-16 18:02:22', '2026-03-16 18:02:22'),
 (20, 'accepted', NULL, '2026-03-16', NULL, 'OLONGAPO CITY NATIONAL HIGH SCHOOL', 'incident', 6, NULL, 'One room affected Location Admin Building Room 207, Cause of Fire Electrical (Broken Oscillating Fan), Approximately 1230H On scene City DRRMO, BFP, PNP,  and SDO DRRM Focal Person. Fire out 1245H as per officer Erwin Magaway and Officer Lising.', NULL, NULL, NULL, NULL, 'Adan Kristopher B. Dumpit', 0, NULL, NULL, 0, 0, NULL, '2026-03-19 00:33:45', '2026-03-19 00:33:45'),
 (21, 'accepted', NULL, '2026-03-17', NULL, 'Gordon Heights National High School', 'incident', 9, NULL, 'Stabbing incident outside school premises involving outsider and 2 GHNHS Students. Outsider was rushed to the nearest hospital for treatment. Later parents of involve d students and outsider set Barangay Meeting to settle the concerned issue.', NULL, NULL, NULL, NULL, 'Adan Kristopher B. Dumpit', 0, NULL, NULL, 0, 2, NULL, '2026-03-19 00:41:18', '2026-03-19 00:41:18'),
-(22, 'accepted', 7, '2026-03-23', NULL, 'Integrated School at the Mabini High School', 'incident', 8, NULL, 'This Love', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 2, 0, NULL, '2026-03-23 01:44:08', '2026-03-23 01:44:08');
+(22, 'accepted', 7, '2026-03-23', NULL, 'Integrated School at the Mabini High School', 'incident', 8, NULL, 'This Love', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 2, 0, NULL, '2026-03-23 01:44:08', '2026-03-23 01:44:08'),
+(23, 'accepted', 1, '2026-03-26', NULL, 'Integrated School at the Mabini High School', 'compliance', NULL, 6, 'oks', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 0, 0, NULL, '2026-03-23 15:43:12', '2026-03-23 15:43:12');
 
 -- --------------------------------------------------------
 
@@ -1423,7 +1540,7 @@ INSERT INTO `incident_schools` (`id`, `name`, `district`, `division`, `region`, 
 (3, 'East National High School', 'East District', NULL, NULL, NULL, 0, NULL, '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
 (4, 'West Integrated School', 'West District', NULL, NULL, NULL, 0, NULL, '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
 (5, 'Macbalan Academia', 'Unknown', NULL, NULL, NULL, 1, '2026-02-09', '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
-(6, 'Integrated School at the Mabini High School', 'Unknown', NULL, NULL, NULL, 3, '2026-03-23', '2026-02-09 00:04:51', '2026-03-23 01:44:08'),
+(6, 'Integrated School at the Mabini High School', 'Unknown', NULL, NULL, NULL, 4, '2026-03-23', '2026-02-09 00:04:51', '2026-03-23 15:43:12'),
 (7, 'Dos Trios School', 'Unknown', NULL, NULL, NULL, 2, '2026-03-12', '2026-02-09 00:04:51', '2026-03-11 23:56:47'),
 (8, 'Revenue School', 'Unknown', NULL, NULL, NULL, 1, '2026-02-09', '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
 (9, 'All Schools', 'Unknown', NULL, NULL, NULL, 2, '2026-02-09', '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
@@ -1438,7 +1555,21 @@ INSERT INTO `incident_schools` (`id`, `name`, `district`, `division`, `region`, 
 (18, 'All School', 'Unknown', NULL, NULL, NULL, 1, '2026-03-17', '2026-03-16 18:02:22', '2026-03-16 18:02:22'),
 (19, 'Amelia Heights ES', 'Unknown', NULL, NULL, NULL, 1, '2026-03-19', '2026-03-19 00:24:57', '2026-03-19 00:24:57'),
 (20, 'OLONGAPO CITY NATIONAL HIGH SCHOOL', 'Unknown', NULL, NULL, NULL, 1, '2026-03-19', '2026-03-19 00:33:45', '2026-03-19 00:33:45'),
-(21, 'Gordon Heights National High School', 'Unknown', NULL, NULL, NULL, 1, '2026-03-19', '2026-03-19 00:41:18', '2026-03-19 00:41:18');
+(21, 'Gordon Heights National High School', 'Unknown', NULL, NULL, NULL, 1, '2026-03-19', '2026-03-19 00:41:18', '2026-03-19 00:41:18'),
+(22, 'Iram I Elementary School', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:15', '2026-03-24 02:25:15'),
+(23, 'Mabayuan Elementary School', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:15', '2026-03-24 02:25:15'),
+(24, 'Bangal Integrated School', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:15', '2026-03-24 02:25:15'),
+(25, 'Boton ES', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:15', '2026-03-24 02:25:15'),
+(26, 'New Cabalan Senior High School', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:15', '2026-03-24 02:25:15'),
+(27, 'Mabayuan Senior High School', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:16', '2026-03-24 02:25:16'),
+(28, 'Nellie E. Brown Elementary School', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:16', '2026-03-24 02:25:16'),
+(29, 'New Cabalan Elementary School', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:16', '2026-03-24 02:25:16'),
+(30, 'Sergia Soriano Esteban Integrated School - Coral', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:16', '2026-03-24 02:25:16'),
+(31, 'Tapinac Elementary School', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:16', '2026-03-24 02:25:16'),
+(32, 'East National High School', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:16', '2026-03-24 02:25:16'),
+(33, 'North Central High School', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:16', '2026-03-24 02:25:16'),
+(34, 'South Elementary School', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:16', '2026-03-24 02:25:16'),
+(35, 'West Integrated School', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:16', '2026-03-24 02:25:16');
 
 -- --------------------------------------------------------
 
@@ -1611,7 +1742,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (91, '2026_03_17_100000_update_incident_checklists_add_is_default_and_is_deleted', 52),
 (92, '2026_03_17_112454_add_attached_evacuation_map_to_schools_table', 53),
 (93, '2026_03_19_164756_add_status_and_contributor_to_incident_calendars', 54),
-(94, '2026_03_23_090000_add_incident_school_id_to_users_table', 55);
+(94, '2026_03_23_090000_add_incident_school_id_to_users_table', 55),
+(95, '2025_02_05_000001_create_school_safety_tables', 56);
 
 -- --------------------------------------------------------
 
@@ -1733,7 +1865,8 @@ INSERT INTO `notifications` (`id`, `compliance_type`, `module`, `school_id`, `us
 (92, 'fire_safety', 'fire_safety', 21, 1, 'alarm_update', 'Alarm Updated: ALARM-02', 'Adan Kristopher B. Dumpit updated alarm ALARM-02. Changes: Notes updated', 'go_test', NULL, '{\"alarm_id\":36,\"school_id\":21,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 0, '2026-03-19 06:47:34', '2026-03-19 06:47:34'),
 (93, 'fire_safety', 'fire_safety', 15, 1, 'extinguisher_inspection', 'Extinguisher Inspected: FRXT-01', 'Extinguisher FRXT-01 was inspected. Status: Maintenance, Pressure: 57%', 'update_now', NULL, '{\"extinguisher_id\":57,\"school_id\":15}', 0, '2026-03-19 08:00:17', '2026-03-19 08:00:17'),
 (94, 'fire_safety', 'fire_safety', 14, NULL, 'alarm_due', 'Alarm Test Due Today: ALRM-002', 'Alarm ALRM-002 is scheduled for testing today.', 'go_test', NULL, '{\"alarm_id\":32,\"school_id\":14}', 0, '2026-03-22 23:53:55', '2026-03-22 23:53:55'),
-(95, 'typhoon_flood', 'announcement', NULL, 1, 'announcement', 'Event Nomalization', 'To normalize the new gasoline savings', 'mark_read', NULL, '{\"urgency\":\"info\"}', 1, '2026-03-23 01:40:52', '2026-03-23 01:41:05');
+(95, 'typhoon_flood', 'announcement', NULL, 1, 'announcement', 'Event Nomalization', 'To normalize the new gasoline savings', 'mark_read', NULL, '{\"urgency\":\"info\"}', 1, '2026-03-23 01:40:52', '2026-03-23 01:41:05'),
+(96, 'fire_safety', 'fire_safety', 17, NULL, 'alarm_due', 'Alarm Test Due Today: 001', 'Alarm 001 is scheduled for testing today.', 'go_test', NULL, '{\"alarm_id\":20,\"school_id\":17}', 0, '2026-03-25 02:47:08', '2026-03-25 02:47:08');
 
 -- --------------------------------------------------------
 
@@ -2020,12 +2153,12 @@ CREATE TABLE `users` (
 INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `is_active`, `remember_token`, `created_at`, `updated_at`, `role`, `school_id`, `typhoon_school_id`, `incident_school_id`, `needs_fs_registration`, `needs_tf_registration`, `module_access`) VALUES
 (1, 'Adan Kristopher B. Dumpit', 'adankristopher.dumpit@gmail.com', NULL, '$2y$12$f/IBhh/RpO6ADlpoIqSna.FDNT9DBaQxckg/zZV5xdqRHDLtqgUhK', 1, NULL, '2026-01-29 17:42:14', '2026-02-15 23:58:44', 'admin', NULL, NULL, NULL, 0, 0, '[\"fire_safety\",\"typhoon_flood\",\"incident_checklist\",\"comprehensive_school_safety\",\"hazard_mapping\"]'),
 (3, 'Dolores A. Umbina', 'doloresU@yahoo.com', NULL, '$2y$12$UlKNWpc6A70R4BGHJcfzt.YlXIdUlXyt1E7mHOcvrIBMXbDUluDEi', 1, NULL, '2026-02-02 23:02:12', '2026-03-04 19:58:26', 'contributor', 14, NULL, NULL, 0, 0, '[\"fire_safety\"]'),
-(4, 'Zaldy Danaytan, Jr.', 'zaldydanaytan@gmail.com', NULL, '$2y$12$l3WSaFNirGrPGyJV6ikzYekeqgZTPCTLL9mRQNOqoJxMdWcLoa7Cy', 1, NULL, '2026-02-15 23:37:41', '2026-03-04 21:54:27', 'contributor', 13, NULL, NULL, 0, 0, '[\"fire_safety\",\"comprehensive_school_safety\"]'),
+(4, 'Zaldy Danaytan, Jr.', 'zaldydanaytan@gmail.com', NULL, '$2y$12$l3WSaFNirGrPGyJV6ikzYekeqgZTPCTLL9mRQNOqoJxMdWcLoa7Cy', 1, NULL, '2026-02-15 23:37:41', '2026-03-25 07:31:52', 'contributor', 11, NULL, NULL, 0, 0, '[\"fire_safety\",\"comprehensive_school_safety\"]'),
 (5, 'Erwin A. Castillejo', 'erwin.castillejo@deped.gov.ph', NULL, '$2y$12$0oYX2QkQ/5gVDmUISOaCie.kLG2VzbpjCu/ye4qhyz.a/F7R76yIW', 1, NULL, '2026-02-17 22:02:34', '2026-03-12 00:14:02', 'admin', NULL, NULL, NULL, 0, 0, '[]'),
 (6, 'Test', 'test@example.com', NULL, '$2y$12$aUG3/2YVk8Y718./5hhasudwDWPLFaYyJ4Mz1q3bxus9wc/w3QsIm', 1, NULL, '2026-03-04 01:02:07', '2026-03-17 02:43:21', 'contributor', NULL, NULL, NULL, 0, 0, '[\"typhoon_flood\"]'),
 (7, 'Denver Faenticilia', 'dennieverrycilia@gmail.com', NULL, '$2y$12$m1REED1J8/zgGX5UFpKFbOr40a/JdtJdpH40/nvVqRzJA73msAgCG', 1, NULL, '2026-03-04 18:19:34', '2026-03-23 01:19:46', 'contributor', 19, NULL, 6, 0, 0, '[\"fire_safety\",\"incident_checklist\"]'),
 (8, 'example', 'example@gmail.com', NULL, '$2y$12$zs31NOMzJCJNPh2Qzg7fN.PncEUd5K3kEriz8ZiZnN.gyIWPSrm7W', 1, NULL, '2026-03-04 21:11:53', '2026-03-10 16:14:26', 'contributor', 11, NULL, NULL, 0, 0, '[\"fire_safety\",\"typhoon_flood\",\"incident_checklist\",\"comprehensive_school_safety\",\"hazard_mapping\"]'),
-(9, 'Subagent', 'subagent@example.com', NULL, '$2y$12$bfGBW3Gy28q3QKklp2uHW.hCDPaJFa/TvUQ1YE4tN1AAEE.Sd.3UW', 1, NULL, '2026-03-18 05:50:27', '2026-03-18 05:50:27', 'contributor', NULL, NULL, NULL, 0, 0, NULL);
+(9, 'Subagent', 'subagent@example.com', NULL, '$2y$12$bfGBW3Gy28q3QKklp2uHW.hCDPaJFa/TvUQ1YE4tN1AAEE.Sd.3UW', 0, NULL, '2026-03-18 05:50:27', '2026-03-23 02:35:26', 'contributor', NULL, NULL, NULL, 0, 0, NULL);
 
 --
 -- Indexes for dumped tables
@@ -2045,6 +2178,49 @@ ALTER TABLE `activity_logs`
 --
 ALTER TABLE `announcements`
   ADD PRIMARY KEY (`id`) USING BTREE;
+
+--
+-- Indexes for table `cmpr_schl_sfty_assessments`
+--
+ALTER TABLE `cmpr_schl_sfty_assessments`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `cmpr_schl_sfty_assessments_school_id_foreign` (`school_id`);
+
+--
+-- Indexes for table `cmpr_schl_sfty_assessment_items`
+--
+ALTER TABLE `cmpr_schl_sfty_assessment_items`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `cmpr_schl_sfty_assessment_items_assessment_id_foreign` (`assessment_id`);
+
+--
+-- Indexes for table `cmpr_schl_sfty_facilities`
+--
+ALTER TABLE `cmpr_schl_sfty_facilities`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `cmpr_schl_sfty_facilities_school_id_foreign` (`school_id`);
+
+--
+-- Indexes for table `cmpr_schl_sfty_schools`
+--
+ALTER TABLE `cmpr_schl_sfty_schools`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `cmpr_schl_sfty_schools_school_id_number_unique` (`school_id_number`);
+
+--
+-- Indexes for table `cmpr_schl_sfty_students`
+--
+ALTER TABLE `cmpr_schl_sfty_students`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `cmpr_schl_sfty_students_student_lrn_unique` (`student_lrn`),
+  ADD KEY `cmpr_schl_sfty_students_school_id_foreign` (`school_id`);
+
+--
+-- Indexes for table `cmpr_schl_sfty_student_pathways`
+--
+ALTER TABLE `cmpr_schl_sfty_student_pathways`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `cmpr_schl_sfty_student_pathways_student_id_foreign` (`student_id`);
 
 --
 -- Indexes for table `firesafety_alarm_systems`
@@ -2261,13 +2437,49 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `activity_logs`
 --
 ALTER TABLE `activity_logs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=257;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=258;
 
 --
 -- AUTO_INCREMENT for table `announcements`
 --
 ALTER TABLE `announcements`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `cmpr_schl_sfty_assessments`
+--
+ALTER TABLE `cmpr_schl_sfty_assessments`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `cmpr_schl_sfty_assessment_items`
+--
+ALTER TABLE `cmpr_schl_sfty_assessment_items`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `cmpr_schl_sfty_facilities`
+--
+ALTER TABLE `cmpr_schl_sfty_facilities`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `cmpr_schl_sfty_schools`
+--
+ALTER TABLE `cmpr_schl_sfty_schools`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `cmpr_schl_sfty_students`
+--
+ALTER TABLE `cmpr_schl_sfty_students`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `cmpr_schl_sfty_student_pathways`
+--
+ALTER TABLE `cmpr_schl_sfty_student_pathways`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `firesafety_alarm_systems`
@@ -2345,7 +2557,7 @@ ALTER TABLE `fire_safety_rooms`
 -- AUTO_INCREMENT for table `incident_calendars`
 --
 ALTER TABLE `incident_calendars`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=24;
 
 --
 -- AUTO_INCREMENT for table `incident_checklists`
@@ -2357,7 +2569,7 @@ ALTER TABLE `incident_checklists`
 -- AUTO_INCREMENT for table `incident_schools`
 --
 ALTER TABLE `incident_schools`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT for table `incident_statuses`
@@ -2375,13 +2587,13 @@ ALTER TABLE `incident_types`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=95;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=96;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=96;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=97;
 
 --
 -- AUTO_INCREMENT for table `system_configurations`
@@ -2422,6 +2634,36 @@ ALTER TABLE `users`
 --
 -- Constraints for dumped tables
 --
+
+--
+-- Constraints for table `cmpr_schl_sfty_assessments`
+--
+ALTER TABLE `cmpr_schl_sfty_assessments`
+  ADD CONSTRAINT `cmpr_schl_sfty_assessments_school_id_foreign` FOREIGN KEY (`school_id`) REFERENCES `cmpr_schl_sfty_schools` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `cmpr_schl_sfty_assessment_items`
+--
+ALTER TABLE `cmpr_schl_sfty_assessment_items`
+  ADD CONSTRAINT `cmpr_schl_sfty_assessment_items_assessment_id_foreign` FOREIGN KEY (`assessment_id`) REFERENCES `cmpr_schl_sfty_assessments` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `cmpr_schl_sfty_facilities`
+--
+ALTER TABLE `cmpr_schl_sfty_facilities`
+  ADD CONSTRAINT `cmpr_schl_sfty_facilities_school_id_foreign` FOREIGN KEY (`school_id`) REFERENCES `cmpr_schl_sfty_schools` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `cmpr_schl_sfty_students`
+--
+ALTER TABLE `cmpr_schl_sfty_students`
+  ADD CONSTRAINT `cmpr_schl_sfty_students_school_id_foreign` FOREIGN KEY (`school_id`) REFERENCES `cmpr_schl_sfty_schools` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `cmpr_schl_sfty_student_pathways`
+--
+ALTER TABLE `cmpr_schl_sfty_student_pathways`
+  ADD CONSTRAINT `cmpr_schl_sfty_student_pathways_student_id_foreign` FOREIGN KEY (`student_id`) REFERENCES `cmpr_schl_sfty_students` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `firesafety_alarm_systems`

@@ -131,13 +131,6 @@ class ComprehensiveSchoolSafetyController extends Controller
         return view('comprehensive-school-safety.schools-index', compact('schools'));
     }
 
-    public function createSchool()
-    {
-        $this->ensureAdmin();
-
-        return view('comprehensive-school-safety.create-school');
-    }
-
     public function storeSchool(Request $request)
     {
         $this->ensureAdmin();

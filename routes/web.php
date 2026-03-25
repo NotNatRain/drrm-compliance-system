@@ -254,7 +254,6 @@ Route::prefix('comprehensive-school-safety')
         Route::get('/dashboard', [ComprehensiveSchoolSafetyController::class, 'dashboard'])->name('dashboard');
 
         Route::get('/schools', [ComprehensiveSchoolSafetyController::class, 'schools'])->name('schools.index');
-        Route::get('/schools/create', [ComprehensiveSchoolSafetyController::class, 'createSchool'])->name('schools.create');
         Route::post('/schools', [ComprehensiveSchoolSafetyController::class, 'storeSchool'])->name('schools.store');
 
         Route::get('/schools/register-existing', [ComprehensiveSchoolSafetyController::class, 'registerExistingForm'])->name('schools.register-existing');
