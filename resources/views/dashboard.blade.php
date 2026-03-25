@@ -213,7 +213,7 @@
             </a>
         </div>
 
-        <!-- Typhoon/Flooding Compliance -->
+        <!-- Typhoon/Flooding Monitoring -->
         <div class="col-md-4 mb-4">
             @php $canAccessTyphoon = $isAdmin || in_array('typhoon_flood', $modules); @endphp
             <a href="{{ route('typhoon.dashboard') }}" class="text-decoration-none module-card-link"

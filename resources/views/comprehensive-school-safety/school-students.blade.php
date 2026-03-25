@@ -2,8 +2,17 @@
 @section('activeMenu', 'students')
 
 @section('content')
-<h2 class="csss-section-title mb-2">Student Records</h2>
-<p class="csss-muted mb-4">{{ $students->count() }} student{{ $students->count() !== 1 ? 's' : '' }} on record</p>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-users text-white" style="font-size: 1.5rem;"></i>
+        </div>
+        <div>
+            <h2 class="csss-section-title mb-1">Student Records</h2>
+            <p class="csss-muted mb-0">{{ $students->count() }} student{{ $students->count() !== 1 ? 's' : '' }} on record</p>
+        </div>
+    </div>
+</div>
 
 <div style="margin-bottom: 1rem;">
     <button type="button" class="btn" style="background: linear-gradient(135deg, var(--csss-primary) 0%, var(--csss-primary-soft) 100%); color: white;" data-bs-toggle="modal" data-bs-target="#addStudentModal">

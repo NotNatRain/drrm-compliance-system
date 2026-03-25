@@ -346,7 +346,7 @@
                                     <input class="form-check-input module-check" type="checkbox" name="modules[]" value="fire_safety" id="checkFS">
                                     <label class="form-check-label fw-bold" for="checkFS">Fire Safety Compliance</label>
                                 </div>
-                                <span class="badge bg-secondary">Active</span>
+                                <span class="badge bg-success text-white">Completed</span>
                             </div>
                             <div id="schoolFS" class="ms-4 mt-2 d-none">
                                 <label class="small fw-bold">Assign School:</label>
@@ -369,9 +369,9 @@
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <div class="form-check">
                                     <input class="form-check-input module-check" type="checkbox" name="modules[]" value="typhoon_flood" id="checkTF">
-                                    <label class="form-check-label fw-bold" for="checkTF">Typhoon/Flooding Compliance</label>
+                                    <label class="form-check-label fw-bold" for="checkTF">Typhoon/Flooding Monitoring</label>
                                 </div>
-                                <span class="badge bg-secondary">Active</span>
+                                <span class="badge bg-primary text-white">Pending Validation</span>
                             </div>
                             <!-- Note: Request says use respective tables, but they don't exist yet. Using FireSafety schools for now as placeholder as per instructions -->
                             <div id="schoolTF" class="ms-4 mt-2 d-none">
@@ -397,7 +397,7 @@
                                     <input class="form-check-input module-check" type="checkbox" name="modules[]" value="incident_checklist" id="checkIC">
                                     <label class="form-check-label fw-bold" for="checkIC">Incident Checklist</label>
                                 </div>
-                                <span class="badge bg-secondary">Active</span>
+                                <span class="badge bg-success text-white">Completed</span>
                             </div>
                             <div id="schoolIC" class="ms-4 mt-2 d-none">
                                 <label class="small fw-bold">Assign School (Incident):</label>
@@ -417,12 +417,15 @@
                                     <input class="form-check-input module-check" type="checkbox" name="modules[]" value="comprehensive_school_safety" id="checkSS">
                                     <label class="form-check-label fw-bold" for="checkSS">Comprehensive School Safety</label>
                                 </div>
-                                <span class="badge bg-info text-dark">Development</span>
+                                <span class="badge bg-info text-dark">In Development</span>
                             </div>
                             <div id="schoolSS" class="ms-4 mt-2 d-none">
                                 <label class="small fw-bold">Assign School:</label>
-                                <select name="school_safety_id" class="form-select form-select-sm" disabled>
-                                    <option value="">-- Development Only --</option>
+                                <select name="school_safety_id" class="form-select form-select-sm school-select">
+                                    <option value="">-- Select Comprehensive School --</option>
+                                    @foreach($comprehensiveSchools as $comprehensiveSchool)
+                                        <option value="{{ $comprehensiveSchool->id }}">{{ $comprehensiveSchool->name }}</option>
+                                    @endforeach
                                 </select>
                             </div>
                         </div>
@@ -434,7 +437,7 @@
                                     <input class="form-check-input module-check" type="checkbox" name="modules[]" value="hazard_mapping" id="checkHM">
                                     <label class="form-check-label fw-bold" for="checkHM">Hazard Mapping</label>
                                 </div>
-                                <span class="badge bg-info text-dark">Development</span>
+                                <span class="badge bg-secondary text-white">To be Developed</span>
                             </div>
                         </div>
                     </div>
@@ -571,6 +574,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = {
                     modules: modules,
                     school_id: formData.get('school_id'),
+                    school_safety_id: formData.get('school_safety_id'),
                     typhoon_school_id: formData.get('typhoon_school_id'),
                     incident_school_id: formData.get('incident_school_id')
                 };
@@ -721,6 +725,18 @@ function assignAccess(userId) {
                 } else {
                     incidentSelect.disabled = false;
                     incidentSelect.value = user.incident_school_id || "";
+                }
+            }
+
+            // Comprehensive School Safety selection
+            const csssSelect = assignForm.querySelector('select[name="school_safety_id"]');
+            if (csssSelect) {
+                if (isAdmin) {
+                    csssSelect.value = "";
+                    csssSelect.disabled = true;
+                } else {
+                    csssSelect.disabled = false;
+                    csssSelect.value = user.school_safety_id || "";
                 }
             }
 

@@ -216,7 +216,7 @@ The module supports printable reports:
 
 OVERVIEW:
 ---------
-The Typhoon/Flooding Compliance Module is designed to manage and monitor the
+The Typhoon/Flooding Monitoring Module is designed to manage and monitor the
 response to typhoon and flooding events. It focuses on casualty tracking,
 evacuation center management, evacuee registration, and real-time monitoring
 of flood and typhoon conditions.

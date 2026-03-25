@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Comprehensive School Safety')</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/comprehensive-school-safety-logo.png') }}">
+    <link rel="shortcut icon" type="image/png" href="{{ asset('images/comprehensive-school-safety-logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/comprehensive-school-safety-logo.png') }}">
 
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -49,16 +52,23 @@
         .csss-brand {
             border-bottom: 1px solid rgba(255, 255, 255, 0.15);
             padding-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 50px;
         }
 
         .csss-brand h5 {
             margin: 0;
             font-weight: 700;
             letter-spacing: 0.02em;
+            font-size: 1rem;
         }
 
         .csss-brand small {
             color: var(--csss-sidebar-muted);
+            display: block;
+            font-size: 0.8rem;
         }
 
         .csss-menu-label {
@@ -113,6 +123,19 @@
             position: sticky;
             top: 0;
             z-index: 5;
+        }
+
+        .csss-topbar-side {
+            width: 42px;
+            min-width: 42px;
+            display: inline-flex;
+            justify-content: center;
+        }
+
+        .csss-topbar-title {
+            flex: 1;
+            text-align: center;
+            min-width: 0;
         }
 
         .csss-search {
@@ -182,24 +205,43 @@
     @php
         $selectedSchool = $school ?? null;
         $activeMenu = trim($__env->yieldContent('activeMenu'));
+        $currentUser = auth()->user();
+        $isAdmin = $currentUser && $currentUser->role === 'admin';
+        $sessionSchoolId = session('csss_active_school_id');
+
+        if (!$selectedSchool && $isAdmin && !empty($sessionSchoolId)) {
+            $selectedSchool = \App\Models\ComprehensiveSchool::find($sessionSchoolId);
+        }
+
+        $headerLabel = trim($__env->yieldContent('headerLabel'));
+
+        if ($headerLabel === '') {
+            $headerLabel = $selectedSchool ? $selectedSchool->name : 'All Schools';
+        }
     @endphp
 
     <aside class="csss-sidebar">
-        <div class="csss-brand">
-            <h5>Comprehensive School Safety</h5>
-            <small>
-                @if($selectedSchool)
-                    {{ $selectedSchool->name }}
-                @else
-                    Schools Directory
+        <div class="csss-brand d-flex align-items-center justify-content-between gap-2">
+            <a href="{{ route('dashboard') }}" class="text-white text-decoration-none" title="Back to Main Dashboard" style="font-size: 1.2rem; flex-shrink: 0;">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div class="d-flex align-items-center gap-2" style="flex: 1;">
+                @if(file_exists(public_path('images/comprehensive-school-safety-logo.png')))
+                    <img src="{{ asset('images/comprehensive-school-safety-logo.png') }}" alt="Comprehensive School Safety Logo" style="height: 40px; object-fit: contain; flex-shrink: 0;">
+                @elseif(file_exists(public_path('images/comprehensive-school-safety-logo.jpg')))
+                    <img src="{{ asset('images/comprehensive-school-safety-logo.jpg') }}" alt="Comprehensive School Safety Logo" style="height: 40px; object-fit: contain; flex-shrink: 0;">
                 @endif
-            </small>
+                <div style="min-width: 0;">
+                    <h5 style="margin: 0; font-size: 0.95rem;">Comprehensive</h5>
+                    <small style="color: var(--csss-sidebar-muted); display: block; font-size: 0.75rem;">School Safety</small>
+                </div>
+            </div>
         </div>
 
         <div class="csss-menu-label">School Menu</div>
 
-        <a class="csss-menu-link {{ $activeMenu === 'dashboard' ? 'active' : '' }}"
-           href="{{ $selectedSchool ? route('comprehensive-school-safety.school.dashboard', $selectedSchool->id) : route('comprehensive-school-safety.dashboard') }}">
+          <a class="csss-menu-link {{ $activeMenu === 'dashboard' ? 'active' : '' }}"
+              href="{{ route('comprehensive-school-safety.dashboard') }}">
             <i class="fas fa-chart-line"></i> Dashboard
         </a>
 
@@ -224,27 +266,33 @@
             <i class="fas fa-chart-pie"></i> Analytics &amp; Reports
         </a>
 
-        <div class="mt-auto pt-3 border-top border-secondary-subtle">
-            <a class="csss-menu-link" href="{{ route('comprehensive-school-safety.dashboard') }}">
-                <i class="fas fa-school"></i> Switch School
-            </a>
-            <a class="csss-menu-link mt-2" href="{{ route('dashboard') }}">
-                <i class="fas fa-arrow-left"></i> Main System
-            </a>
-        </div>
+        @if($isAdmin)
+            <div class="mt-auto pt-3 border-top border-secondary-subtle">
+                <button type="button" class="csss-menu-link w-100" data-bs-toggle="modal" data-bs-target="#switchSchoolModal">
+                    <i class="fas fa-school"></i> Switch School
+                </button>
+                <a class="csss-menu-link w-100 mt-2" href="{{ route('comprehensive-school-safety.dashboard') }}#schoolsDirectory">
+                    <i class="fas fa-plus-circle"></i> Add School
+                </a>
+            </div>
+        @endif
     </aside>
 
     <div class="csss-main">
         <div class="csss-topbar d-flex align-items-center justify-content-between gap-3">
-            <div class="csss-search w-100">
-                <div class="input-group">
-                    <span class="input-group-text"><i class="fas fa-search"></i></span>
-                    <input type="text" class="form-control" placeholder="Search schools, assessments, students, facilities...">
+            <div class="csss-topbar-side"></div>
+            <div class="csss-topbar-title">
+                <div>
+                    <h5 class="mb-0 fw-bold" style="color: var(--csss-primary-dark); font-size: 1.1rem;">
+                        {{ $headerLabel }}
+                    </h5>
                 </div>
             </div>
-            <button type="button" class="csss-notification" aria-label="Notifications">
-                <i class="fas fa-bell"></i>
-            </button>
+            <div class="csss-topbar-side">
+                <button type="button" class="csss-notification" aria-label="Notifications">
+                    <i class="fas fa-bell"></i>
+                </button>
+            </div>
         </div>
 
         <main class="csss-content">
@@ -252,6 +300,57 @@
         </main>
     </div>
 </div>
+
+@if($isAdmin)
+    <!-- School Selection Modal -->
+    <div class="modal fade" id="switchSchoolModal" tabindex="-1" role="dialog" aria-labelledby="switchSchoolLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content border-0" style="border-radius: 14px;">
+                <div class="modal-header border-0 pb-0" style="background: linear-gradient(135deg, var(--csss-primary) 0%, var(--csss-primary-soft) 100%); border-radius: 14px 14px 0 0; color: white;">
+                    <h5 class="modal-title fw-bold" id="switchSchoolLabel">
+                        <i class="fas fa-school me-2"></i>Select a School
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    @php
+                        $allSchools = \App\Models\ComprehensiveSchool::orderBy('name')->get();
+                    @endphp
+                    @if($allSchools->isEmpty())
+                        <div class="text-center py-4">
+                            <i class="fas fa-inbox text-muted" style="font-size: 2.5rem; margin-bottom: 1rem;"></i>
+                            <p class="text-muted mb-3">No schools registered yet.</p>
+                            <a href="{{ route('comprehensive-school-safety.dashboard') }}#schoolsDirectory" class="btn btn-sm btn-primary">
+                                <i class="fas fa-plus me-1"></i> Create New School
+                            </a>
+                        </div>
+                    @else
+                        <div class="d-grid gap-2">
+                            @foreach($allSchools as $switchSchool)
+                                <a href="{{ route('comprehensive-school-safety.school.dashboard', $switchSchool->id) }}" class="btn btn-outline-secondary text-start p-3" style="border-radius: 10px; transition: all 0.2s ease;">
+                                    <div class="d-flex align-items-start justify-content-between">
+                                        <div>
+                                            <h6 class="mb-1 fw-bold" style="color: var(--csss-primary);">{{ $switchSchool->name }}</h6>
+                                            <small class="text-muted">
+                                                <i class="fas fa-map-marker-alt me-1"></i>{{ $switchSchool->district ?? 'N/A' }} • {{ $switchSchool->division ?? 'N/A' }}
+                                            </small>
+                                        </div>
+                                        <i class="fas fa-chevron-right text-muted" style="margin-top: 5px;"></i>
+                                    </div>
+                                </a>
+                            @endforeach
+                        </div>
+                        <div class="mt-4 pt-3 border-top">
+                            <a href="{{ route('comprehensive-school-safety.dashboard') }}#schoolsDirectory" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-plus me-2"></i> Add New School
+                            </a>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+@endif
 
 @stack('scripts')
 </body>

@@ -29,8 +29,8 @@
                         <i data-lucide="shield" class="w-5 h-5 text-white"></i>
                     </div>
                     <div>
-                        <h1 class="font-bold text-lg tracking-tight">SafeSchool</h1>
-                        <p class="text-xs text-slate-400">Division System</p>
+                        <h1 class="font-bold text-lg tracking-tight">Comprehensive School Safety</h1>
+                        <p class="text-xs text-slate-400">Compliance System</p>
                     </div>
                 </div>
             </div>
@@ -270,7 +270,7 @@
                     <div class="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center">
                         <i data-lucide="shield" class="w-5 h-5 text-white"></i>
                     </div>
-                    <span class="font-bold text-xl tracking-tight text-slate-800">SafeSchool <span class="text-slate-400 font-normal text-sm ml-1">Portal</span></span>
+                    <span class="font-bold text-xl tracking-tight text-slate-800">Comprehensive School Safety <span class="text-slate-400 font-normal text-sm ml-1">Portal</span></span>
                 </div>
 
                 <div class="flex items-center gap-4">

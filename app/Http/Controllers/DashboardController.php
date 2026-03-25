@@ -5,15 +5,61 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\FireSafetySchool;
+use App\Models\ComprehensiveSchool;
 use App\Models\TypFldEvacuationCenter;
 use App\Models\IncidentSchool;
 use App\Models\Announcement;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+    private function resolveComprehensiveSchoolIdFromFireSafetyId(?int $fireSafetySchoolId): ?int
+    {
+        if (!$fireSafetySchoolId) {
+            return null;
+        }
+
+        $fireSafetySchool = FireSafetySchool::find($fireSafetySchoolId);
+        if (!$fireSafetySchool) {
+            return null;
+        }
+
+        $comprehensiveSchool = ComprehensiveSchool::where('school_id_number', $fireSafetySchool->school_id)->first();
+        if ($comprehensiveSchool) {
+            return (int) $comprehensiveSchool->id;
+        }
+
+        $fallbackByName = ComprehensiveSchool::where('name', $fireSafetySchool->school_name)->first();
+
+        return $fallbackByName ? (int) $fallbackByName->id : null;
+    }
+
+    private function resolveFireSafetySchoolIdFromComprehensiveSchoolId(?int $comprehensiveSchoolId): ?int
+    {
+        if (!$comprehensiveSchoolId) {
+            return null;
+        }
+
+        $comprehensiveSchool = ComprehensiveSchool::find($comprehensiveSchoolId);
+        if (!$comprehensiveSchool) {
+            return null;
+        }
+
+        if (!empty($comprehensiveSchool->school_id_number)) {
+            $fireByCode = FireSafetySchool::where('school_id', $comprehensiveSchool->school_id_number)->first();
+            if ($fireByCode) {
+                return (int) $fireByCode->id;
+            }
+        }
+
+        $fireByName = FireSafetySchool::where('school_name', $comprehensiveSchool->name)->first();
+
+        return $fireByName ? (int) $fireByName->id : null;
+    }
+
     /**
      * Create a new controller instance.
      */
@@ -29,8 +75,8 @@ class DashboardController extends Controller
     {
         $schools = FireSafetySchool::all();
         // If user is contributor, only pass their assigned school
-        if (auth()->user()->role === 'contributor' && auth()->user()->school_id) {
-            $schools = FireSafetySchool::where('id', auth()->user()->school_id)->get();
+        if (Auth::user()->role === 'contributor' && Auth::user()->school_id) {
+            $schools = FireSafetySchool::where('id', Auth::user()->school_id)->get();
         }
         $announcements = Announcement::where('is_active', true)->latest()->get();
         return view('dashboard', compact('schools', 'announcements'));
@@ -38,7 +84,7 @@ class DashboardController extends Controller
 
     public function getUsers(Request $request)
     {
-        $isAdmin = auth()->user()->role === 'admin';
+        $isAdmin = Auth::user()->role === 'admin';
 
         if ($isAdmin) {
             $query = User::with(['school', 'typhoonSchool.school', 'incidentSchool']);
@@ -59,10 +105,11 @@ class DashboardController extends Controller
 
             $users = $query->get();
         } else {
-            $users = User::with(['school', 'typhoonSchool.school', 'incidentSchool'])->whereKey(auth()->id())->get();
+            $users = User::with(['school', 'typhoonSchool.school', 'incidentSchool'])->whereKey(Auth::id())->get();
         }
 
         $schools = FireSafetySchool::all();
+        $comprehensiveSchools = ComprehensiveSchool::orderBy('name')->get(['id', 'name', 'school_id_number', 'district', 'division']);
         $typhoonSchools = TypFldEvacuationCenter::with('school')->get();
         $this->syncIncidentSchoolsFromSources();
         $incidentSchools = IncidentSchool::selectRaw('MIN(id) as id, name')
@@ -75,7 +122,7 @@ class DashboardController extends Controller
             return response()->json($users);
         }
 
-        return view('users.index', compact('users', 'schools', 'typhoonSchools', 'incidentSchools', 'adminCount', 'isAdmin'));
+        return view('users.index', compact('users', 'schools', 'comprehensiveSchools', 'typhoonSchools', 'incidentSchools', 'adminCount', 'isAdmin'));
     }
 
     /**
@@ -119,7 +166,7 @@ class DashboardController extends Controller
 
     public function storeUser(Request $request)
     {
-        if (auth()->user()->role !== 'admin') {
+        if (Auth::user()->role !== 'admin') {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -140,7 +187,7 @@ class DashboardController extends Controller
             if ($adminCount >= 2) {
                 return response()->json(['success' => false, 'message' => 'The system is limited to a maximum of 2 administrators.'], 403);
             }
-            if (!Hash::check($request->admin_confirmation, auth()->user()->password)) {
+            if (!Hash::check($request->admin_confirmation, Auth::user()->password)) {
                 return response()->json(['success' => false, 'message' => 'Invalid admin confirmation password'], 403);
             }
         }
@@ -160,19 +207,21 @@ class DashboardController extends Controller
 
     public function getUser($id)
     {
-        $isAdmin = auth()->user()->role === 'admin';
-        if (!$isAdmin && (int) $id !== (int) auth()->id()) {
+        $isAdmin = Auth::user()->role === 'admin';
+        if (!$isAdmin && (int) $id !== (int) Auth::id()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
         $user = User::with(['school', 'incidentSchool'])->findOrFail($id);
+        $user->school_safety_id = $this->resolveComprehensiveSchoolIdFromFireSafetyId($user->school_id);
+
         return response()->json($user);
     }
 
     public function updateUser(Request $request, $id)
     {
-        $isAdmin = auth()->user()->role === 'admin';
-        if (!$isAdmin && (int) $id !== (int) auth()->id()) {
+        $isAdmin = Auth::user()->role === 'admin';
+        if (!$isAdmin && (int) $id !== (int) Auth::id()) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -212,11 +261,11 @@ class DashboardController extends Controller
 
     public function toggleUserStatus($id)
     {
-        if (auth()->user()->role !== 'admin') {
+        if (Auth::user()->role !== 'admin') {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        if ($id == auth()->id()) {
+        if ($id == Auth::id()) {
             return response()->json(['success' => false, 'message' => 'Cannot deactivate yourself'], 400);
         }
 
@@ -230,7 +279,7 @@ class DashboardController extends Controller
 
     public function assignAccess(Request $request, $id)
     {
-        if (auth()->user()->role !== 'admin') {
+        if (Auth::user()->role !== 'admin') {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -242,9 +291,19 @@ class DashboardController extends Controller
         if ($request->school_id === 'encode') {
             $user->school_id = null;
             $user->needs_fs_registration = true;
-        } else {
+        } elseif (!empty($request->school_id)) {
             $user->school_id = $request->school_id;
             $user->needs_fs_registration = false;
+        }
+
+        // Comprehensive School Safety assignment (mapped to existing Fire Safety assignment)
+        if (!empty($request->school_safety_id)) {
+            $mappedFireSafetySchoolId = $this->resolveFireSafetySchoolIdFromComprehensiveSchoolId((int) $request->school_safety_id);
+
+            if ($mappedFireSafetySchoolId) {
+                $user->school_id = $mappedFireSafetySchoolId;
+                $user->needs_fs_registration = false;
+            }
         }
 
         // Typhoon school assignment
@@ -271,7 +330,7 @@ class DashboardController extends Controller
 
     public function registerMySchool(Request $request)
     {
-        $user = auth()->user();
+        $user = Auth::user();
         if ($user->role !== 'contributor') {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
@@ -326,7 +385,7 @@ class DashboardController extends Controller
 
     public function storeAnnouncement(Request $request)
     {
-        if (auth()->user()->role !== 'admin') {
+        if (Auth::user()->role !== 'admin') {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -364,7 +423,7 @@ class DashboardController extends Controller
 
     public function deleteAnnouncement($id)
     {
-        if (auth()->user()->role !== 'admin') {
+        if (Auth::user()->role !== 'admin') {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 

@@ -1,19 +1,50 @@
 @extends('comprehensive-school-safety.layouts.app')
 @section('activeMenu', 'reports')
 
+@push('styles')
+<style>
+    .lively-report-card {
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .lively-report-card .lively-report-icon {
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .lively-report-card:hover {
+        transform: translateY(-10px) scale(1.015);
+        box-shadow: 0 20px 44px rgba(52, 39, 31, 0.2);
+    }
+
+    .lively-report-card:hover .lively-report-icon {
+        transform: translateY(-2px) scale(1.08) rotate(-4deg);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+    }
+</style>
+@endpush
+
 @section('content')
-<h2 class="csss-section-title mb-1">Analytics &amp; Reports</h2>
-<p class="csss-muted mb-4">{{ $school->name }}</p>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #e91e63 0%, #f06292 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-chart-pie text-white" style="font-size: 1.5rem;"></i>
+        </div>
+        <div>
+            <h2 class="csss-section-title mb-1">Analytics & Reports</h2>
+            <p class="csss-muted mb-0">{{ $school->name }}</p>
+        </div>
+    </div>
+</div>
 
 <div class="row g-4 mb-4">
     <div class="col-md-3">
-        <div class="csss-card p-4">
+        <div class="csss-card p-4 lively-report-card">
             <div class="d-flex justify-content-between align-items-start mb-3">
                 <div>
                     <p class="csss-muted small mb-1">Assessments Completed</p>
                     <h3 class="fw-bold m-0">{{ $reportStats['assessments_completed'] }}</h3>
                 </div>
-                <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                <div class="lively-report-icon" style="width: 45px; height: 45px; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
                     <i class="fas fa-check-circle text-white" style="font-size: 1.5rem;"></i>
                 </div>
             </div>
@@ -22,13 +53,13 @@
     </div>
 
     <div class="col-md-3">
-        <div class="csss-card p-4">
+        <div class="csss-card p-4 lively-report-card">
             <div class="d-flex justify-content-between align-items-start mb-3">
                 <div>
                     <p class="csss-muted small mb-1">Total Students</p>
                     <h3 class="fw-bold m-0">{{ $reportStats['total_students'] }}</h3>
                 </div>
-                <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                <div class="lively-report-icon" style="width: 45px; height: 45px; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
                     <i class="fas fa-users text-white" style="font-size: 1.5rem;"></i>
                 </div>
             </div>
@@ -36,13 +67,13 @@
     </div>
 
     <div class="col-md-3">
-        <div class="csss-card p-4">
+        <div class="csss-card p-4 lively-report-card">
             <div class="d-flex justify-content-between align-items-start mb-3">
                 <div>
                     <p class="csss-muted small mb-1">School Facilities</p>
                     <h3 class="fw-bold m-0">{{ $reportStats['total_facilities'] }}</h3>
                 </div>
-                <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                <div class="lively-report-icon" style="width: 45px; height: 45px; background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
                     <i class="fas fa-building text-white" style="font-size: 1.5rem;"></i>
                 </div>
             </div>
@@ -50,13 +81,13 @@
     </div>
 
     <div class="col-md-3">
-        <div class="csss-card p-4">
+        <div class="csss-card p-4 lively-report-card">
             <div class="d-flex justify-content-between align-items-start mb-3">
                 <div>
                     <p class="csss-muted small mb-1">Total Assessments</p>
                     <h3 class="fw-bold m-0">{{ $reportStats['total_assessments'] }}</h3>
                 </div>
-                <div style="width: 45px; height: 45px; background: linear-gradient(135deg, #6f42c1 0%, #9b6ad1 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                <div class="lively-report-icon" style="width: 45px; height: 45px; background: linear-gradient(135deg, #6f42c1 0%, #9b6ad1 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
                     <i class="fas fa-chart-bar text-white" style="font-size: 1.5rem;"></i>
                 </div>
             </div>

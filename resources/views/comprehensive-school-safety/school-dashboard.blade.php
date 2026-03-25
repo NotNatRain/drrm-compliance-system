@@ -1,24 +1,51 @@
 @extends('comprehensive-school-safety.layouts.app')
 @section('activeMenu', 'dashboard')
 
+@push('styles')
+<style>
+    .lively-kpi-card {
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .lively-kpi-card .lively-kpi-icon {
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .lively-kpi-card:hover {
+        transform: translateY(-10px) scale(1.015);
+        box-shadow: 0 20px 44px rgba(52, 39, 31, 0.2);
+    }
+
+    .lively-kpi-card:hover .lively-kpi-icon {
+        transform: translateY(-2px) scale(1.08) rotate(-4deg);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h2 class="csss-section-title mb-1">{{ $school->name }}</h2>
-        <p class="csss-muted">School Safety Overview & Key Metrics</p>
+    <div class="d-flex align-items-center gap-3">
+        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, var(--csss-primary) 0%, var(--csss-primary-soft) 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-chart-line text-white" style="font-size: 1.5rem;"></i>
+        </div>
+        <div>
+            <h2 class="csss-section-title mb-1">Dashboard</h2>
+            <p class="csss-muted mb-0">School Safety Overview & Key Metrics</p>
+        </div>
     </div>
 </div>
 
 <!-- KPI Cards -->
 <div class="row g-3 mb-5">
     <div class="col-md-3">
-        <div class="csss-card p-4">
+        <div class="csss-card p-4 lively-kpi-card">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <p class="csss-muted small mb-2">Assessments Completed</p>
                     <h3 class="fw-bold mb-0">{{ $school->assessments()->count() }}</h3>
                 </div>
-                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, var(--csss-primary) 0%, var(--csss-primary-soft) 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <div class="lively-kpi-icon" style="width: 50px; height: 50px; background: linear-gradient(135deg, var(--csss-primary) 0%, var(--csss-primary-soft) 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
                     <i class="fas fa-check-circle text-white" style="font-size: 1.5rem;"></i>
                 </div>
             </div>
@@ -26,13 +53,13 @@
     </div>
 
     <div class="col-md-3">
-        <div class="csss-card p-4">
+        <div class="csss-card p-4 lively-kpi-card">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <p class="csss-muted small mb-2">Total Students</p>
                     <h3 class="fw-bold mb-0">{{ $school->students()->count() }}</h3>
                 </div>
-                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <div class="lively-kpi-icon" style="width: 50px; height: 50px; background: linear-gradient(135deg, #0066cc 0%, #0099ff 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
                     <i class="fas fa-users text-white" style="font-size: 1.5rem;"></i>
                 </div>
             </div>
@@ -40,13 +67,13 @@
     </div>
 
     <div class="col-md-3">
-        <div class="csss-card p-4">
+        <div class="csss-card p-4 lively-kpi-card">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <p class="csss-muted small mb-2">Facilities</p>
                     <h3 class="fw-bold mb-0">{{ $school->facilities()->count() }}</h3>
                 </div>
-                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #ff9800 0%, #ffb74d 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <div class="lively-kpi-icon" style="width: 50px; height: 50px; background: linear-gradient(135deg, #ff9800 0%, #ffb74d 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
                     <i class="fas fa-building text-white" style="font-size: 1.5rem;"></i>
                 </div>
             </div>
@@ -54,13 +81,13 @@
     </div>
 
     <div class="col-md-3">
-        <div class="csss-card p-4">
+        <div class="csss-card p-4 lively-kpi-card">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
                     <p class="csss-muted small mb-2">School ID</p>
                     <h6 class="fw-bold mb-0">{{ $school->school_id_number ?? 'Manual' }}</h6>
                 </div>
-                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #6c757d 0%, #9ca3af 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <div class="lively-kpi-icon" style="width: 50px; height: 50px; background: linear-gradient(135deg, #6c757d 0%, #9ca3af 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
                     <i class="fas fa-id-card text-white" style="font-size: 1.5rem;"></i>
                 </div>
             </div>
@@ -70,77 +97,92 @@
 
 <!-- School Information -->
 <div class="row g-3 mb-5">
-    <div class="col-lg-8">
+    <div class="col-12">
         <div class="csss-card p-4">
             <h5 class="fw-bold mb-4">School Information</h5>
-            
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <p class="csss-muted small mb-1">School Name</p>
-                    <p class="fw-bold">{{ $school->name }}</p>
+            @if(auth()->user()->role === 'admin')
+                <p class="csss-muted mb-3">Select a school to set it as your active context across Assessments, Students, Facilities, and Reports.</p>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead>
+                            <tr style="border-bottom: 2px solid var(--csss-border);">
+                                <th class="fw-bold" style="color: var(--csss-primary);">School Name</th>
+                                <th class="fw-bold" style="color: var(--csss-primary);">Division</th>
+                                <th class="fw-bold" style="color: var(--csss-primary);">District</th>
+                                <th class="fw-bold" style="color: var(--csss-primary);">Current</th>
+                                <th class="fw-bold text-end" style="color: var(--csss-primary);">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($allSchools as $schoolItem)
+                                <tr>
+                                    <td class="fw-semibold">{{ $schoolItem->name }}</td>
+                                    <td>{{ $schoolItem->division ?? 'N/A' }}</td>
+                                    <td>{{ $schoolItem->district ?? 'N/A' }}</td>
+                                    <td>
+                                        @if((int)$schoolItem->id === (int)$school->id)
+                                            <span class="badge bg-success-subtle text-success">Active</span>
+                                        @else
+                                            <span class="badge bg-light text-muted">-</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-end">
+                                        <a href="{{ route('comprehensive-school-safety.school.dashboard', $schoolItem->id) }}" class="btn btn-sm btn-outline-dark">
+                                            Use This School
+                                        </a>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center csss-muted py-4">No schools found.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
-                <div class="col-md-6">
-                    <p class="csss-muted small mb-1">School Type</p>
-                    <p class="fw-bold">{{ $school->school_type ?? 'Not specified' }}</p>
-                </div>
-            </div>
-
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <p class="csss-muted small mb-1">Region</p>
-                    <p class="fw-bold">{{ $school->region ?? 'Not specified' }}</p>
-                </div>
-                <div class="col-md-6">
-                    <p class="csss-muted small mb-1">Division</p>
-                    <p class="fw-bold">{{ $school->division ?? 'Not specified' }}</p>
-                </div>
-            </div>
-
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <p class="csss-muted small mb-1">District</p>
-                    <p class="fw-bold">{{ $school->district ?? 'Not specified' }}</p>
-                </div>
-                <div class="col-md-6">
-                    <p class="csss-muted small mb-1">Contact</p>
-                    <p class="fw-bold">{{ $school->contact_person ?? 'Not specified' }}</p>
-                </div>
-            </div>
-
-            @if($school->address)
-                <div class="row">
-                    <div class="col-12">
-                        <p class="csss-muted small mb-1">Address</p>
-                        <p class="fw-bold">{{ $school->address }}</p>
+            @else
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <p class="csss-muted small mb-1">School Name</p>
+                        <p class="fw-bold">{{ $school->name }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="csss-muted small mb-1">School Type</p>
+                        <p class="fw-bold">{{ $school->school_type ?? 'Not specified' }}</p>
                     </div>
                 </div>
-            @endif
-        </div>
-    </div>
 
-    <!-- Quick Actions -->
-    <div class="col-lg-4">
-        <div class="csss-card p-4">
-            <h5 class="fw-bold mb-4">Quick Actions</h5>
-            
-            <div class="d-grid gap-2">
-                <a href="{{ route('comprehensive-school-safety.school.assessments', $school->id) }}" 
-                   class="btn btn-outline-dark d-flex align-items-center justify-content-center gap-2 py-3 rounded-3">
-                    <i class="fas fa-list-check"></i> View Assessments
-                </a>
-                <a href="{{ route('comprehensive-school-safety.school.students', $school->id) }}" 
-                   class="btn btn-outline-dark d-flex align-items-center justify-content-center gap-2 py-3 rounded-3">
-                    <i class="fas fa-users"></i> Manage Students
-                </a>
-                <a href="{{ route('comprehensive-school-safety.school.facilities', $school->id) }}" 
-                   class="btn btn-outline-dark d-flex align-items-center justify-content-center gap-2 py-3 rounded-3">
-                    <i class="fas fa-building"></i> Manage Facilities
-                </a>
-                <a href="{{ route('comprehensive-school-safety.school.reports', $school->id) }}" 
-                   class="btn btn-outline-dark d-flex align-items-center justify-content-center gap-2 py-3 rounded-3">
-                    <i class="fas fa-chart-bar"></i> View Reports
-                </a>
-            </div>
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <p class="csss-muted small mb-1">Region</p>
+                        <p class="fw-bold">{{ $school->region ?? 'Not specified' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="csss-muted small mb-1">Division</p>
+                        <p class="fw-bold">{{ $school->division ?? 'Not specified' }}</p>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <p class="csss-muted small mb-1">District</p>
+                        <p class="fw-bold">{{ $school->district ?? 'Not specified' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="csss-muted small mb-1">Contact</p>
+                        <p class="fw-bold">{{ $school->contact_person ?? 'Not specified' }}</p>
+                    </div>
+                </div>
+
+                @if($school->address)
+                    <div class="row">
+                        <div class="col-12">
+                            <p class="csss-muted small mb-1">Address</p>
+                            <p class="fw-bold">{{ $school->address }}</p>
+                        </div>
+                    </div>
+                @endif
+            @endif
         </div>
     </div>
 </div>
@@ -207,10 +249,10 @@
             </div>
 
             @php
-                $activeStudents = $school->students()->where('status', 'active')->count();
-                $graduatedStudents = $school->students()->where('status', 'graduated')->count();
-                $inactiveStudents = $school->students()->where('status', 'inactive')->count();
                 $totalStudents = $school->students()->count();
+                $activeStudents = 0;
+                $graduatedStudents = 0;
+                $inactiveStudents = 0;
             @endphp
 
             @if($totalStudents > 0)

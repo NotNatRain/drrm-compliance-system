@@ -1,7 +1,7 @@
 {{-- resources/views/typhoon/choose-school.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'Choose School - Typhoon/Flooding Compliance')
+@section('title', 'Choose School - Typhoon/Flooding Monitoring')
 @section('hide_main_nav', '1')
 
 @push('styles')
@@ -54,7 +54,7 @@
 
     <div class="mb-3">
         <h1 class="h3 tf-title">
-            <i class="fas fa-umbrella"></i> Typhoon/Flooding Compliance
+            <i class="fas fa-umbrella"></i> Typhoon/Flooding Monitoring
         </h1>
         <p class="text-muted mb-0">Choose the evacuation center (school) to manage and monitor.</p>
     </div>

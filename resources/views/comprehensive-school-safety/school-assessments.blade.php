@@ -2,8 +2,17 @@
 @section('activeMenu', 'assessments')
 
 @section('content')
-<h2 class="csss-section-title mb-2">Assessments</h2>
-<p class="csss-muted mb-4">{{ $assessments->count() }} assessment{{ $assessments->count() !== 1 ? 's' : '' }} on record</p>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex align-items-center gap-3">
+        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #9c27b0 0%, #ce93d8 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+            <i class="fas fa-clipboard-check text-white" style="font-size: 1.5rem;"></i>
+        </div>
+        <div>
+            <h2 class="csss-section-title mb-1">Assessments</h2>
+            <p class="csss-muted mb-0">{{ $assessments->count() }} assessment{{ $assessments->count() !== 1 ? 's' : '' }} on record</p>
+        </div>
+    </div>
+</div>
 
 <div style="margin-bottom: 1rem;">
     <a href="{{ route('comprehensive-school-safety.school.assessments.new', $school->id) }}" class="btn" style="background: linear-gradient(135deg, var(--csss-primary) 0%, var(--csss-primary-soft) 100%); color: white;">
