@@ -30,11 +30,11 @@
         <div class="csss-card p-4">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <p class="csss-muted small mb-2">Total Schools</p>
-                    <h3 class="fw-bold mb-0">{{ $stats['total_schools'] ?? 0 }}</h3>
+                    <p class="csss-muted small mb-2">Schools in main directory</p>
+                    <h3 class="fw-bold mb-0">{{ $stats['directory_total'] ?? 0 }}</h3>
                 </div>
                 <div style="width: 50px; height: 50px; background: linear-gradient(135deg, var(--csss-primary) 0%, var(--csss-primary-soft) 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-school text-white" style="font-size: 1.5rem;"></i>
+                    <i class="fas fa-database text-white" style="font-size: 1.5rem;"></i>
                 </div>
             </div>
         </div>
@@ -44,11 +44,11 @@
         <div class="csss-card p-4">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <p class="csss-muted small mb-2">From Fire Safety</p>
-                    <h3 class="fw-bold mb-0">{{ $stats['registered_from_fire_safety'] ?? 0 }}</h3>
+                    <p class="csss-muted small mb-2">Registered in this module</p>
+                    <h3 class="fw-bold mb-0">{{ $stats['registered_comprehensive'] ?? 0 }}</h3>
                 </div>
-                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #dc3545 0%, #ff6b6b 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-fire text-white" style="font-size: 1.5rem;"></i>
+                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #5c4033 0%, #8b6914 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-clipboard-check text-white" style="font-size: 1.5rem;"></i>
                 </div>
             </div>
         </div>
@@ -58,11 +58,11 @@
         <div class="csss-card p-4">
             <div class="d-flex justify-content-between align-items-start">
                 <div>
-                    <p class="csss-muted small mb-2">Manually Created</p>
-                    <h3 class="fw-bold mb-0">{{ $stats['manually_created'] ?? 0 }}</h3>
+                    <p class="csss-muted small mb-2">Not registered here yet</p>
+                    <h3 class="fw-bold mb-0">{{ $stats['pending_registration'] ?? 0 }}</h3>
                 </div>
-                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #28a745 0%, #51cf66 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-pencil-alt text-white" style="font-size: 1.5rem;"></i>
+                <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #6c757d 0%, #adb5bd 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-hourglass-half text-white" style="font-size: 1.5rem;"></i>
                 </div>
             </div>
         </div>
@@ -75,24 +75,23 @@
 @if($recentSchools->isEmpty())
     <div class="csss-card p-5 text-center">
         <i class="fas fa-inbox" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem;"></i>
-        <h5 class="csss-muted">No Schools Found</h5>
-        <p class="csss-muted mb-3">Start by creating a new school record or registering schools from Fire Safety.</p>
-        @if($isAdminView)
-            <div class="d-flex gap-2 justify-content-center">
-                <button type="button" class="btn" style="background: linear-gradient(135deg, var(--csss-primary) 0%, var(--csss-primary-soft) 100%); color: white;" data-bs-toggle="modal" data-bs-target="#createSchoolModal">
-                    <i class="fas fa-plus"></i> Create New School
-                </button>
-                <button type="button" class="btn btn-outline-dark" data-bs-toggle="modal" data-bs-target="#registerExistingSchoolModal">
-                    <i class="fas fa-link"></i> Register from Fire Safety
-                </button>
-            </div>
+        <h5 class="csss-muted">No schools registered in this module yet</h5>
+        <p class="csss-muted mb-3">Add schools on <strong>DRRM Main Dashboard → Schools</strong>, then register them here to use Comprehensive School Safety.</p>
+        @if($isAdminView && ($directorySchoolsForComprehensiveRegistration ?? collect())->isNotEmpty())
+            <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#registerSchoolFromDirectoryModal">
+                <i class="fas fa-link me-1"></i> Register school
+            </button>
+        @elseif($isAdminView && ($stats['directory_total'] ?? 0) === 0)
+            <p class="small text-muted mb-0">There are no schools in the main directory yet.</p>
+        @elseif($isAdminView)
+            <p class="small text-muted mb-0">Every directory school is already registered for this module.</p>
         @endif
     </div>
 @else
     <div class="row g-3" id="schoolsContainer">
         @foreach($recentSchools as $school)
             <div class="col-md-6 col-lg-4 school-card" data-school-name="{{ strtolower($school->name) }}">
-                <div class="csss-card p-4 h-100 school-card-item" style="cursor: pointer;" onclick="window.location.href='{{ route('comprehensive-school-safety.school.dashboard', $school->id) }}'">
+                <div class="csss-card p-4 h-100 school-card-item" style="cursor: pointer;" onclick="window.location.href='{{ route('comprehensive-school-safety.school.assessments', $school->id) }}'">
                     <div class="d-flex justify-content-between align-items-start mb-3">
                         <div class="flex-grow-1">
                             <h5 class="fw-bold mb-1">{{ $school->name }}</h5>
@@ -137,160 +136,23 @@
             </div>
         @endforeach
 
-        @if($isAdminView)
+        @if($isAdminView && ($directorySchoolsForComprehensiveRegistration ?? collect())->isNotEmpty())
         <div class="col-md-6 col-lg-4">
             <div class="csss-card p-4 h-100 d-flex flex-column justify-content-center align-items-center text-center school-card-item"
                  id="addSchoolCard"
                  style="cursor: pointer; border: 2px dashed var(--csss-border);">
                 <div style="width: 72px; height: 72px; border-radius: 16px; background: linear-gradient(135deg, var(--csss-primary) 0%, var(--csss-primary-soft) 100%); display: flex; align-items: center; justify-content: center;" class="mb-3">
-                    <i class="fas fa-plus text-white" style="font-size: 1.75rem;"></i>
+                    <i class="fas fa-link text-white" style="font-size: 1.75rem;"></i>
                 </div>
-                <h5 class="fw-bold mb-1">Add New School</h5>
-                <p class="csss-muted mb-3">Create a school manually or register one from Fire Safety data.</p>
-                <div class="d-flex flex-column gap-2 w-100">
-                    <button type="button" class="btn btn-dark js-open-create-school" data-bs-toggle="modal" data-bs-target="#createSchoolModal">
-                        <i class="fas fa-pen me-1"></i> Create New School
-                    </button>
-                    <button type="button" class="btn btn-outline-dark js-open-register-school" data-bs-toggle="modal" data-bs-target="#registerExistingSchoolModal">
-                        <i class="fas fa-link me-1"></i> Register an Existing School
-                    </button>
-                </div>
+                <h5 class="fw-bold mb-1">Register another school</h5>
+                <p class="csss-muted mb-3">Choose a school from the main DRRM directory that is not yet in this module.</p>
+                <button type="button" class="btn btn-dark w-100 js-open-register-from-directory" data-bs-toggle="modal" data-bs-target="#registerSchoolFromDirectoryModal">
+                    <i class="fas fa-school me-1"></i> Register school
+                </button>
             </div>
         </div>
         @endif
     </div>
-@endif
-
-@if($isAdminView)
-<div class="modal fade" id="createSchoolModal" tabindex="-1" aria-labelledby="createSchoolModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content" style="border-radius: 16px; border: 1px solid var(--csss-border);">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold" id="createSchoolModalLabel">Create New School</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="POST" action="{{ route('comprehensive-school-safety.schools.store') }}">
-                @csrf
-                <div class="modal-body pt-3">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">School Name</label>
-                            <input type="text" name="name" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">School ID Number</label>
-                            <input type="text" name="school_id_number" class="form-control" required>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label fw-semibold">Address</label>
-                            <input type="text" name="address" class="form-control" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">District</label>
-                            <input type="text" name="district" class="form-control" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Division</label>
-                            <input type="text" name="division" class="form-control" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Region</label>
-                            <input type="text" name="region" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">School Head</label>
-                            <input type="text" name="school_head" class="form-control" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Contact Number</label>
-                            <input type="text" name="contact_number" class="form-control" required>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-dark">
-                        <i class="fas fa-save me-1"></i> Save School
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="registerExistingSchoolModal" tabindex="-1" aria-labelledby="registerExistingSchoolModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content" style="border-radius: 16px; border: 1px solid var(--csss-border);">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold" id="registerExistingSchoolModalLabel">Register an Existing School</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form method="POST" action="{{ route('comprehensive-school-safety.schools.register-existing.store') }}">
-                @csrf
-                <div class="modal-body pt-3">
-                    <div class="row g-3">
-                        <div class="col-12">
-                            <label class="form-label fw-semibold">Fire Safety School</label>
-                            <select name="fire_safety_school_id" id="fireSafetySchoolSelect" class="form-select" required>
-                                <option value="">Select School</option>
-                                @foreach($fireSafetySchools as $fireSchool)
-                                    <option
-                                        value="{{ $fireSchool->id }}"
-                                        data-school-id="{{ $fireSchool->school_id }}"
-                                        data-address="{{ $fireSchool->address }}"
-                                        data-school-head="{{ $fireSchool->school_head }}"
-                                    >
-                                        {{ $fireSchool->school_name }} ({{ $fireSchool->school_id ?? 'No ID' }})
-                                        {{ $registeredSchoolIds->contains((string) $fireSchool->school_id) ? ' - Already Registered' : '' }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            <small class="text-muted">Schools come from Fire Safety Compliance records.</small>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">School ID Number</label>
-                            <input type="text" id="registerSchoolIdNumber" class="form-control" readonly>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">School Head</label>
-                            <input type="text" name="school_head" id="registerSchoolHead" class="form-control" required>
-                        </div>
-
-                        <div class="col-12">
-                            <label class="form-label fw-semibold">Address</label>
-                            <input type="text" id="registerAddress" class="form-control" readonly>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">District</label>
-                            <input type="text" name="district" class="form-control" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Division</label>
-                            <input type="text" name="division" class="form-control" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">Region</label>
-                            <input type="text" name="region" class="form-control" required>
-                        </div>
-
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Contact Number</label>
-                            <input type="text" name="contact_number" class="form-control" required>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-dark">
-                        <i class="fas fa-link me-1"></i> Register School
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 @endif
 
 <script>
@@ -307,37 +169,22 @@ document.querySelectorAll('.school-card-item').forEach(card => {
 
 const addSchoolCard = document.getElementById('addSchoolCard');
 if (addSchoolCard) {
-    addSchoolCard.addEventListener('click', function() {
-        if (typeof bootstrap === 'undefined') {
+    addSchoolCard.addEventListener('click', function(ev) {
+        if (ev.target.closest('.js-open-register-from-directory')) {
             return;
         }
-        const createSchoolModal = document.getElementById('createSchoolModal');
-        if (createSchoolModal) {
-            new bootstrap.Modal(createSchoolModal).show();
-        }
+        ev.preventDefault();
+        if (typeof bootstrap === 'undefined') return;
+        const m = document.getElementById('registerSchoolFromDirectoryModal');
+        if (m) new bootstrap.Modal(m).show();
     });
 }
 
-document.querySelectorAll('.js-open-create-school, .js-open-register-school').forEach(button => {
+document.querySelectorAll('.js-open-register-from-directory').forEach(button => {
     button.addEventListener('click', function(event) {
         event.stopPropagation();
     });
 });
-
-const fireSafetySchoolSelect = document.getElementById('fireSafetySchoolSelect');
-if (fireSafetySchoolSelect) {
-    fireSafetySchoolSelect.addEventListener('change', function() {
-        const option = this.options[this.selectedIndex];
-        document.getElementById('registerSchoolIdNumber').value = option?.dataset?.schoolId || '';
-        document.getElementById('registerAddress').value = option?.dataset?.address || '';
-        document.getElementById('registerSchoolHead').value = option?.dataset?.schoolHead || '';
-    });
-}
-
-if (typeof bootstrap !== 'undefined' && window.location.hash === '#schoolsDirectory' && document.getElementById('createSchoolModal')) {
-    const createModal = new bootstrap.Modal(document.getElementById('createSchoolModal'));
-    createModal.show();
-}
 </script>
 
 @endsection

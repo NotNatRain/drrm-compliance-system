@@ -1,153 +1,166 @@
 @extends('comprehensive-school-safety.layouts.app')
 @section('activeMenu', 'facilities')
+@section('headerLabel', $school->name ?? 'Facilities')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div class="d-flex align-items-center gap-3">
-        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #ff9800 0%, #ffb74d 100%); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-            <i class="fas fa-building text-white" style="font-size: 1.5rem;"></i>
+<div class="d-flex justify-content-between align-items-start gap-3 mb-4">
+    <div>
+        <h2 class="csss-section-title mb-1">Safety Facilities Dashboard</h2>
+        <p class="csss-muted mb-0">Read-only references from Fire Safety, with risk and action tracking for this school.</p>
+    </div>
+    <div class="text-end">
+        <div class="badge bg-dark text-white px-3 py-2 mb-2">{{ $assessmentSummary['building_count'] ?? 0 }} Fire Safety references</div>
+        <p class="csss-muted small mb-0">Average score: <strong>{{ $assessmentSummary['average_score'] ?? 0 }}</strong></p>
+    </div>
+</div>
+
+@if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+        <i class="fas fa-check-circle me-1"></i> {{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+@endif
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="csss-card p-4 h-100">
+            <p class="csss-muted small mb-2">Average safety score</p>
+            <h3 class="fw-bold mb-0">{{ $assessmentSummary['average_score'] ?? 0 }}</h3>
         </div>
-        <div>
-            <h2 class="csss-section-title mb-1">School Facilities</h2>
-            <p class="csss-muted mb-0">{{ $facilities->count() }} facilit{{ $facilities->count() !== 1 ? 'ies' : 'y' }} on record</p>
+    </div>
+    <div class="col-md-3">
+        <div class="csss-card p-4 h-100">
+            <p class="csss-muted small mb-2">Good</p>
+            <h3 class="fw-bold mb-0 text-success">{{ $assessmentSummary['good_count'] ?? 0 }}</h3>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="csss-card p-4 h-100">
+            <p class="csss-muted small mb-2">Fair</p>
+            <h3 class="fw-bold mb-0 text-warning">{{ $assessmentSummary['fair_count'] ?? 0 }}</h3>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="csss-card p-4 h-100">
+            <p class="csss-muted small mb-2">Needs attention</p>
+            <h3 class="fw-bold mb-0 text-danger">{{ $assessmentSummary['poor_count'] ?? 0 }}</h3>
         </div>
     </div>
 </div>
 
-<div style="margin-bottom: 1rem;">
-    <button type="button" class="btn" style="background: linear-gradient(135deg, var(--csss-primary) 0%, var(--csss-primary-soft) 100%); color: white;" data-bs-toggle="modal" data-bs-target="#addFacilityModal">
-        <i class="fas fa-plus me-2"></i> Add Facility
-    </button>
-</div>
+<div class="csss-card p-4 mb-4">
+    <div class="d-flex align-items-center justify-content-between gap-3 mb-3">
+        <div>
+            <h5 class="fw-bold mb-1">Fire Safety References</h5>
+            <p class="csss-muted small mb-0">Buildings are referenced from the Fire Safety module, not duplicated here.</p>
+        </div>
+        <span class="badge bg-light text-dark">Read only</span>
+    </div>
 
-<div class="csss-card p-4">
-    @if($facilities->isEmpty())
-        <div class="text-center py-5">
-            <i class="fas fa-building" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem;"></i>
-            <h5 class="text-muted mb-3">No Facilities Found</h5>
-            <p class="text-muted mb-4">No facility records have been added for this school yet.</p>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFacilityModal">
-                <i class="fas fa-plus"></i> Add First Facility
-            </button>
+    @if(($fireSafetyBuildings ?? collect())->isEmpty())
+        <div class="text-center py-4 border rounded-3 bg-light">
+            <i class="fas fa-building-circle-exclamation text-muted" style="font-size: 2rem;"></i>
+            <p class="csss-muted mt-3 mb-0">No Fire Safety buildings are linked to this school yet.</p>
         </div>
     @else
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead>
-                    <tr style="background: #f8f9fa;">
-                        <th class="text-muted small">Facility Name</th>
-                        <th class="text-muted small">Type</th>
-                        <th class="text-muted small">Condition</th>
-                        <th class="text-muted small">Date Added</th>
-                        <th class="text-muted small text-end">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($facilities as $facility)
-                        <tr>
-                            <td class="fw-500">{{ $facility->name ?? 'Facility' }}</td>
-                            <td>{{ $facility->type ?? 'N/A' }}</td>
-                            <td>
-                                <span class="badge bg-success text-capitalize">{{ $facility->condition ?? 'good' }}</span>
-                            </td>
-                            <td class="text-muted small">{{ $facility->created_at?->format('M d, Y') ?? 'N/A' }}</td>
-                            <td class="text-end">
-                                <div class="btn-group btn-group-sm">
-                                    <button type="button" class="btn btn-outline-secondary" title="View" disabled>
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button type="button" class="btn btn-outline-secondary" title="Edit" disabled>
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
+        <div class="d-flex flex-wrap gap-2">
+            @foreach($fireSafetyBuildings as $building)
+                <span class="badge rounded-pill text-bg-light border px-3 py-2">
+                    {{ $building->building_name ?? ('Building ' . $building->building_no) }}
+                </span>
+            @endforeach
         </div>
-
-        @if($facilities->hasPages())
-            <div class="mt-4">
-                {{ $facilities->links('pagination::bootstrap-5') }}
-            </div>
-        @endif
     @endif
 </div>
 
-<div class="modal fade" id="addFacilityModal" tabindex="-1" role="dialog" aria-labelledby="addFacilityLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
-        <div class="modal-content border-0" style="border-radius: 14px;">
-            <div class="modal-header border-0 pb-0" style="background: linear-gradient(135deg, var(--csss-primary) 0%, var(--csss-primary-soft) 100%); border-radius: 14px 14px 0 0; color: white;">
-                <h5 class="modal-title fw-bold" id="addFacilityLabel">Add New Facility</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="csss-card p-4 h-100">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+                <div>
+                    <h5 class="fw-bold mb-1">Risk Register</h5>
+                    <p class="csss-muted small mb-0">Risk is derived from Fire Safety scores, plans, alarms, and extinguisher coverage.</p>
+                </div>
             </div>
-            <form method="POST" action="{{ route('comprehensive-school-safety.school.facilities', $school->id) }}">
-                @csrf
-                <div class="modal-body p-4">
-                    <p class="csss-muted small mb-4">Record a new physical asset or location.</p>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-600">Select School</label>
-                        <select name="school_id" class="form-select @error('school_id') is-invalid @enderror">
-                            @foreach($allSchools as $s)
-                                <option value="{{ $s->id }}" {{ (int) $s->id === (int) $school->id ? 'selected' : '' }}>
-                                    {{ $s->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('school_id')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-600">Facility Name</label>
-                        <input type="text" name="name" class="form-control @error('name') is-invalid @enderror" placeholder="Enter facility name" required>
-                        @error('name')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-600">Type</label>
-                            <input type="text" name="type" class="form-control @error('type') is-invalid @enderror" placeholder="e.g. Classroom, Hallway" required>
-                            @error('type')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+            <div class="d-grid gap-3">
+                @forelse($riskRegister as $item)
+                    <div class="border rounded-3 p-3 {{ $item['needs_attention'] ? 'bg-light' : '' }}">
+                        <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                            <div>
+                                <h6 class="fw-bold mb-1">{{ $item['title'] }}</h6>
+                                <p class="csss-muted small mb-0">{{ $item['summary'] }}</p>
+                            </div>
+                            <span class="badge bg-{{ $item['color'] ?? 'secondary' }}">{{ $item['status'] }}</span>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-600">Condition</label>
-                            <select name="condition" class="form-select @error('condition') is-invalid @enderror">
-                                <option value="good" selected>Good</option>
-                                <option value="fair">Fair</option>
-                                <option value="needs_repair">Needs Repair</option>
-                                <option value="condemned">Condemned</option>
-                            </select>
-                            @error('condition')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                        <div class="row g-2 small text-muted">
+                            <div class="col-md-3">Score: <strong>{{ $item['score'] }}</strong></div>
+                            <div class="col-md-3">Exits: <strong>{{ $item['exits'] }}</strong></div>
+                            <div class="col-md-3">Alarms: <strong>{{ $item['alarms'] }}</strong></div>
+                            <div class="col-md-3">Extinguishers: <strong>{{ $item['extinguishers'] }}</strong></div>
                         </div>
                     </div>
-
-                    <div class="mt-3">
-                        <label class="form-label fw-600">Description</label>
-                        <textarea name="description" rows="3" class="form-control @error('description') is-invalid @enderror" placeholder="Add optional details"></textarea>
-                        @error('description')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                @empty
+                    <div class="text-center py-5 border rounded-3 bg-light">
+                        <i class="fas fa-shield-halved text-muted" style="font-size: 2rem;"></i>
+                        <p class="csss-muted mt-3 mb-0">No risk records available yet.</p>
                     </div>
-                </div>
-
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn" style="background: linear-gradient(135deg, var(--csss-primary) 0%, var(--csss-primary-soft) 100%); color: white;">
-                        <i class="fas fa-save me-2"></i> Save Facility
-                    </button>
-                </div>
-            </form>
+                @endforelse
+            </div>
         </div>
     </div>
+
+    <div class="col-lg-5">
+        <div class="csss-card p-4 h-100">
+            <h5 class="fw-bold mb-3">Reference Facilities</h5>
+            <p class="csss-muted small mb-3">Read-only references from evacuation centers, assembly areas, and school profile data.</p>
+
+            <div class="d-grid gap-3">
+                @foreach($referenceFacilities as $facility)
+                    <div class="border rounded-3 p-3 bg-white">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                                <h6 class="fw-bold mb-1">{{ $facility['label'] }}</h6>
+                                <p class="mb-1">{{ $facility['value'] }}</p>
+                                <small class="csss-muted">{{ $facility['meta'] }}</small>
+                            </div>
+                            <span class="badge bg-secondary-subtle text-dark">Reference</span>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="csss-card p-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h5 class="fw-bold mb-1">Action Tracker</h5>
+            <p class="csss-muted small mb-0">Track the next steps that need to be completed for Fire Safety and school safety readiness.</p>
+        </div>
+        <span class="badge bg-danger">Open items</span>
+    </div>
+
+    @if(($actionItems ?? collect())->isEmpty())
+        <div class="text-center py-4 border rounded-3 bg-light">
+            <i class="fas fa-circle-check text-success" style="font-size: 2rem;"></i>
+            <p class="csss-muted mt-3 mb-0">No open actions right now.</p>
+        </div>
+    @else
+        <div class="row g-3">
+            @foreach($actionItems as $action)
+                <div class="col-md-6 col-xl-4">
+                    <div class="border rounded-3 p-3 h-100 bg-white">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                            <h6 class="fw-bold mb-0">{{ $action['title'] }}</h6>
+                            <span class="badge bg-{{ $action['color'] ?? 'danger' }}">{{ $action['status'] }}</span>
+                        </div>
+                        <p class="csss-muted small mb-0">{{ $action['action'] }}</p>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @endif
 </div>
 @endsection

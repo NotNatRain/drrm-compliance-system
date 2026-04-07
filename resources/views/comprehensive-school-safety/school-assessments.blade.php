@@ -15,9 +15,16 @@
 </div>
 
 <div style="margin-bottom: 1rem;">
-    <a href="{{ route('comprehensive-school-safety.school.assessments.new', $school->id) }}" class="btn" style="background: linear-gradient(135deg, var(--csss-primary) 0%, var(--csss-primary-soft) 100%); color: white;">
-        <i class="fas fa-plus me-2"></i> New Safety Assessment
-    </a>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{{ route('comprehensive-school-safety.school.assessments.new', $school->id) }}" class="btn" style="background: linear-gradient(135deg, var(--csss-primary) 0%, var(--csss-primary-soft) 100%); color: white;">
+            <i class="fas fa-plus me-2"></i> New Safety Assessment
+        </a>
+        @if(auth()->check() && auth()->user()->role === 'admin')
+            <a href="{{ route('comprehensive-school-safety.school.assessments.questionnaire.edit', $school->id) }}" class="btn btn-outline-dark">
+                <i class="fas fa-pen-ruler me-2"></i> Edit Assessment Questionnaires
+            </a>
+        @endif
+    </div>
 </div>
 
 <!-- Assessments Table or Empty State -->
@@ -46,7 +53,7 @@
                                 <tbody>
                                 @foreach($assessments as $assessment)
                                     <tr>
-                                        <td class="fw-500">{{ $assessment->title ?? 'Assessment' }}</td>
+                                        <td class="fw-500">{{ $assessment->assessment_code ?? ('ASMT-' . str_pad($assessment->id, 3, '0', STR_PAD_LEFT)) }}</td>
                                         <td>{{ $assessment->total_score ?? 'N/A' }}</td>
                                         <td>
                                             <span class="badge bg-success">{{ $assessment->status ?? 'Active' }}</span>
@@ -54,12 +61,12 @@
                                         <td class="text-muted small">{{ $assessment->created_at->format('M d, Y') }}</td>
                                         <td class="text-end">
                                             <div class="btn-group btn-group-sm">
-                                                <button type="button" class="btn btn-outline-secondary" title="View" disabled>
+                                                <a href="{{ route('comprehensive-school-safety.school.assessments.view', [$school->id, $assessment->id]) }}" class="btn btn-outline-secondary" title="View">
                                                     <i class="fas fa-eye"></i>
-                                                </button>
-                                                <button type="button" class="btn btn-outline-secondary" title="Edit" disabled>
+                                                </a>
+                                                <a href="{{ route('comprehensive-school-safety.school.assessments.edit', [$school->id, $assessment->id]) }}" class="btn btn-outline-secondary" title="Edit">
                                                     <i class="fas fa-edit"></i>
-                                                </button>
+                                                </a>
                                             </div>
                                         </td>
                                     </tr>

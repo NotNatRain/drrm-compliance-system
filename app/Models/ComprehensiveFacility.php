@@ -15,6 +15,6 @@ class ComprehensiveFacility extends Model
 
     public function school()
     {
-        return $this->belongsTo(ComprehensiveSchool::class, 'school_id');
+        return $this->belongsTo(School::class, 'school_id');
     }
 }

@@ -22,7 +22,7 @@
         <div id="mobile-overlay" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 hidden md:hidden transition-opacity duration-300"></div>
 
         <!-- Sidebar -->
-        <aside id="sidebar" class="fixed md:relative inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white flex flex-col transition-transform duration-300 transform -translate-x-full md:translate-x-0 md:inset-auto shadow-2xl h-full">
+        <aside id="sidebar" class="fixed md:relative inset-y-0 left-0 z-50 w-64 bg-slate-900 text-white flex flex-col transition-transform duration-300 transform -translate-x-full md:translate-x-0 md:inset-auto shadow-2xl h-full overflow-hidden">
             <div class="p-6 border-b border-slate-800">
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
@@ -35,7 +35,7 @@
                 </div>
             </div>
 
-            <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+            <nav class="flex-1 p-4 space-y-1">
                 {{-- Back Button (Visible only when inside a school context) --}}
                 @if(isset($school))
                 <a href="{{ route('dashboard') }}" class="flex items-center gap-2 px-4 py-2 mb-4 text-xs font-semibold text-blue-300 hover:text-white uppercase tracking-wider transition-colors">
