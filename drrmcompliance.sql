@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 25, 2026 at 09:42 AM
+-- Generation Time: Apr 07, 2026 at 07:47 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -48,44 +48,8 @@ INSERT INTO `activity_logs` (`id`, `user_id`, `role`, `activity`, `school_id`, `
 (1, 1, 'admin', 'Updated room: Room-010', 11, 'Iram I Elementary School', 'fire_safety', 'Okay kayo room', '2026-03-11 23:55:06', '2026-03-11 23:55:06'),
 (2, 1, 'admin', 'Logged incident: Earthquake at Dos Trios School', NULL, 'Dos Trios School', 'incident_checklist', 'Magnitude of 3.2 earthquake', '2026-03-11 23:56:47', '2026-03-11 23:56:47'),
 (3, 1, 'admin', 'Registered family: Louise Santiago', 11, 'Iram I Elementary School', 'typhoon_flood', NULL, '2026-03-11 23:58:47', '2026-03-11 23:58:47'),
-(4, 1, 'admin', 'Sent map update notification', 19, 'New Cabalan Elementary School', 'fire_safety', 'Need buildings to register', '2026-03-12 00:00:32', '2026-03-12 00:00:32'),
-(5, 1, 'admin', 'Created room: Grade 1 Classroom', 15, 'Amelia Heights ES', 'fire_safety', 'Okay', '2026-03-12 00:01:43', '2026-03-12 00:01:43'),
-(6, 1, 'admin', 'Created extinguisher: FRXT-01', 15, 'Amelia Heights ES', 'fire_safety', 'Okay extinguisher', '2026-03-12 00:02:17', '2026-03-12 00:02:17'),
-(7, 1, 'admin', 'Updated extinguisher: FRXT-01', 15, 'Amelia Heights ES', 'fire_safety', 'Was used now', '2026-03-12 00:03:05', '2026-03-12 00:03:05'),
 (8, 1, 'admin', 'Created incident status: Fire Drilling', NULL, NULL, 'incident_checklist', NULL, '2026-03-12 00:04:20', '2026-03-12 00:04:20'),
 (9, 1, 'admin', 'Logged incident: Incident at Deped SDO department', NULL, 'Deped SDO department', 'incident_checklist', 'To practice personnel', '2026-03-12 00:05:29', '2026-03-12 00:05:29'),
-(10, 1, 'admin', 'Updated extinguisher: FRXT-09', 14, 'Boton ES', 'fire_safety', 'Okay', '2026-03-12 00:31:11', '2026-03-12 00:31:11'),
-(11, 1, 'admin', 'Updated room: 01', 12, 'Mabayuan Elementary School', 'fire_safety', 'Okay now', '2026-03-12 00:32:17', '2026-03-12 00:32:17'),
-(12, 5, 'admin', 'Updated room: 01', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', NULL, '2026-03-12 00:32:49', '2026-03-12 00:32:49'),
-(13, 1, 'admin', 'Created evacuation plan: Olan a', 12, 'Mabayuan Elementary School', 'fire_safety', 'Omay', '2026-03-12 00:32:59', '2026-03-12 00:32:59'),
-(14, 5, 'admin', 'Updated room: 02', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', NULL, '2026-03-12 00:33:08', '2026-03-12 00:33:08'),
-(15, 5, 'admin', 'Updated room: 02', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', NULL, '2026-03-12 00:33:08', '2026-03-12 00:33:08'),
-(16, 5, 'admin', 'Updated room: 02', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', NULL, '2026-03-12 00:33:08', '2026-03-12 00:33:08'),
-(17, 5, 'admin', 'Updated room: 01', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', NULL, '2026-03-12 00:33:25', '2026-03-12 00:33:25'),
-(18, 5, 'admin', 'Updated extinguisher: 01', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', 'Assigned', '2026-03-12 00:35:46', '2026-03-12 00:35:46'),
-(19, 5, 'admin', 'Transferred extinguisher: 02 to 001', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', NULL, '2026-03-12 00:37:45', '2026-03-12 00:37:45'),
-(20, 5, 'admin', 'Updated extinguisher: 02', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', 'Preventive Maintenance Done', '2026-03-12 00:38:55', '2026-03-12 00:38:55'),
-(21, 5, 'admin', 'Updated extinguisher: 02', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', 'Preventive Maintenance Done', '2026-03-12 00:39:01', '2026-03-12 00:39:01'),
-(22, 5, 'admin', 'Updated building: 3', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', NULL, '2026-03-12 00:41:28', '2026-03-12 00:41:28'),
-(23, 5, 'admin', 'Updated room: 01', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', NULL, '2026-03-12 00:42:07', '2026-03-12 00:42:07'),
-(24, 5, 'admin', 'Updated room: 02', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', NULL, '2026-03-12 00:42:32', '2026-03-12 00:42:32'),
-(25, 5, 'admin', 'Updated extinguisher: 09', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', 'Purchased', '2026-03-12 00:43:27', '2026-03-12 00:43:27'),
-(26, 5, 'admin', 'Updated extinguisher: 10', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', 'Purchased', '2026-03-12 00:44:03', '2026-03-12 00:44:03'),
-(27, 5, 'admin', 'Created extinguisher: 11', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', 'Purchased', '2026-03-12 00:47:07', '2026-03-12 00:47:07'),
-(28, 5, 'admin', 'Created extinguisher: 12', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', 'Purchased', '2026-03-12 00:48:02', '2026-03-12 00:48:02'),
-(29, 5, 'admin', 'Updated extinguisher: 12', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', 'Updated', '2026-03-12 00:48:29', '2026-03-12 00:48:29'),
-(30, 5, 'admin', 'Updated room: 01', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', NULL, '2026-03-12 00:49:11', '2026-03-12 00:49:11'),
-(31, 5, 'admin', 'Created extinguisher: 13', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', 'Purchased', '2026-03-12 00:50:12', '2026-03-12 00:50:12'),
-(32, 5, 'admin', 'Updated room: 01', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', NULL, '2026-03-12 00:53:43', '2026-03-12 00:53:43'),
-(33, 5, 'admin', 'Updated room: 02', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', NULL, '2026-03-12 00:54:16', '2026-03-12 00:54:16'),
-(34, 5, 'admin', 'Created extinguisher: 04', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', NULL, '2026-03-12 00:55:29', '2026-03-12 00:55:29'),
-(35, 5, 'admin', 'Updated extinguisher: 06', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', 'Purchased', '2026-03-12 00:58:41', '2026-03-12 00:58:41'),
-(36, 5, 'admin', 'Updated extinguisher: 07', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', 'Addressed', '2026-03-12 00:59:08', '2026-03-12 00:59:08'),
-(37, 5, 'admin', 'Updated extinguisher: 04', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', 'addressed', '2026-03-12 00:59:47', '2026-03-12 00:59:47'),
-(38, 5, 'admin', 'Created extinguisher: 14', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', NULL, '2026-03-12 01:01:18', '2026-03-12 01:01:18'),
-(39, 5, 'admin', 'Updated extinguisher: 08', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', 'Updated', '2026-03-12 01:04:49', '2026-03-12 01:04:49'),
-(40, 5, 'admin', 'Updated building: 001', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', NULL, '2026-03-12 01:05:57', '2026-03-12 01:05:57'),
-(41, 1, 'admin', 'Created extinguisher: 16', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', 'Okay', '2026-03-13 00:21:55', '2026-03-13 00:21:55'),
 (42, 1, 'admin', 'Updated checklist item: Incident Verification Completed (Completed)', NULL, NULL, 'incident_checklist', NULL, '2026-03-15 18:26:07', '2026-03-15 18:26:07'),
 (43, 1, 'admin', 'Added checklist item: Go to Jackson and inspect fire extinguisher there?', NULL, NULL, 'incident_checklist', NULL, '2026-03-15 18:26:38', '2026-03-15 18:26:38'),
 (44, 1, 'admin', 'Updated checklist item: Go to Jackson and inspect fire extinguisher there? (Completed)', NULL, NULL, 'incident_checklist', NULL, '2026-03-15 18:26:40', '2026-03-15 18:26:40'),
@@ -95,14 +59,6 @@ INSERT INTO `activity_logs` (`id`, `user_id`, `role`, `activity`, `school_id`, `
 (48, 1, 'admin', 'Created evacuation center: ', 18, 'Nellie E. Brown Elementary School', 'typhoon_flood', NULL, '2026-03-15 22:45:41', '2026-03-15 22:45:41'),
 (49, 1, 'admin', 'Logged incident: Fire at Unknown', NULL, 'Unknown', 'incident_checklist', 'To be encode later', '2026-03-15 23:57:37', '2026-03-15 23:57:37'),
 (50, 1, 'admin', 'Updated checklist item: Daily Monitoring Report Submitted (Completed)', NULL, NULL, 'incident_checklist', NULL, '2026-03-15 23:59:41', '2026-03-15 23:59:41'),
-(51, 1, 'admin', 'Updated extinguisher: 15', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', 'Extinguisher Code updated', '2026-03-16 00:53:44', '2026-03-16 00:53:44'),
-(52, 1, 'admin', 'Updated extinguisher: 14', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', 'Extinguisher Code updated', '2026-03-16 00:53:58', '2026-03-16 00:53:58'),
-(53, 1, 'admin', 'Updated building: 005', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', NULL, '2026-03-16 00:54:27', '2026-03-16 00:54:27'),
-(54, 1, 'admin', 'Updated extinguisher: 13', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', 'Extinguisher Code updated', '2026-03-16 00:57:16', '2026-03-16 00:57:16'),
-(55, 1, 'admin', 'Updated extinguisher: 12', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', 'Extinguisher Code updated', '2026-03-16 00:57:36', '2026-03-16 00:57:36'),
-(56, 1, 'admin', 'Updated extinguisher: 11', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', 'Extinguisher Code updated', '2026-03-16 00:58:10', '2026-03-16 00:58:10'),
-(57, 1, 'admin', 'Updated extinguisher: 10', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', 'Extinguisher Code updated', '2026-03-16 00:58:38', '2026-03-16 00:58:38'),
-(58, 1, 'admin', 'Updated extinguisher: 09', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', 'Extinguisher Code updated', '2026-03-16 00:59:00', '2026-03-16 00:59:00'),
 (59, 1, 'admin', 'Deleted checklist item: Incident Verification Completed', NULL, NULL, 'incident_checklist', NULL, '2026-03-16 16:48:27', '2026-03-16 16:48:27'),
 (60, 1, 'admin', 'Deleted checklist item: Go to Jackson and inspect fire extinguisher there?', NULL, NULL, 'incident_checklist', NULL, '2026-03-16 16:48:30', '2026-03-16 16:48:30'),
 (61, 1, 'admin', 'Deleted checklist item: Victim Assistance Log Updated', NULL, NULL, 'incident_checklist', NULL, '2026-03-16 16:48:33', '2026-03-16 16:48:33'),
@@ -111,91 +67,18 @@ INSERT INTO `activity_logs` (`id`, `user_id`, `role`, `activity`, `school_id`, `
 (64, 1, 'admin', 'Added checklist item: Other task (outdoor)', NULL, NULL, 'incident_checklist', NULL, '2026-03-17 16:50:17', '2026-03-17 16:50:17'),
 (65, 1, 'admin', 'Updated checklist item: Other task (outdoor) (Completed)', NULL, NULL, 'incident_checklist', NULL, '2026-03-17 16:50:18', '2026-03-17 16:50:18'),
 (66, 1, 'admin', 'Updated checklist item: Daily Monitoring Report Submitted (Completed)', NULL, NULL, 'incident_checklist', NULL, '2026-03-17 16:50:20', '2026-03-17 16:50:20'),
-(67, 1, 'admin', 'Updated building: Okay room', 14, 'Boton ES', 'fire_safety', NULL, '2026-03-16 17:25:10', '2026-03-16 17:25:10'),
-(68, 1, 'admin', 'Updated building: 01', 13, 'Bangal Integrated School', 'fire_safety', NULL, '2026-03-16 17:36:31', '2026-03-16 17:36:31'),
-(69, 1, 'admin', 'Updated room: 01', 13, 'Bangal Integrated School', 'fire_safety', 'Okay room', '2026-03-16 17:37:18', '2026-03-16 17:37:18'),
-(70, 1, 'admin', 'Created extinguisher: 01', 13, 'Bangal Integrated School', 'fire_safety', 'Good Extinguisher', '2026-03-16 17:37:51', '2026-03-16 17:37:51'),
-(71, 1, 'admin', 'Updated building: 02', 13, 'Bangal Integrated School', 'fire_safety', NULL, '2026-03-16 17:38:58', '2026-03-16 17:38:58'),
-(72, 1, 'admin', 'Created alarm: 11', 13, 'Bangal Integrated School', 'fire_safety', 'Alarm not functional (Fire Bells)', '2026-03-16 17:40:26', '2026-03-16 17:40:26'),
-(73, 1, 'admin', 'Tested alarm: 11', 13, 'Bangal Integrated School', 'fire_safety', NULL, '2026-03-16 17:40:29', '2026-03-16 17:40:29'),
-(74, 1, 'admin', 'Updated room: 01', 13, 'Bangal Integrated School', 'fire_safety', 'Okay room', '2026-03-16 17:51:12', '2026-03-16 17:51:12'),
-(75, 1, 'admin', 'Created room: Classroom', 13, 'Bangal Integrated School', 'fire_safety', 'Okay room', '2026-03-16 17:52:39', '2026-03-16 17:52:39'),
-(76, 1, 'admin', 'Created room: ffrg', 13, 'Bangal Integrated School', 'fire_safety', NULL, '2026-03-16 17:53:19', '2026-03-16 17:53:19'),
-(77, 1, 'admin', 'Removed room: 03', 13, 'Bangal Integrated School', 'fire_safety', 'Wrong room', '2026-03-16 17:53:54', '2026-03-16 17:53:54'),
-(78, 1, 'admin', 'Created room: Classroom', 13, 'Bangal Integrated School', 'fire_safety', 'Good Room', '2026-03-16 17:54:20', '2026-03-16 17:54:20'),
 (79, 1, 'admin', 'Registered family: Katadingan Reyes', 18, 'Nellie E. Brown Elementary School', 'typhoon_flood', NULL, '2026-03-16 18:00:43', '2026-03-16 18:00:43'),
 (80, 1, 'admin', 'Logged incident: Incident at All School', NULL, 'All School', 'incident_checklist', 'Eid\'l Fitr day', '2026-03-16 18:02:22', '2026-03-16 18:02:22'),
-(81, 4, 'contributor', 'Created room: Classroom', 13, 'Bangal Integrated School', 'fire_safety', 'Okay room', '2026-03-16 18:07:56', '2026-03-16 18:07:56'),
-(82, 4, 'contributor', 'Created extinguisher: FR-XT 02', 13, 'Bangal Integrated School', 'fire_safety', 'Okay Extinguisher', '2026-03-16 18:09:17', '2026-03-16 18:09:17'),
-(83, 4, 'contributor', 'Updated extinguisher: FR-XT 02', 13, 'Bangal Integrated School', 'fire_safety', 'Changing', '2026-03-16 18:09:56', '2026-03-16 18:09:56'),
-(84, 1, 'admin', 'Approved room: 04', 13, 'Bangal Integrated School', 'fire_safety', NULL, '2026-03-16 18:10:48', '2026-03-16 18:10:48'),
-(85, 1, 'admin', 'Updated building: 01', 16, 'New Cabalan Senior High School', 'fire_safety', NULL, '2026-03-17 02:34:15', '2026-03-17 02:34:15'),
-(86, 1, 'admin', 'Uploaded Custom Evacuation Map', 13, 'Bangal Integrated School', 'fire_safety', NULL, '2026-03-17 03:37:56', '2026-03-17 03:37:56'),
-(87, 1, 'admin', 'Uploaded Custom Evacuation Map', 13, 'Bangal Integrated School', 'fire_safety', NULL, '2026-03-17 03:38:07', '2026-03-17 03:38:07'),
-(88, 1, 'admin', 'Uploaded Custom Evacuation Map', 13, 'Bangal Integrated School', 'fire_safety', NULL, '2026-03-17 03:38:16', '2026-03-17 03:38:16'),
-(89, 1, 'admin', 'Sent map update notification', 13, 'Bangal Integrated School', 'fire_safety', 'attached file here in bangal', '2026-03-17 03:38:58', '2026-03-17 03:38:58'),
-(90, 1, 'admin', 'Uploaded Custom Evacuation Map', 13, 'Bangal Integrated School', 'fire_safety', NULL, '2026-03-17 03:45:12', '2026-03-17 03:45:12'),
 (91, 1, 'admin', 'Uploaded Custom Evacuation Map', 11, 'Iram I Elementary School', 'fire_safety', NULL, '2026-03-17 03:51:31', '2026-03-17 03:51:31'),
 (92, 1, 'admin', 'Uploaded Custom Evacuation Map', 11, 'Iram I Elementary School', 'fire_safety', NULL, '2026-03-17 03:51:42', '2026-03-17 03:51:42'),
-(93, 4, 'contributor', 'Created extinguisher: FR-XTE 01', 13, 'Bangal Integrated School', 'fire_safety', 'Oks', '2026-03-17 05:20:24', '2026-03-17 05:20:24'),
-(94, 4, 'contributor', 'Updated extinguisher: FR-XT 01', 13, 'Bangal Integrated School', 'fire_safety', 'oks', '2026-03-17 05:20:42', '2026-03-17 05:20:42'),
-(95, 4, 'contributor', 'Created room: Administration Room', 13, 'Bangal Integrated School', 'fire_safety', 'Okay', '2026-03-17 05:22:24', '2026-03-17 05:22:24'),
-(96, 4, 'contributor', 'Updated room: 01', 13, 'Bangal Integrated School', 'fire_safety', 'Okay', '2026-03-17 05:22:38', '2026-03-17 05:22:38'),
-(97, 4, 'contributor', 'Updated building: 03', 13, 'Bangal Integrated School', 'fire_safety', NULL, '2026-03-17 05:47:32', '2026-03-17 05:47:32'),
-(98, 1, 'admin', 'Updated building: 03', 13, 'Bangal Integrated School', 'fire_safety', NULL, '2026-03-17 06:06:32', '2026-03-17 06:06:32'),
-(99, 1, 'admin', 'Created building: 05', 13, 'Bangal Integrated School', 'fire_safety', NULL, '2026-03-17 06:07:36', '2026-03-17 06:07:36'),
-(100, 1, 'admin', 'Updated building: 05', 13, 'Bangal Integrated School', 'fire_safety', NULL, '2026-03-17 06:08:04', '2026-03-17 06:08:04'),
-(101, 1, 'admin', 'Updated building: 04', 13, 'Bangal Integrated School', 'fire_safety', NULL, '2026-03-17 06:08:42', '2026-03-17 06:08:42'),
-(102, 1, 'admin', 'Created room: Classroom', 13, 'Bangal Integrated School', 'fire_safety', 'Okay Room', '2026-03-17 06:09:46', '2026-03-17 06:09:46'),
-(103, 1, 'admin', 'Created room: Classroom', 13, 'Bangal Integrated School', 'fire_safety', 'Okay', '2026-03-17 06:10:15', '2026-03-17 06:10:15'),
-(104, 1, 'admin', 'Created room: Classroom', 13, 'Bangal Integrated School', 'fire_safety', 'Okay', '2026-03-17 06:10:47', '2026-03-17 06:10:47'),
-(105, 1, 'admin', 'Created extinguisher: 02', 13, 'Bangal Integrated School', 'fire_safety', 'Okay', '2026-03-17 06:11:24', '2026-03-17 06:11:24'),
-(106, 1, 'admin', 'Updated extinguisher: 04', 13, 'Bangal Integrated School', 'fire_safety', 'Update number', '2026-03-17 06:12:08', '2026-03-17 06:12:08'),
-(107, 1, 'admin', 'Updated extinguisher: 02', 13, 'Bangal Integrated School', 'fire_safety', 'Change code', '2026-03-17 06:12:36', '2026-03-17 06:12:36'),
-(108, 1, 'admin', 'Updated extinguisher: 03', 13, 'Bangal Integrated School', 'fire_safety', 'Change code', '2026-03-17 06:12:57', '2026-03-17 06:12:57'),
-(109, 1, 'admin', 'Created building: 05', 13, 'Bangal Integrated School', 'fire_safety', 'Single Door', '2026-03-17 06:18:10', '2026-03-17 06:18:10'),
-(110, 1, 'admin', 'Created building: 06', 13, 'Bangal Integrated School', 'fire_safety', NULL, '2026-03-17 06:20:14', '2026-03-17 06:20:14'),
-(111, 1, 'admin', 'Created building: 07', 13, 'Bangal Integrated School', 'fire_safety', NULL, '2026-03-17 06:23:03', '2026-03-17 06:23:03'),
-(112, 1, 'admin', 'Created building: 08', 13, 'Bangal Integrated School', 'fire_safety', 'Single Door', '2026-03-17 06:23:44', '2026-03-17 06:23:44'),
-(113, 1, 'admin', 'Updated building: 07', 13, 'Bangal Integrated School', 'fire_safety', NULL, '2026-03-17 06:23:59', '2026-03-17 06:23:59'),
-(114, 1, 'admin', 'Updated building: 06', 13, 'Bangal Integrated School', 'fire_safety', NULL, '2026-03-17 06:24:33', '2026-03-17 06:24:33'),
-(115, 1, 'admin', 'Created building: 09', 13, 'Bangal Integrated School', 'fire_safety', 'Single door, not yet turned over', '2026-03-17 06:25:42', '2026-03-17 06:25:42'),
-(116, 1, 'admin', 'Created room: Classroom', 13, 'Bangal Integrated School', 'fire_safety', 'Okay', '2026-03-17 06:26:56', '2026-03-17 06:26:56'),
-(117, 1, 'admin', 'Updated room: 01', 13, 'Bangal Integrated School', 'fire_safety', 'Okay', '2026-03-17 06:28:19', '2026-03-17 06:28:19'),
-(118, 1, 'admin', 'Created room: Classroom', 13, 'Bangal Integrated School', 'fire_safety', 'OKay', '2026-03-17 06:29:19', '2026-03-17 06:29:19'),
-(119, 1, 'admin', 'Created room: Classroom', 13, 'Bangal Integrated School', 'fire_safety', 'Okay', '2026-03-17 06:30:40', '2026-03-17 06:30:40'),
-(120, 1, 'admin', 'Created room: Administration', 13, 'Bangal Integrated School', 'fire_safety', 'Okay', '2026-03-17 06:35:48', '2026-03-17 06:35:48'),
-(121, 1, 'admin', 'Created room: Administration', 13, 'Bangal Integrated School', 'fire_safety', 'Okay', '2026-03-17 06:36:25', '2026-03-17 06:36:25'),
-(122, 1, 'admin', 'Created room: Canteen', 13, 'Bangal Integrated School', 'fire_safety', 'Okay Canteen', '2026-03-17 06:37:29', '2026-03-17 06:37:29'),
-(123, 1, 'admin', 'Created extinguisher: 05', 13, 'Bangal Integrated School', 'fire_safety', 'Covering multiples', '2026-03-17 06:39:13', '2026-03-17 06:39:13'),
-(124, 1, 'admin', 'Created extinguisher: 07', 13, 'Bangal Integrated School', 'fire_safety', 'Okay', '2026-03-17 06:40:03', '2026-03-17 06:40:03'),
-(125, 1, 'admin', 'Updated extinguisher: 06', 13, 'Bangal Integrated School', 'fire_safety', 'Change code', '2026-03-17 06:41:29', '2026-03-17 06:41:29'),
-(126, 1, 'admin', 'Created extinguisher: 07', 13, 'Bangal Integrated School', 'fire_safety', 'Okay room', '2026-03-17 06:42:08', '2026-03-17 06:42:08'),
-(127, 1, 'admin', 'Created room: Classroom room', 13, 'Bangal Integrated School', 'fire_safety', 'Okay', '2026-03-17 06:44:05', '2026-03-17 06:44:05'),
-(128, 1, 'admin', 'Created room: Classroom room', 13, 'Bangal Integrated School', 'fire_safety', 'Okay', '2026-03-17 06:44:56', '2026-03-17 06:44:56'),
-(129, 1, 'admin', 'Created extinguisher: 08', 13, 'Bangal Integrated School', 'fire_safety', 'Okay extinguisher', '2026-03-17 06:45:56', '2026-03-17 06:45:56'),
-(130, 1, 'admin', 'Created room: Classroom room', 13, 'Bangal Integrated School', 'fire_safety', 'Okay', '2026-03-17 06:47:11', '2026-03-17 06:47:11'),
-(131, 1, 'admin', 'Updated room: 01', 13, 'Bangal Integrated School', 'fire_safety', 'Okay', '2026-03-17 06:47:55', '2026-03-17 06:47:55'),
-(132, 1, 'admin', 'Created room: Classroom room', 13, 'Bangal Integrated School', 'fire_safety', 'Okay', '2026-03-17 07:00:30', '2026-03-17 07:00:30'),
-(133, 1, 'admin', 'Created extinguisher: 09', 13, 'Bangal Integrated School', 'fire_safety', 'Okay', '2026-03-17 07:01:01', '2026-03-17 07:01:01'),
-(134, 1, 'admin', 'Updated building: Fil-Chi', 13, 'Bangal Integrated School', 'fire_safety', NULL, '2026-03-17 07:02:48', '2026-03-17 07:02:48'),
-(135, 1, 'admin', 'Created room: Lab 1', 13, 'Bangal Integrated School', 'fire_safety', 'Okay', '2026-03-17 07:03:29', '2026-03-17 07:03:29'),
-(136, 1, 'admin', 'Created room: Lab 2', 13, 'Bangal Integrated School', 'fire_safety', 'Okay', '2026-03-17 07:03:57', '2026-03-17 07:03:57'),
-(137, 1, 'admin', 'Created alarm: 01', 13, 'Bangal Integrated School', 'fire_safety', 'Okay bell', '2026-03-17 07:05:25', '2026-03-17 07:05:25'),
-(138, 1, 'admin', 'Updated evacuation map layout', 13, 'Bangal Integrated School', 'fire_safety', NULL, '2026-03-17 07:07:18', '2026-03-17 07:07:18'),
-(139, 1, 'admin', 'Sent map update notification', 13, 'Bangal Integrated School', 'fire_safety', 'Map updated', '2026-03-17 07:08:54', '2026-03-17 07:08:54'),
-(140, 1, 'admin', 'Created inspection: Fire', 13, 'Bangal Integrated School', 'fire_safety', '-Hotline # inc. of BFP\r\n- Inc. I.D for personnel & Students\r\n- Revise Evac Area', '2026-03-17 07:17:36', '2026-03-17 07:17:36'),
 (141, 1, 'admin', 'Updated inspection: Fire', 11, 'Iram I Elementary School', 'fire_safety', 'Repaint directional Arrows\r\nPut up exit signages\r\nInc. I.D for personnel & Students', '2026-03-17 07:39:56', '2026-03-17 07:39:56'),
 (142, 1, 'admin', 'Removed building: 014', 11, 'Iram I Elementary School', 'fire_safety', 'To be removed, building doesn\'t exist at first place', '2026-03-17 07:51:17', '2026-03-17 07:51:17'),
 (143, 1, 'admin', 'Updated evacuation map layout', 11, 'Iram I Elementary School', 'fire_safety', NULL, '2026-03-18 00:29:55', '2026-03-18 00:29:55'),
 (144, 1, 'admin', 'Updated evacuation map layout', 11, 'Iram I Elementary School', 'fire_safety', NULL, '2026-03-18 00:51:05', '2026-03-18 00:51:05'),
 (145, 1, 'admin', 'Updated evacuation map layout', 11, 'Iram I Elementary School', 'fire_safety', NULL, '2026-03-18 00:51:25', '2026-03-18 00:51:25'),
-(146, 1, 'admin', 'Updated evacuation map layout', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', NULL, '2026-03-18 00:51:54', '2026-03-18 00:51:54'),
-(147, 1, 'admin', 'Updated evacuation map layout', 20, 'Sergia Soriano Esteban Integrated School - Coral', 'fire_safety', NULL, '2026-03-18 00:52:14', '2026-03-18 00:52:14'),
 (148, 1, 'admin', 'Updated alarm: 01', 18, 'Nellie E. Brown Elementary School', 'fire_safety', 'Okay bell', '2026-03-18 01:07:17', '2026-03-18 01:07:17'),
 (149, 1, 'admin', 'Created building: 099', 18, 'Nellie E. Brown Elementary School', 'fire_safety', NULL, '2026-03-18 01:36:22', '2026-03-18 01:36:22'),
 (150, 1, 'admin', 'Removed building: 099', 18, 'Nellie E. Brown Elementary School', 'fire_safety', 'Testing building', '2026-03-18 01:37:05', '2026-03-18 01:37:05'),
-(151, 1, 'admin', 'Created evacuation center: ', 17, 'Mabayuan Senior High School', 'typhoon_flood', NULL, '2026-03-18 01:44:32', '2026-03-18 01:44:32'),
 (152, 1, 'admin', 'Created backup: fire-safety-backup-20260318_101442.json', NULL, NULL, 'fire_safety', NULL, '2026-03-18 02:14:42', '2026-03-18 02:14:42'),
 (153, 1, 'admin', 'Updated configuration (alarm_type): Bell', NULL, NULL, 'fire_safety', NULL, '2026-03-18 02:34:46', '2026-03-18 02:34:46'),
 (154, 1, 'admin', 'Logged incident: Accidents at Unknown', NULL, 'Unknown', 'incident_checklist', 'Saksakan', '2026-03-18 08:45:08', '2026-03-18 08:45:08'),
@@ -205,103 +88,47 @@ INSERT INTO `activity_logs` (`id`, `user_id`, `role`, `activity`, `school_id`, `
 (158, 1, 'admin', 'Logged incident: Fire at OLONGAPO CITY NATIONAL HIGH SCHOOL', NULL, 'OLONGAPO CITY NATIONAL HIGH SCHOOL', 'incident_checklist', 'One room affected Location Admin Building Room 207, Cause of Fire Electrical (Broken Oscillating Fan), Approximately 1230H On scene City DRRMO, BFP, PNP,  and SDO DRRM Focal Person. Fire out 1245H as per officer Erwin Magaway and Officer Lising.', '2026-03-19 00:33:45', '2026-03-19 00:33:45'),
 (159, 1, 'admin', 'Deleted incident: Accidents at Unknown', NULL, NULL, 'incident_checklist', NULL, '2026-03-19 00:33:58', '2026-03-19 00:33:58'),
 (160, 1, 'admin', 'Logged incident: Others at Gordon Heights National High School', NULL, 'Gordon Heights National High School', 'incident_checklist', 'Stabbing incident outside school premises involving outsider and 2 GHNHS Students. Outsider was rushed to the nearest hospital for treatment. Later parents of involve d students and outsider set Barangay Meeting to settle the concerned issue.', '2026-03-19 00:41:18', '2026-03-19 00:41:18'),
-(161, 1, 'admin', 'Created school: Tapinac Elementary School', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:16:39', '2026-03-19 02:16:39'),
 (162, 1, 'admin', 'Created configuration (safety_feature): Dry Stand Pipe', NULL, NULL, 'fire_safety', NULL, '2026-03-19 02:18:25', '2026-03-19 02:18:25'),
-(163, 1, 'admin', 'Created building: 01', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:19:06', '2026-03-19 02:19:06'),
-(164, 1, 'admin', 'Created room: Classroom', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:20:15', '2026-03-19 02:20:15'),
-(165, 1, 'admin', 'Created room: 02', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:20:54', '2026-03-19 02:20:54'),
-(166, 1, 'admin', 'Created room: 03', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:21:20', '2026-03-19 02:21:20'),
-(167, 1, 'admin', 'Created room: Science Laboratory', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:21:50', '2026-03-19 02:21:50'),
-(168, 1, 'admin', 'Created room: 05', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:22:16', '2026-03-19 02:22:16'),
-(169, 1, 'admin', 'Created room: 06', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:22:36', '2026-03-19 02:22:36'),
-(170, 1, 'admin', 'Created extinguisher: FRXT-01', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:23:25', '2026-03-19 02:23:25'),
-(171, 1, 'admin', 'Created extinguisher: FRXT-02', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:24:52', '2026-03-19 02:24:52'),
-(172, 1, 'admin', 'Created extinguisher: FRXT-03', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:25:42', '2026-03-19 02:25:42'),
-(173, 1, 'admin', 'Created extinguisher: FRXT-04', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:26:18', '2026-03-19 02:26:18'),
-(174, 1, 'admin', 'Created building: School Canteen', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:27:16', '2026-03-19 02:27:16'),
-(175, 1, 'admin', 'Created alarm: ALARM-01', 21, 'Tapinac Elementary School', 'fire_safety', 'Working', '2026-03-19 02:28:43', '2026-03-19 02:28:43'),
-(176, 1, 'admin', 'Created alarm: ALARM-02', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:31:10', '2026-03-19 02:31:10'),
-(177, 1, 'admin', 'Created alarm: ALARM-03', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:32:10', '2026-03-19 02:32:10'),
-(178, 1, 'admin', 'Updated alarm: ALARM-03', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:32:35', '2026-03-19 02:32:35'),
-(179, 1, 'admin', 'Created room: School Canteen', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:33:34', '2026-03-19 02:33:34'),
-(180, 1, 'admin', 'Created extinguisher: FRXT-13', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:35:04', '2026-03-19 02:35:04'),
-(181, 1, 'admin', 'Created building: HE Laboratory', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:39:16', '2026-03-19 02:39:16'),
-(182, 1, 'admin', 'Created room: HE Laboratory', 21, 'Tapinac Elementary School', 'fire_safety', 'Need  to address locked gate', '2026-03-19 02:42:31', '2026-03-19 02:42:31'),
-(183, 1, 'admin', 'Created extinguisher: FRXT-05', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:43:11', '2026-03-19 02:43:11'),
-(184, 1, 'admin', 'Created building: 04', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:43:56', '2026-03-19 02:43:56'),
-(185, 1, 'admin', 'Created room: 01', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:44:33', '2026-03-19 02:44:33'),
-(186, 1, 'admin', 'Created extinguisher: FRXT-06', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:45:13', '2026-03-19 02:45:13'),
-(187, 1, 'admin', 'Created building: 05', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:46:46', '2026-03-19 02:46:46'),
-(188, 1, 'admin', 'Created room: 01', 21, 'Tapinac Elementary School', 'fire_safety', 'With grills - Creation of Secondary Exit', '2026-03-19 02:48:04', '2026-03-19 02:48:04'),
-(189, 1, 'admin', 'Created room: 02', 21, 'Tapinac Elementary School', 'fire_safety', 'With grills - creation of Secondary Exit', '2026-03-19 02:48:46', '2026-03-19 02:48:46'),
-(190, 1, 'admin', 'Created room: 03', 21, 'Tapinac Elementary School', 'fire_safety', 'With Grills - Creation of Secondary Exit', '2026-03-19 02:49:24', '2026-03-19 02:49:24'),
-(191, 1, 'admin', 'Created room: Feeding Room', 21, 'Tapinac Elementary School', 'fire_safety', 'With Grills - Creation of Secondary Exit', '2026-03-19 02:50:10', '2026-03-19 02:50:10'),
-(192, 1, 'admin', 'Created room: HE and Storage', 21, 'Tapinac Elementary School', 'fire_safety', 'With Grills - Creation of Secondary Exit', '2026-03-19 02:50:49', '2026-03-19 02:50:49'),
-(193, 1, 'admin', 'Updated room: 05', 21, 'Tapinac Elementary School', 'fire_safety', 'With Grills - Creation of Secondary Exit', '2026-03-19 02:51:12', '2026-03-19 02:51:12'),
-(194, 1, 'admin', 'Created room: 01', 21, 'Tapinac Elementary School', 'fire_safety', 'With Grills - Creation of Secondary Exit', '2026-03-19 02:51:49', '2026-03-19 02:51:49'),
-(195, 1, 'admin', 'Created room: Classroom', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:52:13', '2026-03-19 02:52:13'),
-(196, 1, 'admin', 'Created room: 03', 21, 'Tapinac Elementary School', 'fire_safety', 'With Grills - Creation of Secondary Exit', '2026-03-19 02:52:45', '2026-03-19 02:52:45'),
-(197, 1, 'admin', 'Created room: 04', 21, 'Tapinac Elementary School', 'fire_safety', 'With Grills - Creation of Secondary Exit', '2026-03-19 02:53:15', '2026-03-19 02:53:15'),
-(198, 1, 'admin', 'Created room: 05', 21, 'Tapinac Elementary School', 'fire_safety', 'With Grills - Creation of Secondary Exit', '2026-03-19 02:53:46', '2026-03-19 02:53:46'),
-(199, 1, 'admin', 'Created room: 06', 21, 'Tapinac Elementary School', 'fire_safety', 'With Grills - Creation of Secondary Exit', '2026-03-19 02:54:09', '2026-03-19 02:54:09'),
-(200, 1, 'admin', 'Created room: 07', 21, 'Tapinac Elementary School', 'fire_safety', 'With Grills - Creation of Secondary Exit', '2026-03-19 02:54:30', '2026-03-19 02:54:30'),
-(201, 1, 'admin', 'Created extinguisher: FRXT-07', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:55:55', '2026-03-19 02:55:55'),
-(202, 1, 'admin', 'Created extinguisher: FRXT-08', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:56:44', '2026-03-19 02:56:44'),
-(203, 1, 'admin', 'Created extinguisher: FRXT-09', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:57:25', '2026-03-19 02:57:25'),
-(204, 1, 'admin', 'Updated extinguisher: FRXT-08', 21, 'Tapinac Elementary School', 'fire_safety', 'wrong Entry', '2026-03-19 02:58:31', '2026-03-19 02:58:31'),
-(205, 1, 'admin', 'Created extinguisher: FRXT-10', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 02:59:25', '2026-03-19 02:59:25'),
-(206, 1, 'admin', 'Created extinguisher: FRXT-11', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:00:27', '2026-03-19 03:00:27'),
-(207, 1, 'admin', 'Created extinguisher: FRXT-12', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:01:12', '2026-03-19 03:01:12'),
-(208, 1, 'admin', 'Created building: 06', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:05:25', '2026-03-19 03:05:25'),
-(209, 1, 'admin', 'Created room: 01', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:06:32', '2026-03-19 03:06:32'),
-(210, 1, 'admin', 'Created room: 01-01', 21, 'Tapinac Elementary School', 'fire_safety', 'Converted Comfort Room to Admin Function', '2026-03-19 03:07:23', '2026-03-19 03:07:23'),
-(211, 1, 'admin', 'Created room: 02', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:07:45', '2026-03-19 03:07:45'),
-(212, 1, 'admin', 'Created room: 03', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:08:09', '2026-03-19 03:08:09'),
-(213, 1, 'admin', 'Updated room: 02', 21, 'Tapinac Elementary School', 'fire_safety', 'Check Electrical Connections (Extension Chords)', '2026-03-19 03:08:40', '2026-03-19 03:08:40'),
-(214, 1, 'admin', 'Created room: 04', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:09:01', '2026-03-19 03:09:01'),
-(215, 1, 'admin', 'Created room: 05', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:09:24', '2026-03-19 03:09:24'),
-(216, 1, 'admin', 'Created room: 06', 21, 'Tapinac Elementary School', 'fire_safety', 'No Secondary Exit \r\nCheck for Electrical Concerns\r\nRemoval of Defective Oscillating Fan', '2026-03-19 03:11:09', '2026-03-19 03:11:09'),
-(217, 1, 'admin', 'Created room: Principal\'s Office', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:11:54', '2026-03-19 03:11:54'),
-(218, 1, 'admin', 'Created room: EMIS', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:12:28', '2026-03-19 03:12:28'),
-(219, 1, 'admin', 'Updated room: 01', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:12:44', '2026-03-19 03:12:44'),
-(220, 1, 'admin', 'Created room: LRC', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:13:12', '2026-03-19 03:13:12'),
-(221, 1, 'admin', 'Created room: 04', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:13:42', '2026-03-19 03:13:42'),
-(222, 1, 'admin', 'Created room: 05', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:14:05', '2026-03-19 03:14:05'),
-(223, 1, 'admin', 'Created room: 06', 21, 'Tapinac Elementary School', 'fire_safety', 'Change Electric Fan Switch', '2026-03-19 03:14:55', '2026-03-19 03:14:55'),
-(224, 1, 'admin', 'Updated building: 06', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:15:46', '2026-03-19 03:15:46'),
-(225, 1, 'admin', 'Created room: 07', 21, 'Tapinac Elementary School', 'fire_safety', 'Remove Defective Electric Oscillating Fan\r\nSecure electrical wires \r\nMove books to other location', '2026-03-19 03:17:44', '2026-03-19 03:17:44'),
-(226, 1, 'admin', 'Updated extinguisher: FRXT-19', 21, 'Tapinac Elementary School', 'fire_safety', 'Wrong Numbering', '2026-03-19 03:18:41', '2026-03-19 03:18:41'),
-(227, 1, 'admin', 'Created extinguisher: FRXT-13', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:19:38', '2026-03-19 03:19:38'),
-(228, 1, 'admin', 'Created extinguisher: FXRT-14', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:20:56', '2026-03-19 03:20:56'),
-(229, 1, 'admin', 'Created extinguisher: FRXT-15', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:22:00', '2026-03-19 03:22:00'),
-(230, 1, 'admin', 'Created extinguisher: FRXT-16', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:23:05', '2026-03-19 03:23:05'),
-(231, 1, 'admin', 'Created extinguisher: FXRT-17', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:24:09', '2026-03-19 03:24:09'),
-(232, 1, 'admin', 'Created extinguisher: FXRT-18', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:25:10', '2026-03-19 03:25:10'),
-(233, 1, 'admin', 'Updated building: 06', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:25:57', '2026-03-19 03:25:57'),
-(234, 1, 'admin', 'Created alarm: ALARM-04', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:27:38', '2026-03-19 03:27:38'),
-(235, 1, 'admin', 'Removed alarm: ALARM-04', 21, 'Tapinac Elementary School', 'fire_safety', 'Wrong Entry', '2026-03-19 03:29:41', '2026-03-19 03:29:41'),
-(236, 1, 'admin', 'Created alarm: ALRM-004', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:31:12', '2026-03-19 03:31:12'),
-(237, 1, 'admin', 'Updated evacuation map layout', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:38:05', '2026-03-19 03:38:05'),
-(238, 1, 'admin', 'Updated evacuation map layout', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:38:23', '2026-03-19 03:38:23'),
-(239, 1, 'admin', 'Updated evacuation map layout', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 03:40:04', '2026-03-19 03:40:04'),
 (240, 1, 'admin', 'Added checklist item: Go to elementary school', NULL, NULL, 'incident_checklist', NULL, '2026-03-19 06:04:33', '2026-03-19 06:04:33'),
-(241, 1, 'admin', 'Updated building: 01', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 06:29:17', '2026-03-19 06:29:17'),
 (242, 1, 'admin', 'Created configuration (safety_feature): Axe', NULL, NULL, 'fire_safety', NULL, '2026-03-19 06:32:17', '2026-03-19 06:32:17'),
-(243, 1, 'admin', 'Updated alarm: ALARM-01', 21, 'Tapinac Elementary School', 'fire_safety', 'Working, Covering now', '2026-03-19 06:33:39', '2026-03-19 06:33:39'),
-(244, 1, 'admin', 'Created alarm: Alrm-001', 21, 'Tapinac Elementary School', 'fire_safety', NULL, '2026-03-19 06:36:35', '2026-03-19 06:36:35'),
-(245, 1, 'admin', 'Removed alarm: Alrm-001', 21, 'Tapinac Elementary School', 'fire_safety', 'Wrong alarm installed', '2026-03-19 06:46:53', '2026-03-19 06:46:53'),
-(246, 1, 'admin', 'Updated alarm: ALARM-01', 21, 'Tapinac Elementary School', 'fire_safety', 'Working, Covering now', '2026-03-19 06:47:15', '2026-03-19 06:47:15'),
-(247, 1, 'admin', 'Updated alarm: ALARM-02', 21, 'Tapinac Elementary School', 'fire_safety', 'Covering', '2026-03-19 06:47:34', '2026-03-19 06:47:34'),
-(248, 1, 'admin', 'Updated alarm: ALARM-01', 21, 'Tapinac Elementary School', 'fire_safety', 'Working, Covering now', '2026-03-19 07:53:36', '2026-03-19 07:53:36'),
-(249, 1, 'admin', 'Updated room: 01', 15, 'Amelia Heights ES', 'fire_safety', 'Okay', '2026-03-19 07:58:00', '2026-03-19 07:58:00'),
-(250, 1, 'admin', 'Updated extinguisher: FRXT-01', 15, 'Amelia Heights ES', 'fire_safety', 'Okay?', '2026-03-19 08:00:17', '2026-03-19 08:00:17'),
-(251, 1, 'admin', 'Created extinguisher: fdd', 15, 'Amelia Heights ES', 'fire_safety', NULL, '2026-03-19 08:00:40', '2026-03-19 08:00:40'),
-(252, 1, 'admin', 'Removed extinguisher: fdd', 15, 'Amelia Heights ES', 'fire_safety', 'Testing something', '2026-03-19 08:01:00', '2026-03-19 08:01:00'),
-(253, 1, 'admin', 'Created extinguisher: EXT-001', 15, 'Amelia Heights ES', 'fire_safety', NULL, '2026-03-19 08:01:51', '2026-03-19 08:01:51'),
 (254, 1, 'admin', 'Created evacuation center: ', 11, 'Iram I Elementary School', 'typhoon_flood', NULL, '2026-03-23 01:13:43', '2026-03-23 01:13:43'),
-(255, 1, 'admin', 'Created evacuation center: West Ridge Secondary School', 22, 'West Ridge Secondary School', 'typhoon_flood', NULL, '2026-03-23 01:41:39', '2026-03-23 01:41:39'),
 (256, 7, 'contributor', 'Logged incident: Violence/Conflict at Integrated School at the Mabini High School', NULL, 'Integrated School at the Mabini High School', 'incident_checklist', 'This Love', '2026-03-23 01:44:08', '2026-03-23 01:44:08'),
-(257, 1, 'admin', 'Logged compliance: Fire Drilling at Integrated School at the Mabini High School', NULL, 'Integrated School at the Mabini High School', 'incident_checklist', 'oks', '2026-03-23 15:43:12', '2026-03-23 15:43:12');
+(257, 1, 'admin', 'Logged compliance: Fire Drilling at Integrated School at the Mabini High School', NULL, 'Integrated School at the Mabini High School', 'incident_checklist', 'oks', '2026-03-23 15:43:12', '2026-03-23 15:43:12'),
+(258, 1, 'admin', 'Updated building: 011', NULL, NULL, 'fire_safety', NULL, '2026-03-29 01:12:37', '2026-03-29 01:12:37'),
+(259, 1, 'admin', 'Updated alarm: ALRM-003', NULL, NULL, 'fire_safety', 'Loudst bell that can cover two more buildings', '2026-03-29 01:12:59', '2026-03-29 01:12:59'),
+(260, 1, 'admin', 'Updated alarm: ALRM-003', NULL, NULL, 'fire_safety', 'Loudst bell that can cover two more buildings', '2026-03-29 01:13:06', '2026-03-29 01:13:06'),
+(261, 1, 'admin', 'Removed alarm: ALRM-003', NULL, NULL, 'fire_safety', 'To be re-assign yet again', '2026-03-29 01:14:05', '2026-03-29 01:14:05'),
+(262, 1, 'admin', 'Updated building: 011', NULL, NULL, 'fire_safety', 'there isn\'t 2nd floor', '2026-03-29 02:26:32', '2026-03-29 02:26:32'),
+(263, 1, 'admin', 'Updated building: 011', NULL, NULL, 'fire_safety', 'there isn\'t room', '2026-03-29 02:27:04', '2026-03-29 02:27:04'),
+(264, 1, 'admin', 'Updated extinguisher: EXT-0012', NULL, NULL, 'fire_safety', 'new cod', '2026-03-29 02:30:29', '2026-03-29 02:30:29'),
+(265, 1, 'admin', 'Updated extinguisher: EXT-001', NULL, NULL, 'fire_safety', 'Reverted code back', '2026-03-29 02:30:42', '2026-03-29 02:30:42'),
+(266, 1, 'admin', 'Updated evacuation plan: PLAN AB', NULL, NULL, 'fire_safety', 'Make sure to guide pwd, senior and pregnant if you see one, don\'t push each other, if you\'re in front immediately go outside so that it\'ll not traffic', '2026-03-29 02:32:51', '2026-03-29 02:32:51'),
+(267, 1, 'admin', 'Updated evacuation plan: PLAN A', NULL, NULL, 'fire_safety', 'Make sure to guide pwd, senior and pregnant if you see one, don\'t push each other, if you\'re in front immediately go outside so that it\'ll not traffic', '2026-03-29 02:32:59', '2026-03-29 02:32:59'),
+(268, 1, 'admin', 'Created building: Scie', NULL, NULL, 'fire_safety', 'large emmote building', '2026-03-30 01:06:44', '2026-03-30 01:06:44'),
+(269, 1, 'admin', 'Created alarm: ALRM-003', NULL, NULL, 'fire_safety', 'Okay bell very functional', '2026-03-30 01:07:57', '2026-03-30 01:07:57'),
+(270, 1, 'admin', 'Updated alarm: ALRM-001', NULL, NULL, 'fire_safety', 'To be installed', '2026-03-30 01:10:44', '2026-03-30 01:10:44'),
+(271, 1, 'admin', 'Created alarm: ALRM-0012', NULL, NULL, 'fire_safety', 'Okay alarm', '2026-03-30 01:29:55', '2026-03-30 01:29:55'),
+(272, 1, 'admin', 'Created room: amande', 1, 'Iram I Elementary School', 'fire_safety', 'okay', '2026-03-30 06:24:28', '2026-03-30 06:24:28'),
+(273, 1, 'admin', 'Created extinguisher: FRCT-0011', 1, 'Iram I Elementary School', 'fire_safety', 'okay', '2026-03-30 06:25:12', '2026-03-30 06:25:12'),
+(274, 1, 'admin', 'Registered school for Comprehensive School Safety (from directory): OLONGAPO CITY NATIONAL HIGH SCHOOL', 30, 'OLONGAPO CITY NATIONAL HIGH SCHOOL', 'comprehensive_safety', NULL, '2026-04-06 08:27:27', '2026-04-06 08:27:27'),
+(275, 1, 'admin', 'Created building: 01', 9, 'New Cabalan Elementary School', 'fire_safety', NULL, '2026-04-07 00:23:11', '2026-04-07 00:23:11'),
+(276, 1, 'admin', 'Created alarm: 01', 9, 'New Cabalan Elementary School', 'fire_safety', NULL, '2026-04-07 00:28:41', '2026-04-07 00:28:41'),
+(277, 1, 'admin', 'Created building: 02', 9, 'New Cabalan Elementary School', 'fire_safety', NULL, '2026-04-07 00:29:06', '2026-04-07 00:29:06'),
+(278, 1, 'admin', 'Updated alarm: 01', 9, 'New Cabalan Elementary School', 'fire_safety', NULL, '2026-04-07 00:29:24', '2026-04-07 00:29:24'),
+(279, 1, 'admin', 'Updated alarm: 01', 9, 'New Cabalan Elementary School', 'fire_safety', 'okay', '2026-04-07 00:29:52', '2026-04-07 00:29:52'),
+(280, 1, 'admin', 'Created room: Classroom Grade 1', 9, 'New Cabalan Elementary School', 'fire_safety', 'Okay roo', '2026-04-07 00:42:39', '2026-04-07 00:42:39'),
+(281, 1, 'admin', 'Created extinguisher: 01', 9, 'New Cabalan Elementary School', 'fire_safety', NULL, '2026-04-07 00:43:43', '2026-04-07 00:43:43'),
+(282, 1, 'admin', 'Created extinguisher: 02', 9, 'New Cabalan Elementary School', 'fire_safety', 'Okay Extinguisher', '2026-04-07 00:44:05', '2026-04-07 00:44:05'),
+(283, 1, 'admin', 'Created room: Oks', 9, 'New Cabalan Elementary School', 'fire_safety', 'Okay', '2026-04-07 00:44:30', '2026-04-07 00:44:30'),
+(284, 1, 'admin', 'Created room: Classroom Grade 2', 9, 'New Cabalan Elementary School', 'fire_safety', 'Okay', '2026-04-07 00:45:26', '2026-04-07 00:45:26'),
+(285, 1, 'admin', 'Updated building: 01', 9, 'New Cabalan Elementary School', 'fire_safety', NULL, '2026-04-07 00:45:51', '2026-04-07 00:45:51'),
+(286, 1, 'admin', 'Created extinguisher: 03', 9, 'New Cabalan Elementary School', 'fire_safety', 'Okay', '2026-04-07 00:46:27', '2026-04-07 00:46:27'),
+(287, 1, 'admin', 'Created extinguisher: 04', 9, 'New Cabalan Elementary School', 'fire_safety', 'Okay', '2026-04-07 00:47:06', '2026-04-07 00:47:06'),
+(288, 1, 'admin', 'Created extinguisher: 022', 9, 'New Cabalan Elementary School', 'fire_safety', 'Oks', '2026-04-07 00:47:38', '2026-04-07 00:47:38'),
+(289, 1, 'admin', 'Transferred extinguisher: 022 to 02', 9, 'New Cabalan Elementary School', 'fire_safety', NULL, '2026-04-07 00:48:18', '2026-04-07 00:48:18'),
+(290, 1, 'admin', 'Created extinguisher: 06', 9, 'New Cabalan Elementary School', 'fire_safety', 'Oks', '2026-04-07 00:49:47', '2026-04-07 00:49:47'),
+(291, 1, 'admin', 'Removed extinguisher: 022', 9, 'New Cabalan Elementary School', 'fire_safety', 'Didn\'t exist', '2026-04-07 00:50:39', '2026-04-07 00:50:39'),
+(292, 1, 'admin', 'Updated evacuation map layout', 9, 'New Cabalan Elementary School', 'fire_safety', NULL, '2026-04-07 01:09:01', '2026-04-07 01:09:01');
 
 -- --------------------------------------------------------
 
@@ -346,6 +173,13 @@ CREATE TABLE `cmpr_schl_sfty_assessments` (
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `cmpr_schl_sfty_assessments`
+--
+
+INSERT INTO `cmpr_schl_sfty_assessments` (`id`, `school_id`, `date_visited`, `assessed_by`, `total_score`, `status`, `created_at`, `updated_at`) VALUES
+(1, 1, '2026-04-07', 'Adan Kristopher B. Dumpit', 5.00, 'completed', '2026-04-06 07:26:59', '2026-04-07 03:33:10');
+
 -- --------------------------------------------------------
 
 --
@@ -363,6 +197,31 @@ CREATE TABLE `cmpr_schl_sfty_assessment_items` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `cmpr_schl_sfty_assessment_items`
+--
+
+INSERT INTO `cmpr_schl_sfty_assessment_items` (`id`, `assessment_id`, `category`, `criteria`, `is_compliant`, `points`, `remarks`, `created_at`, `updated_at`) VALUES
+(20, 1, 'Enabling Environment', 'Adopted/Localized policies relating to DRRM/CCA/EIE on education/school safety', 0, 0, NULL, '2026-04-07 03:33:10', '2026-04-07 03:33:10'),
+(21, 1, 'Enabling Environment', 'Formed School DRRM Team, with a focal person and consisting of personnel from different offices', 0, 0, NULL, '2026-04-07 03:33:10', '2026-04-07 03:33:10'),
+(22, 1, 'Enabling Environment', 'Has a comprehensive School DRRM Plan, which includes CCA and EIE measures', 0, 0, NULL, '2026-04-07 03:33:10', '2026-04-07 03:33:10'),
+(23, 1, 'Enabling Environment', 'School budget supports regular DRRM activities', 0, 0, NULL, '2026-04-07 03:33:10', '2026-04-07 03:33:10'),
+(24, 1, 'Enabling Environment', 'Conducted student-led school watching and hazard mapping', 0, 0, NULL, '2026-04-07 03:33:10', '2026-04-07 03:33:10'),
+(25, 1, 'Enabling Environment', 'Incorporated results of student-led school watching and hazard mapping in the SIP', 0, 0, NULL, '2026-04-07 03:33:10', '2026-04-07 03:33:10'),
+(26, 1, 'Enabling Environment', 'Data collection and consolidation of programs and activities on DRRM', 0, 0, NULL, '2026-04-07 03:33:10', '2026-04-07 03:33:10'),
+(27, 1, 'Safe Learning Facilities', 'School building/classroom components are according to DepEd/National Building Code', 1, 1, NULL, '2026-04-07 03:33:10', '2026-04-07 03:33:10'),
+(28, 1, 'Safe Learning Facilities', 'School conducted risk assessment of buildings', 1, 1, NULL, '2026-04-07 03:33:10', '2026-04-07 03:33:10'),
+(29, 1, 'Safe Learning Facilities', 'School has taken appropriate action with respect to unsafe school buildings', 1, 1, NULL, '2026-04-07 03:33:10', '2026-04-07 03:33:10'),
+(30, 1, 'Safe Learning Facilities', 'Undertaken regular inspection and repair of minor classroom damages', 1, 1, NULL, '2026-04-07 03:33:10', '2026-04-07 03:33:10'),
+(31, 1, 'Safe Learning Facilities', 'School heads and teachers have training on psychosocial support', 0, 0, NULL, '2026-04-07 03:33:10', '2026-04-07 03:33:10'),
+(32, 1, 'Safe Learning Facilities', 'Classrooms have usually 2 doors that swing out', 1, 1, NULL, '2026-04-07 03:33:10', '2026-04-07 03:33:10'),
+(33, 1, 'Safe Learning Facilities', 'Wide corridors for easy movement', 0, 0, NULL, '2026-04-07 03:33:10', '2026-04-07 03:33:10'),
+(34, 1, 'Disaster Risk Management', 'School has a contingency plan for various hazards', 0, 0, NULL, '2026-04-07 03:33:10', '2026-04-07 03:33:10'),
+(35, 1, 'Disaster Risk Management', '95% of students and personnel participated in drills', 0, 0, NULL, '2026-04-07 03:33:10', '2026-04-07 03:33:10'),
+(36, 1, 'Disaster Risk Management', 'School has a functional early warning system', 0, 0, NULL, '2026-04-07 03:33:10', '2026-04-07 03:33:10'),
+(37, 1, 'Disaster Risk Management', 'School has available emergency kits/equipment', 0, 0, NULL, '2026-04-07 03:33:10', '2026-04-07 03:33:10'),
+(38, 1, 'Disaster Risk Management', 'School has a trained emergency response team', 0, 0, NULL, '2026-04-07 03:33:10', '2026-04-07 03:33:10');
 
 -- --------------------------------------------------------
 
@@ -385,33 +244,6 @@ CREATE TABLE `cmpr_schl_sfty_facilities` (
 -- --------------------------------------------------------
 
 --
--- Table structure for table `cmpr_schl_sfty_schools`
---
-
-CREATE TABLE `cmpr_schl_sfty_schools` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `school_id_number` varchar(255) DEFAULT NULL,
-  `name` varchar(255) NOT NULL,
-  `address` varchar(255) DEFAULT NULL,
-  `district` varchar(255) DEFAULT NULL,
-  `division` varchar(255) DEFAULT NULL,
-  `region` varchar(255) DEFAULT NULL,
-  `school_head` varchar(255) DEFAULT NULL,
-  `contact_number` varchar(255) DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `cmpr_schl_sfty_schools`
---
-
-INSERT INTO `cmpr_schl_sfty_schools` (`id`, `school_id_number`, `name`, `address`, `district`, `division`, `region`, `school_head`, `contact_number`, `created_at`, `updated_at`) VALUES
-(1, '107121', 'Iram I Elementary School', 'Iram resettlement Area New Cabalan', NULL, NULL, NULL, 'Mr. Raymund F Camacho', NULL, '2026-03-23 08:07:20', '2026-03-23 08:07:20');
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `cmpr_schl_sfty_students`
 --
 
@@ -419,7 +251,9 @@ CREATE TABLE `cmpr_schl_sfty_students` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `school_id` bigint(20) UNSIGNED NOT NULL,
   `student_lrn` varchar(255) DEFAULT NULL,
-  `name` varchar(255) NOT NULL,
+  `first_name` varchar(255) NOT NULL,
+  `last_name` varchar(255) NOT NULL,
+  `middle_name` varchar(255) DEFAULT NULL,
   `grade_level` varchar(255) DEFAULT NULL,
   `section` varchar(255) DEFAULT NULL,
   `guardian_name` varchar(255) DEFAULT NULL,
@@ -452,7 +286,7 @@ CREATE TABLE `cmpr_schl_sfty_student_pathways` (
 
 CREATE TABLE `firesafety_alarm_systems` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `school_id` bigint(20) UNSIGNED NOT NULL,
+  `unified_school_id` bigint(20) UNSIGNED DEFAULT NULL,
   `building_id` bigint(20) UNSIGNED DEFAULT NULL,
   `floor_id` varchar(255) DEFAULT NULL,
   `code` varchar(255) NOT NULL,
@@ -465,38 +299,41 @@ CREATE TABLE `firesafety_alarm_systems` (
   `installation_date` date DEFAULT NULL,
   `notes` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
+  `updated_at` timestamp NULL DEFAULT NULL,
+  `anchor_building_id` bigint(20) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
 
 --
 -- Dumping data for table `firesafety_alarm_systems`
 --
 
-INSERT INTO `firesafety_alarm_systems` (`id`, `school_id`, `building_id`, `floor_id`, `code`, `location`, `alarm_type`, `status`, `last_test`, `next_test_due`, `manufacturer`, `installation_date`, `notes`, `created_at`, `updated_at`) VALUES
-(12, 11, NULL, 'all', 'ALRM-001', 'All Floors - At the center of the 3rd floor', 'Bell', 'active', '2026-02-18', '2026-02-19', NULL, '2026-02-11', 'To be installed', '2026-02-11 00:41:50', '2026-02-17 21:25:57'),
-(13, 11, NULL, 'all', 'ALRM-002', 'All Floors - 3rd floor at the stairway', 'Bell', 'active', '2026-02-13', '2026-02-19', NULL, '2026-02-11', 'Great Bell', '2026-02-11 00:43:29', '2026-02-12 18:22:58'),
-(14, 11, NULL, 'all', 'ALRM-003', 'All Floors - Center at the hallway', 'Bell', 'active', '2026-02-16', '2026-03-02', NULL, '2026-02-10', 'Loudst bell that can cover two more buildings', '2026-02-12 18:31:03', '2026-02-26 17:23:41'),
-(15, 11, NULL, 'all', 'ALRM-004', 'All Floors - At the center of hallway', 'Bell', 'active', '2026-02-13', '2026-02-19', NULL, '2026-01-07', 'Okay', '2026-02-12 18:49:45', '2026-02-12 18:52:30'),
-(19, 12, 31, 'all', 'ALRM-001', 'Main Lobby', 'Mechanical', 'active', '2026-02-16', '2026-02-20', NULL, '2026-02-18', 'Okay', '2026-02-18 19:26:40', '2026-02-18 19:26:40'),
-(20, 17, 32, '2', '001', 'Second Floor Front of Principals Office', 'Digital', 'active', '2026-02-19', '2026-03-25', 'Ilopop', NULL, 'Identified manufacturer', '2026-03-01 18:23:59', '2026-03-11 17:18:40'),
-(21, 17, 32, '1', '02', '2nd Floor near stairway', 'Bell', 'functional', '2026-02-19', '2026-03-16', NULL, NULL, NULL, '2026-03-01 18:25:07', '2026-03-01 18:25:07'),
-(22, 17, 33, '2', '03', 'Middle Room', 'Bell', 'functional', '2026-02-19', '2026-03-16', NULL, NULL, NULL, '2026-03-01 18:31:04', '2026-03-01 18:31:04'),
-(23, 17, 33, '1', '04', 'Middle Room', 'Bell', 'functional', '2026-02-19', '2026-03-16', NULL, NULL, NULL, '2026-03-01 18:32:10', '2026-03-01 18:32:10'),
-(24, 11, 27, 'all', 'alrm-0011', 'All Floors - At the center of the 3rd floor', 'Bell', 'functional', '2026-02-10', '2026-03-10', NULL, NULL, NULL, '2026-03-02 19:39:19', '2026-03-02 19:39:19'),
-(25, 18, 36, '2', '01', 'Between Room 8 and 9 and possibly 7', 'Bell', 'active', '2026-03-03', '2026-04-03', NULL, NULL, 'Okay bell', '2026-03-03 00:27:07', '2026-03-18 01:07:17'),
-(26, 18, 44, '1', '002', 'Room 3', 'Mechanical', 'active', '2026-03-03', '2026-04-03', NULL, NULL, NULL, '2026-03-03 00:27:59', '2026-03-03 00:28:38'),
-(27, 18, 47, '2', '003', 'Room 5', 'Bell', 'broken', '2026-03-03', '2026-04-03', NULL, NULL, NULL, '2026-03-03 00:29:28', '2026-03-03 00:29:28'),
-(28, 20, 49, '1', '01', 'Between Faculty Room and Classroom (Room 2)', 'Bell', 'broken', '2026-03-04', '2026-04-04', NULL, NULL, 'Need to purchase pull down switch, coordinate with engineering team and test asap.', '2026-03-04 22:18:14', '2026-03-04 22:18:14'),
-(29, 20, 52, 'all', '02', 'Near stairway at First Floor', 'Digital', 'functional', '2026-03-04', '2026-04-04', NULL, NULL, NULL, '2026-03-05 00:04:24', '2026-03-05 00:04:24'),
-(30, 20, 55, '1', '03', 'Between Room 3 and Room 4', 'Bell', 'functional', '2026-03-04', '2026-04-04', NULL, NULL, NULL, '2026-03-05 00:22:11', '2026-03-05 00:22:11'),
-(31, 14, 57, NULL, 'AlRM-001', 'great britain', 'Bell', 'active', '2026-03-11', '2026-03-26', NULL, NULL, 'Okay Alarm', '2026-03-10 22:24:23', '2026-03-10 23:05:03'),
-(32, 14, 58, NULL, 'ALRM-002', 'okay?', 'Mechanical', 'active', '2026-03-01', '2026-03-23', NULL, NULL, 'Good bell, no more issues', '2026-03-10 22:25:30', '2026-03-10 23:06:03'),
-(33, 13, 51, NULL, '11', 'Not Specified', 'Bell', 'broken', '2026-03-17', '2026-02-11', NULL, NULL, 'Alarm not functional (Fire Bells)', '2026-03-16 17:40:26', '2026-03-16 17:40:29'),
-(34, 13, 63, NULL, '01', 'Not Specified', 'Bell', 'active', '2026-01-08', '2026-01-14', NULL, NULL, 'Okay bell', '2026-03-17 07:05:25', '2026-03-17 07:05:25'),
-(35, 21, 68, '1', 'ALARM-01', 'In between the two classrooms', 'Bell', 'active', '2026-03-19', '2026-04-19', NULL, NULL, 'Working, Covering now', '2026-03-19 02:28:43', '2026-03-19 06:33:39'),
-(36, 21, 68, '2', 'ALARM-02', 'In between the two classrooms', 'Bell', 'active', '2026-03-19', '2026-04-19', NULL, NULL, 'Covering', '2026-03-19 02:31:10', '2026-03-19 06:47:34'),
-(37, 21, 68, '3', 'ALARM-03', 'In between two classrooms', 'Bell', 'active', '2026-03-19', '2026-04-19', NULL, NULL, NULL, '2026-03-19 02:32:10', '2026-03-19 02:32:35'),
-(39, 21, 73, NULL, 'ALRM-004', 'Covered Court Area', 'Mechanical', 'active', '2026-03-19', '2026-04-19', NULL, NULL, NULL, '2026-03-19 03:31:12', '2026-03-19 03:31:12');
+INSERT INTO `firesafety_alarm_systems` (`id`, `unified_school_id`, `building_id`, `floor_id`, `code`, `location`, `alarm_type`, `status`, `last_test`, `next_test_due`, `manufacturer`, `installation_date`, `notes`, `created_at`, `updated_at`, `anchor_building_id`) VALUES
+(12, 1, NULL, NULL, 'ALRM-001', 'All Floors - At the center of the 3rd floor', 'Bell', 'active', '2026-02-18', '2026-02-19', NULL, '2026-02-11', 'To be installed', '2026-02-11 00:41:50', '2026-03-30 01:10:44', NULL),
+(13, 1, NULL, 'all', 'ALRM-002', 'All Floors - 3rd floor at the stairway', 'Bell', 'active', '2026-02-13', '2026-02-19', NULL, '2026-02-11', 'Great Bell', '2026-02-11 00:43:29', '2026-02-12 18:22:58', NULL),
+(15, 1, NULL, 'all', 'ALRM-004', 'All Floors - At the center of hallway', 'Bell', 'active', '2026-02-13', '2026-02-19', NULL, '2026-01-07', 'Okay', '2026-02-12 18:49:45', '2026-02-12 18:52:30', NULL),
+(19, 2, 31, 'all', 'ALRM-001', 'Main Lobby', 'Mechanical', 'active', '2026-02-16', '2026-02-20', NULL, '2026-02-18', 'Okay', '2026-02-18 19:26:40', '2026-02-18 19:26:40', NULL),
+(20, 7, 32, '2', '001', 'Second Floor Front of Principals Office', 'Digital', 'active', '2026-02-19', '2026-03-25', 'Ilopop', NULL, 'Identified manufacturer', '2026-03-01 18:23:59', '2026-03-11 17:18:40', NULL),
+(21, 7, 32, '1', '02', '2nd Floor near stairway', 'Bell', 'functional', '2026-02-19', '2026-03-16', NULL, NULL, NULL, '2026-03-01 18:25:07', '2026-03-01 18:25:07', NULL),
+(22, 7, 33, '2', '03', 'Middle Room', 'Bell', 'functional', '2026-02-19', '2026-03-16', NULL, NULL, NULL, '2026-03-01 18:31:04', '2026-03-01 18:31:04', NULL),
+(23, 7, 33, '1', '04', 'Middle Room', 'Bell', 'functional', '2026-02-19', '2026-03-16', NULL, NULL, NULL, '2026-03-01 18:32:10', '2026-03-01 18:32:10', NULL),
+(24, 1, 27, 'all', 'alrm-0011', 'All Floors - At the center of the 3rd floor', 'Bell', 'functional', '2026-02-10', '2026-03-10', NULL, NULL, NULL, '2026-03-02 19:39:19', '2026-03-02 19:39:19', NULL),
+(25, 8, 36, '2', '01', 'Between Room 8 and 9 and possibly 7', 'Bell', 'active', '2026-03-03', '2026-04-03', NULL, NULL, 'Okay bell', '2026-03-03 00:27:07', '2026-03-18 01:07:17', NULL),
+(26, 8, 44, '1', '002', 'Room 3', 'Mechanical', 'active', '2026-03-03', '2026-04-03', NULL, NULL, NULL, '2026-03-03 00:27:59', '2026-03-03 00:28:38', NULL),
+(27, 8, 47, '2', '003', 'Room 5', 'Bell', 'broken', '2026-03-03', '2026-04-03', NULL, NULL, NULL, '2026-03-03 00:29:28', '2026-03-03 00:29:28', NULL),
+(28, 10, 49, '1', '01', 'Between Faculty Room and Classroom (Room 2)', 'Bell', 'broken', '2026-03-04', '2026-04-04', NULL, NULL, 'Need to purchase pull down switch, coordinate with engineering team and test asap.', '2026-03-04 22:18:14', '2026-03-04 22:18:14', NULL),
+(29, 10, 52, 'all', '02', 'Near stairway at First Floor', 'Digital', 'functional', '2026-03-04', '2026-04-04', NULL, NULL, NULL, '2026-03-05 00:04:24', '2026-03-05 00:04:24', NULL),
+(30, 10, 55, '1', '03', 'Between Room 3 and Room 4', 'Bell', 'functional', '2026-03-04', '2026-04-04', NULL, NULL, NULL, '2026-03-05 00:22:11', '2026-03-05 00:22:11', NULL),
+(31, 4, 57, NULL, 'AlRM-001', 'great britain', 'Bell', 'active', '2026-03-11', '2026-03-26', NULL, NULL, 'Okay Alarm', '2026-03-10 22:24:23', '2026-03-10 23:05:03', NULL),
+(32, 4, 58, NULL, 'ALRM-002', 'okay?', 'Mechanical', 'active', '2026-03-01', '2026-03-23', NULL, NULL, 'Good bell, no more issues', '2026-03-10 22:25:30', '2026-03-10 23:06:03', NULL),
+(33, 3, 51, NULL, '11', 'Not Specified', 'Bell', 'broken', '2026-03-17', '2026-02-11', NULL, NULL, 'Alarm not functional (Fire Bells)', '2026-03-16 17:40:26', '2026-03-16 17:40:29', NULL),
+(34, 3, 63, NULL, '01', 'Not Specified', 'Bell', 'active', '2026-01-08', '2026-01-14', NULL, NULL, 'Okay bell', '2026-03-17 07:05:25', '2026-03-17 07:05:25', NULL),
+(35, 11, 68, '1', 'ALARM-01', 'In between the two classrooms', 'Bell', 'active', '2026-03-19', '2026-04-19', NULL, NULL, 'Working, Covering now', '2026-03-19 02:28:43', '2026-03-19 06:33:39', NULL),
+(36, 11, 68, '2', 'ALARM-02', 'In between the two classrooms', 'Bell', 'active', '2026-03-19', '2026-04-19', NULL, NULL, 'Covering', '2026-03-19 02:31:10', '2026-03-19 06:47:34', NULL),
+(37, 11, 68, '3', 'ALARM-03', 'In between two classrooms', 'Bell', 'active', '2026-03-19', '2026-04-19', NULL, NULL, NULL, '2026-03-19 02:32:10', '2026-03-19 02:32:35', NULL),
+(39, 11, 73, NULL, 'ALRM-004', 'Covered Court Area', 'Mechanical', 'active', '2026-03-19', '2026-04-19', NULL, NULL, NULL, '2026-03-19 03:31:12', '2026-03-19 03:31:12', NULL),
+(41, 1, 17, NULL, 'ALRM-003', 'Near', 'Bell', 'active', '2026-02-02', '2026-03-16', NULL, NULL, 'Okay bell very functional', '2026-03-30 01:07:57', '2026-03-30 01:07:57', NULL),
+(42, 1, 74, NULL, 'ALRM-0012', '1st Floor near stairway', 'Bell', 'active', '2026-03-21', '2026-04-11', NULL, NULL, 'Okay alarm', '2026-03-30 01:29:55', '2026-03-30 01:29:55', NULL),
+(43, 9, 75, NULL, '01', 'Not Specified', 'Bell', 'active', '2026-04-01', '2026-04-16', NULL, NULL, 'okay', '2026-04-07 00:28:41', '2026-04-07 00:29:52', NULL);
 
 -- --------------------------------------------------------
 
@@ -506,7 +343,7 @@ INSERT INTO `firesafety_alarm_systems` (`id`, `school_id`, `building_id`, `floor
 
 CREATE TABLE `firesafety_buildings` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `school_id` bigint(20) UNSIGNED NOT NULL,
+  `unified_school_id` bigint(20) UNSIGNED DEFAULT NULL,
   `building_no` varchar(255) NOT NULL,
   `building_name` varchar(255) DEFAULT NULL,
   `floors` int(11) NOT NULL,
@@ -531,60 +368,63 @@ CREATE TABLE `firesafety_buildings` (
 -- Dumping data for table `firesafety_buildings`
 --
 
-INSERT INTO `firesafety_buildings` (`id`, `school_id`, `building_no`, `building_name`, `floors`, `max_floors`, `rooms`, `max_rooms`, `required_extinguishers`, `year_constructed`, `last_renovation`, `emergency_exits`, `building_type`, `description`, `features`, `created_at`, `updated_at`, `safety_score`, `compliance_status`, `compliance_reason`) VALUES
-(17, 11, '01', '01', 1, 1, 3, 2, 2, 1994, 1995, 2, 'School Building', 'Madrasah Room, same as bldg.2', NULL, '2026-02-10 17:05:29', '2026-03-05 00:15:17', 0, 'Incomplete', NULL),
-(19, 11, '02', '02', 1, 1, 3, 3, 2, 2003, 2010, 4, 'School Building', 'Single Doors, swing in grills', 'two_stairways', '2026-02-11 00:38:31', '2026-02-12 18:26:54', 0, 'Incomplete', NULL),
-(20, 11, '03', '03', 1, 1, 2, 2, 0, 2013, 2018, 4, 'School Building', 'Single Door, Grills', NULL, '2026-02-12 18:29:24', '2026-02-12 18:29:24', 0, 'Incomplete', NULL),
-(21, 11, '04', '04', 1, 1, 2, 2, 1, 2014, 2020, 7, 'School Building', 'Single Door , (1) canlan', NULL, '2026-02-12 18:41:24', '2026-02-12 18:41:24', 0, 'Incomplete', NULL),
-(22, 11, '05', '05', 1, 1, 1, 1, 1, 2020, 2024, 6, 'School Building', 'Newest Building', NULL, '2026-02-12 18:44:00', '2026-02-12 18:44:00', 0, 'Incomplete', NULL),
-(23, 11, '06', '06', 1, 1, 1, 1, 0, 2010, 2023, 4, 'School Building', NULL, NULL, '2026-02-12 18:46:47', '2026-02-12 18:46:47', 0, 'Incomplete', NULL),
-(24, 11, '07', '07', 1, 1, 1, 1, 1, 2017, 2023, 2, 'School Building', NULL, NULL, '2026-02-12 18:47:51', '2026-02-12 18:47:51', 0, 'Incomplete', NULL),
-(25, 11, '08', '08', 1, 1, 3, 2, 1, 2017, 2021, 2, 'School Building', 'Lightest Yellow Building', NULL, '2026-02-12 18:54:02', '2026-03-02 01:04:32', 0, 'Incomplete', NULL),
-(26, 11, '09', '09', 1, 1, 2, 2, 1, NULL, NULL, 2, 'School Building', NULL, NULL, '2026-02-12 18:57:18', '2026-02-12 18:57:18', 0, 'Incomplete', NULL),
-(27, 11, '10', '10', 1, 1, 3, 3, 3, 2010, 2023, 1, 'School Building', '1 Feeding Room', NULL, '2026-02-12 19:00:37', '2026-02-12 19:03:53', 0, 'Incomplete', NULL),
-(28, 11, '11', '11', 1, 1, 2, 2, 2, NULL, NULL, 0, 'School Building', NULL, NULL, '2026-02-12 19:05:30', '2026-02-15 17:54:04', 0, 'Incomplete', NULL),
-(31, 12, '01', NULL, 1, 1, 1, 1, 1, NULL, NULL, 2, 'School Building', NULL, NULL, '2026-02-18 19:25:38', '2026-03-12 00:32:59', 95, 'Passed', NULL),
-(32, 17, '001', '01', 2, 2, 6, 6, 3, NULL, NULL, 1, 'Administration', 'Bites the dust', 'sprinklers', '2026-03-01 18:18:34', '2026-03-11 17:23:29', 0, 'Incomplete', NULL),
-(33, 17, '02', '02', 2, 2, 6, 6, 4, NULL, NULL, 1, 'School Building', NULL, NULL, '2026-03-01 18:26:48', '2026-03-01 18:26:48', 0, 'Incomplete', NULL),
-(34, 17, '03', '03', 1, 1, 2, 2, 1, NULL, NULL, 0, 'Administration', NULL, NULL, '2026-03-01 18:28:36', '2026-03-01 18:28:36', 0, 'Incomplete', NULL),
-(35, 17, '04', '04', 1, 1, 2, 2, 1, NULL, NULL, 0, 'School Building', NULL, NULL, '2026-03-01 18:29:35', '2026-03-01 18:29:35', 0, 'Incomplete', NULL),
-(36, 18, '01', NULL, 2, 2, 11, 6, 2, 1992, NULL, 2, 'School Building', NULL, 'exit_signs', '2026-03-02 22:56:45', '2026-03-02 23:16:49', 0, 'Incomplete', NULL),
-(37, 18, '02', NULL, 1, 1, 3, 3, 2, 1979, NULL, 0, 'School Building', NULL, NULL, '2026-03-02 23:06:36', '2026-03-02 23:14:07', 0, 'Incomplete', NULL),
-(38, 18, '03', NULL, 1, 1, 3, 3, 2, 1980, NULL, 0, 'School Building', NULL, NULL, '2026-03-02 23:10:46', '2026-03-02 23:17:35', 0, 'Incomplete', NULL),
-(39, 18, '04', NULL, 1, 1, 3, 3, 3, 1992, NULL, 0, 'Administration', NULL, NULL, '2026-03-02 23:13:25', '2026-03-02 23:18:10', 0, 'Incomplete', NULL),
-(40, 18, '05', NULL, 1, 1, 1, 1, 1, 1987, NULL, 0, 'School Building', NULL, NULL, '2026-03-02 23:16:09', '2026-03-02 23:18:42', 0, 'Incomplete', NULL),
-(41, 18, '06', NULL, 1, 1, 1, 1, 1, 1998, NULL, 0, 'School Building', NULL, NULL, '2026-03-02 23:19:43', '2026-03-02 23:19:43', 0, 'Incomplete', NULL),
-(42, 18, '07', NULL, 1, 1, 3, 3, 2, 1979, NULL, 0, 'School Building', NULL, NULL, '2026-03-02 23:21:37', '2026-03-02 23:21:37', 0, 'Incomplete', NULL),
-(43, 18, '08', NULL, 1, 1, 1, 1, 1, 1998, NULL, 0, 'School Building', NULL, NULL, '2026-03-02 23:22:38', '2026-03-02 23:22:38', 0, 'Incomplete', NULL),
-(44, 18, '09', NULL, 1, 1, 3, 3, 2, 1976, NULL, 0, 'School Building', NULL, NULL, '2026-03-02 23:23:24', '2026-03-02 23:23:24', 0, 'Incomplete', NULL),
-(45, 18, '10', NULL, 1, 1, 2, 2, 1, 2016, NULL, 0, 'School Building', NULL, NULL, '2026-03-02 23:24:16', '2026-03-02 23:24:16', 0, 'Incomplete', NULL),
-(46, 18, '11', NULL, 2, 2, 4, 4, 2, 1998, NULL, 1, 'School Building', NULL, NULL, '2026-03-02 23:25:32', '2026-03-02 23:25:32', 0, 'Incomplete', NULL),
-(47, 18, '12', NULL, 2, 2, 6, 6, 4, 1991, NULL, 1, 'School Building', NULL, NULL, '2026-03-02 23:26:31', '2026-03-02 23:26:31', 0, 'Incomplete', NULL),
-(48, 16, '01', NULL, 1, 1, 4, 3, 2, NULL, NULL, 0, 'School Building', NULL, NULL, '2026-03-03 22:50:34', '2026-03-17 02:34:15', 0, 'Incomplete', NULL),
-(49, 20, '001', NULL, 1, 1, 2, 2, 2, NULL, NULL, 0, 'School Building', NULL, NULL, '2026-03-04 22:14:03', '2026-03-12 01:05:57', 0, 'Incomplete', NULL),
-(50, 13, '01', NULL, 1, 1, 1, 1, 1, NULL, NULL, 0, 'School Building', NULL, NULL, '2026-03-04 22:15:30', '2026-03-04 22:15:30', 0, 'Incomplete', NULL),
-(51, 13, '02', NULL, 2, 2, 4, 4, 2, NULL, NULL, 2, 'School Building', NULL, NULL, '2026-03-04 22:16:41', '2026-03-04 22:16:41', 0, 'Incomplete', NULL),
-(52, 20, '002', NULL, 3, 3, 6, 6, 7, NULL, NULL, 1, 'Administration', NULL, NULL, '2026-03-04 22:19:44', '2026-03-04 22:19:44', 0, 'Incomplete', NULL),
-(53, 13, '03', NULL, 1, 1, 1, 1, 1, NULL, NULL, 0, 'Administration', 'Unused Clinic', NULL, '2026-03-04 22:20:52', '2026-03-17 06:06:32', 0, 'Incomplete', NULL),
-(54, 20, '003', '3', 1, 1, 2, 2, 2, NULL, NULL, 0, 'School Building', 'HE and Classroom', NULL, '2026-03-04 23:21:45', '2026-03-12 00:41:28', 0, 'Incomplete', NULL),
-(55, 20, '004', NULL, 1, 1, 4, 4, 2, NULL, NULL, 0, 'School Building', NULL, NULL, '2026-03-04 23:24:08', '2026-03-04 23:24:08', 0, 'Incomplete', NULL),
-(56, 20, '005', NULL, 1, 1, 2, 2, 2, NULL, NULL, 0, 'School Building', NULL, NULL, '2026-03-04 23:26:44', '2026-03-04 23:26:44', 0, 'Incomplete', NULL),
-(57, 14, '01', 'BLDG -001', 1, 1, 3, 3, 2, 2003, 2021, NULL, 'School Building', 'Sturdy and good building', 'fire_doors,two_stairways', '2026-03-10 18:40:06', '2026-03-10 22:34:03', 0, 'Incomplete', NULL),
-(58, 14, '02', 'Okay room', 2, 1, 6, 6, 4, 2009, 2022, 2, 'School Building', 'Building enough enough to handle drilling', NULL, '2026-03-10 18:51:49', '2026-03-16 17:25:10', 0, 'Incomplete', NULL),
-(59, 14, '03', 'Sturdiest buildy', 1, 1, 4, 4, 2, NULL, NULL, NULL, 'School Building', NULL, NULL, '2026-03-10 18:52:33', '2026-03-10 18:52:33', 0, 'Incomplete', NULL),
-(60, 15, '01', 'colored building', 1, 1, 1, 1, 1, NULL, NULL, NULL, 'School Building', '<script>Alert(\"www\");</script>', 'exit_signs', '2026-03-10 22:41:08', '2026-03-10 22:41:55', 0, 'Incomplete', NULL),
-(61, 13, '04', NULL, 1, 1, 3, 3, 1, NULL, NULL, NULL, 'School Building', 'Single Door', NULL, '2026-03-17 06:07:36', '2026-03-17 06:08:42', 0, 'Incomplete', NULL),
-(62, 13, '05', NULL, 1, 1, 3, 3, 1, NULL, NULL, NULL, 'School Building', 'Single Door', NULL, '2026-03-17 06:18:10', '2026-03-17 06:18:10', 0, 'Incomplete', NULL),
-(63, 13, '06', NULL, 1, 1, 3, 3, 2, NULL, NULL, NULL, 'Administration', '(1) Canteen', NULL, '2026-03-17 06:20:14', '2026-03-17 06:24:32', 0, 'Incomplete', NULL),
-(64, 13, '07', NULL, 1, 1, 2, 2, 1, NULL, NULL, NULL, 'School Building', 'Single Door', NULL, '2026-03-17 06:23:03', '2026-03-17 06:23:59', 0, 'Incomplete', NULL),
-(65, 13, '08', NULL, 1, 1, 2, 2, 1, NULL, NULL, NULL, 'School Building', 'Single Door', NULL, '2026-03-17 06:23:44', '2026-03-17 06:23:44', 0, 'Incomplete', NULL),
-(66, 13, '09', 'Fil-Chi', 1, 1, 2, 2, 1, NULL, NULL, NULL, 'Laboratory', 'Single door, not yet turned over', NULL, '2026-03-17 06:25:42', '2026-03-17 07:02:48', 0, 'Incomplete', NULL),
-(68, 21, '01', '01', 3, 3, 6, 6, 4, NULL, NULL, 2, 'School Building', NULL, 'Dry Stand Pipe', '2026-03-19 02:19:06', '2026-03-19 06:29:17', 0, 'Incomplete', NULL),
-(69, 21, '02', 'School Canteen', 1, 1, 1, 1, 1, NULL, NULL, NULL, 'Canteen', NULL, NULL, '2026-03-19 02:27:15', '2026-03-19 02:27:15', 0, 'Incomplete', NULL),
-(70, 21, '03', 'HE Laboratory', 1, 1, 1, 1, 1, NULL, NULL, NULL, 'Laboratory', NULL, NULL, '2026-03-19 02:39:16', '2026-03-19 02:39:16', 0, 'Incomplete', NULL),
-(71, 21, '04', NULL, 1, 1, 1, 1, 1, NULL, NULL, NULL, 'School Building', NULL, NULL, '2026-03-19 02:43:56', '2026-03-19 02:43:56', 0, 'Incomplete', NULL),
-(72, 21, '05', NULL, 2, 2, 12, 12, 6, NULL, NULL, 2, 'School Building', NULL, NULL, '2026-03-19 02:46:46', '2026-03-19 02:46:46', 0, 'Incomplete', NULL),
-(73, 21, '06', NULL, 2, 2, 14, 13, 6, NULL, NULL, 2, 'School Building', NULL, NULL, '2026-03-19 03:05:25', '2026-03-19 03:25:57', 0, 'Incomplete', NULL);
+INSERT INTO `firesafety_buildings` (`id`, `unified_school_id`, `building_no`, `building_name`, `floors`, `max_floors`, `rooms`, `max_rooms`, `required_extinguishers`, `year_constructed`, `last_renovation`, `emergency_exits`, `building_type`, `description`, `features`, `created_at`, `updated_at`, `safety_score`, `compliance_status`, `compliance_reason`) VALUES
+(17, 1, '01', '011', 1, 1, 4, 2, 5, 1995, 1996, 0, 'School Building', 'Madrasah Room, same as bldg.2', NULL, '2026-02-10 17:05:29', '2026-03-29 02:27:04', 0, 'Incomplete', NULL),
+(19, 1, '02', '02', 1, 1, 3, 3, 2, 2003, 2010, 4, 'School Building', 'Single Doors, swing in grills', 'two_stairways', '2026-02-11 00:38:31', '2026-03-29 02:32:51', 95, 'Passed', NULL),
+(20, 1, '03', '03', 1, 1, 2, 2, 0, 2013, 2018, 4, 'School Building', 'Single Door, Grills', NULL, '2026-02-12 18:29:24', '2026-03-29 02:32:51', 95, 'Passed', NULL),
+(21, 1, '04', '04', 1, 1, 2, 2, 1, 2014, 2020, 7, 'School Building', 'Single Door , (1) canlan', NULL, '2026-02-12 18:41:24', '2026-02-12 18:41:24', 0, 'Incomplete', NULL),
+(22, 1, '05', '05', 1, 1, 1, 1, 1, 2020, 2024, 6, 'School Building', 'Newest Building', NULL, '2026-02-12 18:44:00', '2026-02-12 18:44:00', 0, 'Incomplete', NULL),
+(23, 1, '06', '06', 1, 1, 1, 1, 0, 2010, 2023, 4, 'School Building', NULL, NULL, '2026-02-12 18:46:47', '2026-02-12 18:46:47', 0, 'Incomplete', NULL),
+(24, 1, '07', '07', 1, 1, 1, 1, 1, 2017, 2023, 2, 'School Building', NULL, NULL, '2026-02-12 18:47:51', '2026-02-12 18:47:51', 0, 'Incomplete', NULL),
+(25, 1, '08', '08', 1, 1, 3, 2, 1, 2017, 2021, 2, 'School Building', 'Lightest Yellow Building', NULL, '2026-02-12 18:54:02', '2026-03-29 02:32:51', 95, 'Passed', NULL),
+(26, 1, '09', '09', 1, 1, 2, 2, 1, NULL, NULL, 2, 'School Building', NULL, NULL, '2026-02-12 18:57:18', '2026-03-29 02:32:51', 95, 'Passed', NULL),
+(27, 1, '10', '10', 1, 1, 3, 3, 3, 2010, 2023, 1, 'School Building', '1 Feeding Room', NULL, '2026-02-12 19:00:37', '2026-03-29 02:32:51', 95, 'Passed', NULL),
+(28, 1, '11', '11', 1, 1, 2, 2, 2, NULL, NULL, 0, 'School Building', NULL, NULL, '2026-02-12 19:05:30', '2026-03-29 02:32:51', 95, 'Passed', NULL),
+(31, 2, '01', NULL, 1, 1, 1, 1, 1, NULL, NULL, 2, 'School Building', NULL, NULL, '2026-02-18 19:25:38', '2026-03-12 00:32:59', 95, 'Passed', NULL),
+(32, 7, '001', '01', 2, 2, 6, 6, 3, NULL, NULL, 1, 'Administration', 'Bites the dust', 'sprinklers', '2026-03-01 18:18:34', '2026-03-11 17:23:29', 0, 'Incomplete', NULL),
+(33, 7, '02', '02', 2, 2, 6, 6, 4, NULL, NULL, 1, 'School Building', NULL, NULL, '2026-03-01 18:26:48', '2026-03-01 18:26:48', 0, 'Incomplete', NULL),
+(34, 7, '03', '03', 1, 1, 2, 2, 1, NULL, NULL, 0, 'Administration', NULL, NULL, '2026-03-01 18:28:36', '2026-03-01 18:28:36', 0, 'Incomplete', NULL),
+(35, 7, '04', '04', 1, 1, 2, 2, 1, NULL, NULL, 0, 'School Building', NULL, NULL, '2026-03-01 18:29:35', '2026-03-01 18:29:35', 0, 'Incomplete', NULL),
+(36, 8, '01', NULL, 2, 2, 11, 6, 2, 1992, NULL, 2, 'School Building', NULL, 'exit_signs', '2026-03-02 22:56:45', '2026-03-02 23:16:49', 0, 'Incomplete', NULL),
+(37, 8, '02', NULL, 1, 1, 3, 3, 2, 1979, NULL, 0, 'School Building', NULL, NULL, '2026-03-02 23:06:36', '2026-03-02 23:14:07', 0, 'Incomplete', NULL),
+(38, 8, '03', NULL, 1, 1, 3, 3, 2, 1980, NULL, 0, 'School Building', NULL, NULL, '2026-03-02 23:10:46', '2026-03-02 23:17:35', 0, 'Incomplete', NULL),
+(39, 8, '04', NULL, 1, 1, 3, 3, 3, 1992, NULL, 0, 'Administration', NULL, NULL, '2026-03-02 23:13:25', '2026-03-02 23:18:10', 0, 'Incomplete', NULL),
+(40, 8, '05', NULL, 1, 1, 1, 1, 1, 1987, NULL, 0, 'School Building', NULL, NULL, '2026-03-02 23:16:09', '2026-03-02 23:18:42', 0, 'Incomplete', NULL),
+(41, 8, '06', NULL, 1, 1, 1, 1, 1, 1998, NULL, 0, 'School Building', NULL, NULL, '2026-03-02 23:19:43', '2026-03-02 23:19:43', 0, 'Incomplete', NULL),
+(42, 8, '07', NULL, 1, 1, 3, 3, 2, 1979, NULL, 0, 'School Building', NULL, NULL, '2026-03-02 23:21:37', '2026-03-02 23:21:37', 0, 'Incomplete', NULL),
+(43, 8, '08', NULL, 1, 1, 1, 1, 1, 1998, NULL, 0, 'School Building', NULL, NULL, '2026-03-02 23:22:38', '2026-03-02 23:22:38', 0, 'Incomplete', NULL),
+(44, 8, '09', NULL, 1, 1, 3, 3, 2, 1976, NULL, 0, 'School Building', NULL, NULL, '2026-03-02 23:23:24', '2026-03-02 23:23:24', 0, 'Incomplete', NULL),
+(45, 8, '10', NULL, 1, 1, 2, 2, 1, 2016, NULL, 0, 'School Building', NULL, NULL, '2026-03-02 23:24:16', '2026-03-02 23:24:16', 0, 'Incomplete', NULL),
+(46, 8, '11', NULL, 2, 2, 4, 4, 2, 1998, NULL, 1, 'School Building', NULL, NULL, '2026-03-02 23:25:32', '2026-03-02 23:25:32', 0, 'Incomplete', NULL),
+(47, 8, '12', NULL, 2, 2, 6, 6, 4, 1991, NULL, 1, 'School Building', NULL, NULL, '2026-03-02 23:26:31', '2026-03-02 23:26:31', 0, 'Incomplete', NULL),
+(48, 6, '01', NULL, 1, 1, 4, 3, 2, NULL, NULL, 0, 'School Building', NULL, NULL, '2026-03-03 22:50:34', '2026-03-17 02:34:15', 0, 'Incomplete', NULL),
+(49, 10, '001', NULL, 1, 1, 2, 2, 2, NULL, NULL, 0, 'School Building', NULL, NULL, '2026-03-04 22:14:03', '2026-03-12 01:05:57', 0, 'Incomplete', NULL),
+(50, 3, '01', NULL, 1, 1, 1, 1, 1, NULL, NULL, 0, 'School Building', NULL, NULL, '2026-03-04 22:15:30', '2026-03-04 22:15:30', 0, 'Incomplete', NULL),
+(51, 3, '02', NULL, 2, 2, 4, 4, 2, NULL, NULL, 2, 'School Building', NULL, NULL, '2026-03-04 22:16:41', '2026-03-04 22:16:41', 0, 'Incomplete', NULL),
+(52, 10, '002', NULL, 3, 3, 6, 6, 7, NULL, NULL, 1, 'Administration', NULL, NULL, '2026-03-04 22:19:44', '2026-03-04 22:19:44', 0, 'Incomplete', NULL),
+(53, 3, '03', NULL, 1, 1, 1, 1, 1, NULL, NULL, 0, 'Administration', 'Unused Clinic', NULL, '2026-03-04 22:20:52', '2026-03-17 06:06:32', 0, 'Incomplete', NULL),
+(54, 10, '003', '3', 1, 1, 2, 2, 2, NULL, NULL, 0, 'School Building', 'HE and Classroom', NULL, '2026-03-04 23:21:45', '2026-03-12 00:41:28', 0, 'Incomplete', NULL),
+(55, 10, '004', NULL, 1, 1, 4, 4, 2, NULL, NULL, 0, 'School Building', NULL, NULL, '2026-03-04 23:24:08', '2026-03-04 23:24:08', 0, 'Incomplete', NULL),
+(56, 10, '005', NULL, 1, 1, 2, 2, 2, NULL, NULL, 0, 'School Building', NULL, NULL, '2026-03-04 23:26:44', '2026-03-04 23:26:44', 0, 'Incomplete', NULL),
+(57, 4, '01', 'BLDG -001', 1, 1, 3, 3, 2, 2003, 2021, NULL, 'School Building', 'Sturdy and good building', 'fire_doors,two_stairways', '2026-03-10 18:40:06', '2026-03-10 22:34:03', 0, 'Incomplete', NULL),
+(58, 4, '02', 'Okay room', 2, 1, 6, 6, 4, 2009, 2022, 2, 'School Building', 'Building enough enough to handle drilling', NULL, '2026-03-10 18:51:49', '2026-03-16 17:25:10', 0, 'Incomplete', NULL),
+(59, 4, '03', 'Sturdiest buildy', 1, 1, 4, 4, 2, NULL, NULL, NULL, 'School Building', NULL, NULL, '2026-03-10 18:52:33', '2026-03-10 18:52:33', 0, 'Incomplete', NULL),
+(60, 5, '01', 'colored building', 1, 1, 1, 1, 1, NULL, NULL, NULL, 'School Building', '<script>Alert(\"www\");</script>', 'exit_signs', '2026-03-10 22:41:08', '2026-03-10 22:41:55', 0, 'Incomplete', NULL),
+(61, 3, '04', NULL, 1, 1, 3, 3, 1, NULL, NULL, NULL, 'School Building', 'Single Door', NULL, '2026-03-17 06:07:36', '2026-03-17 06:08:42', 0, 'Incomplete', NULL),
+(62, 3, '05', NULL, 1, 1, 3, 3, 1, NULL, NULL, NULL, 'School Building', 'Single Door', NULL, '2026-03-17 06:18:10', '2026-03-17 06:18:10', 0, 'Incomplete', NULL),
+(63, 3, '06', NULL, 1, 1, 3, 3, 2, NULL, NULL, NULL, 'Administration', '(1) Canteen', NULL, '2026-03-17 06:20:14', '2026-03-17 06:24:32', 0, 'Incomplete', NULL),
+(64, 3, '07', NULL, 1, 1, 2, 2, 1, NULL, NULL, NULL, 'School Building', 'Single Door', NULL, '2026-03-17 06:23:03', '2026-03-17 06:23:59', 0, 'Incomplete', NULL),
+(65, 3, '08', NULL, 1, 1, 2, 2, 1, NULL, NULL, NULL, 'School Building', 'Single Door', NULL, '2026-03-17 06:23:44', '2026-03-17 06:23:44', 0, 'Incomplete', NULL),
+(66, 3, '09', 'Fil-Chi', 1, 1, 2, 2, 1, NULL, NULL, NULL, 'Laboratory', 'Single door, not yet turned over', NULL, '2026-03-17 06:25:42', '2026-03-17 07:02:48', 0, 'Incomplete', NULL),
+(68, 11, '01', '01', 3, 3, 6, 6, 4, NULL, NULL, 2, 'School Building', NULL, 'Dry Stand Pipe', '2026-03-19 02:19:06', '2026-03-19 06:29:17', 0, 'Incomplete', NULL),
+(69, 11, '02', 'School Canteen', 1, 1, 1, 1, 1, NULL, NULL, NULL, 'Canteen', NULL, NULL, '2026-03-19 02:27:15', '2026-03-19 02:27:15', 0, 'Incomplete', NULL),
+(70, 11, '03', 'HE Laboratory', 1, 1, 1, 1, 1, NULL, NULL, NULL, 'Laboratory', NULL, NULL, '2026-03-19 02:39:16', '2026-03-19 02:39:16', 0, 'Incomplete', NULL),
+(71, 11, '04', NULL, 1, 1, 1, 1, 1, NULL, NULL, NULL, 'School Building', NULL, NULL, '2026-03-19 02:43:56', '2026-03-19 02:43:56', 0, 'Incomplete', NULL),
+(72, 11, '05', NULL, 2, 2, 12, 12, 6, NULL, NULL, 2, 'School Building', NULL, NULL, '2026-03-19 02:46:46', '2026-03-19 02:46:46', 0, 'Incomplete', NULL),
+(73, 11, '06', NULL, 2, 2, 14, 13, 6, NULL, NULL, 2, 'School Building', NULL, NULL, '2026-03-19 03:05:25', '2026-03-19 03:25:57', 0, 'Incomplete', NULL),
+(74, 1, '044', 'Scie', 2, 2, 3, 3, 2, 1957, 1958, 2, 'School Building', 'large emmote building', 'axe', '2026-03-30 01:06:44', '2026-03-30 01:06:44', 0, 'Incomplete', NULL),
+(75, 9, '01', NULL, 2, 2, 2, 2, 3, NULL, NULL, 2, 'School Building', NULL, NULL, '2026-04-07 00:23:11', '2026-04-07 00:45:51', 0, 'Incomplete', NULL),
+(76, 9, '02', NULL, 1, 1, 1, 1, 2, NULL, NULL, 0, 'School Building', NULL, NULL, '2026-04-07 00:29:06', '2026-04-07 00:29:06', 0, 'Incomplete', NULL);
 
 -- --------------------------------------------------------
 
@@ -594,7 +434,8 @@ INSERT INTO `firesafety_buildings` (`id`, `school_id`, `building_no`, `building_
 
 CREATE TABLE `firesafety_evacuationplans` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `school_id` bigint(20) UNSIGNED NOT NULL,
+  `school_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `unified_school_id` bigint(20) UNSIGNED DEFAULT NULL,
   `building_id` bigint(20) UNSIGNED DEFAULT NULL,
   `plan_no` varchar(255) NOT NULL,
   `exits` text DEFAULT NULL,
@@ -619,12 +460,12 @@ CREATE TABLE `firesafety_evacuationplans` (
 -- Dumping data for table `firesafety_evacuationplans`
 --
 
-INSERT INTO `firesafety_evacuationplans` (`id`, `school_id`, `building_id`, `plan_no`, `exits`, `routes`, `primary_route`, `secondary_route`, `safety_features_installed`, `areas`, `primary_assembly_area`, `secondary_assembly_area`, `assembly_capacity`, `emergency_contacts`, `special_instructions`, `map_data`, `status`, `approved_at`, `created_at`, `updated_at`) VALUES
-(1, 11, NULL, 'PLAN A', '0', '1', NULL, NULL, NULL, '1', 'Main Gate Open Grounds', NULL, 300, '0960544677 Reto Jebanya', 'Make sure to guide pwd, senior and pregnant if you see one, don\'t push each other, if you\'re in front immediately go outside so that it\'ll not traffic', NULL, 'active', '2026-02-26 23:35:56', '2026-02-26 23:35:56', '2026-02-26 23:35:56'),
-(2, 14, NULL, 'PLAN A', '0', '1', NULL, NULL, NULL, '2', 'Main Gate Open Grounds', 'Near the second gate', 600, '099999692749 - Dolores Umbina', 'Guide students safely, priority seniors, pwd & pregnant women', NULL, 'active', '2026-03-10 22:28:48', '2026-03-10 22:28:48', '2026-03-10 22:28:48'),
-(3, 13, NULL, 'Plan A', '0', '1', NULL, NULL, NULL, '2', 'Okay', 'Okay kayo', 480, 'Printinciao 09006767', 'Do no let your selves to be stucked on a building updated', NULL, 'active', '2026-03-11 19:30:56', '2026-03-11 19:30:56', '2026-03-11 19:31:17'),
-(4, 13, 50, 'Pwede na', '0', '2', 'Okay', 'O', 'No safety features recorded', NULL, NULL, NULL, 0, NULL, NULL, NULL, 'active', '2026-03-11 19:31:48', '2026-03-11 19:31:48', '2026-03-11 19:31:48'),
-(5, 12, NULL, 'Olan a', '0', '1', NULL, NULL, NULL, '1', 'Okay', NULL, 50, 'Okay', 'Omay', NULL, 'active', '2026-03-12 00:32:59', '2026-03-12 00:32:59', '2026-03-12 00:32:59');
+INSERT INTO `firesafety_evacuationplans` (`id`, `school_id`, `unified_school_id`, `building_id`, `plan_no`, `exits`, `routes`, `primary_route`, `secondary_route`, `safety_features_installed`, `areas`, `primary_assembly_area`, `secondary_assembly_area`, `assembly_capacity`, `emergency_contacts`, `special_instructions`, `map_data`, `status`, `approved_at`, `created_at`, `updated_at`) VALUES
+(1, 11, 1, NULL, 'PLAN A', '0', '1', NULL, NULL, NULL, '1', 'Main Gate Open Grounds', NULL, 300, '0960544677 Reto Jebanya', 'Make sure to guide pwd, senior and pregnant if you see one, don\'t push each other, if you\'re in front immediately go outside so that it\'ll not traffic', NULL, 'active', '2026-02-26 23:35:56', '2026-02-26 23:35:56', '2026-03-29 02:32:59'),
+(2, 14, 4, NULL, 'PLAN A', '0', '1', NULL, NULL, NULL, '2', 'Main Gate Open Grounds', 'Near the second gate', 600, '099999692749 - Dolores Umbina', 'Guide students safely, priority seniors, pwd & pregnant women', NULL, 'active', '2026-03-10 22:28:48', '2026-03-10 22:28:48', '2026-03-10 22:28:48'),
+(3, 13, 3, NULL, 'Plan A', '0', '1', NULL, NULL, NULL, '2', 'Okay', 'Okay kayo', 480, 'Printinciao 09006767', 'Do no let your selves to be stucked on a building updated', NULL, 'active', '2026-03-11 19:30:56', '2026-03-11 19:30:56', '2026-03-11 19:31:17'),
+(4, 13, 3, 50, 'Pwede na', '0', '2', 'Okay', 'O', 'No safety features recorded', NULL, NULL, NULL, 0, NULL, NULL, NULL, 'active', '2026-03-11 19:31:48', '2026-03-11 19:31:48', '2026-03-11 19:31:48'),
+(5, 12, 2, NULL, 'Olan a', '0', '1', NULL, NULL, NULL, '1', 'Okay', NULL, 50, 'Okay', 'Omay', NULL, 'active', '2026-03-12 00:32:59', '2026-03-12 00:32:59', '2026-03-12 00:32:59');
 
 -- --------------------------------------------------------
 
@@ -634,7 +475,7 @@ INSERT INTO `firesafety_evacuationplans` (`id`, `school_id`, `building_id`, `pla
 
 CREATE TABLE `firesafety_fire_extinguishers` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `school_id` bigint(20) UNSIGNED NOT NULL,
+  `unified_school_id` bigint(20) UNSIGNED DEFAULT NULL,
   `building_id` bigint(20) UNSIGNED DEFAULT NULL,
   `room_id` bigint(20) UNSIGNED DEFAULT NULL,
   `code` varchar(255) NOT NULL,
@@ -652,120 +493,85 @@ CREATE TABLE `firesafety_fire_extinguishers` (
 -- Dumping data for table `firesafety_fire_extinguishers`
 --
 
-INSERT INTO `firesafety_fire_extinguishers` (`id`, `school_id`, `building_id`, `room_id`, `code`, `type`, `status`, `pressure_level`, `date_checked`, `remarks`, `evaluation_result`, `created_at`, `updated_at`) VALUES
-(19, 11, 17, 35, 'EXT-001', 'ABC', 'active', 100, '2026-03-05', 'Okay to be installed', 'Passed', '2026-02-11 18:00:23', '2026-03-05 00:05:32'),
-(20, 11, 19, 38, 'EXT-002', 'ABC', 'active', 100, '2026-02-18', 'Refill Needed', 'Passed', '2026-02-12 18:25:51', '2026-02-17 18:15:56'),
-(21, 11, 20, 41, 'EXT-004', 'ABC', 'active', 100, '2026-02-13', 'Okay To be use', 'Passed', '2026-02-12 18:39:05', '2026-02-12 18:39:05'),
-(22, 11, 25, 49, 'EXT-005', 'ABC', 'active', 100, '2026-03-03', NULL, 'Passed', '2026-02-12 18:55:56', '2026-03-02 18:49:50'),
-(23, 11, 26, 50, 'EXT-006', 'CO2', 'active', 100, '2026-02-13', 'Okay', 'Passed', '2026-02-12 18:59:22', '2026-02-12 18:59:22'),
-(24, 11, 27, 52, 'EXT-08', 'CO2', 'active', 100, '2026-02-13', 'Okay Extinguisher', 'Passed', '2026-02-12 19:02:49', '2026-02-12 19:02:49'),
-(25, 11, 27, 53, 'EXT-009', 'CO2', 'active', 100, '2026-02-13', 'Okay Extinguisher', 'Passed', '2026-02-12 19:03:25', '2026-02-12 19:03:25'),
-(26, 11, 27, 54, 'EXT-010', 'CO2', 'active', 100, '2026-02-13', 'Feeding Room Covered', 'Passed', '2026-02-12 19:04:34', '2026-02-12 19:04:34'),
-(27, 11, 28, 55, 'EXT-008', 'ABC', 'active', 100, '2026-02-13', NULL, 'Passed', '2026-02-12 19:07:20', '2026-02-12 19:07:20'),
-(28, 11, 28, 56, 'EXT-011', 'ABC', 'active', 100, '2026-03-11', NULL, 'Passed', '2026-02-12 19:09:28', '2026-03-10 17:50:10'),
-(29, 12, 31, 57, 'FRXT-01', 'ABC', 'active', 100, '2026-02-19', 'Okay extinguisher', 'Passed', '2026-02-18 19:34:38', '2026-02-18 19:34:38'),
-(30, 17, 32, 58, '01', 'ABC', 'maintenance', 20, '2026-02-19', 'For Preventive Maintenance', 'Failed', '2026-03-01 18:38:19', '2026-03-01 18:38:19'),
-(32, 17, 32, 59, '02', 'ABC', 'maintenance', 20, '2026-02-19', 'For Preventive Maintenance', 'Failed', '2026-03-01 18:42:19', '2026-03-01 18:42:19'),
-(33, 17, 33, 63, '05', 'ABC', 'active', 90, '2026-02-19', 'Newly Purchased', 'Passed', '2026-03-01 18:53:20', '2026-03-01 18:53:20'),
-(34, 11, 25, 65, 'FRCT-007', 'ABC', 'active', 100, '2026-03-03', NULL, 'Passed', '2026-03-02 01:02:50', '2026-03-02 18:50:28'),
-(35, 11, 19, 40, 'FRXT-04', 'ABC', 'active', 100, '2026-03-03', 'Okay', 'Passed', '2026-03-02 16:08:06', '2026-03-02 16:08:06'),
-(36, 18, 36, 67, 'FE-001', 'ABC', 'decommissioned', 100, '2026-03-04', NULL, 'Failed', '2026-03-02 22:58:27', '2026-03-03 21:55:02'),
-(37, 18, 37, 77, '4354', 'ABC', 'active', 100, '2026-03-04', 'Okay', 'Passed', '2026-03-03 16:48:56', '2026-03-03 16:48:56'),
-(39, 20, 49, 93, '01', 'ABC', 'active', 100, '2026-03-12', 'Please hang the Fire Extinguisher', 'Passed', '2026-03-04 22:16:30', '2026-03-12 00:35:46'),
-(40, 20, 49, 94, '02', 'ABC', 'active', 100, '2026-03-12', 'Please hang the unit after Preventive Maintenance', 'Passed', '2026-03-05 00:05:25', '2026-03-12 00:39:01'),
-(41, 20, 52, 98, '03', 'ABC', 'active', 80, '2026-03-04', NULL, 'Passed', '2026-03-05 00:06:05', '2026-03-05 00:06:05'),
-(42, 20, 52, 100, '05', 'ABC', 'active', 90, '2026-03-04', 'Hang the unit', 'Passed', '2026-03-05 00:10:15', '2026-03-05 00:10:15'),
-(43, 20, 52, 99, '06', 'ABC', 'active', 100, '2026-03-12', 'Note have label and hook', 'Passed', '2026-03-05 00:11:10', '2026-03-12 00:58:41'),
-(44, 20, 52, 101, '07', 'ABC', 'active', 100, '2026-03-12', 'Hang the unit and have labels', 'Passed', '2026-03-05 00:12:01', '2026-03-12 00:59:08'),
-(45, 20, 52, 102, '08', 'ABC', 'active', 100, '2026-03-12', 'Hang the unit and put label and instructions', 'Passed', '2026-03-05 00:12:56', '2026-03-12 01:04:49'),
-(46, 20, 54, 103, '10', 'ABC', 'active', 100, '2026-03-16', 'Hang the unit and put label and instructions', 'Passed', '2026-03-05 00:13:37', '2026-03-16 00:58:38'),
-(47, 20, 54, 104, '11', 'ABC', 'active', 100, '2026-03-16', 'Hang the unit and put label and instructions', 'Passed', '2026-03-05 00:14:06', '2026-03-16 00:58:10'),
-(48, 11, 19, 39, 'frxt-01', 'ABC', 'active', 100, '2026-03-06', NULL, 'Passed', '2026-03-05 17:02:09', '2026-03-05 17:02:09'),
-(49, 14, 57, 111, 'FRXT-01', 'ABC', 'active', 100, '2026-03-11', 'Good to go Extinguisher', 'Passed', '2026-03-10 19:48:28', '2026-03-10 19:50:18'),
-(50, 14, 57, 110, 'FRXT-02', 'ABC', 'active', 100, '2026-03-11', 'Good to go Extinguisher', 'Passed', '2026-03-10 19:49:06', '2026-03-10 19:50:41'),
-(51, 14, 58, 113, 'FRXT-03', 'ABC', 'active', 100, '2026-03-11', 'Good to go Extinguisher', 'Passed', '2026-03-10 19:49:45', '2026-03-10 21:30:56'),
-(52, 14, 58, 120, 'FRXT-04', 'ABC', 'active', 100, '2026-03-11', NULL, 'Passed', '2026-03-10 19:57:21', '2026-03-10 21:31:51'),
-(53, 14, 58, 117, 'FRXT-05', 'ABC', 'active', 100, '2026-03-11', 'Good to go Extinguisher', 'Passed', '2026-03-10 20:01:35', '2026-03-10 21:41:24'),
-(54, 14, 58, 122, 'FRXT-06', 'ABC', 'active', 100, '2026-03-11', 'Good to go Extinguisher', 'Passed', '2026-03-10 21:39:55', '2026-03-10 21:39:55'),
-(55, 14, 59, 123, 'FRXT-08', 'ABC', 'active', 100, '2026-02-25', 'Good to go Extinguisher', 'Passed', '2026-03-10 21:42:21', '2026-03-10 21:42:21'),
-(56, 14, 59, 125, 'FRXT-09', 'ABC', 'active', 70, '2026-03-12', 'Extinguisher ready to use', 'Passed', '2026-03-10 21:43:01', '2026-03-12 00:31:11'),
-(57, 15, 60, 127, 'FRXT-01', 'ABC', 'maintenance', 57, '2026-03-19', 'Okay extinguisher', 'Failed', '2026-03-12 00:02:17', '2026-03-19 08:00:17'),
-(58, 20, 55, 105, '12', 'ABC', 'active', 100, '2026-03-16', 'Purchased', 'Passed', '2026-03-12 00:47:07', '2026-03-16 00:57:36'),
-(59, 20, 55, 108, '13', 'ABC', 'active', 100, '2026-03-16', 'Purchased', 'Passed', '2026-03-12 00:48:02', '2026-03-16 00:57:16'),
-(60, 20, 56, 109, '14', 'ABC', 'active', 100, '2026-03-16', 'Purchased', 'Passed', '2026-03-12 00:50:12', '2026-03-16 00:53:58'),
-(61, 20, 52, 97, '04', 'ABC', 'active', 100, '2026-03-12', NULL, 'Passed', '2026-03-12 00:55:29', '2026-03-12 00:59:47'),
-(62, 20, 56, 109, '15', 'ABC', 'active', 100, '2026-03-16', NULL, 'Passed', '2026-03-12 01:01:18', '2026-03-16 00:53:44'),
-(63, 20, 52, 97, '09', 'ABC', 'active', 100, '2026-03-16', 'Okay', 'Passed', '2026-03-13 00:21:54', '2026-03-16 00:59:00'),
-(64, 13, 50, 95, '01', 'ABC', 'active', 100, '2026-03-17', 'Good Extinguisher', 'Passed', '2026-03-16 17:37:51', '2026-03-16 17:37:51'),
-(65, 13, 51, 130, '03', 'ABC', 'active', 100, '2026-03-17', 'Okay Extinguisher', 'Passed', '2026-03-16 18:09:17', '2026-03-17 06:12:57'),
-(66, 13, 51, 96, '02', 'ABC', 'active', 100, '2026-03-17', 'Oks', 'Passed', '2026-03-17 05:20:24', '2026-03-17 06:12:36'),
-(67, 13, 61, 134, '04', 'ABC', 'active', 100, '2026-03-17', 'Okay', 'Passed', '2026-03-17 06:11:24', '2026-03-17 06:12:08'),
-(68, 13, 62, 136, '05', 'ABC', 'active', 100, '2026-03-17', 'Covering multiples', 'Passed', '2026-03-17 06:39:13', '2026-03-17 06:39:13'),
-(69, 13, 63, 139, '06', 'ABC', 'active', 100, '2026-03-17', 'Okay', 'Passed', '2026-03-17 06:40:03', '2026-03-17 06:41:29'),
-(70, 13, 63, 140, '07', 'ABC', 'active', 100, '2026-03-17', 'Okay room', 'Passed', '2026-03-17 06:42:08', '2026-03-17 06:42:08'),
-(71, 13, 64, 142, '08', 'ABC', 'active', 100, '2026-03-17', 'Okay extinguisher', 'Passed', '2026-03-17 06:45:56', '2026-03-17 06:45:56'),
-(72, 13, 65, 144, '09', 'ABC', 'active', 100, '2026-03-17', 'Okay', 'Passed', '2026-03-17 07:01:01', '2026-03-17 07:01:01'),
-(73, 21, 68, 148, 'FRXT-01', 'ABC', 'active', 100, '2026-03-19', NULL, 'Passed', '2026-03-19 02:23:25', '2026-03-19 02:23:25'),
-(74, 21, 68, 150, 'FRXT-02', 'ABC', 'maintenance', 20, '2026-03-19', NULL, 'Failed', '2026-03-19 02:24:52', '2026-03-19 02:24:52'),
-(75, 21, 68, 151, 'FRXT-03', 'ABC', 'maintenance', 20, '2026-03-19', NULL, 'Failed', '2026-03-19 02:25:42', '2026-03-19 02:25:42'),
-(76, 21, 68, 152, 'FRXT-04', 'ABC', 'active', 90, '2026-03-19', NULL, 'Passed', '2026-03-19 02:26:18', '2026-03-19 02:26:18'),
-(77, 21, 69, 154, 'FRXT-19', 'ABC', 'purchase', 0, '2026-03-19', NULL, 'Failed', '2026-03-19 02:35:04', '2026-03-19 03:18:41'),
-(78, 21, 70, 155, 'FRXT-05', 'ABC', 'active', 80, '2026-03-19', NULL, 'Passed', '2026-03-19 02:43:11', '2026-03-19 02:43:11'),
-(79, 21, 71, 156, 'FRXT-06', 'ABC', 'maintenance', 69, '2026-03-19', NULL, 'Failed', '2026-03-19 02:45:13', '2026-03-19 02:45:13'),
-(80, 21, 72, 157, 'FRXT-07', 'ABC', 'maintenance', 20, '2026-03-19', NULL, 'Failed', '2026-03-19 02:55:55', '2026-03-19 02:55:55'),
-(81, 21, 72, 160, 'FRXT-08', 'ABC', 'maintenance', 20, '2026-03-19', NULL, 'Failed', '2026-03-19 02:56:44', '2026-03-19 02:58:31'),
-(82, 21, 72, 161, 'FRXT-09', 'ABC', 'maintenance', 20, '2026-03-19', NULL, 'Failed', '2026-03-19 02:57:25', '2026-03-19 02:57:25'),
-(83, 21, 72, 163, 'FRXT-10', 'ABC', 'maintenance', 20, '2026-03-19', NULL, 'Failed', '2026-03-19 02:59:25', '2026-03-19 02:59:25'),
-(84, 21, 72, 166, 'FRXT-11', 'ABC', 'maintenance', 20, '2026-03-19', NULL, 'Failed', '2026-03-19 03:00:27', '2026-03-19 03:00:27'),
-(85, 21, 72, 167, 'FRXT-12', 'ABC', 'maintenance', 20, '2026-03-19', NULL, 'Failed', '2026-03-19 03:01:12', '2026-03-19 03:01:12'),
-(86, 21, 73, 169, 'FRXT-13', 'ABC', 'maintenance', 20, '2026-03-19', NULL, 'Failed', '2026-03-19 03:19:38', '2026-03-19 03:19:38'),
-(87, 21, 73, 172, 'FXRT-14', 'ABC', 'purchase', 0, '2026-03-19', NULL, 'Failed', '2026-03-19 03:20:56', '2026-03-19 03:20:56'),
-(88, 21, 73, 174, 'FRXT-15', 'ABC', 'purchase', 0, '2026-03-19', NULL, 'Failed', '2026-03-19 03:22:00', '2026-03-19 03:22:00'),
-(89, 21, 73, 176, 'FRXT-16', 'ABC', 'purchase', 0, '2026-03-19', NULL, 'Failed', '2026-03-19 03:23:05', '2026-03-19 03:23:05'),
-(90, 21, 73, 178, 'FXRT-17', 'ABC', 'purchase', 0, '2026-03-19', NULL, 'Failed', '2026-03-19 03:24:09', '2026-03-19 03:24:09'),
-(91, 21, 73, 181, 'FXRT-18', 'ABC', 'purchase', 0, '2026-03-19', NULL, 'Failed', '2026-03-19 03:25:10', '2026-03-19 03:25:10'),
-(93, 15, 60, NULL, 'EXT-001', 'ABC', 'active', 100, '2026-03-19', NULL, 'Passed', '2026-03-19 08:01:51', '2026-03-19 08:01:51');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `firesafety_school_information`
---
-
-CREATE TABLE `firesafety_school_information` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `school_name` varchar(255) NOT NULL,
-  `evacuation_map_layout` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`evacuation_map_layout`)),
-  `address` varchar(255) DEFAULT NULL,
-  `school_id` varchar(255) NOT NULL,
-  `school_head` varchar(255) NOT NULL,
-  `school_drrm_coordinator` varchar(255) NOT NULL,
-  `status` varchar(255) NOT NULL DEFAULT 'unconfigured',
-  `alerts` longtext DEFAULT NULL,
-  `events` longtext DEFAULT NULL,
-  `replies` longtext DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL,
-  `attached_evacuation_map` varchar(255) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
-
---
--- Dumping data for table `firesafety_school_information`
---
-
-INSERT INTO `firesafety_school_information` (`id`, `school_name`, `evacuation_map_layout`, `address`, `school_id`, `school_head`, `school_drrm_coordinator`, `status`, `alerts`, `events`, `replies`, `created_at`, `updated_at`, `attached_evacuation_map`) VALUES
-(11, 'Iram I Elementary School', '{\"building_17\":{\"x\":59,\"y\":765,\"rotation\":270,\"width\":280.66317038371176,\"height\":140},\"building_19\":{\"x\":549,\"y\":160,\"rotation\":0,\"width\":300,\"height\":136.66666666666669},\"building_20\":{\"x\":1328,\"y\":387,\"rotation\":90,\"width\":300,\"height\":185},\"building_21\":{\"x\":1061,\"y\":15,\"rotation\":90,\"width\":300,\"height\":185},\"building_22\":{\"x\":590,\"y\":0,\"rotation\":0,\"width\":220,\"height\":151.82492710705836},\"building_23\":{\"x\":239,\"y\":499,\"rotation\":270,\"width\":220,\"height\":140},\"building_24\":{\"x\":1093,\"y\":428,\"rotation\":90,\"width\":220,\"height\":140},\"building_25\":{\"x\":1241,\"y\":0,\"rotation\":90,\"width\":300,\"height\":136.66666666666669},\"building_26\":{\"x\":206,\"y\":0,\"rotation\":0,\"width\":220,\"height\":140},\"building_27\":{\"x\":4,\"y\":411,\"rotation\":270,\"width\":300,\"height\":136.66666666666669},\"building_28\":{\"x\":918,\"y\":736,\"rotation\":0,\"width\":300,\"height\":185},\"facility_1772669252052\":{\"type\":\"facility\",\"name\":\"Covered Court\",\"description\":\"Basketball Court\",\"color\":\"#e83e8c\",\"x\":483,\"y\":421,\"width\":271.1495340327758,\"height\":486.052},\"facility_1772669381877\":{\"type\":\"facility\",\"name\":\"Exit Area\",\"description\":\"For students to take a path exit to school\",\"color\":\"#6c757d\",\"x\":300,\"y\":845,\"width\":200,\"height\":100},\"facility_1773793742149\":{\"type\":\"facility\",\"name\":\"STAGE\",\"description\":null,\"color\":\"#20c997\",\"x\":521,\"y\":322,\"width\":200,\"height\":100}}', 'Iram resettlement Area New Cabalan', '107121', 'Mr. Raymund F Camacho', 'Eleazar Arazadon', 'unconfigured', NULL, NULL, NULL, '2026-02-10 17:03:08', '2026-03-18 00:51:25', 'evacuation_maps/R2VPdmt74QpLkxvohRp1GoKo8XUeqgmwXi6DsX3Q.png'),
-(12, 'Mabayuan Elementary School', NULL, 'Otero Avenue, Mabayuan, Olongapo City, Central Luzon, Philippines', '1', 'Froilan N. Rivas', 'Jeffrey C. Mabini', 'unconfigured', NULL, NULL, NULL, '2026-02-12 19:21:22', '2026-02-12 19:21:22', NULL),
-(13, 'Bangal Integrated School', '{\"building_50\":{\"x\":574,\"y\":94,\"rotation\":0,\"width\":300,\"height\":330},\"building_51\":{\"x\":421,\"y\":475,\"rotation\":0,\"width\":307.198,\"height\":353.68138696814253},\"building_53\":{\"x\":1247,\"y\":55,\"rotation\":90,\"width\":300,\"height\":330},\"building_61\":{\"x\":103,\"y\":589,\"rotation\":270,\"width\":255.61356449469042,\"height\":140},\"building_62\":{\"x\":1008,\"y\":695,\"rotation\":90,\"width\":300,\"height\":136.66666666666669},\"building_63\":{\"x\":103,\"y\":954,\"rotation\":270,\"width\":341.98736660796465,\"height\":143.865},\"building_64\":{\"x\":720,\"y\":409,\"rotation\":0,\"width\":300,\"height\":185},\"building_65\":{\"x\":202,\"y\":80,\"rotation\":0,\"width\":300,\"height\":185},\"building_66\":{\"x\":1219,\"y\":487,\"rotation\":90,\"width\":300,\"height\":185}}', 'National Hi-Way, Purok 6, New Cabalan, Olongapo City, Zambales, Philippines, 2200', '502678', 'Nestor Sison', 'Nestor Sison', 'unconfigured', '[{\"id\":\"69a926ad26cad\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Zaldy Danaytan, Jr. created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-05 06:46:05\"},{\"id\":\"69a926f41d9ab\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Zaldy Danaytan, Jr. created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-05 06:47:16\"}]', NULL, NULL, '2026-02-16 00:29:57', '2026-03-17 07:07:18', 'evacuation_maps/3mP2oJnOUg18vPj5jdnjkyxK7M1X7rRT448Wg32V.jpg'),
-(14, 'Boton ES', '{\"building_57\":{\"x\":160,\"y\":595,\"rotation\":270,\"width\":300,\"height\":136.66666666666669},\"building_58\":{\"x\":394,\"y\":87,\"rotation\":0,\"width\":300,\"height\":233.33333333333334},\"building_59\":{\"x\":968,\"y\":130,\"rotation\":90,\"width\":300,\"height\":112.5},\"facility_1773213058363\":{\"type\":\"facility\",\"name\":\"Assembly Area\",\"description\":\"1st and largest assembly area\",\"color\":\"#fd7e14\",\"x\":338,\"y\":355,\"width\":409.6270893320134,\"height\":236.86817974826755},\"facility_1773213084435\":{\"type\":\"facility\",\"name\":\"Secondary Assembly Area\",\"description\":null,\"color\":\"#20c997\",\"x\":803,\"y\":512,\"width\":251.854994578796,\"height\":172.59699241031444},\"facility_1773213098851\":{\"type\":\"facility\",\"name\":\"Garden\",\"description\":null,\"color\":\"#28a745\",\"x\":40,\"y\":102,\"width\":308.4240795738462,\"height\":151.85481374628765}}', 'Pinagpala Street, Purok 4, New Cabalan, Olongapo City, 2200, Philippine', '107119', 'Dolores A. Umbina', 'Dolores A. Umbina', 'unconfigured', '[{\"id\":\"69b0d6458b7d4\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 02:41:09\"},{\"id\":\"69b0d96d0b07d\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 02:54:37\"},{\"id\":\"69b0d98697427\",\"title\":\"Room Update Approved\",\"description\":\"Your update for room 01 has been approved by the administrator.\",\"type\":\"success\",\"created_at\":\"2026-03-11 02:55:02\"},{\"id\":\"69b0d986c0e1e\",\"title\":\"Room Update Approved\",\"description\":\"Your update for room 01 has been approved by the administrator.\",\"type\":\"success\",\"created_at\":\"2026-03-11 02:55:02\"},{\"id\":\"69b0d9af997f1\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Dolores A. Umbina updated room 91 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 02:55:43\"},{\"id\":\"69b0d9afcf794\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Dolores A. Umbina updated room 01 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 02:55:43\"},{\"id\":\"69b0d9b77690d\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Dolores A. Umbina updated room 01 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 02:55:51\"},{\"id\":\"69b0d9d686b78\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 02:56:22\"},{\"id\":\"69b0da8ed5e05\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 02:59:26\"},{\"id\":\"69b0daa83d199\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Dolores A. Umbina updated room ADMN-01 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 02:59:52\"},{\"id\":\"69b0dadea8133\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:00:46\"},{\"id\":\"69b0db0304514\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Dolores A. Umbina updated room LB-01 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:01:23\"},{\"id\":\"69b0db35a952a\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:02:13\"},{\"id\":\"69b0e3209337f\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:36:00\"},{\"id\":\"69b0e348d75f5\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Dolores A. Umbina updated room te65 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:36:40\"},{\"id\":\"69b0e368149f6\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:37:12\"},{\"id\":\"69b0e3860b1b7\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:37:42\"},{\"id\":\"69b0e395a7b2e\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:37:57\"},{\"id\":\"69b0e41443c2a\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:40:04\"},{\"id\":\"69b0e42e21204\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Dolores A. Umbina updated room 04 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:40:30\"},{\"id\":\"69b0e460b0ab5\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:41:20\"},{\"id\":\"69b0e4c318101\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:42:59\"},{\"id\":\"69b0e57374c10\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:45:55\"},{\"id\":\"69b0e5a3cfde6\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:46:43\"},{\"id\":\"69b0e5be6ba49\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:47:10\"},{\"id\":\"69b0e5dd9a344\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:47:41\"},{\"id\":\"69b100f6cfe0d\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Dolores A. Umbina updated room 04 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 05:43:18\"},{\"id\":\"69b100f7461bb\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Dolores A. Umbina updated room 04 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 05:43:19\"},{\"id\":\"69b10161206da\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Dolores A. Umbina updated room 04 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 05:45:05\"},{\"id\":\"69b10180381bb\",\"title\":\"Room Update Approved\",\"description\":\"Your update for room 04 has been approved by the administrator.\",\"type\":\"success\",\"created_at\":\"2026-03-11 05:45:36\"},{\"id\":\"69b111ece3494\",\"title\":\"Room Update Approved\",\"description\":\"Your update for room 05 has been approved by the administrator.\",\"type\":\"success\",\"created_at\":\"2026-03-11 06:55:40\"},{\"id\":\"69b211f590fd8\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Dolores A. Umbina updated room 02 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-12 01:08:05\"},{\"id\":\"69b211f5e9f51\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Dolores A. Umbina updated room 02 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-12 01:08:05\"}]', '[{\"id\":\"69b2282e51c41\",\"title\":\"The stray and stucky event\",\"description\":\"To provide stray animals more comfort adopt it for the students or pet them temporarily\",\"date\":\"2026-03-20\",\"time\":\"11:00\",\"posted_by\":\"Adan Kristopher B. Dumpit\",\"created_at\":\"2026-03-12 02:42:54\"}]', NULL, '2026-02-16 00:30:55', '2026-03-11 18:42:54', NULL),
-(15, 'Amelia Heights ES', NULL, 'Barangay New Cabalan, Olongapo City, Philippines', '162002', 'Laura Managbanag', 'Laura Managbanag', 'unconfigured', NULL, NULL, NULL, '2026-02-16 00:35:07', '2026-02-16 00:35:07', NULL),
-(16, 'New Cabalan Senior High School', '{\"building_48\":{\"x\":608,\"y\":259,\"rotation\":90}}', 'Lopez Jaena Street, Purok 2, in Barangay New Cabalan, Olongapo City, 2200 Zambales', '305898', 'Erwin A. Bucasas, EdD', 'Erwin A. Bucasas, EdD', 'unconfigured', '[{\"id\":\"6995083f52f87\",\"title\":\"Fire Evacuation Plan to be action\",\"description\":\"To evacuate students safely\",\"type\":\"warning\",\"created_at\":\"2026-02-18 00:30:55\"},{\"id\":\"69a7dbfaad964\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Ragdoll@gmail.com created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-04 07:15:06\"},{\"id\":\"69a7dc31bc036\",\"title\":\"Room Update Approved\",\"description\":\"Your update for room 01 has been approved by the administrator.\",\"type\":\"success\",\"created_at\":\"2026-03-04 07:16:01\"},{\"id\":\"69a7e3983dcf2\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Ragdoll@gmail.com updated room 01 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-04 07:47:36\"},{\"id\":\"69a7e3c98fb46\",\"title\":\"Room Update Approved\",\"description\":\"Your update for room 01 has been approved by the administrator.\",\"type\":\"success\",\"created_at\":\"2026-03-04 07:48:25\"},{\"id\":\"69a917724226f\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Zaldy Danaytan, Jr. created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-05 05:41:06\"}]', NULL, '[{\"id\":\"69967d78a2c13\",\"item_id\":\"6995083f52f87\",\"user_name\":\"Adan Kristopher B. Dumpit\",\"user_role\":\"admin\",\"message\":\"Not so okay?\",\"created_at\":\"2026-02-19 03:03:20\"}]', '2026-02-17 16:24:30', '2026-03-04 21:41:06', NULL),
-(17, 'Mabayuan Senior High School', '{\"building_32\":{\"x\":50,\"y\":50},\"building_33\":{\"x\":370,\"y\":50},\"building_34\":{\"x\":674,\"y\":31},\"building_35\":{\"x\":1010,\"y\":50}}', 'Otero Avenue, Mabayuan, Olongapo City', '345224', 'Albert Llego', 'ON PROCESS', 'unconfigured', NULL, NULL, NULL, '2026-03-01 18:16:24', '2026-03-01 22:24:14', NULL),
-(18, 'Nellie E. Brown Elementary School', '{\"building_36\":{\"x\":1216,\"y\":513,\"rotation\":0,\"width\":538.876,\"height\":195.62027851791396},\"building_37\":{\"x\":435,\"y\":149,\"rotation\":0,\"width\":300,\"height\":136.66666666666669},\"building_38\":{\"x\":882,\"y\":1,\"rotation\":90,\"width\":300,\"height\":136.66666666666669},\"building_39\":{\"x\":339,\"y\":0,\"rotation\":0,\"width\":300,\"height\":136.66666666666669},\"building_40\":{\"x\":0,\"y\":369,\"rotation\":270,\"width\":391.42478314455144,\"height\":330},\"building_41\":{\"x\":417,\"y\":369,\"rotation\":0,\"width\":220,\"height\":184.6834374989679},\"building_42\":{\"x\":1118,\"y\":0,\"rotation\":90,\"width\":300,\"height\":136.66666666666669},\"building_43\":{\"x\":815,\"y\":615,\"rotation\":0,\"width\":300,\"height\":330},\"building_44\":{\"x\":1599,\"y\":485,\"rotation\":180,\"width\":404.03390958660714,\"height\":389.447},\"building_45\":{\"x\":193,\"y\":871,\"rotation\":0,\"width\":300,\"height\":330},\"building_46\":{\"x\":743,\"y\":370,\"rotation\":0,\"width\":220,\"height\":140},\"building_47\":{\"x\":589,\"y\":614,\"rotation\":0,\"width\":220,\"height\":276.3455611440555},\"facility_1773194696679\":{\"type\":\"facility\",\"name\":\"Evacuation Area\",\"description\":null,\"color\":\"#6f42c1\",\"x\":1448,\"y\":835,\"width\":326.9176772893508,\"height\":256.2063720484318}}', '#17 Davidson St. West Bajac Bajac', '107136', 'Letecia F. Farne', 'Kriz Anne A Hemenez', 'unconfigured', NULL, NULL, NULL, '2026-03-02 22:54:00', '2026-03-10 18:50:33', NULL),
-(19, 'New Cabalan Elementary School', NULL, 'Barangay New Cabalan, Olongapo City, Zambales, Philippines', '107122', 'Marites A. Calara', 'Denver Faenticilia', 'unconfigured', NULL, NULL, NULL, '2026-03-04 18:32:48', '2026-03-04 18:32:48', NULL),
-(20, 'Sergia Soriano Esteban Integrated School - Coral', '{\"building_49\":{\"x\":58,\"y\":118,\"rotation\":0,\"width\":300,\"height\":185},\"building_52\":{\"x\":469,\"y\":158,\"rotation\":0,\"width\":274.2390041718834,\"height\":219.0985477506633},\"building_54\":{\"x\":836,\"y\":104,\"rotation\":0,\"width\":300,\"height\":185},\"building_55\":{\"x\":591,\"y\":562,\"rotation\":0,\"width\":300,\"height\":112.5},\"building_56\":{\"x\":177,\"y\":558,\"rotation\":0,\"width\":300,\"height\":330}}', 'Coral St. Kalaklan Olongapo City', '500135', 'Judith Jao', 'Judith Jao', 'unconfigured', NULL, NULL, NULL, '2026-03-04 22:13:06', '2026-03-18 00:52:14', NULL),
-(21, 'Tapinac Elementary School', '{\"building_68\":{\"x\":667,\"y\":70,\"rotation\":0,\"width\":220,\"height\":437.4289282601542},\"building_69\":{\"x\":1097,\"y\":29,\"rotation\":0,\"width\":220,\"height\":205.51749618564207},\"building_70\":{\"x\":1479,\"y\":354,\"rotation\":90,\"width\":220,\"height\":292.2754415181643},\"building_71\":{\"x\":1179,\"y\":275,\"rotation\":90,\"width\":294.0166934253433,\"height\":207.51193171052765},\"building_72\":{\"x\":568,\"y\":564,\"rotation\":0,\"width\":460,\"height\":275},\"building_73\":{\"x\":25,\"y\":518,\"rotation\":0,\"width\":540.7042869889913,\"height\":353.4307631499679},\"facility_1773891450543\":{\"type\":\"facility\",\"name\":\"STAGE\",\"description\":null,\"color\":\"#28a745\",\"x\":300,\"y\":253,\"width\":200,\"height\":100},\"facility_1773891474740\":{\"type\":\"facility\",\"name\":\"Covered Court\",\"description\":null,\"color\":\"#007bff\",\"x\":1,\"y\":114,\"width\":650.3576973248234,\"height\":348.11307812970654}}', '13th Street, East Tapinac', '107141', 'Joseph Gregorio', 'Joseph Gregorio', 'unconfigured', NULL, NULL, NULL, '2026-03-19 02:16:39', '2026-03-19 03:40:04', NULL),
-(22, 'West Ridge Secondary School', NULL, 'Rizal Heritage Drive', '122005', 'Adan Kristopher B. Dumpit', 'Adan Kristopher B. Dumpit', 'unconfigured', NULL, NULL, NULL, '2026-03-23 01:41:39', '2026-03-23 01:41:39', NULL);
+INSERT INTO `firesafety_fire_extinguishers` (`id`, `unified_school_id`, `building_id`, `room_id`, `code`, `type`, `status`, `pressure_level`, `date_checked`, `remarks`, `evaluation_result`, `created_at`, `updated_at`) VALUES
+(19, 1, 17, 35, 'EXT-001', 'ABC', 'active', 100, '2026-03-29', 'Okay to be installed', 'Passed', '2026-02-11 18:00:23', '2026-03-29 02:30:42'),
+(20, 1, 19, 38, 'EXT-002', 'ABC', 'active', 100, '2026-02-18', 'Refill Needed', 'Passed', '2026-02-12 18:25:51', '2026-02-17 18:15:56'),
+(21, 1, 20, 41, 'EXT-004', 'ABC', 'active', 100, '2026-02-13', 'Okay To be use', 'Passed', '2026-02-12 18:39:05', '2026-02-12 18:39:05'),
+(22, 1, 25, 49, 'EXT-005', 'ABC', 'active', 100, '2026-03-03', NULL, 'Passed', '2026-02-12 18:55:56', '2026-03-02 18:49:50'),
+(23, 1, 26, 50, 'EXT-006', 'CO2', 'active', 100, '2026-02-13', 'Okay', 'Passed', '2026-02-12 18:59:22', '2026-02-12 18:59:22'),
+(24, 1, 27, 52, 'EXT-08', 'CO2', 'active', 100, '2026-02-13', 'Okay Extinguisher', 'Passed', '2026-02-12 19:02:49', '2026-02-12 19:02:49'),
+(25, 1, 27, 53, 'EXT-009', 'CO2', 'active', 100, '2026-02-13', 'Okay Extinguisher', 'Passed', '2026-02-12 19:03:25', '2026-02-12 19:03:25'),
+(26, 1, 27, 54, 'EXT-010', 'CO2', 'active', 100, '2026-02-13', 'Feeding Room Covered', 'Passed', '2026-02-12 19:04:34', '2026-02-12 19:04:34'),
+(27, 1, 28, 55, 'EXT-008', 'ABC', 'active', 100, '2026-02-13', NULL, 'Passed', '2026-02-12 19:07:20', '2026-02-12 19:07:20'),
+(28, 1, 28, 56, 'EXT-011', 'ABC', 'active', 100, '2026-03-11', NULL, 'Passed', '2026-02-12 19:09:28', '2026-03-10 17:50:10'),
+(29, 2, 31, 57, 'FRXT-01', 'ABC', 'active', 100, '2026-02-19', 'Okay extinguisher', 'Passed', '2026-02-18 19:34:38', '2026-02-18 19:34:38'),
+(30, 7, 32, 58, '01', 'ABC', 'maintenance', 20, '2026-02-19', 'For Preventive Maintenance', 'Failed', '2026-03-01 18:38:19', '2026-03-01 18:38:19'),
+(32, 7, 32, 59, '02', 'ABC', 'maintenance', 20, '2026-02-19', 'For Preventive Maintenance', 'Failed', '2026-03-01 18:42:19', '2026-03-01 18:42:19'),
+(33, 7, 33, 63, '05', 'ABC', 'active', 90, '2026-02-19', 'Newly Purchased', 'Passed', '2026-03-01 18:53:20', '2026-03-01 18:53:20'),
+(34, 1, 25, 65, 'FRCT-007', 'ABC', 'active', 100, '2026-03-03', NULL, 'Passed', '2026-03-02 01:02:50', '2026-03-02 18:50:28'),
+(35, 1, 19, 40, 'FRXT-04', 'ABC', 'active', 100, '2026-03-03', 'Okay', 'Passed', '2026-03-02 16:08:06', '2026-03-02 16:08:06'),
+(36, 8, 36, 67, 'FE-001', 'ABC', 'decommissioned', 100, '2026-03-04', NULL, 'Failed', '2026-03-02 22:58:27', '2026-03-03 21:55:02'),
+(37, 8, 37, 77, '4354', 'ABC', 'active', 100, '2026-03-04', 'Okay', 'Passed', '2026-03-03 16:48:56', '2026-03-03 16:48:56'),
+(39, 10, 49, 93, '01', 'ABC', 'active', 100, '2026-03-12', 'Please hang the Fire Extinguisher', 'Passed', '2026-03-04 22:16:30', '2026-03-12 00:35:46'),
+(40, 10, 49, 94, '02', 'ABC', 'active', 100, '2026-03-12', 'Please hang the unit after Preventive Maintenance', 'Passed', '2026-03-05 00:05:25', '2026-03-12 00:39:01'),
+(41, 10, 52, 98, '03', 'ABC', 'active', 80, '2026-03-04', NULL, 'Passed', '2026-03-05 00:06:05', '2026-03-05 00:06:05'),
+(42, 10, 52, 100, '05', 'ABC', 'active', 90, '2026-03-04', 'Hang the unit', 'Passed', '2026-03-05 00:10:15', '2026-03-05 00:10:15'),
+(43, 10, 52, 99, '06', 'ABC', 'active', 100, '2026-03-12', 'Note have label and hook', 'Passed', '2026-03-05 00:11:10', '2026-03-12 00:58:41'),
+(44, 10, 52, 101, '07', 'ABC', 'active', 100, '2026-03-12', 'Hang the unit and have labels', 'Passed', '2026-03-05 00:12:01', '2026-03-12 00:59:08'),
+(45, 10, 52, 102, '08', 'ABC', 'active', 100, '2026-03-12', 'Hang the unit and put label and instructions', 'Passed', '2026-03-05 00:12:56', '2026-03-12 01:04:49'),
+(46, 10, 54, 103, '10', 'ABC', 'active', 100, '2026-03-16', 'Hang the unit and put label and instructions', 'Passed', '2026-03-05 00:13:37', '2026-03-16 00:58:38'),
+(47, 10, 54, 104, '11', 'ABC', 'active', 100, '2026-03-16', 'Hang the unit and put label and instructions', 'Passed', '2026-03-05 00:14:06', '2026-03-16 00:58:10'),
+(48, 1, 19, 39, 'frxt-01', 'ABC', 'active', 100, '2026-03-06', NULL, 'Passed', '2026-03-05 17:02:09', '2026-03-05 17:02:09'),
+(49, 4, 57, 111, 'FRXT-01', 'ABC', 'active', 100, '2026-03-11', 'Good to go Extinguisher', 'Passed', '2026-03-10 19:48:28', '2026-03-10 19:50:18'),
+(50, 4, 57, 110, 'FRXT-02', 'ABC', 'active', 100, '2026-03-11', 'Good to go Extinguisher', 'Passed', '2026-03-10 19:49:06', '2026-03-10 19:50:41'),
+(51, 4, 58, 113, 'FRXT-03', 'ABC', 'active', 100, '2026-03-11', 'Good to go Extinguisher', 'Passed', '2026-03-10 19:49:45', '2026-03-10 21:30:56'),
+(52, 4, 58, 120, 'FRXT-04', 'ABC', 'active', 100, '2026-03-11', NULL, 'Passed', '2026-03-10 19:57:21', '2026-03-10 21:31:51'),
+(53, 4, 58, 117, 'FRXT-05', 'ABC', 'active', 100, '2026-03-11', 'Good to go Extinguisher', 'Passed', '2026-03-10 20:01:35', '2026-03-10 21:41:24'),
+(54, 4, 58, 122, 'FRXT-06', 'ABC', 'active', 100, '2026-03-11', 'Good to go Extinguisher', 'Passed', '2026-03-10 21:39:55', '2026-03-10 21:39:55'),
+(55, 4, 59, 123, 'FRXT-08', 'ABC', 'active', 100, '2026-02-25', 'Good to go Extinguisher', 'Passed', '2026-03-10 21:42:21', '2026-03-10 21:42:21'),
+(56, 4, 59, 125, 'FRXT-09', 'ABC', 'active', 70, '2026-03-12', 'Extinguisher ready to use', 'Passed', '2026-03-10 21:43:01', '2026-03-12 00:31:11'),
+(57, 5, 60, 127, 'FRXT-01', 'ABC', 'maintenance', 57, '2026-03-19', 'Okay extinguisher', 'Failed', '2026-03-12 00:02:17', '2026-03-19 08:00:17'),
+(58, 10, 55, 105, '12', 'ABC', 'active', 100, '2026-03-16', 'Purchased', 'Passed', '2026-03-12 00:47:07', '2026-03-16 00:57:36'),
+(59, 10, 55, 108, '13', 'ABC', 'active', 100, '2026-03-16', 'Purchased', 'Passed', '2026-03-12 00:48:02', '2026-03-16 00:57:16'),
+(60, 10, 56, 109, '14', 'ABC', 'active', 100, '2026-03-16', 'Purchased', 'Passed', '2026-03-12 00:50:12', '2026-03-16 00:53:58'),
+(61, 10, 52, 97, '04', 'ABC', 'active', 100, '2026-03-12', NULL, 'Passed', '2026-03-12 00:55:29', '2026-03-12 00:59:47'),
+(62, 10, 56, 109, '15', 'ABC', 'active', 100, '2026-03-16', NULL, 'Passed', '2026-03-12 01:01:18', '2026-03-16 00:53:44'),
+(63, 10, 52, 97, '09', 'ABC', 'active', 100, '2026-03-16', 'Okay', 'Passed', '2026-03-13 00:21:54', '2026-03-16 00:59:00'),
+(64, 3, 50, 95, '01', 'ABC', 'active', 100, '2026-03-17', 'Good Extinguisher', 'Passed', '2026-03-16 17:37:51', '2026-03-16 17:37:51'),
+(65, 3, 51, 130, '03', 'ABC', 'active', 100, '2026-03-17', 'Okay Extinguisher', 'Passed', '2026-03-16 18:09:17', '2026-03-17 06:12:57'),
+(66, 3, 51, 96, '02', 'ABC', 'active', 100, '2026-03-17', 'Oks', 'Passed', '2026-03-17 05:20:24', '2026-03-17 06:12:36'),
+(67, 3, 61, 134, '04', 'ABC', 'active', 100, '2026-03-17', 'Okay', 'Passed', '2026-03-17 06:11:24', '2026-03-17 06:12:08'),
+(68, 3, 62, 136, '05', 'ABC', 'active', 100, '2026-03-17', 'Covering multiples', 'Passed', '2026-03-17 06:39:13', '2026-03-17 06:39:13'),
+(69, 3, 63, 139, '06', 'ABC', 'active', 100, '2026-03-17', 'Okay', 'Passed', '2026-03-17 06:40:03', '2026-03-17 06:41:29'),
+(70, 3, 63, 140, '07', 'ABC', 'active', 100, '2026-03-17', 'Okay room', 'Passed', '2026-03-17 06:42:08', '2026-03-17 06:42:08'),
+(71, 3, 64, 142, '08', 'ABC', 'active', 100, '2026-03-17', 'Okay extinguisher', 'Passed', '2026-03-17 06:45:56', '2026-03-17 06:45:56'),
+(72, 3, 65, 144, '09', 'ABC', 'active', 100, '2026-03-17', 'Okay', 'Passed', '2026-03-17 07:01:01', '2026-03-17 07:01:01'),
+(73, 11, 68, 148, 'FRXT-01', 'ABC', 'active', 100, '2026-03-19', NULL, 'Passed', '2026-03-19 02:23:25', '2026-03-19 02:23:25'),
+(74, 11, 68, 150, 'FRXT-02', 'ABC', 'maintenance', 20, '2026-03-19', NULL, 'Failed', '2026-03-19 02:24:52', '2026-03-19 02:24:52'),
+(75, 11, 68, 151, 'FRXT-03', 'ABC', 'maintenance', 20, '2026-03-19', NULL, 'Failed', '2026-03-19 02:25:42', '2026-03-19 02:25:42'),
+(76, 11, 68, 152, 'FRXT-04', 'ABC', 'active', 90, '2026-03-19', NULL, 'Passed', '2026-03-19 02:26:18', '2026-03-19 02:26:18'),
+(77, 11, 69, 154, 'FRXT-19', 'ABC', 'purchase', 0, '2026-03-19', NULL, 'Failed', '2026-03-19 02:35:04', '2026-03-19 03:18:41'),
+(78, 11, 70, 155, 'FRXT-05', 'ABC', 'active', 80, '2026-03-19', NULL, 'Passed', '2026-03-19 02:43:11', '2026-03-19 02:43:11'),
+(79, 11, 71, 156, 'FRXT-06', 'ABC', 'maintenance', 69, '2026-03-19', NULL, 'Failed', '2026-03-19 02:45:13', '2026-03-19 02:45:13'),
+(80, 11, 72, 157, 'FRXT-07', 'ABC', 'maintenance', 20, '2026-03-19', NULL, 'Failed', '2026-03-19 02:55:55', '2026-03-19 02:55:55'),
+(81, 11, 72, 160, 'FRXT-08', 'ABC', 'maintenance', 20, '2026-03-19', NULL, 'Failed', '2026-03-19 02:56:44', '2026-03-19 02:58:31'),
+(82, 11, 72, 161, 'FRXT-09', 'ABC', 'maintenance', 20, '2026-03-19', NULL, 'Failed', '2026-03-19 02:57:25', '2026-03-19 02:57:25'),
+(83, 11, 72, 163, 'FRXT-10', 'ABC', 'maintenance', 20, '2026-03-19', NULL, 'Failed', '2026-03-19 02:59:25', '2026-03-19 02:59:25'),
+(84, 11, 72, 166, 'FRXT-11', 'ABC', 'maintenance', 20, '2026-03-19', NULL, 'Failed', '2026-03-19 03:00:27', '2026-03-19 03:00:27'),
+(85, 11, 72, 167, 'FRXT-12', 'ABC', 'maintenance', 20, '2026-03-19', NULL, 'Failed', '2026-03-19 03:01:12', '2026-03-19 03:01:12'),
+(86, 11, 73, 169, 'FRXT-13', 'ABC', 'maintenance', 20, '2026-03-19', NULL, 'Failed', '2026-03-19 03:19:38', '2026-03-19 03:19:38'),
+(87, 11, 73, 172, 'FXRT-14', 'ABC', 'purchase', 0, '2026-03-19', NULL, 'Failed', '2026-03-19 03:20:56', '2026-03-19 03:20:56'),
+(88, 11, 73, 174, 'FRXT-15', 'ABC', 'purchase', 0, '2026-03-19', NULL, 'Failed', '2026-03-19 03:22:00', '2026-03-19 03:22:00'),
+(89, 11, 73, 176, 'FRXT-16', 'ABC', 'purchase', 0, '2026-03-19', NULL, 'Failed', '2026-03-19 03:23:05', '2026-03-19 03:23:05'),
+(90, 11, 73, 178, 'FXRT-17', 'ABC', 'purchase', 0, '2026-03-19', NULL, 'Failed', '2026-03-19 03:24:09', '2026-03-19 03:24:09'),
+(91, 11, 73, 181, 'FXRT-18', 'ABC', 'purchase', 0, '2026-03-19', NULL, 'Failed', '2026-03-19 03:25:10', '2026-03-19 03:25:10'),
+(93, 5, 60, NULL, 'EXT-001', 'ABC', 'active', 100, '2026-03-19', NULL, 'Passed', '2026-03-19 08:01:51', '2026-03-19 08:01:51'),
+(94, 1, 74, NULL, 'FRCT-0011', 'ABC', 'expired', 19, '2026-03-30', 'okay', 'Failed', '2026-03-30 06:25:12', '2026-03-30 06:25:12'),
+(95, 9, 76, 184, '01', 'ABC', 'active', 100, '2026-04-07', NULL, 'Passed', '2026-04-07 00:43:43', '2026-04-07 00:43:43'),
+(96, 9, 76, NULL, '02', 'ABC', 'active', 100, '2026-04-07', 'Okay Extinguisher', 'Passed', '2026-04-07 00:44:05', '2026-04-07 00:44:05'),
+(97, 9, 75, 186, '03', 'ABC', 'active', 100, '2026-04-07', 'Okay', 'Passed', '2026-04-07 00:46:27', '2026-04-07 00:46:27'),
+(98, 9, 75, 186, '04', 'ABC', 'active', 100, '2026-04-07', 'Okay', 'Passed', '2026-04-07 00:47:06', '2026-04-07 00:47:06'),
+(100, 9, 75, 185, '06', 'ABC', 'active', 100, '2026-04-07', 'Oks', 'Passed', '2026-04-07 00:49:47', '2026-04-07 00:49:47');
 
 -- --------------------------------------------------------
 
@@ -814,12 +620,8 @@ CREATE TABLE `fire_safety_alarm_building` (
 --
 
 INSERT INTO `fire_safety_alarm_building` (`id`, `alarm_id`, `building_id`, `created_at`, `updated_at`) VALUES
-(14, 12, 17, NULL, NULL),
 (15, 13, 19, NULL, NULL),
-(16, 14, 20, NULL, NULL),
 (17, 15, 24, NULL, NULL),
-(21, 14, 17, NULL, NULL),
-(22, 14, 19, NULL, NULL),
 (25, 19, 31, NULL, NULL),
 (26, 20, 32, NULL, NULL),
 (27, 21, 32, NULL, NULL),
@@ -839,7 +641,11 @@ INSERT INTO `fire_safety_alarm_building` (`id`, `alarm_id`, `building_id`, `crea
 (41, 35, 68, NULL, NULL),
 (42, 36, 68, NULL, NULL),
 (43, 37, 68, NULL, NULL),
-(45, 39, 72, NULL, NULL);
+(45, 39, 72, NULL, NULL),
+(49, 41, 19, NULL, NULL),
+(50, 41, 22, NULL, NULL),
+(51, 42, 26, NULL, NULL),
+(52, 43, 75, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -849,7 +655,7 @@ INSERT INTO `fire_safety_alarm_building` (`id`, `alarm_id`, `building_id`, `crea
 
 CREATE TABLE `fire_safety_archives` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `school_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `unified_school_id` bigint(20) UNSIGNED DEFAULT NULL,
   `type` varchar(255) NOT NULL,
   `item_id` bigint(20) UNSIGNED DEFAULT NULL,
   `item_code` varchar(255) DEFAULT NULL,
@@ -864,7 +670,7 @@ CREATE TABLE `fire_safety_archives` (
 -- Dumping data for table `fire_safety_archives`
 --
 
-INSERT INTO `fire_safety_archives` (`id`, `school_id`, `type`, `item_id`, `item_code`, `item_data`, `reason`, `removed_at`, `created_at`, `updated_at`) VALUES
+INSERT INTO `fire_safety_archives` (`id`, `unified_school_id`, `type`, `item_id`, `item_code`, `item_data`, `reason`, `removed_at`, `created_at`, `updated_at`) VALUES
 (1, NULL, 'room', 22, 'Room-003', '{\"room_name\":\"Chap-Chap Room 2\",\"room_type\":\"classroom\",\"floor_no\":1,\"building_name\":\"Chapel & Events Hall\"}', 'Mistaken floor', '2026-02-05 22:55:49', '2026-02-05 22:55:49', '2026-02-05 22:55:49'),
 (2, NULL, 'extinguisher', 10, 'EXT', '{\"type\":\"ABC\",\"status\":\"decommissioned\",\"pressure_level\":100,\"building_name\":\"001\",\"floor_no\":2,\"room_name\":\"Roomer\"}', 'Removal of Extinguisher', '2026-02-08 19:19:04', '2026-02-08 19:19:04', '2026-02-08 19:19:04'),
 (3, NULL, 'extinguisher', 14, 'EXT-001', '{\"type\":\"ABC\",\"status\":\"decommissioned\",\"pressure_level\":100,\"building_name\":\"The Building\",\"floor_no\":1,\"room_name\":\"Resting Room\"}', 'Removal of Fire Extinguisher', '2026-02-08 19:21:02', '2026-02-08 19:21:02', '2026-02-08 19:21:02'),
@@ -887,27 +693,30 @@ INSERT INTO `fire_safety_archives` (`id`, `school_id`, `type`, `item_id`, `item_
 (20, NULL, 'alarm', 4, 'ALRM-008', '{\"alarm_type\":\"Bell\",\"status\":\"active\",\"building_name\":\"001\",\"manufacturer\":null,\"last_test\":\"2026-02-09\"}', 'I don\'t need this, it\'ll be now decommissioned', '2026-02-09 18:38:22', '2026-02-09 18:38:22', '2026-02-09 18:38:22'),
 (27, NULL, 'alarm', 8, 'ALM-0011', '{\"alarm_type\":\"Bell\",\"status\":\"active\",\"building_name\":\"N\\/A\",\"manufacturer\":\"Hochiki\",\"last_test\":\"2026-02-11\"}', 'I\'ve hated it', '2026-02-10 21:33:48', '2026-02-10 21:33:48', '2026-02-10 21:33:48'),
 (28, NULL, 'alarm', 3, 'ALRM-004', '{\"alarm_type\":\"Bell\",\"status\":\"active\",\"building_name\":\"colored building\",\"manufacturer\":\"Hochiki\",\"last_test\":\"2026-02-06\"}', 'Decommisioned', '2026-02-10 22:47:21', '2026-02-10 22:47:21', '2026-02-10 22:47:21'),
-(29, 11, 'alarm', 9, 'Alrms-001', '{\"alarm_type\":\"Digital\",\"status\":\"active\",\"building_name\":\"N\\/A\",\"manufacturer\":null,\"last_test\":\"2026-02-11\"}', 'Its not digital its only bell', '2026-02-11 00:40:04', '2026-02-11 00:40:04', '2026-02-11 00:40:04'),
+(29, 1, 'alarm', 9, 'Alrms-001', '{\"alarm_type\":\"Digital\",\"status\":\"active\",\"building_name\":\"N\\/A\",\"manufacturer\":null,\"last_test\":\"2026-02-11\"}', 'Its not digital its only bell', '2026-02-11 00:40:04', '2026-02-11 00:40:04', '2026-02-11 00:40:04'),
 (30, NULL, 'school_deletion', 4, 'SCH-0451', '{\"school_name\":\"San Isidro Integrated School\",\"school_code\":\"SCH-0451\",\"school_head\":\"Dr. Maria L. Fernandez\",\"drrm_coordinator\":\"Engr. Paolo R. Villanueva\",\"address\":\"San Isidro, Olongapo City, Zambales, Philippines\",\"buildings\":2,\"alarm_systems\":3,\"extinguishers\":5,\"evacuation_plans\":0,\"evacuation_coverage_status\":\"poor\"}', 'School deleted by Adan Kristopher B. Dumpit', '2026-02-12 16:46:40', '2026-02-12 16:46:40', '2026-02-12 16:46:40'),
 (31, NULL, 'school_deletion', 5, 'SCH-0789', '{\"school_name\":\"Mabini National High School\",\"school_code\":\"SCH-0789\",\"school_head\":\"Mrs. Alicia T. Ramos\",\"drrm_coordinator\":\"Mr. Jerome C. De la Cruz\",\"address\":\"Street, Barangay East Bajac-Bajac, Olongapo City, Zambales\",\"buildings\":2,\"alarm_systems\":1,\"extinguishers\":3,\"evacuation_plans\":0,\"evacuation_coverage_status\":\"poor\"}', 'School deleted by Adan Kristopher B. Dumpit', '2026-02-12 16:59:43', '2026-02-12 16:59:43', '2026-02-12 16:59:43'),
 (32, NULL, 'school_deletion', 6, 'SCH-1126', '{\"school_name\":\"Rizal City Science High Schoo\",\"school_code\":\"SCH-1126\",\"school_head\":\"Dr. Victor M. Alonzo\",\"drrm_coordinator\":\"Ms. Karen F. Bautista\",\"address\":\"Rizal Avenue, Barangay New Cabalan, Olongapo City, Zambales\",\"buildings\":1,\"alarm_systems\":0,\"extinguishers\":3,\"evacuation_plans\":0,\"evacuation_coverage_status\":\"poor\"}', 'School deleted by Adan Kristopher B. Dumpit', '2026-02-12 17:01:02', '2026-02-12 17:01:02', '2026-02-12 17:01:02'),
 (33, NULL, 'school_deletion', 7, 'SCH-2101', '{\"school_name\":\"West Ridge Secondary School\",\"school_code\":\"SCH-2101\",\"school_head\":\"Mr. Eduardo N. Salazares\",\"drrm_coordinator\":\"Ms. Liza A. Romero\",\"address\":\"Sitio Maligaya, Castillejos, Zambales\",\"buildings\":2,\"alarm_systems\":0,\"extinguishers\":0,\"evacuation_plans\":0,\"evacuation_coverage_status\":\"poor\"}', 'School deleted by Adan Kristopher B. Dumpit', '2026-02-12 17:01:12', '2026-02-12 17:01:12', '2026-02-12 17:01:12'),
-(35, 11, 'alarm', 16, 'ALRM-0014', '{\"alarm_type\":\"Bell\",\"status\":\"functional\",\"building_name\":\"N\\/A\",\"manufacturer\":null,\"last_test\":\"2026-02-16\"}', 'Alarm didn\'t exist at first place', '2026-02-15 18:09:00', '2026-02-15 18:09:00', '2026-02-15 18:09:00'),
-(36, 11, 'alarm', 17, 'ALRM-008', '{\"alarm_type\":\"Bell\",\"status\":\"missing\",\"building_name\":\"N\\/A\",\"manufacturer\":null,\"last_test\":\"2026-02-16\"}', 'Alarm didn\'t even existed', '2026-02-15 22:16:12', '2026-02-15 22:16:12', '2026-02-15 22:16:12'),
-(37, 11, 'alarm', 18, 'ALRM-008', '{\"alarm_type\":\"Bell\",\"status\":\"functional\",\"building_name\":\"06\",\"manufacturer\":null,\"last_test\":\"2026-02-17\"}', 'To be removed', '2026-02-17 21:27:12', '2026-02-17 21:27:12', '2026-02-17 21:27:12'),
-(38, 17, 'extinguisher', 31, '02', '{\"type\":\"ABC\",\"status\":\"maintenance\",\"pressure_level\":20,\"building_name\":\"01\",\"floor_no\":1,\"room_name\":\"05\"}', 'Wrong Code', '2026-03-01 18:41:12', '2026-03-01 18:41:12', '2026-03-01 18:41:12'),
-(39, 11, 'floor', NULL, 'FLR-2', '{\"building_name\":\"014\",\"building_no\":\"014\",\"floor_no\":\"2\"}', 'Ayoko na', '2026-03-03 01:06:56', '2026-03-03 01:06:56', '2026-03-03 01:06:56'),
-(40, 18, 'extinguisher', 38, 'FRXT-01', '{\"type\":\"ABC\",\"status\":\"active\",\"pressure_level\":100,\"building_name\":\"N\\/A\",\"floor_no\":1,\"room_name\":\"24\"}', 'Wrong installment', '2026-03-03 21:47:20', '2026-03-03 21:47:20', '2026-03-03 21:47:20'),
-(41, 14, 'room', 115, '01', '{\"room_name\":\"Grade 5 Classroom\",\"room_type\":\"Classroom\",\"floor_no\":1,\"building_name\":\"Okay room\"}', 'I don\'t like it', '2026-03-10 19:34:55', '2026-03-10 19:34:55', '2026-03-10 19:34:55'),
-(42, 14, 'room', 114, 'LB-01', '{\"room_name\":\"Science Laboratory\",\"room_type\":\"Laboratory\",\"floor_no\":2,\"building_name\":\"Okay room\"}', 'This too', '2026-03-10 19:35:10', '2026-03-10 19:35:10', '2026-03-10 19:35:10'),
-(43, 14, 'room', 118, '4354', '{\"room_name\":\"65546\",\"room_type\":\"Administration\",\"floor_no\":1,\"building_name\":\"Okay room\"}', 'Wrong floor encoded', '2026-03-10 19:38:57', '2026-03-10 19:38:57', '2026-03-10 19:38:57'),
-(44, 14, 'room', 119, 'te6t54', '{\"room_name\":\"56546\",\"room_type\":\"Classroom\",\"floor_no\":1,\"building_name\":\"Okay room\"}', 'Wrong floor encoded', '2026-03-10 19:39:09', '2026-03-10 19:39:09', '2026-03-10 19:39:09'),
-(45, 13, 'room', 129, '03', '{\"room_name\":\"ffrg\",\"room_type\":\"Classroom\",\"floor_no\":1,\"building_name\":\"02\"}', 'Wrong room', '2026-03-16 17:53:54', '2026-03-16 17:53:54', '2026-03-16 17:53:54'),
-(46, 11, 'building', NULL, '014', '{\"building_name\":\"014\",\"type\":\"School Building\",\"required_fext\":2,\"year_constructed\":1994,\"last_renovation\":2025,\"description\":null,\"safety_features\":null}', 'To be removed, building doesn\'t exist at first place', '2026-03-17 07:51:17', '2026-03-17 07:51:17', '2026-03-17 07:51:17'),
-(47, 18, 'building', NULL, '099', '{\"building_name\":null,\"type\":\"Reggiestar building\",\"required_fext\":1,\"year_constructed\":null,\"last_renovation\":null,\"description\":null,\"safety_features\":null}', 'Testing building', '2026-03-18 01:37:05', '2026-03-18 01:37:05', '2026-03-18 01:37:05'),
-(48, 21, 'alarm', 38, 'ALARM-04', '{\"alarm_type\":\"Mechanical\",\"status\":\"active\",\"building_name\":\"N\\/A\",\"manufacturer\":null,\"last_test\":\"2026-03-19\"}', 'Wrong Entry', '2026-03-19 03:29:41', '2026-03-19 03:29:41', '2026-03-19 03:29:41'),
-(49, 21, 'alarm', 40, 'Alrm-001', '{\"alarm_type\":\"Mechanical\",\"status\":\"active\",\"building_name\":\"School Canteen\",\"manufacturer\":null,\"last_test\":\"2026-03-18\"}', 'Wrong alarm installed', '2026-03-19 06:46:53', '2026-03-19 06:46:53', '2026-03-19 06:46:53'),
-(50, 15, 'extinguisher', 92, 'fdd', '{\"type\":\"ABC\",\"status\":\"active\",\"pressure_level\":100,\"building_name\":\"colored building\",\"floor_no\":\"N\\/A\",\"room_name\":\"N\\/A\"}', 'Testing something', '2026-03-19 08:01:00', '2026-03-19 08:01:00', '2026-03-19 08:01:00');
+(35, 1, 'alarm', 16, 'ALRM-0014', '{\"alarm_type\":\"Bell\",\"status\":\"functional\",\"building_name\":\"N\\/A\",\"manufacturer\":null,\"last_test\":\"2026-02-16\"}', 'Alarm didn\'t exist at first place', '2026-02-15 18:09:00', '2026-02-15 18:09:00', '2026-02-15 18:09:00'),
+(36, 1, 'alarm', 17, 'ALRM-008', '{\"alarm_type\":\"Bell\",\"status\":\"missing\",\"building_name\":\"N\\/A\",\"manufacturer\":null,\"last_test\":\"2026-02-16\"}', 'Alarm didn\'t even existed', '2026-02-15 22:16:12', '2026-02-15 22:16:12', '2026-02-15 22:16:12'),
+(37, 1, 'alarm', 18, 'ALRM-008', '{\"alarm_type\":\"Bell\",\"status\":\"functional\",\"building_name\":\"06\",\"manufacturer\":null,\"last_test\":\"2026-02-17\"}', 'To be removed', '2026-02-17 21:27:12', '2026-02-17 21:27:12', '2026-02-17 21:27:12'),
+(38, 7, 'extinguisher', 31, '02', '{\"type\":\"ABC\",\"status\":\"maintenance\",\"pressure_level\":20,\"building_name\":\"01\",\"floor_no\":1,\"room_name\":\"05\"}', 'Wrong Code', '2026-03-01 18:41:12', '2026-03-01 18:41:12', '2026-03-01 18:41:12'),
+(39, 1, 'floor', NULL, 'FLR-2', '{\"building_name\":\"014\",\"building_no\":\"014\",\"floor_no\":\"2\"}', 'Ayoko na', '2026-03-03 01:06:56', '2026-03-03 01:06:56', '2026-03-03 01:06:56'),
+(40, 8, 'extinguisher', 38, 'FRXT-01', '{\"type\":\"ABC\",\"status\":\"active\",\"pressure_level\":100,\"building_name\":\"N\\/A\",\"floor_no\":1,\"room_name\":\"24\"}', 'Wrong installment', '2026-03-03 21:47:20', '2026-03-03 21:47:20', '2026-03-03 21:47:20'),
+(41, 4, 'room', 115, '01', '{\"room_name\":\"Grade 5 Classroom\",\"room_type\":\"Classroom\",\"floor_no\":1,\"building_name\":\"Okay room\"}', 'I don\'t like it', '2026-03-10 19:34:55', '2026-03-10 19:34:55', '2026-03-10 19:34:55'),
+(42, 4, 'room', 114, 'LB-01', '{\"room_name\":\"Science Laboratory\",\"room_type\":\"Laboratory\",\"floor_no\":2,\"building_name\":\"Okay room\"}', 'This too', '2026-03-10 19:35:10', '2026-03-10 19:35:10', '2026-03-10 19:35:10'),
+(43, 4, 'room', 118, '4354', '{\"room_name\":\"65546\",\"room_type\":\"Administration\",\"floor_no\":1,\"building_name\":\"Okay room\"}', 'Wrong floor encoded', '2026-03-10 19:38:57', '2026-03-10 19:38:57', '2026-03-10 19:38:57'),
+(44, 4, 'room', 119, 'te6t54', '{\"room_name\":\"56546\",\"room_type\":\"Classroom\",\"floor_no\":1,\"building_name\":\"Okay room\"}', 'Wrong floor encoded', '2026-03-10 19:39:09', '2026-03-10 19:39:09', '2026-03-10 19:39:09'),
+(45, 3, 'room', 129, '03', '{\"room_name\":\"ffrg\",\"room_type\":\"Classroom\",\"floor_no\":1,\"building_name\":\"02\"}', 'Wrong room', '2026-03-16 17:53:54', '2026-03-16 17:53:54', '2026-03-16 17:53:54'),
+(46, 1, 'building', NULL, '014', '{\"building_name\":\"014\",\"type\":\"School Building\",\"required_fext\":2,\"year_constructed\":1994,\"last_renovation\":2025,\"description\":null,\"safety_features\":null}', 'To be removed, building doesn\'t exist at first place', '2026-03-17 07:51:17', '2026-03-17 07:51:17', '2026-03-17 07:51:17'),
+(47, 8, 'building', NULL, '099', '{\"building_name\":null,\"type\":\"Reggiestar building\",\"required_fext\":1,\"year_constructed\":null,\"last_renovation\":null,\"description\":null,\"safety_features\":null}', 'Testing building', '2026-03-18 01:37:05', '2026-03-18 01:37:05', '2026-03-18 01:37:05'),
+(48, 11, 'alarm', 38, 'ALARM-04', '{\"alarm_type\":\"Mechanical\",\"status\":\"active\",\"building_name\":\"N\\/A\",\"manufacturer\":null,\"last_test\":\"2026-03-19\"}', 'Wrong Entry', '2026-03-19 03:29:41', '2026-03-19 03:29:41', '2026-03-19 03:29:41'),
+(49, 11, 'alarm', 40, 'Alrm-001', '{\"alarm_type\":\"Mechanical\",\"status\":\"active\",\"building_name\":\"School Canteen\",\"manufacturer\":null,\"last_test\":\"2026-03-18\"}', 'Wrong alarm installed', '2026-03-19 06:46:53', '2026-03-19 06:46:53', '2026-03-19 06:46:53'),
+(50, 5, 'extinguisher', 92, 'fdd', '{\"type\":\"ABC\",\"status\":\"active\",\"pressure_level\":100,\"building_name\":\"colored building\",\"floor_no\":\"N\\/A\",\"room_name\":\"N\\/A\"}', 'Testing something', '2026-03-19 08:01:00', '2026-03-19 08:01:00', '2026-03-19 08:01:00'),
+(51, 1, 'alarm', 14, 'ALRM-003', '{\"alarm_type\":\"Bell\",\"status\":\"broken\",\"building_name\":\"N\\/A\",\"manufacturer\":\"curuosh\",\"last_test\":\"2026-02-16\"}', 'To be re-assign yet again', '2026-03-29 01:14:05', '2026-03-29 01:14:05', '2026-03-29 01:14:05'),
+(52, 1, 'floor', NULL, 'FLR-2', '{\"building_name\":\"011\",\"building_no\":\"011\",\"floor_no\":\"2\"}', 'there isn\'t 2nd floor', '2026-03-29 02:26:32', '2026-03-29 02:26:32', '2026-03-29 02:26:32'),
+(53, 9, 'extinguisher', 99, '022', '{\"type\":\"ABC\",\"status\":\"active\",\"pressure_level\":100,\"building_name\":\"N\\/A\",\"floor_no\":\"N\\/A\",\"room_name\":\"N\\/A\"}', 'Didn\'t exist', '2026-04-07 00:50:39', '2026-04-07 00:50:39', '2026-04-07 00:50:39');
 
 -- --------------------------------------------------------
 
@@ -993,7 +802,9 @@ INSERT INTO `fire_safety_extinguisher_inspections` (`id`, `extinguisher_id`, `us
 (102, 69, 1, '2026-03-17', 'active', '100', 'Change code', '2026-03-17 06:41:29', '2026-03-17 06:41:29'),
 (103, 81, 1, '2026-03-19', 'maintenance', '20', 'wrong Entry', '2026-03-19 02:58:31', '2026-03-19 02:58:31'),
 (104, 77, 1, '2026-03-19', 'purchase', '0', 'Wrong Numbering', '2026-03-19 03:18:41', '2026-03-19 03:18:41'),
-(105, 57, 1, '2026-03-19', 'maintenance', '57', 'Okay?', '2026-03-19 08:00:17', '2026-03-19 08:00:17');
+(105, 57, 1, '2026-03-19', 'maintenance', '57', 'Okay?', '2026-03-19 08:00:17', '2026-03-19 08:00:17'),
+(106, 19, 1, '2026-03-29', 'active', '100', 'new cod', '2026-03-29 02:30:29', '2026-03-29 02:30:29'),
+(107, 19, 1, '2026-03-29', 'active', '100', 'Reverted code back', '2026-03-29 02:30:42', '2026-03-29 02:30:42');
 
 -- --------------------------------------------------------
 
@@ -1125,7 +936,11 @@ INSERT INTO `fire_safety_extinguisher_room_coverage` (`id`, `extinguisher_id`, `
 (164, 90, 179, '2026-03-19 03:24:09', '2026-03-19 03:24:09'),
 (165, 91, 180, '2026-03-19 03:25:10', '2026-03-19 03:25:10'),
 (166, 91, 181, '2026-03-19 03:25:10', '2026-03-19 03:25:10'),
-(167, 91, 182, '2026-03-19 03:25:10', '2026-03-19 03:25:10');
+(167, 91, 182, '2026-03-19 03:25:10', '2026-03-19 03:25:10'),
+(168, 95, 184, '2026-04-07 00:43:43', '2026-04-07 00:43:43'),
+(169, 97, 186, '2026-04-07 00:46:27', '2026-04-07 00:46:27'),
+(170, 98, 186, '2026-04-07 00:47:06', '2026-04-07 00:47:06'),
+(172, 100, 185, '2026-04-07 00:49:47', '2026-04-07 00:49:47');
 
 -- --------------------------------------------------------
 
@@ -1135,7 +950,7 @@ INSERT INTO `fire_safety_extinguisher_room_coverage` (`id`, `extinguisher_id`, `
 
 CREATE TABLE `fire_safety_inspections` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `school_id` bigint(20) UNSIGNED NOT NULL,
+  `unified_school_id` bigint(20) UNSIGNED DEFAULT NULL,
   `drill_type` varchar(255) NOT NULL,
   `inspection_date` date NOT NULL,
   `inspection_time` time NOT NULL,
@@ -1161,12 +976,12 @@ CREATE TABLE `fire_safety_inspections` (
 -- Dumping data for table `fire_safety_inspections`
 --
 
-INSERT INTO `fire_safety_inspections` (`id`, `school_id`, `drill_type`, `inspection_date`, `inspection_time`, `time_started`, `time_finished`, `elapsed_time`, `no_of_exits`, `no_of_buildings`, `no_of_students`, `no_of_personnel`, `monitored_by`, `monitored_by_position`, `checklist_data`, `observers_data`, `remarks`, `coordinator_name`, `school_head_name`, `created_at`, `updated_at`) VALUES
-(1, 11, 'Fire', '2026-02-03', '09:00:00', '09:45:00', '10:00:00', '4:56', 2, 10, 615, 29, 'John Benedict G. Pecson', 'TA-1 DRRM1', '[\"Alarm\",\"Evacuation Plan (Updated)\",\"First Aid Kit\",\"Actual Head Count\",\"Directional Arrows\",\"SF 2 \\/ Attendance Sheet\",\"Group Signage\",\"Walked Casually\",\"Guard On Duty\",\"Closed Doors (Fire)\"]', '[\"Local Barangay\",\"City DRRM\",\"BFP\"]', 'Repaint directional Arrows\r\nPut up exit signages\r\nInc. I.D for personnel & Students', 'Eleazar Arazadon', 'Mr. Raymund F. Camacho', '2026-02-12 22:46:47', '2026-03-17 07:39:56'),
-(2, 12, 'Fire', '2026-02-19', '14:01:00', '02:00:00', '02:30:00', '30mins', 2, 6, 899, 19, 'John Benedict G. Pecson', NULL, '[\"Alarm\",\"First Aid Kit\",\"Hotline Numbers\",\"Command Center\"]', '[\"City DRRM\",\"OTMPS\",\"PNP\"]', 'Okay Inspection', 'Jeffrey C. Mabini', 'Froilan N. Rivas', '2026-02-18 19:31:17', '2026-02-18 19:31:17'),
-(3, 20, 'Fire', '2026-03-04', '09:30:00', '09:37:00', '09:39:00', '02:24', 1, 5, 253, 25, 'Erwin A. Castillejo', NULL, '[\"Alarm\",\"Actual Head Count\"]', '[\"BFP\"]', 'Change Evacuation Area farther back\r\nRemove books along corridor at Bldg 2 room 6\r\nAvoid using Butane Stove as main mode of cooking\r\nHang all Fire Extinguishers\r\nTransfer Alarm switch to Building 4\r\nutilize Digital Alarm system', 'Judith Jao', 'Judith Jao', '2026-03-04 23:32:40', '2026-03-04 23:32:40'),
-(4, 13, 'Fire', '2026-03-12', '02:16:00', '10:20:00', '10:40:00', '15:30', 4, 3, 545, 26, 'Zaldy Danaytan, Jr.', 'Disc Head', '[\"Alarm\",\"Actual Head Count\",\"Command Center\",\"Megaphone\",\"Group Signage\",\"School ID (Personnel)\",\"School ID (Students)\",\"Closed Doors (Fire)\"]', '[\"City DRRM\",\"OTMPS\",\"Others: Special Investigator\"]', 'Good drilling, be safe when evacuating, follow the rules', 'Nestor Sison', 'Nestor Sison', '2026-03-11 18:18:52', '2026-03-11 18:19:43'),
-(5, 13, 'Fire', '2026-03-17', '10:18:00', '10:18:00', '10:23:00', '5:07', 2, 7, 337, 21, 'John Benedict G. Pecson', 'TA-1 DRRM1', '[\"Alarm\",\"Evacuation Plan (Updated)\",\"First Aid Kit\",\"Actual Head Count\",\"Directional Arrows\",\"Hotline Numbers\",\"Command Center\",\"SF 2 \\/ Attendance Sheet\",\"Megaphone\",\"Group Signage\",\"Walked Casually\",\"Guard On Duty\",\"School ID (Personnel)\",\"School ID (Students)\",\"Closed Doors (Fire)\"]', '[\"Local Barangay\",\"City DRRM\"]', '-Hotline # inc. of BFP\r\n- Inc. I.D for personnel & Students\r\n- Revise Evac Area', 'Zaldy D. Danaytab, Jr.', 'Nestor Sison', '2026-03-17 07:17:36', '2026-03-17 07:17:36');
+INSERT INTO `fire_safety_inspections` (`id`, `unified_school_id`, `drill_type`, `inspection_date`, `inspection_time`, `time_started`, `time_finished`, `elapsed_time`, `no_of_exits`, `no_of_buildings`, `no_of_students`, `no_of_personnel`, `monitored_by`, `monitored_by_position`, `checklist_data`, `observers_data`, `remarks`, `coordinator_name`, `school_head_name`, `created_at`, `updated_at`) VALUES
+(1, 1, 'Fire', '2026-02-03', '09:00:00', '09:45:00', '10:00:00', '4:56', 2, 10, 615, 29, 'John Benedict G. Pecson', 'TA-1 DRRM1', '[\"Alarm\",\"Evacuation Plan (Updated)\",\"First Aid Kit\",\"Actual Head Count\",\"Directional Arrows\",\"SF 2 \\/ Attendance Sheet\",\"Group Signage\",\"Walked Casually\",\"Guard On Duty\",\"Closed Doors (Fire)\"]', '[\"Local Barangay\",\"City DRRM\",\"BFP\"]', 'Repaint directional Arrows\r\nPut up exit signages\r\nInc. I.D for personnel & Students', 'Eleazar Arazadon', 'Mr. Raymund F. Camacho', '2026-02-12 22:46:47', '2026-03-17 07:39:56'),
+(2, 2, 'Fire', '2026-02-19', '14:01:00', '02:00:00', '02:30:00', '30mins', 2, 6, 899, 19, 'John Benedict G. Pecson', NULL, '[\"Alarm\",\"First Aid Kit\",\"Hotline Numbers\",\"Command Center\"]', '[\"City DRRM\",\"OTMPS\",\"PNP\"]', 'Okay Inspection', 'Jeffrey C. Mabini', 'Froilan N. Rivas', '2026-02-18 19:31:17', '2026-02-18 19:31:17'),
+(3, 10, 'Fire', '2026-03-04', '09:30:00', '09:37:00', '09:39:00', '02:24', 1, 5, 253, 25, 'Erwin A. Castillejo', NULL, '[\"Alarm\",\"Actual Head Count\"]', '[\"BFP\"]', 'Change Evacuation Area farther back\r\nRemove books along corridor at Bldg 2 room 6\r\nAvoid using Butane Stove as main mode of cooking\r\nHang all Fire Extinguishers\r\nTransfer Alarm switch to Building 4\r\nutilize Digital Alarm system', 'Judith Jao', 'Judith Jao', '2026-03-04 23:32:40', '2026-03-04 23:32:40'),
+(4, 3, 'Fire', '2026-03-12', '02:16:00', '10:20:00', '10:40:00', '15:30', 4, 3, 545, 26, 'Zaldy Danaytan, Jr.', 'Disc Head', '[\"Alarm\",\"Actual Head Count\",\"Command Center\",\"Megaphone\",\"Group Signage\",\"School ID (Personnel)\",\"School ID (Students)\",\"Closed Doors (Fire)\"]', '[\"City DRRM\",\"OTMPS\",\"Others: Special Investigator\"]', 'Good drilling, be safe when evacuating, follow the rules', 'Nestor Sison', 'Nestor Sison', '2026-03-11 18:18:52', '2026-03-11 18:19:43'),
+(5, 3, 'Fire', '2026-03-17', '10:18:00', '10:18:00', '10:23:00', '5:07', 2, 7, 337, 21, 'John Benedict G. Pecson', 'TA-1 DRRM1', '[\"Alarm\",\"Evacuation Plan (Updated)\",\"First Aid Kit\",\"Actual Head Count\",\"Directional Arrows\",\"Hotline Numbers\",\"Command Center\",\"SF 2 \\/ Attendance Sheet\",\"Megaphone\",\"Group Signage\",\"Walked Casually\",\"Guard On Duty\",\"School ID (Personnel)\",\"School ID (Students)\",\"Closed Doors (Fire)\"]', '[\"Local Barangay\",\"City DRRM\"]', '-Hotline # inc. of BFP\r\n- Inc. I.D for personnel & Students\r\n- Revise Evac Area', 'Zaldy D. Danaytab, Jr.', 'Nestor Sison', '2026-03-17 07:17:36', '2026-03-17 07:17:36');
 
 -- --------------------------------------------------------
 
@@ -1176,7 +991,7 @@ INSERT INTO `fire_safety_inspections` (`id`, `school_id`, `drill_type`, `inspect
 
 CREATE TABLE `fire_safety_rooms` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `school_id` bigint(20) UNSIGNED NOT NULL,
+  `unified_school_id` bigint(20) UNSIGNED DEFAULT NULL,
   `building_id` bigint(20) UNSIGNED NOT NULL,
   `room_code` varchar(255) DEFAULT NULL,
   `room_name` varchar(255) NOT NULL,
@@ -1202,150 +1017,154 @@ CREATE TABLE `fire_safety_rooms` (
 -- Dumping data for table `fire_safety_rooms`
 --
 
-INSERT INTO `fire_safety_rooms` (`id`, `school_id`, `building_id`, `room_code`, `room_name`, `room_type`, `has_smoke_detector`, `smoke_detector_required`, `has_secondary_exit`, `secondary_exit_remarks`, `room_type_config_id`, `calculated_priority_label`, `remarks`, `coverage_limit`, `floor_no`, `created_at`, `updated_at`, `nearest_extinguisher_room_id`, `last_inspector_id`, `approval_status`, `approval_message`) VALUES
-(35, 11, 17, 'Room 01', 'Room 01', 'Administration', 0, 0, 0, NULL, 47, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-11 17:59:57', '2026-03-05 00:02:27', NULL, 1, 'approved', NULL),
-(36, 11, 17, 'Room 02', 'Room 02', 'Administration', 0, 0, 0, NULL, 47, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:09:45', '2026-03-05 00:05:42', 35, 1, 'approved', NULL),
-(37, 11, 17, 'ADMNRM-001', 'ADMNRM-001', 'Department', 0, 0, 0, NULL, 47, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:10:54', '2026-02-12 18:11:03', 35, NULL, NULL, NULL),
-(38, 11, 19, 'Room-001', 'Room 001', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:23:44', '2026-02-12 18:23:44', NULL, NULL, NULL, NULL),
-(39, 11, 19, 'Room-002', 'Room 02', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:24:06', '2026-02-17 18:15:16', 38, NULL, NULL, NULL),
-(40, 11, 19, 'Lab-001', 'Lab-001', 'Laboratory', 0, 0, 0, NULL, 49, 'Dedicated / Limited Shared', NULL, 2, 1, '2026-02-12 18:24:34', '2026-02-12 18:24:34', NULL, NULL, NULL, NULL),
-(41, 11, 20, 'Room-004', 'Room 01', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:32:17', '2026-02-12 18:32:17', NULL, NULL, NULL, NULL),
-(42, 11, 20, 'Room-005', 'Room 05', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:34:02', '2026-02-12 18:39:29', 41, NULL, NULL, NULL),
-(43, 11, 21, 'Room-006', 'Room-067', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:42:05', '2026-02-17 18:15:00', NULL, NULL, NULL, NULL),
-(44, 11, 21, 'Room-007', 'Room 07', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:42:25', '2026-02-12 18:42:25', NULL, NULL, NULL, NULL),
-(45, 11, 22, 'Room-008', 'Room-008', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:50:38', '2026-02-12 18:50:38', NULL, NULL, NULL, NULL),
-(46, 11, 23, 'Room-009', 'Room-009', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:51:21', '2026-02-12 18:51:21', NULL, NULL, NULL, NULL),
-(47, 11, 24, 'Room-010', 'Room-010', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay kayo room', 3, 1, '2026-02-12 18:51:46', '2026-03-11 23:55:05', NULL, 1, 'approved', NULL),
-(48, 11, 25, 'Room-011', 'Room-011', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:54:51', '2026-02-12 18:54:51', NULL, NULL, NULL, NULL),
-(49, 11, 25, 'Room-0012', 'Room-012', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:55:09', '2026-02-12 18:56:07', 48, NULL, NULL, NULL),
-(50, 11, 26, 'Room-013', 'Room-013', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:58:18', '2026-02-12 18:58:18', NULL, NULL, NULL, NULL),
-(51, 11, 26, 'Room-014', 'Room-014', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:58:34', '2026-03-05 00:04:36', 50, 1, 'approved', NULL),
-(52, 11, 27, 'Room-016', 'Room-016', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 19:01:06', '2026-02-12 19:01:06', NULL, NULL, NULL, NULL),
-(53, 11, 27, 'Room-017', 'Room-017', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 19:01:29', '2026-02-12 19:01:29', NULL, NULL, NULL, NULL),
-(54, 11, 27, 'Room-018', 'Room-018', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 19:01:51', '2026-02-12 19:01:51', NULL, NULL, NULL, NULL),
-(55, 11, 28, 'Room-019', 'Room-019', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 19:06:16', '2026-02-12 19:06:16', NULL, NULL, NULL, NULL),
-(56, 11, 28, 'Room-02', 'Room-020', 'Administration', 0, 1, 0, NULL, 47, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 19:06:54', '2026-03-10 17:48:56', NULL, 1, 'approved', NULL),
-(57, 12, 31, '01', '01', 'Classroom', 0, 0, 1, 'Okay', 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay now', 3, 1, '2026-02-18 19:34:09', '2026-03-12 00:32:17', NULL, 1, 'approved', NULL),
-(58, 17, 32, '101', 'Computer Laboratory', 'Laboratory', 0, 0, 0, NULL, 49, 'Dedicated / Limited Shared', NULL, 2, 2, '2026-03-01 18:34:45', '2026-03-01 18:34:45', NULL, NULL, NULL, NULL),
-(59, 17, 32, '02', 'Principals Office', 'Administration', 0, 0, 0, NULL, 47, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-01 18:35:19', '2026-03-01 18:35:19', NULL, NULL, NULL, NULL),
-(60, 17, 32, '03', 'Faculty Room', 'Administration', 0, 0, 0, NULL, 47, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-01 18:35:59', '2026-03-01 18:35:59', NULL, NULL, NULL, NULL),
-(61, 17, 32, '04', '04', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-01 18:36:42', '2026-03-01 18:36:42', NULL, NULL, NULL, NULL),
-(62, 17, 32, '05', '05', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-01 18:37:08', '2026-03-01 18:37:08', NULL, NULL, NULL, NULL),
-(63, 17, 33, '08', '08', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-01 18:52:47', '2026-03-01 18:52:47', NULL, NULL, NULL, NULL),
-(64, 17, 32, '06', '06', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-01 22:27:23', '2026-03-01 22:27:23', NULL, NULL, NULL, NULL),
-(65, 11, 25, 'Room-0111', 'Room-0111', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-02 01:05:00', '2026-03-02 01:05:00', NULL, NULL, NULL, NULL),
-(66, 18, 36, '1', '1', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Open Outlet', 3, 1, '2026-03-02 23:57:21', '2026-03-03 16:59:56', NULL, NULL, NULL, NULL),
-(67, 18, 36, '2', 'Grade 2 Classroom', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay has a fire extinguisher now', 3, 1, '2026-03-02 23:58:04', '2026-03-03 22:20:17', NULL, NULL, NULL, NULL),
-(68, 18, 36, '3', '3', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-02 23:58:28', '2026-03-02 23:58:28', NULL, NULL, NULL, NULL),
-(69, 18, 36, '4', '4', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-02 23:59:12', '2026-03-02 23:59:12', NULL, NULL, NULL, NULL),
-(70, 18, 36, '5', '5', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-02 23:59:32', '2026-03-02 23:59:32', NULL, NULL, NULL, NULL),
-(71, 18, 36, '6', '6', 'Administration', 0, 0, 0, NULL, 47, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-03 00:00:41', '2026-03-03 00:00:41', NULL, NULL, NULL, NULL),
-(72, 18, 36, '7', '7', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-03 00:03:11', '2026-03-03 00:03:11', NULL, NULL, NULL, NULL),
-(73, 18, 36, '8', '8', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-03 00:04:34', '2026-03-03 00:04:34', NULL, NULL, NULL, NULL),
-(74, 18, 36, '9', '9', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-03 00:05:40', '2026-03-03 00:05:40', NULL, NULL, NULL, NULL),
-(75, 18, 36, '10', '10', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-03 00:06:20', '2026-03-03 00:06:20', NULL, NULL, NULL, NULL),
-(76, 18, 36, '11', 'Grade 6 Classroom', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Needs minor repair', 3, 2, '2026-03-03 00:06:35', '2026-03-03 22:18:20', NULL, NULL, NULL, NULL),
-(77, 18, 37, '12', '12', 'Laboratory', 0, 0, 0, NULL, 46, 'Dedicated / Limited Shared (Up to 2 rooms)', NULL, 2, 1, '2026-03-03 00:07:18', '2026-03-03 00:07:18', NULL, NULL, NULL, NULL),
-(78, 18, 37, '13', '13', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-03 00:07:56', '2026-03-03 00:07:56', NULL, NULL, NULL, NULL),
-(79, 18, 37, '14', '14', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-03 00:08:18', '2026-03-03 00:08:18', NULL, NULL, NULL, NULL),
-(80, 18, 38, '15', '15', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-03 00:11:37', '2026-03-03 00:11:37', NULL, NULL, NULL, NULL),
-(81, 18, 38, '16', '16', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-03 00:12:02', '2026-03-03 00:12:02', NULL, NULL, NULL, NULL),
-(82, 18, 38, '17', '17', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-03 00:12:22', '2026-03-03 00:12:22', NULL, NULL, NULL, NULL),
-(83, 18, 39, '18', '18', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-03 00:12:56', '2026-03-03 00:12:56', NULL, NULL, NULL, NULL),
-(84, 18, 39, '19', '19', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-03 00:13:11', '2026-03-03 00:13:11', NULL, NULL, NULL, NULL),
-(85, 18, 39, '20', '20', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-03 00:13:27', '2026-03-03 00:13:27', NULL, NULL, NULL, NULL),
-(86, 18, 40, '21', '21', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-03 00:14:12', '2026-03-03 00:14:12', NULL, NULL, NULL, NULL),
-(87, 18, 41, '23', '23', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Needs to be covered now', 3, 1, '2026-03-03 00:14:41', '2026-03-11 18:12:17', NULL, 1, 'approved', NULL),
-(88, 18, 42, '24', '24', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay now room', 3, 1, '2026-03-03 00:15:43', '2026-03-03 21:59:30', NULL, NULL, NULL, NULL),
-(89, 18, 42, '26', '26', 'Canteen', 0, 0, 0, NULL, 155, 'Shared Coverage (Up to 3 Classrooms)', 'Okay now room', 3, 1, '2026-03-03 00:17:22', '2026-03-03 21:59:20', NULL, NULL, NULL, NULL),
-(90, 18, 42, '28', 'Not currently use', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Needs Major Repair', 3, 1, '2026-03-03 21:59:07', '2026-03-03 21:59:07', NULL, NULL, NULL, NULL),
-(91, 16, 48, '01', 'Grade 1 Classroom', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Updated its all good now', 3, 1, '2026-03-03 23:15:06', '2026-03-03 23:48:25', NULL, 4, 'approved', 'Approved by Adan Kristopher B. Dumpit'),
-(92, 16, 48, '02', 'Elementary\'s room', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay room', 3, 1, '2026-03-04 21:41:06', '2026-03-04 21:41:06', NULL, 4, 'pending', NULL),
-(93, 20, 49, '01', 'Faculty Room', 'Administration', 0, 0, 1, NULL, 47, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-04 22:14:49', '2026-03-12 00:33:25', NULL, 5, 'approved', NULL),
-(94, 20, 49, '02', 'Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-04 22:15:08', '2026-03-12 00:33:08', NULL, 5, 'approved', NULL),
-(95, 13, 50, '01', '01', 'Classroom', 0, 0, 1, 'Secondary Exit good to use', 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay room', 3, 1, '2026-03-04 22:46:05', '2026-03-16 17:37:18', NULL, 1, 'approved', 'The room info is incompleted and needed of fire extinguisher'),
-(96, 13, 51, '01', '01', 'Classroom', 0, 0, 1, 'Ready to use', 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay room', 3, 1, '2026-03-04 22:47:16', '2026-03-16 17:51:12', NULL, 1, 'approved', 'Approved by Adan Kristopher B. Dumpit'),
-(97, 20, 52, '01', 'Principal\'s Office and Classroom', 'Classroom and Administration', 0, 0, 0, NULL, 156, 'Shared Space', NULL, 1, 1, '2026-03-04 23:07:05', '2026-03-12 00:53:43', NULL, 5, 'approved', NULL),
-(98, 20, 52, '02', 'SBM and Classroom', 'Classroom and Administration', 0, 0, 0, 'Need to clear grills at back area or create Fire Exit that can be opened.', 156, 'Shared Space', NULL, 1, 1, '2026-03-04 23:08:19', '2026-03-12 00:54:16', NULL, 5, 'approved', NULL),
-(99, 20, 52, '03', 'LRC and Classroom', 'Classroom and Administration', 0, 0, 0, 'No General Secondary Exit', 156, 'Shared Space', NULL, 1, 2, '2026-03-04 23:09:24', '2026-03-04 23:09:24', NULL, 5, 'approved', NULL),
-(100, 20, 52, '04', '04', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'With electrical concern regarding Switch', 3, 2, '2026-03-04 23:09:49', '2026-03-05 00:46:04', NULL, 5, 'approved', NULL),
-(101, 20, 52, '05', '05', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 3, '2026-03-04 23:10:18', '2026-03-04 23:10:18', NULL, 5, 'approved', NULL),
-(102, 20, 52, '06', '06', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'With Electrical Concerns', 3, 3, '2026-03-04 23:11:22', '2026-03-05 00:45:32', NULL, 5, 'approved', NULL),
-(103, 20, 54, '01', '01', 'Classroom', 0, 0, 0, 'Need to remove grills', 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-04 23:22:20', '2026-03-12 00:42:07', NULL, 5, 'approved', NULL),
-(104, 20, 54, '02', 'HE Rooom', 'Laboratory', 0, 0, 0, 'Need to remove grills or create fire exit', 49, 'Dedicated / Limited Shared', NULL, 2, 1, '2026-03-04 23:22:59', '2026-03-12 00:42:32', NULL, 5, 'approved', NULL),
-(105, 20, 55, '01', '01', 'Classroom', 0, 0, 0, 'Need to remove grills or create fire exit.', 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-04 23:24:59', '2026-03-04 23:24:59', NULL, 5, 'approved', NULL),
-(106, 20, 55, '02', '02', 'Classroom', 0, 0, 0, 'Need to remove grills or create fire exit.', 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-04 23:25:19', '2026-03-04 23:25:19', NULL, 5, 'approved', NULL),
-(107, 20, 55, '03', '03', 'Classroom', 0, 0, 0, 'Need to remove grills or create fire exit.', 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-04 23:25:38', '2026-03-04 23:25:38', NULL, 5, 'approved', NULL),
-(108, 20, 55, '04', '04', 'Classroom', 0, 0, 0, 'Need to remove grills or create fire exit.', 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-04 23:25:59', '2026-03-04 23:25:59', NULL, 5, 'approved', NULL),
-(109, 20, 56, '01', 'Clinic', 'Classroom and Administration', 0, 0, 0, 'Need to remove grills or create fire exit.', 156, 'Shared Space', NULL, 1, 1, '2026-03-04 23:27:24', '2026-03-12 00:49:11', NULL, 5, 'approved', NULL),
-(110, 14, 57, '01', 'Grade 1 Classroom', 'Classroom', 0, 0, 1, 'OKAY', 46, 'Shared Coverage (Up to 3 Classrooms)', 'okay', 3, 1, '2026-03-10 18:41:09', '2026-03-10 18:55:43', NULL, 3, 'pending', NULL),
-(111, 14, 57, '02', 'Grade 4 Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay Room', 3, 1, '2026-03-10 18:54:39', '2026-03-10 18:55:51', NULL, 3, 'pending', 'Approved by Adan Kristopher B. Dumpit'),
-(112, 14, 57, '03', 'Grade 4 Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Starred room', 3, 1, '2026-03-10 18:56:22', '2026-03-10 18:56:22', NULL, 3, 'pending', NULL),
-(113, 14, 58, 'ADMN-01', 'Administration Room', 'Administration', 1, 1, 1, 'Closed', 47, 'Shared Coverage (Up to 3 Classrooms)', 'Room is active and compliant', 3, 1, '2026-03-10 18:59:26', '2026-03-10 18:59:52', NULL, 3, 'pending', NULL),
-(116, 14, 58, '02', 'Grade 5 Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Good now', 3, 1, '2026-03-10 19:36:00', '2026-03-10 19:36:40', NULL, 3, 'pending', NULL),
-(117, 14, 58, '03', 'Grade 5 Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Good to go', 3, 1, '2026-03-10 19:37:12', '2026-03-10 19:37:12', NULL, 3, 'pending', NULL),
-(120, 14, 58, 'LAB-04', 'Science Laboratory', 'Laboratory', 0, 0, 1, NULL, 49, 'Dedicated / Limited Shared', 'Laboratory compliant room', 2, 2, '2026-03-10 19:40:04', '2026-03-10 19:40:30', NULL, 3, 'pending', NULL),
-(121, 14, 58, '04', 'Grade 5 Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay room and active', 3, 2, '2026-03-10 19:41:20', '2026-03-10 19:41:20', NULL, 3, 'pending', NULL),
-(122, 14, 58, '05', 'Storage Room, filled', 'Storage', 0, 0, 1, 'okay', 51, 'Dedicated / Limited Shared', 'Good storage, Resupplied', 2, 2, '2026-03-10 19:42:59', '2026-03-11 19:05:08', NULL, 3, 'pending', 'Approved by Adan Kristopher B. Dumpit'),
-(123, 14, 59, '01', 'Grade 1-3 Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay room', 3, 1, '2026-03-10 19:45:55', '2026-03-10 19:45:55', NULL, 3, 'pending', NULL),
-(124, 14, 59, '02', 'Grade 2 Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Grade 2 classroom only & changing hosting', 3, 1, '2026-03-10 19:46:43', '2026-03-11 17:08:05', 125, 3, 'pending', NULL),
-(125, 14, 59, '03', 'Grade 1-3 Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Good to go', 3, 1, '2026-03-10 19:47:10', '2026-03-10 19:47:10', NULL, 3, 'pending', NULL),
-(126, 14, 59, '04', 'Grade 1-3 Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Good to go', 3, 1, '2026-03-10 19:47:41', '2026-03-10 21:45:36', 125, 3, 'approved', 'Approved by Adan Kristopher B. Dumpit'),
-(127, 15, 60, '01', 'Grade 1 Classroom', 'Classroom', 0, 0, 1, 'Okay', 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-03-12 00:01:43', '2026-03-19 07:58:00', NULL, 1, 'approved', NULL),
-(128, 13, 51, '02', 'Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay room', 3, 1, '2026-03-16 17:52:39', '2026-03-16 17:52:39', NULL, 1, 'approved', NULL),
-(130, 13, 51, '03', 'Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Good Room', 3, 2, '2026-03-16 17:54:20', '2026-03-16 17:54:20', NULL, 1, 'approved', NULL),
-(131, 13, 51, '04', 'Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay room', 3, 2, '2026-03-16 18:07:56', '2026-03-16 18:10:48', NULL, 4, 'approved', 'Approved by Adan Kristopher B. Dumpit'),
-(132, 13, 53, '01', 'Administration Room', 'Administration', 0, 0, 1, 'yes', 47, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-03-17 05:22:24', '2026-03-17 05:22:38', NULL, 4, 'pending', NULL),
-(133, 13, 61, '01', 'Classroom', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay Room', 3, 1, '2026-03-17 06:09:46', '2026-03-17 06:09:46', NULL, 1, 'approved', NULL),
-(134, 13, 61, '02', 'Classroom', 'Classroom', 0, 0, 0, 'Okay', 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-03-17 06:10:15', '2026-03-17 06:10:15', NULL, 1, 'approved', NULL),
-(135, 13, 61, '01', 'Classroom', 'Classroom', 0, 0, 0, 'Okay', 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-03-17 06:10:47', '2026-03-17 06:10:47', NULL, 1, 'approved', NULL),
-(136, 13, 62, '01', 'Classroom', 'Classroom', 0, 0, 0, 'Doesn\'t have', 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-03-17 06:26:56', '2026-03-17 06:28:19', NULL, 1, 'approved', NULL),
-(137, 13, 62, '02', 'Classroom', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'OKay', 3, 1, '2026-03-17 06:29:19', '2026-03-17 06:29:19', NULL, 1, 'approved', NULL),
-(138, 13, 62, '01', 'Classroom', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-03-17 06:30:40', '2026-03-17 06:30:40', NULL, 1, 'approved', NULL),
-(139, 13, 63, '01', 'Administration', 'Administration', 0, 0, 1, NULL, 47, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-03-17 06:35:48', '2026-03-17 06:35:48', NULL, 1, 'approved', NULL),
-(140, 13, 63, '02', 'Administration', 'Administration', 0, 0, 1, NULL, 47, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-03-17 06:36:25', '2026-03-17 06:36:25', NULL, 1, 'approved', NULL),
-(141, 13, 63, '03', 'Canteen', 'Canteen', 0, 0, 1, NULL, 155, 'Shared Coverage (Up to 3 Classrooms)', 'Okay Canteen', 3, 1, '2026-03-17 06:37:29', '2026-03-17 06:37:29', NULL, 1, 'approved', NULL),
-(142, 13, 64, '01', 'Classroom room', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-03-17 06:44:05', '2026-03-17 06:44:05', NULL, 1, 'approved', NULL),
-(143, 13, 64, '02', 'Classroom room', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-03-17 06:44:56', '2026-03-17 06:44:56', NULL, 1, 'approved', NULL),
-(144, 13, 65, '01', 'Classroom room', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-03-17 06:47:11', '2026-03-17 06:47:55', NULL, 1, 'approved', NULL),
-(145, 13, 65, '02', 'Classroom room', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-03-17 07:00:30', '2026-03-17 07:00:30', NULL, 1, 'approved', NULL),
-(146, 13, 66, '01', 'Lab 1', 'Laboratory', 0, 0, 1, NULL, 49, 'Dedicated / Limited Shared', 'Okay', 2, 1, '2026-03-17 07:03:29', '2026-03-17 07:03:29', NULL, 1, 'approved', NULL),
-(147, 13, 66, '02', 'Lab 2', 'Laboratory', 0, 0, 1, NULL, 49, 'Dedicated / Limited Shared', 'Okay', 2, 1, '2026-03-17 07:03:57', '2026-03-17 07:03:57', NULL, 1, 'approved', NULL),
-(148, 21, 68, '01', 'Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-19 02:20:15', '2026-03-19 02:20:15', NULL, 1, 'approved', NULL),
-(149, 21, 68, '02', '02', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-19 02:20:54', '2026-03-19 02:20:54', NULL, 1, 'approved', NULL),
-(150, 21, 68, '03', '03', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-19 02:21:20', '2026-03-19 02:21:20', NULL, 1, 'approved', NULL),
-(151, 21, 68, '04', 'Science Laboratory', 'Laboratory', 0, 0, 1, NULL, 49, 'Dedicated / Limited Shared', NULL, 2, 2, '2026-03-19 02:21:50', '2026-03-19 02:21:50', NULL, 1, 'approved', NULL),
-(152, 21, 68, '05', '05', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 3, '2026-03-19 02:22:16', '2026-03-19 02:22:16', NULL, 1, 'approved', NULL),
-(153, 21, 68, '06', '06', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 3, '2026-03-19 02:22:36', '2026-03-19 02:22:36', NULL, 1, 'approved', NULL),
-(154, 21, 69, '01', 'School Canteen', 'Canteen', 0, 0, 1, NULL, 155, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-19 02:33:34', '2026-03-19 02:33:34', NULL, 1, 'approved', NULL),
-(155, 21, 70, '01', 'HE Laboratory', 'Laboratory', 0, 0, 1, NULL, 49, 'Dedicated / Limited Shared', 'Need  to address locked gate', 2, 1, '2026-03-19 02:42:31', '2026-03-19 02:42:31', NULL, 1, 'approved', NULL),
-(156, 21, 71, '01', '01', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-19 02:44:33', '2026-03-19 02:44:33', NULL, 1, 'approved', NULL),
-(157, 21, 72, '01', '01', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'With grills - Creation of Secondary Exit', 3, 1, '2026-03-19 02:48:04', '2026-03-19 02:48:04', NULL, 1, 'approved', NULL),
-(158, 21, 72, '02', '02', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'With grills - creation of Secondary Exit', 3, 1, '2026-03-19 02:48:46', '2026-03-19 02:48:46', NULL, 1, 'approved', NULL),
-(159, 21, 72, '03', '03', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'With Grills - Creation of Secondary Exit', 3, 1, '2026-03-19 02:49:24', '2026-03-19 02:49:24', NULL, 1, 'approved', NULL),
-(160, 21, 72, '04', 'Feeding Room', 'Administration', 0, 0, 0, NULL, 47, 'Shared Coverage (Up to 3 Classrooms)', 'With Grills - Creation of Secondary Exit', 3, 1, '2026-03-19 02:50:10', '2026-03-19 02:50:10', NULL, 1, 'approved', NULL),
-(161, 21, 72, '05', 'HE and Storage', 'Storage', 0, 0, 0, NULL, 51, 'Dedicated / Limited Shared', 'With Grills - Creation of Secondary Exit', 2, 1, '2026-03-19 02:50:49', '2026-03-19 02:51:12', NULL, 1, 'approved', NULL),
-(162, 21, 72, '01', '01', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'With Grills - Creation of Secondary Exit', 3, 2, '2026-03-19 02:51:49', '2026-03-19 02:51:49', NULL, 1, 'approved', NULL),
-(163, 21, 72, '02', 'Classroom', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-19 02:52:13', '2026-03-19 02:52:13', NULL, 1, 'approved', NULL),
-(164, 21, 72, '03', '03', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'With Grills - Creation of Secondary Exit', 3, 2, '2026-03-19 02:52:45', '2026-03-19 02:52:45', NULL, 1, 'approved', NULL),
-(165, 21, 72, '04', '04', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'With Grills - Creation of Secondary Exit', 3, 2, '2026-03-19 02:53:15', '2026-03-19 02:53:15', NULL, 1, 'approved', NULL),
-(166, 21, 72, '05', '05', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'With Grills - Creation of Secondary Exit', 3, 2, '2026-03-19 02:53:46', '2026-03-19 02:53:46', NULL, 1, 'approved', NULL),
-(167, 21, 72, '06', '06', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'With Grills - Creation of Secondary Exit', 3, 2, '2026-03-19 02:54:09', '2026-03-19 02:54:09', NULL, 1, 'approved', NULL),
-(168, 21, 72, '07', '07', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'With Grills - Creation of Secondary Exit', 3, 2, '2026-03-19 02:54:30', '2026-03-19 02:54:30', NULL, 1, 'approved', NULL),
-(169, 21, 73, '01', '01', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-19 03:06:32', '2026-03-19 03:06:32', NULL, 1, 'approved', NULL),
-(170, 21, 73, '01-01', '01-01', 'Clinic', 0, 0, 0, NULL, 50, 'Dedicated / Limited Shared', 'Converted Comfort Room to Admin Function', 2, 1, '2026-03-19 03:07:23', '2026-03-19 03:07:23', NULL, 1, 'approved', NULL),
-(171, 21, 73, '02', '02', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Check Electrical Connections (Extension Chords)', 3, 1, '2026-03-19 03:07:45', '2026-03-19 03:08:40', NULL, 1, 'approved', NULL),
-(172, 21, 73, '03', '03', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-19 03:08:09', '2026-03-19 03:08:09', NULL, 1, 'approved', NULL),
-(173, 21, 73, '04', '04', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-19 03:09:01', '2026-03-19 03:09:01', NULL, 1, 'approved', NULL),
-(174, 21, 73, '05', '05', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-19 03:09:24', '2026-03-19 03:09:24', NULL, 1, 'approved', NULL),
-(175, 21, 73, '06', '06', 'Classroom', 0, 0, 0, 'Need to create an exit point', 46, 'Shared Coverage (Up to 3 Classrooms)', 'No Secondary Exit \r\nCheck for Electrical Concerns\r\nRemoval of Defective Oscillating Fan', 3, 1, '2026-03-19 03:11:09', '2026-03-19 03:11:09', NULL, 1, 'approved', NULL),
-(176, 21, 73, '01', 'Principal\'s Office', 'Administration', 0, 1, 0, 'Create alternative exit', 47, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-19 03:11:54', '2026-03-19 03:12:44', NULL, 1, 'approved', NULL),
-(177, 21, 73, '02', 'EMIS', 'Administration', 0, 1, 1, NULL, 47, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-19 03:12:28', '2026-03-19 03:12:28', NULL, 1, 'approved', NULL),
-(178, 21, 73, '03', 'LRC', 'Library', 0, 0, 1, NULL, 48, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-19 03:13:12', '2026-03-19 03:13:12', NULL, 1, 'approved', NULL),
-(179, 21, 73, '04', '04', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-19 03:13:42', '2026-03-19 03:13:42', NULL, 1, 'approved', NULL),
-(180, 21, 73, '05', '05', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-19 03:14:05', '2026-03-19 03:14:05', NULL, 1, 'approved', NULL),
-(181, 21, 73, '06', '06', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Change Electric Fan Switch', 3, 2, '2026-03-19 03:14:55', '2026-03-19 03:14:55', NULL, 1, 'approved', NULL),
-(182, 21, 73, '07', '07', 'Classroom', 0, 0, 0, 'Creation of Alternative Exit', 46, 'Shared Coverage (Up to 3 Classrooms)', 'Remove Defective Electric Oscillating Fan\r\nSecure electrical wires \r\nMove books to other location', 3, 2, '2026-03-19 03:17:44', '2026-03-19 03:17:44', NULL, 1, 'approved', NULL);
+INSERT INTO `fire_safety_rooms` (`id`, `unified_school_id`, `building_id`, `room_code`, `room_name`, `room_type`, `has_smoke_detector`, `smoke_detector_required`, `has_secondary_exit`, `secondary_exit_remarks`, `room_type_config_id`, `calculated_priority_label`, `remarks`, `coverage_limit`, `floor_no`, `created_at`, `updated_at`, `nearest_extinguisher_room_id`, `last_inspector_id`, `approval_status`, `approval_message`) VALUES
+(35, 1, 17, 'Room 01', 'Room 01', 'Administration', 0, 0, 0, NULL, 47, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-11 17:59:57', '2026-03-05 00:02:27', NULL, 1, 'approved', NULL),
+(36, 1, 17, 'Room 02', 'Room 02', 'Administration', 0, 0, 0, NULL, 47, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:09:45', '2026-03-05 00:05:42', 35, 1, 'approved', NULL),
+(37, 1, 17, 'ADMNRM-001', 'ADMNRM-001', 'Department', 0, 0, 0, NULL, 47, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:10:54', '2026-02-12 18:11:03', 35, NULL, NULL, NULL),
+(38, 1, 19, 'Room-001', 'Room 001', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:23:44', '2026-02-12 18:23:44', NULL, NULL, NULL, NULL),
+(39, 1, 19, 'Room-002', 'Room 02', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:24:06', '2026-02-17 18:15:16', 38, NULL, NULL, NULL),
+(40, 1, 19, 'Lab-001', 'Lab-001', 'Laboratory', 0, 0, 0, NULL, 49, 'Dedicated / Limited Shared', NULL, 2, 1, '2026-02-12 18:24:34', '2026-02-12 18:24:34', NULL, NULL, NULL, NULL),
+(41, 1, 20, 'Room-004', 'Room 01', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:32:17', '2026-02-12 18:32:17', NULL, NULL, NULL, NULL),
+(42, 1, 20, 'Room-005', 'Room 05', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:34:02', '2026-02-12 18:39:29', 41, NULL, NULL, NULL),
+(43, 1, 21, 'Room-006', 'Room-067', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:42:05', '2026-02-17 18:15:00', NULL, NULL, NULL, NULL),
+(44, 1, 21, 'Room-007', 'Room 07', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:42:25', '2026-02-12 18:42:25', NULL, NULL, NULL, NULL),
+(45, 1, 22, 'Room-008', 'Room-008', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:50:38', '2026-02-12 18:50:38', NULL, NULL, NULL, NULL),
+(46, 1, 23, 'Room-009', 'Room-009', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:51:21', '2026-02-12 18:51:21', NULL, NULL, NULL, NULL),
+(47, 1, 24, 'Room-010', 'Room-010', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay kayo room', 3, 1, '2026-02-12 18:51:46', '2026-03-11 23:55:05', NULL, 1, 'approved', NULL),
+(48, 1, 25, 'Room-011', 'Room-011', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:54:51', '2026-02-12 18:54:51', NULL, NULL, NULL, NULL),
+(49, 1, 25, 'Room-0012', 'Room-012', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:55:09', '2026-02-12 18:56:07', 48, NULL, NULL, NULL),
+(50, 1, 26, 'Room-013', 'Room-013', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:58:18', '2026-02-12 18:58:18', NULL, NULL, NULL, NULL),
+(51, 1, 26, 'Room-014', 'Room-014', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 18:58:34', '2026-03-05 00:04:36', 50, 1, 'approved', NULL),
+(52, 1, 27, 'Room-016', 'Room-016', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 19:01:06', '2026-02-12 19:01:06', NULL, NULL, NULL, NULL),
+(53, 1, 27, 'Room-017', 'Room-017', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 19:01:29', '2026-02-12 19:01:29', NULL, NULL, NULL, NULL),
+(54, 1, 27, 'Room-018', 'Room-018', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 19:01:51', '2026-02-12 19:01:51', NULL, NULL, NULL, NULL),
+(55, 1, 28, 'Room-019', 'Room-019', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 19:06:16', '2026-02-12 19:06:16', NULL, NULL, NULL, NULL),
+(56, 1, 28, 'Room-02', 'Room-020', 'Administration', 0, 1, 0, NULL, 47, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-02-12 19:06:54', '2026-03-10 17:48:56', NULL, 1, 'approved', NULL),
+(57, 2, 31, '01', '01', 'Classroom', 0, 0, 1, 'Okay', 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay now', 3, 1, '2026-02-18 19:34:09', '2026-03-12 00:32:17', NULL, 1, 'approved', NULL),
+(58, 7, 32, '101', 'Computer Laboratory', 'Laboratory', 0, 0, 0, NULL, 49, 'Dedicated / Limited Shared', NULL, 2, 2, '2026-03-01 18:34:45', '2026-03-01 18:34:45', NULL, NULL, NULL, NULL),
+(59, 7, 32, '02', 'Principals Office', 'Administration', 0, 0, 0, NULL, 47, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-01 18:35:19', '2026-03-01 18:35:19', NULL, NULL, NULL, NULL),
+(60, 7, 32, '03', 'Faculty Room', 'Administration', 0, 0, 0, NULL, 47, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-01 18:35:59', '2026-03-01 18:35:59', NULL, NULL, NULL, NULL),
+(61, 7, 32, '04', '04', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-01 18:36:42', '2026-03-01 18:36:42', NULL, NULL, NULL, NULL),
+(62, 7, 32, '05', '05', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-01 18:37:08', '2026-03-01 18:37:08', NULL, NULL, NULL, NULL),
+(63, 7, 33, '08', '08', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-01 18:52:47', '2026-03-01 18:52:47', NULL, NULL, NULL, NULL),
+(64, 7, 32, '06', '06', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-01 22:27:23', '2026-03-01 22:27:23', NULL, NULL, NULL, NULL),
+(65, 1, 25, 'Room-0111', 'Room-0111', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-02 01:05:00', '2026-03-02 01:05:00', NULL, NULL, NULL, NULL),
+(66, 8, 36, '1', '1', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Open Outlet', 3, 1, '2026-03-02 23:57:21', '2026-03-03 16:59:56', NULL, NULL, NULL, NULL),
+(67, 8, 36, '2', 'Grade 2 Classroom', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay has a fire extinguisher now', 3, 1, '2026-03-02 23:58:04', '2026-03-03 22:20:17', NULL, NULL, NULL, NULL),
+(68, 8, 36, '3', '3', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-02 23:58:28', '2026-03-02 23:58:28', NULL, NULL, NULL, NULL),
+(69, 8, 36, '4', '4', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-02 23:59:12', '2026-03-02 23:59:12', NULL, NULL, NULL, NULL),
+(70, 8, 36, '5', '5', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-02 23:59:32', '2026-03-02 23:59:32', NULL, NULL, NULL, NULL),
+(71, 8, 36, '6', '6', 'Administration', 0, 0, 0, NULL, 47, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-03 00:00:41', '2026-03-03 00:00:41', NULL, NULL, NULL, NULL),
+(72, 8, 36, '7', '7', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-03 00:03:11', '2026-03-03 00:03:11', NULL, NULL, NULL, NULL),
+(73, 8, 36, '8', '8', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-03 00:04:34', '2026-03-03 00:04:34', NULL, NULL, NULL, NULL),
+(74, 8, 36, '9', '9', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-03 00:05:40', '2026-03-03 00:05:40', NULL, NULL, NULL, NULL),
+(75, 8, 36, '10', '10', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-03 00:06:20', '2026-03-03 00:06:20', NULL, NULL, NULL, NULL),
+(76, 8, 36, '11', 'Grade 6 Classroom', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Needs minor repair', 3, 2, '2026-03-03 00:06:35', '2026-03-03 22:18:20', NULL, NULL, NULL, NULL),
+(77, 8, 37, '12', '12', 'Laboratory', 0, 0, 0, NULL, 46, 'Dedicated / Limited Shared (Up to 2 rooms)', NULL, 2, 1, '2026-03-03 00:07:18', '2026-03-03 00:07:18', NULL, NULL, NULL, NULL),
+(78, 8, 37, '13', '13', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-03 00:07:56', '2026-03-03 00:07:56', NULL, NULL, NULL, NULL),
+(79, 8, 37, '14', '14', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-03 00:08:18', '2026-03-03 00:08:18', NULL, NULL, NULL, NULL),
+(80, 8, 38, '15', '15', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-03 00:11:37', '2026-03-03 00:11:37', NULL, NULL, NULL, NULL),
+(81, 8, 38, '16', '16', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-03 00:12:02', '2026-03-03 00:12:02', NULL, NULL, NULL, NULL),
+(82, 8, 38, '17', '17', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-03 00:12:22', '2026-03-03 00:12:22', NULL, NULL, NULL, NULL),
+(83, 8, 39, '18', '18', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-03 00:12:56', '2026-03-03 00:12:56', NULL, NULL, NULL, NULL),
+(84, 8, 39, '19', '19', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-03 00:13:11', '2026-03-03 00:13:11', NULL, NULL, NULL, NULL),
+(85, 8, 39, '20', '20', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-03 00:13:27', '2026-03-03 00:13:27', NULL, NULL, NULL, NULL),
+(86, 8, 40, '21', '21', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-03 00:14:12', '2026-03-03 00:14:12', NULL, NULL, NULL, NULL),
+(87, 8, 41, '23', '23', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Needs to be covered now', 3, 1, '2026-03-03 00:14:41', '2026-03-11 18:12:17', NULL, 1, 'approved', NULL),
+(88, 8, 42, '24', '24', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay now room', 3, 1, '2026-03-03 00:15:43', '2026-03-03 21:59:30', NULL, NULL, NULL, NULL),
+(89, 8, 42, '26', '26', 'Canteen', 0, 0, 0, NULL, 155, 'Shared Coverage (Up to 3 Classrooms)', 'Okay now room', 3, 1, '2026-03-03 00:17:22', '2026-03-03 21:59:20', NULL, NULL, NULL, NULL),
+(90, 8, 42, '28', 'Not currently use', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Needs Major Repair', 3, 1, '2026-03-03 21:59:07', '2026-03-03 21:59:07', NULL, NULL, NULL, NULL),
+(91, 6, 48, '01', 'Grade 1 Classroom', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Updated its all good now', 3, 1, '2026-03-03 23:15:06', '2026-03-03 23:48:25', NULL, 4, 'approved', 'Approved by Adan Kristopher B. Dumpit'),
+(92, 6, 48, '02', 'Elementary\'s room', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay room', 3, 1, '2026-03-04 21:41:06', '2026-03-04 21:41:06', NULL, 4, 'pending', NULL),
+(93, 10, 49, '01', 'Faculty Room', 'Administration', 0, 0, 1, NULL, 47, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-04 22:14:49', '2026-03-12 00:33:25', NULL, 5, 'approved', NULL),
+(94, 10, 49, '02', 'Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-04 22:15:08', '2026-03-12 00:33:08', NULL, 5, 'approved', NULL),
+(95, 3, 50, '01', '01', 'Classroom', 0, 0, 1, 'Secondary Exit good to use', 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay room', 3, 1, '2026-03-04 22:46:05', '2026-03-16 17:37:18', NULL, 1, 'approved', 'The room info is incompleted and needed of fire extinguisher'),
+(96, 3, 51, '01', '01', 'Classroom', 0, 0, 1, 'Ready to use', 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay room', 3, 1, '2026-03-04 22:47:16', '2026-03-16 17:51:12', NULL, 1, 'approved', 'Approved by Adan Kristopher B. Dumpit'),
+(97, 10, 52, '01', 'Principal\'s Office and Classroom', 'Classroom and Administration', 0, 0, 0, NULL, 156, 'Shared Space', NULL, 1, 1, '2026-03-04 23:07:05', '2026-03-12 00:53:43', NULL, 5, 'approved', NULL),
+(98, 10, 52, '02', 'SBM and Classroom', 'Classroom and Administration', 0, 0, 0, 'Need to clear grills at back area or create Fire Exit that can be opened.', 156, 'Shared Space', NULL, 1, 1, '2026-03-04 23:08:19', '2026-03-12 00:54:16', NULL, 5, 'approved', NULL),
+(99, 10, 52, '03', 'LRC and Classroom', 'Classroom and Administration', 0, 0, 0, 'No General Secondary Exit', 156, 'Shared Space', NULL, 1, 2, '2026-03-04 23:09:24', '2026-03-04 23:09:24', NULL, 5, 'approved', NULL),
+(100, 10, 52, '04', '04', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'With electrical concern regarding Switch', 3, 2, '2026-03-04 23:09:49', '2026-03-05 00:46:04', NULL, 5, 'approved', NULL),
+(101, 10, 52, '05', '05', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 3, '2026-03-04 23:10:18', '2026-03-04 23:10:18', NULL, 5, 'approved', NULL),
+(102, 10, 52, '06', '06', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'With Electrical Concerns', 3, 3, '2026-03-04 23:11:22', '2026-03-05 00:45:32', NULL, 5, 'approved', NULL),
+(103, 10, 54, '01', '01', 'Classroom', 0, 0, 0, 'Need to remove grills', 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-04 23:22:20', '2026-03-12 00:42:07', NULL, 5, 'approved', NULL),
+(104, 10, 54, '02', 'HE Rooom', 'Laboratory', 0, 0, 0, 'Need to remove grills or create fire exit', 49, 'Dedicated / Limited Shared', NULL, 2, 1, '2026-03-04 23:22:59', '2026-03-12 00:42:32', NULL, 5, 'approved', NULL),
+(105, 10, 55, '01', '01', 'Classroom', 0, 0, 0, 'Need to remove grills or create fire exit.', 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-04 23:24:59', '2026-03-04 23:24:59', NULL, 5, 'approved', NULL),
+(106, 10, 55, '02', '02', 'Classroom', 0, 0, 0, 'Need to remove grills or create fire exit.', 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-04 23:25:19', '2026-03-04 23:25:19', NULL, 5, 'approved', NULL),
+(107, 10, 55, '03', '03', 'Classroom', 0, 0, 0, 'Need to remove grills or create fire exit.', 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-04 23:25:38', '2026-03-04 23:25:38', NULL, 5, 'approved', NULL),
+(108, 10, 55, '04', '04', 'Classroom', 0, 0, 0, 'Need to remove grills or create fire exit.', 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-04 23:25:59', '2026-03-04 23:25:59', NULL, 5, 'approved', NULL),
+(109, 10, 56, '01', 'Clinic', 'Classroom and Administration', 0, 0, 0, 'Need to remove grills or create fire exit.', 156, 'Shared Space', NULL, 1, 1, '2026-03-04 23:27:24', '2026-03-12 00:49:11', NULL, 5, 'approved', NULL),
+(110, 4, 57, '01', 'Grade 1 Classroom', 'Classroom', 0, 0, 1, 'OKAY', 46, 'Shared Coverage (Up to 3 Classrooms)', 'okay', 3, 1, '2026-03-10 18:41:09', '2026-03-10 18:55:43', NULL, 3, 'pending', NULL),
+(111, 4, 57, '02', 'Grade 4 Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay Room', 3, 1, '2026-03-10 18:54:39', '2026-03-10 18:55:51', NULL, 3, 'pending', 'Approved by Adan Kristopher B. Dumpit'),
+(112, 4, 57, '03', 'Grade 4 Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Starred room', 3, 1, '2026-03-10 18:56:22', '2026-03-10 18:56:22', NULL, 3, 'pending', NULL),
+(113, 4, 58, 'ADMN-01', 'Administration Room', 'Administration', 1, 1, 1, 'Closed', 47, 'Shared Coverage (Up to 3 Classrooms)', 'Room is active and compliant', 3, 1, '2026-03-10 18:59:26', '2026-03-10 18:59:52', NULL, 3, 'pending', NULL),
+(116, 4, 58, '02', 'Grade 5 Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Good now', 3, 1, '2026-03-10 19:36:00', '2026-03-10 19:36:40', NULL, 3, 'pending', NULL),
+(117, 4, 58, '03', 'Grade 5 Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Good to go', 3, 1, '2026-03-10 19:37:12', '2026-03-10 19:37:12', NULL, 3, 'pending', NULL),
+(120, 4, 58, 'LAB-04', 'Science Laboratory', 'Laboratory', 0, 0, 1, NULL, 49, 'Dedicated / Limited Shared', 'Laboratory compliant room', 2, 2, '2026-03-10 19:40:04', '2026-03-10 19:40:30', NULL, 3, 'pending', NULL),
+(121, 4, 58, '04', 'Grade 5 Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay room and active', 3, 2, '2026-03-10 19:41:20', '2026-03-10 19:41:20', NULL, 3, 'pending', NULL),
+(122, 4, 58, '05', 'Storage Room, filled', 'Storage', 0, 0, 1, 'okay', 51, 'Dedicated / Limited Shared', 'Good storage, Resupplied', 2, 2, '2026-03-10 19:42:59', '2026-03-11 19:05:08', NULL, 3, 'pending', 'Approved by Adan Kristopher B. Dumpit'),
+(123, 4, 59, '01', 'Grade 1-3 Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay room', 3, 1, '2026-03-10 19:45:55', '2026-03-10 19:45:55', NULL, 3, 'pending', NULL),
+(124, 4, 59, '02', 'Grade 2 Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Grade 2 classroom only & changing hosting', 3, 1, '2026-03-10 19:46:43', '2026-03-11 17:08:05', 125, 3, 'pending', NULL),
+(125, 4, 59, '03', 'Grade 1-3 Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Good to go', 3, 1, '2026-03-10 19:47:10', '2026-03-10 19:47:10', NULL, 3, 'pending', NULL),
+(126, 4, 59, '04', 'Grade 1-3 Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Good to go', 3, 1, '2026-03-10 19:47:41', '2026-03-10 21:45:36', 125, 3, 'approved', 'Approved by Adan Kristopher B. Dumpit'),
+(127, 5, 60, '01', 'Grade 1 Classroom', 'Classroom', 0, 0, 1, 'Okay', 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-03-12 00:01:43', '2026-03-19 07:58:00', NULL, 1, 'approved', NULL),
+(128, 3, 51, '02', 'Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay room', 3, 1, '2026-03-16 17:52:39', '2026-03-16 17:52:39', NULL, 1, 'approved', NULL),
+(130, 3, 51, '03', 'Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Good Room', 3, 2, '2026-03-16 17:54:20', '2026-03-16 17:54:20', NULL, 1, 'approved', NULL),
+(131, 3, 51, '04', 'Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay room', 3, 2, '2026-03-16 18:07:56', '2026-03-16 18:10:48', NULL, 4, 'approved', 'Approved by Adan Kristopher B. Dumpit'),
+(132, 3, 53, '01', 'Administration Room', 'Administration', 0, 0, 1, 'yes', 47, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-03-17 05:22:24', '2026-03-17 05:22:38', NULL, 4, 'pending', NULL),
+(133, 3, 61, '01', 'Classroom', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay Room', 3, 1, '2026-03-17 06:09:46', '2026-03-17 06:09:46', NULL, 1, 'approved', NULL),
+(134, 3, 61, '02', 'Classroom', 'Classroom', 0, 0, 0, 'Okay', 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-03-17 06:10:15', '2026-03-17 06:10:15', NULL, 1, 'approved', NULL),
+(135, 3, 61, '01', 'Classroom', 'Classroom', 0, 0, 0, 'Okay', 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-03-17 06:10:47', '2026-03-17 06:10:47', NULL, 1, 'approved', NULL),
+(136, 3, 62, '01', 'Classroom', 'Classroom', 0, 0, 0, 'Doesn\'t have', 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-03-17 06:26:56', '2026-03-17 06:28:19', NULL, 1, 'approved', NULL),
+(137, 3, 62, '02', 'Classroom', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'OKay', 3, 1, '2026-03-17 06:29:19', '2026-03-17 06:29:19', NULL, 1, 'approved', NULL),
+(138, 3, 62, '01', 'Classroom', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-03-17 06:30:40', '2026-03-17 06:30:40', NULL, 1, 'approved', NULL),
+(139, 3, 63, '01', 'Administration', 'Administration', 0, 0, 1, NULL, 47, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-03-17 06:35:48', '2026-03-17 06:35:48', NULL, 1, 'approved', NULL),
+(140, 3, 63, '02', 'Administration', 'Administration', 0, 0, 1, NULL, 47, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-03-17 06:36:25', '2026-03-17 06:36:25', NULL, 1, 'approved', NULL),
+(141, 3, 63, '03', 'Canteen', 'Canteen', 0, 0, 1, NULL, 155, 'Shared Coverage (Up to 3 Classrooms)', 'Okay Canteen', 3, 1, '2026-03-17 06:37:29', '2026-03-17 06:37:29', NULL, 1, 'approved', NULL),
+(142, 3, 64, '01', 'Classroom room', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-03-17 06:44:05', '2026-03-17 06:44:05', NULL, 1, 'approved', NULL),
+(143, 3, 64, '02', 'Classroom room', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-03-17 06:44:56', '2026-03-17 06:44:56', NULL, 1, 'approved', NULL),
+(144, 3, 65, '01', 'Classroom room', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-03-17 06:47:11', '2026-03-17 06:47:55', NULL, 1, 'approved', NULL),
+(145, 3, 65, '02', 'Classroom room', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-03-17 07:00:30', '2026-03-17 07:00:30', NULL, 1, 'approved', NULL),
+(146, 3, 66, '01', 'Lab 1', 'Laboratory', 0, 0, 1, NULL, 49, 'Dedicated / Limited Shared', 'Okay', 2, 1, '2026-03-17 07:03:29', '2026-03-17 07:03:29', NULL, 1, 'approved', NULL),
+(147, 3, 66, '02', 'Lab 2', 'Laboratory', 0, 0, 1, NULL, 49, 'Dedicated / Limited Shared', 'Okay', 2, 1, '2026-03-17 07:03:57', '2026-03-17 07:03:57', NULL, 1, 'approved', NULL),
+(148, 11, 68, '01', 'Classroom', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-19 02:20:15', '2026-03-19 02:20:15', NULL, 1, 'approved', NULL),
+(149, 11, 68, '02', '02', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-19 02:20:54', '2026-03-19 02:20:54', NULL, 1, 'approved', NULL),
+(150, 11, 68, '03', '03', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-19 02:21:20', '2026-03-19 02:21:20', NULL, 1, 'approved', NULL),
+(151, 11, 68, '04', 'Science Laboratory', 'Laboratory', 0, 0, 1, NULL, 49, 'Dedicated / Limited Shared', NULL, 2, 2, '2026-03-19 02:21:50', '2026-03-19 02:21:50', NULL, 1, 'approved', NULL),
+(152, 11, 68, '05', '05', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 3, '2026-03-19 02:22:16', '2026-03-19 02:22:16', NULL, 1, 'approved', NULL),
+(153, 11, 68, '06', '06', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 3, '2026-03-19 02:22:36', '2026-03-19 02:22:36', NULL, 1, 'approved', NULL),
+(154, 11, 69, '01', 'School Canteen', 'Canteen', 0, 0, 1, NULL, 155, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-19 02:33:34', '2026-03-19 02:33:34', NULL, 1, 'approved', NULL),
+(155, 11, 70, '01', 'HE Laboratory', 'Laboratory', 0, 0, 1, NULL, 49, 'Dedicated / Limited Shared', 'Need  to address locked gate', 2, 1, '2026-03-19 02:42:31', '2026-03-19 02:42:31', NULL, 1, 'approved', NULL),
+(156, 11, 71, '01', '01', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-19 02:44:33', '2026-03-19 02:44:33', NULL, 1, 'approved', NULL),
+(157, 11, 72, '01', '01', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'With grills - Creation of Secondary Exit', 3, 1, '2026-03-19 02:48:04', '2026-03-19 02:48:04', NULL, 1, 'approved', NULL),
+(158, 11, 72, '02', '02', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'With grills - creation of Secondary Exit', 3, 1, '2026-03-19 02:48:46', '2026-03-19 02:48:46', NULL, 1, 'approved', NULL),
+(159, 11, 72, '03', '03', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'With Grills - Creation of Secondary Exit', 3, 1, '2026-03-19 02:49:24', '2026-03-19 02:49:24', NULL, 1, 'approved', NULL),
+(160, 11, 72, '04', 'Feeding Room', 'Administration', 0, 0, 0, NULL, 47, 'Shared Coverage (Up to 3 Classrooms)', 'With Grills - Creation of Secondary Exit', 3, 1, '2026-03-19 02:50:10', '2026-03-19 02:50:10', NULL, 1, 'approved', NULL),
+(161, 11, 72, '05', 'HE and Storage', 'Storage', 0, 0, 0, NULL, 51, 'Dedicated / Limited Shared', 'With Grills - Creation of Secondary Exit', 2, 1, '2026-03-19 02:50:49', '2026-03-19 02:51:12', NULL, 1, 'approved', NULL),
+(162, 11, 72, '01', '01', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'With Grills - Creation of Secondary Exit', 3, 2, '2026-03-19 02:51:49', '2026-03-19 02:51:49', NULL, 1, 'approved', NULL),
+(163, 11, 72, '02', 'Classroom', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-19 02:52:13', '2026-03-19 02:52:13', NULL, 1, 'approved', NULL),
+(164, 11, 72, '03', '03', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'With Grills - Creation of Secondary Exit', 3, 2, '2026-03-19 02:52:45', '2026-03-19 02:52:45', NULL, 1, 'approved', NULL),
+(165, 11, 72, '04', '04', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'With Grills - Creation of Secondary Exit', 3, 2, '2026-03-19 02:53:15', '2026-03-19 02:53:15', NULL, 1, 'approved', NULL),
+(166, 11, 72, '05', '05', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'With Grills - Creation of Secondary Exit', 3, 2, '2026-03-19 02:53:46', '2026-03-19 02:53:46', NULL, 1, 'approved', NULL),
+(167, 11, 72, '06', '06', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'With Grills - Creation of Secondary Exit', 3, 2, '2026-03-19 02:54:09', '2026-03-19 02:54:09', NULL, 1, 'approved', NULL),
+(168, 11, 72, '07', '07', 'Classroom', 0, 0, 0, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'With Grills - Creation of Secondary Exit', 3, 2, '2026-03-19 02:54:30', '2026-03-19 02:54:30', NULL, 1, 'approved', NULL),
+(169, 11, 73, '01', '01', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-19 03:06:32', '2026-03-19 03:06:32', NULL, 1, 'approved', NULL),
+(170, 11, 73, '01-01', '01-01', 'Clinic', 0, 0, 0, NULL, 50, 'Dedicated / Limited Shared', 'Converted Comfort Room to Admin Function', 2, 1, '2026-03-19 03:07:23', '2026-03-19 03:07:23', NULL, 1, 'approved', NULL),
+(171, 11, 73, '02', '02', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Check Electrical Connections (Extension Chords)', 3, 1, '2026-03-19 03:07:45', '2026-03-19 03:08:40', NULL, 1, 'approved', NULL),
+(172, 11, 73, '03', '03', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-19 03:08:09', '2026-03-19 03:08:09', NULL, 1, 'approved', NULL),
+(173, 11, 73, '04', '04', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-19 03:09:01', '2026-03-19 03:09:01', NULL, 1, 'approved', NULL),
+(174, 11, 73, '05', '05', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 1, '2026-03-19 03:09:24', '2026-03-19 03:09:24', NULL, 1, 'approved', NULL),
+(175, 11, 73, '06', '06', 'Classroom', 0, 0, 0, 'Need to create an exit point', 46, 'Shared Coverage (Up to 3 Classrooms)', 'No Secondary Exit \r\nCheck for Electrical Concerns\r\nRemoval of Defective Oscillating Fan', 3, 1, '2026-03-19 03:11:09', '2026-03-19 03:11:09', NULL, 1, 'approved', NULL),
+(176, 11, 73, '01', 'Principal\'s Office', 'Administration', 0, 1, 0, 'Create alternative exit', 47, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-19 03:11:54', '2026-03-19 03:12:44', NULL, 1, 'approved', NULL),
+(177, 11, 73, '02', 'EMIS', 'Administration', 0, 1, 1, NULL, 47, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-19 03:12:28', '2026-03-19 03:12:28', NULL, 1, 'approved', NULL),
+(178, 11, 73, '03', 'LRC', 'Library', 0, 0, 1, NULL, 48, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-19 03:13:12', '2026-03-19 03:13:12', NULL, 1, 'approved', NULL),
+(179, 11, 73, '04', '04', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-19 03:13:42', '2026-03-19 03:13:42', NULL, 1, 'approved', NULL),
+(180, 11, 73, '05', '05', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', NULL, 3, 2, '2026-03-19 03:14:05', '2026-03-19 03:14:05', NULL, 1, 'approved', NULL),
+(181, 11, 73, '06', '06', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Change Electric Fan Switch', 3, 2, '2026-03-19 03:14:55', '2026-03-19 03:14:55', NULL, 1, 'approved', NULL),
+(182, 11, 73, '07', '07', 'Classroom', 0, 0, 0, 'Creation of Alternative Exit', 46, 'Shared Coverage (Up to 3 Classrooms)', 'Remove Defective Electric Oscillating Fan\r\nSecure electrical wires \r\nMove books to other location', 3, 2, '2026-03-19 03:17:44', '2026-03-19 03:17:44', NULL, 1, 'approved', NULL),
+(183, 1, 74, '01', 'amande', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'okay', 3, 1, '2026-03-30 06:24:28', '2026-03-30 06:24:28', NULL, 1, 'approved', NULL),
+(184, 9, 76, '01', 'Classroom Grade 1', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay roo', 3, 1, '2026-04-07 00:42:39', '2026-04-07 00:42:39', NULL, 1, 'approved', NULL),
+(185, 9, 75, '01', 'Oks', 'Classroom', 0, 0, 1, NULL, 46, 'Shared Coverage (Up to 3 Classrooms)', 'Okay', 3, 1, '2026-04-07 00:44:30', '2026-04-07 00:44:30', NULL, 1, 'approved', NULL),
+(186, 9, 75, '02', 'Classroom Grade 2', 'Classroom and Administration', 1, 1, 1, NULL, 156, 'Shared Space', 'Okay', 1, 2, '2026-04-07 00:45:26', '2026-04-07 00:45:26', NULL, 1, 'approved', NULL);
 
 -- --------------------------------------------------------
 
@@ -1384,23 +1203,9 @@ CREATE TABLE `incident_calendars` (
 --
 
 INSERT INTO `incident_calendars` (`id`, `status`, `contributor_id`, `incident_date`, `school_id`, `school_name`, `entry_type`, `incident_type_id`, `incident_status_id`, `remarks`, `attachment_path`, `attachment_name`, `attachment_size`, `attachment_mime`, `reported_by`, `is_verified`, `verified_at`, `verified_by`, `affected_personnel`, `affected_students`, `additional_data`, `created_at`, `updated_at`) VALUES
-(1, 'accepted', NULL, '2026-03-11', NULL, 'Macbalan Academia', 'incident', 6, NULL, 'Fire Sparks at school\'s canteen', NULL, NULL, NULL, NULL, 'Adan Kristopher B. Dumpit', 0, NULL, NULL, 5, 13, NULL, '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
 (2, 'accepted', NULL, '2026-03-11', NULL, 'Integrated School at the Mabini High School', 'compliance', NULL, 4, 'Cancel Class Suspension news', NULL, NULL, NULL, NULL, 'Adan Kristopher B. Dumpit', 0, NULL, NULL, 0, 0, NULL, '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
-(3, 'accepted', NULL, '2026-03-11', NULL, 'Dos Trios School', 'incident', 6, NULL, 'Not Okay', NULL, NULL, NULL, NULL, 'Adan Kristopher B. Dumpit', 0, NULL, NULL, 5, 4, NULL, '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
-(4, 'accepted', NULL, '2026-02-05', NULL, 'Revenue School', 'incident', 4, NULL, 'Not So good either', NULL, NULL, NULL, NULL, 'Adan Kristopher B. Dumpit', 0, NULL, NULL, 4, 7, NULL, '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
-(5, 'accepted', NULL, '2026-02-16', NULL, 'All Schools', 'compliance', NULL, 5, 'Strong Typhoon To Be Expected', NULL, NULL, NULL, NULL, 'Adan Kristopher B. Dumpit', 0, NULL, NULL, 0, 0, NULL, '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
-(6, 'accepted', NULL, '2026-02-17', NULL, 'Tragen Elementary School', 'incident', 5, NULL, 'Flooded School by the Typhoon Schawander', NULL, NULL, NULL, NULL, 'Adan Kristopher B. Dumpit', 0, NULL, NULL, 3, 2, NULL, '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
-(7, 'accepted', NULL, '2026-01-09', NULL, 'North Ring College', 'incident', 8, NULL, 'Boxing punching incident', NULL, NULL, NULL, NULL, 'Adan Kristopher B. Dumpit', 0, NULL, NULL, 1, 2, NULL, '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
-(8, 'accepted', NULL, '2026-03-13', NULL, 'West Ridge Secondary School', 'incident', 5, NULL, 'Okay baha na', NULL, NULL, NULL, NULL, 'Adan Kristopher B. Dumpit', 0, NULL, NULL, 4, 4, NULL, '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
-(9, 'accepted', NULL, '2026-02-13', NULL, 'Barangay East Tapinac Elementary School', 'incident', 10, NULL, 'Sudden Volcanic Eruption', NULL, NULL, NULL, NULL, 'Adan Kristopher B. Dumpit', 0, NULL, NULL, 23, 26, NULL, '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
-(10, 'accepted', NULL, '2026-02-27', NULL, 'All Schools', 'compliance', NULL, 1, 'Chinese Garden', NULL, NULL, NULL, NULL, 'Adan Kristopher B. Dumpit', 0, NULL, NULL, 0, 0, NULL, '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
-(11, 'accepted', NULL, '2026-02-10', NULL, 'Araw-Liwanag Paaralan', 'incident', 3, NULL, 'Magnitude of 5.5', NULL, NULL, NULL, NULL, 'Adan Kristopher B. Dumpit', 0, NULL, NULL, 2, 1, NULL, '2026-02-09 18:43:10', '2026-02-09 18:43:10'),
 (12, 'accepted', NULL, '2026-02-25', NULL, 'Integrated School at the Mabini High School', 'incident', 4, NULL, 'Minor landslide observed near hillside area; no injuries reported.', 'incident-attachments/2026/02/fNOXHnyGje792zSa6tKmffPxQo1ovKIhW73fybqv.png', 'Datasets-of-Landslide-Samples.png', 25671, 'image/png', 'Adan Kristopher B. Dumpit', 0, NULL, NULL, 0, 0, NULL, '2026-02-12 22:11:17', '2026-02-12 22:11:17'),
-(13, 'accepted', NULL, '2026-02-23', NULL, 'All', 'compliance', NULL, 5, 'F2f classes suspended due to City-wide power interruption', NULL, NULL, NULL, NULL, 'Erwin A. Castillejo', 0, NULL, NULL, 0, 0, NULL, '2026-03-04 23:41:07', '2026-03-04 23:41:07'),
-(14, 'accepted', NULL, '2026-03-01', NULL, 'Dos Trios School', 'incident', 3, NULL, 'Magnitude of 3.2 earthquake', 'incident-attachments/2026/03/LJclCmvRqpD0WlfeIMv5BUcrhpZOybyEJUpEx9Nu.png', 'Screenshot 2026-02-12 095919.png', 141193, 'image/png', 'Adan Kristopher B. Dumpit', 0, NULL, NULL, 2, 2, NULL, '2026-03-11 23:56:47', '2026-03-11 23:56:47'),
 (15, 'accepted', NULL, '2026-03-12', NULL, 'Deped SDO department', 'compliance', NULL, 3, 'To practice personnel', NULL, NULL, NULL, NULL, 'Adan Kristopher B. Dumpit', 0, NULL, NULL, 0, 0, NULL, '2026-03-12 00:05:29', '2026-03-12 00:05:29'),
-(16, 'accepted', NULL, '2026-03-15', NULL, 'Unknown', 'incident', 6, NULL, 'To be encode later', 'incident-attachments/2026/03/sRPylTpf46As5Whe2w9bo0Fgi2WlaHBzB7cTWB3Q.pdf', 'Tapinac-appendices-2.docx - Appendix D.pdf', 64788, 'application/pdf', 'Adan Kristopher B. Dumpit', 0, NULL, NULL, 4, 0, NULL, '2026-03-15 23:57:37', '2026-03-15 23:57:37'),
-(17, 'accepted', NULL, '2026-03-20', NULL, 'All School', 'compliance', NULL, 1, 'Eid\'l Fitr day', NULL, NULL, NULL, NULL, 'Adan Kristopher B. Dumpit', 0, NULL, NULL, 0, 0, NULL, '2026-03-16 18:02:22', '2026-03-16 18:02:22'),
 (20, 'accepted', NULL, '2026-03-16', NULL, 'OLONGAPO CITY NATIONAL HIGH SCHOOL', 'incident', 6, NULL, 'One room affected Location Admin Building Room 207, Cause of Fire Electrical (Broken Oscillating Fan), Approximately 1230H On scene City DRRMO, BFP, PNP,  and SDO DRRM Focal Person. Fire out 1245H as per officer Erwin Magaway and Officer Lising.', NULL, NULL, NULL, NULL, 'Adan Kristopher B. Dumpit', 0, NULL, NULL, 0, 0, NULL, '2026-03-19 00:33:45', '2026-03-19 00:33:45'),
 (21, 'accepted', NULL, '2026-03-17', NULL, 'Gordon Heights National High School', 'incident', 9, NULL, 'Stabbing incident outside school premises involving outsider and 2 GHNHS Students. Outsider was rushed to the nearest hospital for treatment. Later parents of involve d students and outsider set Barangay Meeting to settle the concerned issue.', NULL, NULL, NULL, NULL, 'Adan Kristopher B. Dumpit', 0, NULL, NULL, 0, 2, NULL, '2026-03-19 00:41:18', '2026-03-19 00:41:18'),
 (22, 'accepted', 7, '2026-03-23', NULL, 'Integrated School at the Mabini High School', 'incident', 8, NULL, 'This Love', NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, 2, 0, NULL, '2026-03-23 01:44:08', '2026-03-23 01:44:08'),
@@ -1510,66 +1315,6 @@ INSERT INTO `incident_checklists` (`id`, `user_id`, `checklist_date`, `label`, `
 (80, 1, '2026-03-19', 'Encode and put all info that has happened this week', 0, 0, 0, 1, '2026-03-18 16:51:06', '2026-03-18 16:51:06'),
 (81, 1, '2026-03-19', 'Other task (outdoor)', 0, 0, 0, 2, '2026-03-18 16:51:06', '2026-03-18 16:51:06'),
 (82, 1, '2026-03-19', 'Go to elementary school', 0, 0, 0, 3, '2026-03-19 06:04:33', '2026-03-19 06:04:33');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `incident_schools`
---
-
-CREATE TABLE `incident_schools` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `district` varchar(255) DEFAULT NULL,
-  `division` varchar(255) DEFAULT NULL,
-  `region` varchar(255) DEFAULT NULL,
-  `school_id` varchar(255) DEFAULT NULL,
-  `incident_count` int(11) NOT NULL DEFAULT 0,
-  `last_incident_date` date DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
-
---
--- Dumping data for table `incident_schools`
---
-
-INSERT INTO `incident_schools` (`id`, `name`, `district`, `division`, `region`, `school_id`, `incident_count`, `last_incident_date`, `created_at`, `updated_at`) VALUES
-(1, 'North Central High School', 'Central District', NULL, NULL, NULL, 0, NULL, '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
-(2, 'South Elementary School', 'South District', NULL, NULL, NULL, 0, NULL, '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
-(3, 'East National High School', 'East District', NULL, NULL, NULL, 0, NULL, '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
-(4, 'West Integrated School', 'West District', NULL, NULL, NULL, 0, NULL, '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
-(5, 'Macbalan Academia', 'Unknown', NULL, NULL, NULL, 1, '2026-02-09', '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
-(6, 'Integrated School at the Mabini High School', 'Unknown', NULL, NULL, NULL, 4, '2026-03-23', '2026-02-09 00:04:51', '2026-03-23 15:43:12'),
-(7, 'Dos Trios School', 'Unknown', NULL, NULL, NULL, 2, '2026-03-12', '2026-02-09 00:04:51', '2026-03-11 23:56:47'),
-(8, 'Revenue School', 'Unknown', NULL, NULL, NULL, 1, '2026-02-09', '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
-(9, 'All Schools', 'Unknown', NULL, NULL, NULL, 2, '2026-02-09', '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
-(10, 'Tragen Elementary School', 'Unknown', NULL, NULL, NULL, 1, '2026-02-09', '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
-(11, 'North Ring College', 'Unknown', NULL, NULL, NULL, 1, '2026-02-09', '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
-(12, 'West Ridge Secondary School', 'Unknown', NULL, NULL, NULL, 1, '2026-02-09', '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
-(13, 'Barangay East Tapinac Elementary School', 'Unknown', NULL, NULL, NULL, 1, '2026-02-09', '2026-02-09 00:04:51', '2026-02-09 00:04:51'),
-(14, 'Araw-Liwanag Paaralan', 'Unknown', NULL, NULL, NULL, 1, '2026-02-10', '2026-02-09 18:43:10', '2026-02-09 18:43:10'),
-(15, 'All', 'Unknown', NULL, NULL, NULL, 1, '2026-03-05', '2026-03-04 23:41:07', '2026-03-04 23:41:07'),
-(16, 'Deped SDO department', 'Unknown', NULL, NULL, NULL, 1, '2026-03-12', '2026-03-12 00:05:29', '2026-03-12 00:05:29'),
-(17, 'Unknown', 'Unknown', NULL, NULL, NULL, 3, '2026-03-19', '2026-03-15 23:57:37', '2026-03-19 00:22:41'),
-(18, 'All School', 'Unknown', NULL, NULL, NULL, 1, '2026-03-17', '2026-03-16 18:02:22', '2026-03-16 18:02:22'),
-(19, 'Amelia Heights ES', 'Unknown', NULL, NULL, NULL, 1, '2026-03-19', '2026-03-19 00:24:57', '2026-03-19 00:24:57'),
-(20, 'OLONGAPO CITY NATIONAL HIGH SCHOOL', 'Unknown', NULL, NULL, NULL, 1, '2026-03-19', '2026-03-19 00:33:45', '2026-03-19 00:33:45'),
-(21, 'Gordon Heights National High School', 'Unknown', NULL, NULL, NULL, 1, '2026-03-19', '2026-03-19 00:41:18', '2026-03-19 00:41:18'),
-(22, 'Iram I Elementary School', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:15', '2026-03-24 02:25:15'),
-(23, 'Mabayuan Elementary School', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:15', '2026-03-24 02:25:15'),
-(24, 'Bangal Integrated School', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:15', '2026-03-24 02:25:15'),
-(25, 'Boton ES', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:15', '2026-03-24 02:25:15'),
-(26, 'New Cabalan Senior High School', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:15', '2026-03-24 02:25:15'),
-(27, 'Mabayuan Senior High School', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:16', '2026-03-24 02:25:16'),
-(28, 'Nellie E. Brown Elementary School', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:16', '2026-03-24 02:25:16'),
-(29, 'New Cabalan Elementary School', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:16', '2026-03-24 02:25:16'),
-(30, 'Sergia Soriano Esteban Integrated School - Coral', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:16', '2026-03-24 02:25:16'),
-(31, 'Tapinac Elementary School', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:16', '2026-03-24 02:25:16'),
-(32, 'East National High School', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:16', '2026-03-24 02:25:16'),
-(33, 'North Central High School', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:16', '2026-03-24 02:25:16'),
-(34, 'South Elementary School', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:16', '2026-03-24 02:25:16'),
-(35, 'West Integrated School', 'Unknown', NULL, NULL, NULL, 0, NULL, '2026-03-24 02:25:16', '2026-03-24 02:25:16');
 
 -- --------------------------------------------------------
 
@@ -1743,7 +1488,16 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (92, '2026_03_17_112454_add_attached_evacuation_map_to_schools_table', 53),
 (93, '2026_03_19_164756_add_status_and_contributor_to_incident_calendars', 54),
 (94, '2026_03_23_090000_add_incident_school_id_to_users_table', 55),
-(95, '2025_02_05_000001_create_school_safety_tables', 56);
+(95, '2025_02_05_000001_create_school_safety_tables', 56),
+(107, '2026_03_26_100001_create_schools_table', 57),
+(108, '2026_03_26_100002_create_school_specifics_information_table', 57),
+(109, '2026_03_26_100003_migrate_school_data_to_unified_tables', 57),
+(110, '2026_03_26_100004_add_unified_id_to_existing_tables', 58),
+(111, '2026_03_27_214722_align_fire_safety_tables_to_unified_schools', 59),
+(112, '2026_03_29_120000_drop_legacy_module_school_tables', 60),
+(113, '2026_03_30_100000_alarm_anchor_and_evacuation_plan_school_nullable', 61),
+(114, '2026_03_30_110000_add_students_personnel_to_schools_table', 62),
+(115, '2026_04_06_120000_add_position_to_users_table', 62);
 
 -- --------------------------------------------------------
 
@@ -1773,100 +1527,113 @@ CREATE TABLE `notifications` (
 --
 
 INSERT INTO `notifications` (`id`, `compliance_type`, `module`, `school_id`, `user_id`, `type`, `title`, `message`, `action_type`, `action_url`, `action_data`, `is_read`, `created_at`, `updated_at`) VALUES
-(1, 'fire_safety', 'fire_safety', 14, 3, 'extinguisher_inspection', 'Extinguisher Inspected: FRXT-09', 'Extinguisher FRXT-09 was inspected. Status: Maintenance, Pressure: 60%', 'update_now', NULL, '{\"extinguisher_id\":56,\"school_id\":14}', 1, '2026-03-11 17:08:52', '2026-03-11 18:20:56'),
-(2, 'fire_safety', 'fire_safety', 14, 3, 'extinguisher_inspection', 'Extinguisher Inspected: FRXT-09', 'Extinguisher FRXT-09 was inspected. Status: Maintenance, Pressure: 60%', 'update_now', NULL, '{\"extinguisher_id\":56,\"school_id\":14}', 1, '2026-03-11 17:08:53', '2026-03-11 18:20:59'),
-(3, 'fire_safety', 'fire_safety', 17, NULL, 'alarm_due', 'Alarm Test Due Today: 001', 'Alarm 001 is scheduled for testing today.', 'go_test', NULL, '{\"alarm_id\":20,\"school_id\":17}', 1, '2026-03-11 17:17:57', '2026-03-18 02:05:20'),
-(4, 'fire_safety', 'fire_safety', 18, 1, 'room_update', 'Room Updated: 23', 'Adan Kristopher B. Dumpit updated room 23. Changes: Remarks updated', 'see_inspection', NULL, '{\"room_id\":87,\"school_id\":18,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 18:12:17', '2026-03-18 02:05:20'),
-(5, 'fire_safety', 'fire_safety', 14, 3, 'building_update', 'Building Updated: 02', 'Dolores A. Umbina updated building Okay room. Changes: Last Renovation: 2022, Description updated', NULL, NULL, '{\"building_id\":58,\"school_id\":14,\"updated_by\":\"Dolores A. Umbina\"}', 1, '2026-03-11 18:14:43', '2026-03-18 02:05:20'),
-(6, 'fire_safety', 'fire_safety', 13, 4, 'inspection', 'Inspection Completed: Fire', 'Fire inspection at Bangal Integrated School on 2026-03-15. Monitored by: Zaldy Danaytan, Jr.', 'see_inspection', NULL, '{\"inspection_id\":4,\"school_id\":\"13\"}', 1, '2026-03-11 18:18:52', '2026-03-11 18:26:26'),
-(7, 'fire_safety', 'fire_safety', 13, 4, 'room_approval', 'Room Update Pending Approval: 01', 'Zaldy Danaytan, Jr. updated room 01 and it requires administrator approval. Changes: Secondary Exit: No', 'see_inspection', NULL, '{\"room_id\":96,\"school_id\":13,\"status\":\"pending\",\"updated_by\":\"Zaldy Danaytan, Jr.\"}', 1, '2026-03-11 18:23:47', '2026-03-11 18:26:25'),
-(8, 'fire_safety', 'fire_safety', 13, 1, 'room_approval', 'Room Update Approved', 'Room 01 has been approved by Adan Kristopher B. Dumpit.', 'see_inspection', NULL, '{\"room_id\":96,\"school_id\":13,\"status\":\"approved\"}', 1, '2026-03-11 18:24:39', '2026-03-11 18:26:22'),
-(9, 'fire_safety', 'fire_safety', 13, 1, 'room_approval', 'Room Update Rejected', 'Room 01 has been rejected. Reason: The room info is incompleted and needed of fire extinguisher', 'see_inspection', NULL, '{\"room_id\":95,\"school_id\":13,\"status\":\"rejected\"}', 1, '2026-03-11 18:25:40', '2026-03-11 18:26:19'),
-(10, 'fire_safety', 'fire_safety', 14, 1, 'event', 'Event: The stray and stucky event', 'To provide stray animals more comfort adopt it for the students or pet them temporarily | Date: 2026-03-20 at 11:00 (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"event_date\":\"2026-03-20\",\"event_time\":\"11:00\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 18:42:54', '2026-03-18 02:05:20'),
-(11, 'fire_safety', 'fire_safety', 11, 1, 'alert', 'Alert: Evacuation area must clear', 'All schools need to check now (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"alert_type\":\"warning\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 19:01:21', '2026-03-18 02:05:20'),
-(12, 'fire_safety', 'fire_safety', 12, 1, 'alert', 'Alert: Evacuation area must clear', 'All schools need to check now (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"alert_type\":\"warning\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 19:01:21', '2026-03-18 02:05:20'),
-(13, 'fire_safety', 'fire_safety', 13, 1, 'alert', 'Alert: Evacuation area must clear', 'All schools need to check now (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"alert_type\":\"warning\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 19:01:21', '2026-03-18 02:05:20'),
-(14, 'fire_safety', 'fire_safety', 14, 1, 'alert', 'Alert: Evacuation area must clear', 'All schools need to check now (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"alert_type\":\"warning\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 19:01:21', '2026-03-18 02:05:20'),
-(15, 'fire_safety', 'fire_safety', 15, 1, 'alert', 'Alert: Evacuation area must clear', 'All schools need to check now (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"alert_type\":\"warning\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 19:01:21', '2026-03-18 02:05:20'),
-(16, 'fire_safety', 'fire_safety', 16, 1, 'alert', 'Alert: Evacuation area must clear', 'All schools need to check now (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"alert_type\":\"warning\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 19:01:21', '2026-03-18 02:05:20'),
-(17, 'fire_safety', 'fire_safety', 17, 1, 'alert', 'Alert: Evacuation area must clear', 'All schools need to check now (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"alert_type\":\"warning\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 19:01:21', '2026-03-18 02:05:20'),
-(18, 'fire_safety', 'fire_safety', 18, 1, 'alert', 'Alert: Evacuation area must clear', 'All schools need to check now (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"alert_type\":\"warning\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 19:01:21', '2026-03-18 02:05:20'),
-(19, 'fire_safety', 'fire_safety', 19, 1, 'alert', 'Alert: Evacuation area must clear', 'All schools need to check now (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"alert_type\":\"warning\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 19:01:21', '2026-03-18 02:05:20'),
-(20, 'fire_safety', 'fire_safety', 20, 1, 'alert', 'Alert: Evacuation area must clear', 'All schools need to check now (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"alert_type\":\"warning\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 19:01:21', '2026-03-18 02:05:20'),
-(21, 'fire_safety', 'fire_safety', 14, 3, 'room_approval', 'Room Update Pending Approval: 05', 'Dolores A. Umbina updated room 05 and it requires administrator approval. Changes: Name: Storage Room, filled, Remarks updated', 'see_inspection', NULL, '{\"room_id\":122,\"school_id\":14,\"status\":\"pending\",\"updated_by\":\"Dolores A. Umbina\"}', 1, '2026-03-11 19:05:08', '2026-03-18 02:05:20'),
-(22, 'fire_safety', 'fire_safety', 14, 1, 'alert', 'Alert: Suntukan', 'May nangyari (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"alert_type\":\"warning\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 19:25:06', '2026-03-18 02:05:20'),
-(23, 'fire_safety', 'fire_safety', 13, 4, 'evacuation_plan', 'Evacuation Plan Created: Plan A', 'Zaldy Danaytan, Jr. created a new evacuation plan \"Plan A\" - School-Wide Plan', NULL, NULL, '{\"plan_id\":3,\"plan_type\":\"school\",\"posted_by\":\"Zaldy Danaytan, Jr.\"}', 1, '2026-03-11 19:30:58', '2026-03-18 02:05:20'),
-(24, 'fire_safety', 'fire_safety', 13, 4, 'evacuation_plan', 'Evacuation Plan Updated: Plan A', 'Zaldy Danaytan, Jr. updated evacuation plan \"Plan A\" - School-Wide Plan', NULL, NULL, '{\"plan_id\":3,\"plan_type\":\"school\",\"posted_by\":\"Zaldy Danaytan, Jr.\"}', 1, '2026-03-11 19:31:18', '2026-03-18 02:05:20'),
-(25, 'fire_safety', 'fire_safety', 13, 4, 'evacuation_plan', 'Evacuation Plan Created: Pwede na', 'Zaldy Danaytan, Jr. created a new evacuation plan \"Pwede na\" - Building Plan (Unknown)', NULL, NULL, '{\"plan_id\":4,\"plan_type\":\"building\",\"posted_by\":\"Zaldy Danaytan, Jr.\"}', 1, '2026-03-11 19:31:49', '2026-03-18 02:05:20'),
-(26, 'fire_safety', 'fire_safety', 13, 4, 'evacuation_plan', 'Evacuation Map Updated: Bangal Integrated School', 'Zaldy Danaytan, Jr. updated the evacuation map layout. Details: New placement', NULL, NULL, '{\"plan_type\":\"map\",\"posted_by\":\"Zaldy Danaytan, Jr.\"}', 1, '2026-03-11 19:32:19', '2026-03-18 02:05:20'),
-(27, 'fire_safety', 'fire_safety', 18, 1, 'event', 'Event: Kono omoi wo', 'Ni hungry | Date: 2026-04-01 at 02:41 (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"event_date\":\"2026-04-01\",\"event_time\":\"02:41\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 19:41:33', '2026-03-18 02:05:20'),
-(28, 'fire_safety', 'fire_safety', 14, 3, 'alert', 'Alert: Pagbigyan mo ako', 'Pagbigyan mo ako (Posted by: Dolores A. Umbina)', NULL, NULL, '{\"alert_type\":\"danger\",\"posted_by\":\"Dolores A. Umbina\"}', 1, '2026-03-11 19:58:58', '2026-03-18 02:05:20'),
-(31, 'fire_safety', 'fire_safety', 11, 1, 'room_update', 'Room Updated: Room-010', 'Adan Kristopher B. Dumpit updated room Room-010. Changes: Remarks updated', 'see_inspection', NULL, '{\"room_id\":47,\"school_id\":11,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 23:55:05', '2026-03-18 02:05:20'),
-(32, 'fire_safety', 'fire_safety', 19, 1, 'evacuation_plan', 'Evacuation Map Updated: New Cabalan Elementary School', 'Adan Kristopher B. Dumpit updated the evacuation map layout. Details: Need buildings to register', NULL, NULL, '{\"plan_type\":\"map\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-12 00:00:32', '2026-03-18 02:05:20'),
-(33, 'fire_safety', 'fire_safety', 15, 1, 'extinguisher_inspection', 'Extinguisher Inspected: FRXT-01', 'Extinguisher FRXT-01 was inspected. Status: Maintenance, Pressure: 59%', 'update_now', NULL, '{\"extinguisher_id\":57,\"school_id\":15}', 1, '2026-03-12 00:03:05', '2026-03-18 02:05:20'),
-(34, 'fire_safety', 'fire_safety', 14, 1, 'extinguisher_inspection', 'Extinguisher Inspected: FRXT-09', 'Extinguisher FRXT-09 was inspected. Status: Active, Pressure: 70%', 'update_now', NULL, '{\"extinguisher_id\":56,\"school_id\":14}', 1, '2026-03-12 00:31:11', '2026-03-18 02:05:20'),
-(35, 'fire_safety', 'fire_safety', 12, 1, 'room_update', 'Room Updated: 01', 'Adan Kristopher B. Dumpit updated room 01. Changes: Secondary Exit: Yes, Remarks updated', 'see_inspection', NULL, '{\"room_id\":57,\"school_id\":12,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-12 00:32:17', '2026-03-18 02:05:20'),
-(36, 'fire_safety', 'fire_safety', 20, 5, 'room_update', 'Room Updated: 01', 'Erwin A. Castillejo updated room 01. Changes: Secondary Exit: Yes', 'see_inspection', NULL, '{\"room_id\":93,\"school_id\":20,\"updated_by\":\"Erwin A. Castillejo\"}', 1, '2026-03-12 00:32:49', '2026-03-18 02:05:20'),
-(37, 'fire_safety', 'fire_safety', 12, 1, 'evacuation_plan', 'Evacuation Plan Created: Olan a', 'Adan Kristopher B. Dumpit created a new evacuation plan \"Olan a\" - School-Wide Plan', NULL, NULL, '{\"plan_id\":5,\"plan_type\":\"school\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-12 00:32:59', '2026-03-18 02:05:20'),
-(38, 'fire_safety', 'fire_safety', 20, 5, 'room_update', 'Room Updated: 02', 'Erwin A. Castillejo updated room 02. Changes: Secondary Exit: Yes', 'see_inspection', NULL, '{\"room_id\":94,\"school_id\":20,\"updated_by\":\"Erwin A. Castillejo\"}', 1, '2026-03-12 00:33:08', '2026-03-18 02:05:20'),
-(39, 'fire_safety', 'fire_safety', 20, 5, 'extinguisher_inspection', 'Extinguisher Inspected: 01', 'Extinguisher 01 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":39,\"school_id\":20}', 1, '2026-03-12 00:35:46', '2026-03-18 02:05:20'),
-(40, 'fire_safety', 'fire_safety', 20, 5, 'extinguisher_inspection', 'Extinguisher Inspected: 02', 'Extinguisher 02 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":40,\"school_id\":20}', 1, '2026-03-12 00:38:55', '2026-03-18 02:05:20'),
-(41, 'fire_safety', 'fire_safety', 20, 5, 'building_update', 'Building Updated: 003', 'Erwin A. Castillejo updated building 3. Changes: Name: 3', NULL, NULL, '{\"building_id\":54,\"school_id\":20,\"updated_by\":\"Erwin A. Castillejo\"}', 1, '2026-03-12 00:41:28', '2026-03-18 02:05:20'),
-(42, 'fire_safety', 'fire_safety', 20, 5, 'extinguisher_inspection', 'Extinguisher Inspected: 09', 'Extinguisher 09 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":46,\"school_id\":20}', 1, '2026-03-12 00:43:27', '2026-03-18 02:05:20'),
-(43, 'fire_safety', 'fire_safety', 20, 5, 'extinguisher_inspection', 'Extinguisher Inspected: 10', 'Extinguisher 10 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":47,\"school_id\":20}', 1, '2026-03-12 00:44:03', '2026-03-18 02:05:20'),
-(44, 'fire_safety', 'fire_safety', 20, 5, 'extinguisher_inspection', 'Extinguisher Inspected: 12', 'Extinguisher 12 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":59,\"school_id\":20}', 1, '2026-03-12 00:48:29', '2026-03-18 02:05:20'),
-(45, 'fire_safety', 'fire_safety', 20, 5, 'extinguisher_inspection', 'Extinguisher Inspected: 06', 'Extinguisher 06 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":43,\"school_id\":20}', 1, '2026-03-12 00:58:41', '2026-03-18 02:05:20'),
-(46, 'fire_safety', 'fire_safety', 20, 5, 'extinguisher_inspection', 'Extinguisher Inspected: 07', 'Extinguisher 07 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":44,\"school_id\":20}', 1, '2026-03-12 00:59:08', '2026-03-18 02:05:20'),
-(47, 'fire_safety', 'fire_safety', 20, 5, 'extinguisher_inspection', 'Extinguisher Inspected: 04', 'Extinguisher 04 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":61,\"school_id\":20}', 1, '2026-03-12 00:59:47', '2026-03-18 02:05:20'),
-(48, 'fire_safety', 'fire_safety', 20, 5, 'extinguisher_inspection', 'Extinguisher Inspected: 08', 'Extinguisher 08 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":45,\"school_id\":20}', 1, '2026-03-12 01:04:49', '2026-03-18 02:05:20'),
-(49, 'fire_safety', 'fire_safety', 20, 5, 'building_update', 'Building Updated: 001', 'Erwin A. Castillejo updated building 001. Changes: Required Extinguishers: 2', NULL, NULL, '{\"building_id\":49,\"school_id\":20,\"updated_by\":\"Erwin A. Castillejo\"}', 1, '2026-03-12 01:05:57', '2026-03-18 02:05:20'),
-(50, 'fire_safety', 'fire_safety', 20, 1, 'extinguisher_inspection', 'Extinguisher Inspected: 15', 'Extinguisher 15 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":62,\"school_id\":20}', 1, '2026-03-16 00:53:44', '2026-03-18 02:05:20'),
-(51, 'fire_safety', 'fire_safety', 20, 1, 'extinguisher_inspection', 'Extinguisher Inspected: 14', 'Extinguisher 14 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":60,\"school_id\":20}', 1, '2026-03-16 00:53:58', '2026-03-18 02:05:20'),
-(52, 'fire_safety', 'fire_safety', 20, 1, 'extinguisher_inspection', 'Extinguisher Inspected: 13', 'Extinguisher 13 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":59,\"school_id\":20}', 1, '2026-03-16 00:57:16', '2026-03-18 02:05:20'),
-(53, 'fire_safety', 'fire_safety', 20, 1, 'extinguisher_inspection', 'Extinguisher Inspected: 12', 'Extinguisher 12 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":58,\"school_id\":20}', 1, '2026-03-16 00:57:36', '2026-03-18 02:05:20'),
-(54, 'fire_safety', 'fire_safety', 20, 1, 'extinguisher_inspection', 'Extinguisher Inspected: 11', 'Extinguisher 11 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":47,\"school_id\":20}', 1, '2026-03-16 00:58:10', '2026-03-18 02:05:20'),
-(55, 'fire_safety', 'fire_safety', 20, 1, 'extinguisher_inspection', 'Extinguisher Inspected: 10', 'Extinguisher 10 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":46,\"school_id\":20}', 1, '2026-03-16 00:58:38', '2026-03-18 02:05:20'),
-(56, 'fire_safety', 'fire_safety', 20, 1, 'extinguisher_inspection', 'Extinguisher Inspected: 09', 'Extinguisher 09 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":63,\"school_id\":20}', 1, '2026-03-16 00:59:00', '2026-03-18 02:05:20'),
-(57, 'fire_safety', 'fire_safety', 14, 1, 'building_update', 'Building Updated: 02', 'Adan Kristopher B. Dumpit updated building Okay room. Changes: Required Extinguishers: 4', NULL, NULL, '{\"building_id\":58,\"school_id\":14,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-16 17:25:10', '2026-03-18 02:05:20'),
-(58, 'fire_safety', 'fire_safety', 13, 1, 'room_update', 'Room Updated: 01', 'Adan Kristopher B. Dumpit updated room 01. Changes: Secondary Exit: Yes', 'see_inspection', NULL, '{\"room_id\":95,\"school_id\":13,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-16 17:37:18', '2026-03-18 02:05:20'),
-(59, 'fire_safety', 'fire_safety', 13, 1, 'alarm_due', 'Alarm Tested: 11', 'Alarm 11 has been tested successfully.', 'go_test', NULL, '{\"alarm_id\":33,\"school_id\":13}', 1, '2026-03-16 17:40:29', '2026-03-18 02:05:20'),
-(60, 'fire_safety', 'fire_safety', 13, 1, 'room_update', 'Room Updated: 01', 'Adan Kristopher B. Dumpit updated room 01. Changes: Secondary Exit: Yes', 'see_inspection', NULL, '{\"room_id\":96,\"school_id\":13,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-16 17:51:12', '2026-03-18 02:05:20'),
-(61, 'fire_safety', 'fire_safety', 13, 4, 'room_approval', 'New Room Created (Pending Approval)', 'Contributor Zaldy Danaytan, Jr. created a new room and it requires administrator approval.', NULL, NULL, '{\"posted_by\":\"Zaldy Danaytan, Jr.\"}', 1, '2026-03-16 18:07:56', '2026-03-18 02:05:20'),
-(62, 'fire_safety', 'fire_safety', 13, 4, 'extinguisher_inspection', 'Extinguisher Inspected: FR-XT 02', 'Extinguisher FR-XT 02 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":65,\"school_id\":13}', 1, '2026-03-16 18:09:56', '2026-03-18 02:05:20'),
-(63, 'fire_safety', 'fire_safety', 13, 1, 'room_approval', 'Room Update Approved', 'Room 04 has been approved by Adan Kristopher B. Dumpit.', 'see_inspection', NULL, '{\"room_id\":131,\"school_id\":13,\"status\":\"approved\"}', 1, '2026-03-16 18:10:48', '2026-03-18 02:05:20'),
-(64, 'fire_safety', 'fire_safety', 13, 1, 'evacuation_plan', 'Evacuation Map Updated: Bangal Integrated School', 'Adan Kristopher B. Dumpit updated the evacuation map layout. Details: attached file here in bangal', NULL, NULL, '{\"plan_type\":\"map\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-17 03:38:58', '2026-03-18 02:05:20'),
-(65, 'fire_safety', 'fire_safety', 13, 4, 'extinguisher_inspection', 'Extinguisher Inspected: FR-XT 01', 'Extinguisher FR-XT 01 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":66,\"school_id\":13}', 1, '2026-03-17 05:20:42', '2026-03-18 02:05:20'),
-(66, 'fire_safety', 'fire_safety', 13, 4, 'room_approval', 'New Room Created (Pending Approval)', 'Contributor Zaldy Danaytan, Jr. created a new room and it requires administrator approval.', NULL, NULL, '{\"posted_by\":\"Zaldy Danaytan, Jr.\"}', 1, '2026-03-17 05:22:24', '2026-03-18 02:05:20'),
-(67, 'fire_safety', 'fire_safety', 13, 4, 'room_approval', 'Room Update Pending Approval: 01', 'Zaldy Danaytan, Jr. updated room 01 and it requires administrator approval. Changes: Secondary Exit: Yes', 'see_inspection', NULL, '{\"room_id\":132,\"school_id\":13,\"status\":\"pending\",\"updated_by\":\"Zaldy Danaytan, Jr.\"}', 1, '2026-03-17 05:22:38', '2026-03-18 02:05:20'),
-(68, 'fire_safety', 'fire_safety', 13, 4, 'building_update', 'Building Updated: 03', 'Zaldy Danaytan, Jr. updated building 03. Changes: Required Extinguishers: 1', NULL, NULL, '{\"building_id\":53,\"school_id\":13,\"updated_by\":\"Zaldy Danaytan, Jr.\"}', 1, '2026-03-17 05:47:32', '2026-03-18 02:05:20'),
-(69, 'fire_safety', 'fire_safety', 13, 1, 'building_update', 'Building Updated: 03', 'Adan Kristopher B. Dumpit updated building 03. Changes: Description updated', NULL, NULL, '{\"building_id\":53,\"school_id\":13,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-17 06:06:32', '2026-03-18 02:05:20'),
-(70, 'fire_safety', 'fire_safety', 13, 1, 'building_update', 'Building Updated: 05', 'Adan Kristopher B. Dumpit updated building 05. Changes: Description updated', NULL, NULL, '{\"building_id\":61,\"school_id\":13,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-17 06:08:04', '2026-03-18 02:05:20'),
-(71, 'fire_safety', 'fire_safety', 13, 1, 'building_update', 'Building Updated: 04', 'Adan Kristopher B. Dumpit updated building 04. Changes: Building No: 04', NULL, NULL, '{\"building_id\":61,\"school_id\":13,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-17 06:08:42', '2026-03-18 02:05:20'),
-(72, 'fire_safety', 'fire_safety', 13, 1, 'extinguisher_inspection', 'Extinguisher Inspected: 04', 'Extinguisher 04 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":67,\"school_id\":13}', 1, '2026-03-17 06:12:08', '2026-03-18 02:05:20'),
-(73, 'fire_safety', 'fire_safety', 13, 1, 'extinguisher_inspection', 'Extinguisher Inspected: 02', 'Extinguisher 02 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":66,\"school_id\":13}', 1, '2026-03-17 06:12:36', '2026-03-18 02:05:20'),
-(74, 'fire_safety', 'fire_safety', 13, 1, 'extinguisher_inspection', 'Extinguisher Inspected: 03', 'Extinguisher 03 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":65,\"school_id\":13}', 1, '2026-03-17 06:12:57', '2026-03-18 02:05:20'),
-(75, 'fire_safety', 'fire_safety', 13, 1, 'building_update', 'Building Updated: 07', 'Adan Kristopher B. Dumpit updated building 07. Changes: Description updated', NULL, NULL, '{\"building_id\":64,\"school_id\":13,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-17 06:23:59', '2026-03-18 02:05:20'),
-(76, 'fire_safety', 'fire_safety', 13, 1, 'building_update', 'Building Updated: 06', 'Adan Kristopher B. Dumpit updated building 06. Changes: Description updated', NULL, NULL, '{\"building_id\":63,\"school_id\":13,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-17 06:24:32', '2026-03-18 02:05:20'),
-(77, 'fire_safety', 'fire_safety', 13, 1, 'room_update', 'Room Updated: 01', 'Adan Kristopher B. Dumpit updated room 01. Changes: Secondary Exit: No', 'see_inspection', NULL, '{\"room_id\":136,\"school_id\":13,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-17 06:28:19', '2026-03-18 02:05:20'),
-(78, 'fire_safety', 'fire_safety', 13, 1, 'extinguisher_inspection', 'Extinguisher Inspected: 06', 'Extinguisher 06 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":69,\"school_id\":13}', 1, '2026-03-17 06:41:29', '2026-03-18 02:05:20'),
-(79, 'fire_safety', 'fire_safety', 13, 1, 'room_update', 'Room Updated: 02', 'Adan Kristopher B. Dumpit updated room 02. Changes: Code: 01', 'see_inspection', NULL, '{\"room_id\":144,\"school_id\":13,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-17 06:47:55', '2026-03-18 02:05:20'),
-(80, 'fire_safety', 'fire_safety', 13, 1, 'building_update', 'Building Updated: 09', 'Adan Kristopher B. Dumpit updated building Fil-Chi. Changes: Name: Fil-Chi', NULL, NULL, '{\"building_id\":66,\"school_id\":13,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-17 07:02:48', '2026-03-18 02:05:20'),
-(81, 'fire_safety', 'fire_safety', 13, 1, 'evacuation_plan', 'Evacuation Map Updated: Bangal Integrated School', 'Adan Kristopher B. Dumpit updated the evacuation map layout. Details: Map updated', NULL, NULL, '{\"plan_type\":\"map\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-17 07:08:54', '2026-03-18 02:05:20'),
-(82, 'fire_safety', 'fire_safety', 13, 1, 'inspection', 'Inspection Completed: Fire', 'Fire inspection at Bangal Integrated School on 2026-03-17. Monitored by: John Benedict G. Pecson', 'see_inspection', NULL, '{\"inspection_id\":5,\"school_id\":\"13\"}', 1, '2026-03-17 07:17:36', '2026-03-18 02:05:20'),
-(83, 'fire_safety', 'fire_safety', 18, 1, 'alarm_update', 'Alarm Updated: 01', 'Adan Kristopher B. Dumpit updated alarm 01. Changes: Status: Active, Location: Between Room 8 and 9 and possibly 7, Notes updated', 'go_test', NULL, '{\"alarm_id\":25,\"school_id\":18,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-18 01:07:17', '2026-03-18 02:05:20'),
-(84, 'fire_safety', 'fire_safety', 21, 1, 'alarm_update', 'Alarm Updated: ALARM-03', 'Adan Kristopher B. Dumpit updated alarm ALARM-03. Changes: Last Test: 2026-03-19', 'go_test', NULL, '{\"alarm_id\":37,\"school_id\":21,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 0, '2026-03-19 02:32:35', '2026-03-19 02:32:35'),
-(85, 'fire_safety', 'fire_safety', 21, 1, 'extinguisher_inspection', 'Extinguisher Inspected: FRXT-08', 'Extinguisher FRXT-08 was inspected. Status: Maintenance, Pressure: 20%', 'update_now', NULL, '{\"extinguisher_id\":81,\"school_id\":21}', 0, '2026-03-19 02:58:31', '2026-03-19 02:58:31'),
-(86, 'fire_safety', 'fire_safety', 21, 1, 'room_update', 'Room Updated: 02', 'Adan Kristopher B. Dumpit updated room 02. Changes: Remarks updated', 'see_inspection', NULL, '{\"room_id\":171,\"school_id\":21,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 0, '2026-03-19 03:08:40', '2026-03-19 03:08:40'),
-(87, 'fire_safety', 'fire_safety', 21, 1, 'room_update', 'Room Updated: 01', 'Adan Kristopher B. Dumpit updated room 01. Changes: Smoke Detector Required: Yes', 'see_inspection', NULL, '{\"room_id\":176,\"school_id\":21,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 0, '2026-03-19 03:12:44', '2026-03-19 03:12:44'),
-(88, 'fire_safety', 'fire_safety', 21, 1, 'extinguisher_inspection', 'Extinguisher Inspected: FRXT-19', 'Extinguisher FRXT-19 was inspected. Status: Purchase, Pressure: 0%', 'update_now', NULL, '{\"extinguisher_id\":77,\"school_id\":21}', 0, '2026-03-19 03:18:41', '2026-03-19 03:18:41'),
-(89, 'fire_safety', 'fire_safety', 21, 1, 'building_update', 'Building Updated: 06', 'Adan Kristopher B. Dumpit updated building 06. Changes: Required Extinguishers: 6', NULL, NULL, '{\"building_id\":73,\"school_id\":21,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 0, '2026-03-19 03:25:57', '2026-03-19 03:25:57'),
-(90, 'fire_safety', 'fire_safety', 21, 1, 'building_update', 'Building Updated: 01', 'Adan Kristopher B. Dumpit updated building 01. Changes: Safety Features updated', NULL, NULL, '{\"building_id\":68,\"school_id\":21,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 0, '2026-03-19 06:29:17', '2026-03-19 06:29:17'),
-(91, 'fire_safety', 'fire_safety', 21, 1, 'alarm_update', 'Alarm Updated: ALARM-01', 'Adan Kristopher B. Dumpit updated alarm ALARM-01. Changes: Notes updated', 'go_test', NULL, '{\"alarm_id\":35,\"school_id\":21,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 0, '2026-03-19 06:33:39', '2026-03-19 06:33:39'),
-(92, 'fire_safety', 'fire_safety', 21, 1, 'alarm_update', 'Alarm Updated: ALARM-02', 'Adan Kristopher B. Dumpit updated alarm ALARM-02. Changes: Notes updated', 'go_test', NULL, '{\"alarm_id\":36,\"school_id\":21,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 0, '2026-03-19 06:47:34', '2026-03-19 06:47:34'),
-(93, 'fire_safety', 'fire_safety', 15, 1, 'extinguisher_inspection', 'Extinguisher Inspected: FRXT-01', 'Extinguisher FRXT-01 was inspected. Status: Maintenance, Pressure: 57%', 'update_now', NULL, '{\"extinguisher_id\":57,\"school_id\":15}', 0, '2026-03-19 08:00:17', '2026-03-19 08:00:17'),
-(94, 'fire_safety', 'fire_safety', 14, NULL, 'alarm_due', 'Alarm Test Due Today: ALRM-002', 'Alarm ALRM-002 is scheduled for testing today.', 'go_test', NULL, '{\"alarm_id\":32,\"school_id\":14}', 0, '2026-03-22 23:53:55', '2026-03-22 23:53:55'),
+(1, 'fire_safety', 'fire_safety', 4, 3, 'extinguisher_inspection', 'Extinguisher Inspected: FRXT-09', 'Extinguisher FRXT-09 was inspected. Status: Maintenance, Pressure: 60%', 'update_now', NULL, '{\"extinguisher_id\":56,\"school_id\":14}', 1, '2026-03-11 17:08:52', '2026-03-11 18:20:56'),
+(2, 'fire_safety', 'fire_safety', 4, 3, 'extinguisher_inspection', 'Extinguisher Inspected: FRXT-09', 'Extinguisher FRXT-09 was inspected. Status: Maintenance, Pressure: 60%', 'update_now', NULL, '{\"extinguisher_id\":56,\"school_id\":14}', 1, '2026-03-11 17:08:53', '2026-03-11 18:20:59'),
+(3, 'fire_safety', 'fire_safety', 7, NULL, 'alarm_due', 'Alarm Test Due Today: 001', 'Alarm 001 is scheduled for testing today.', 'go_test', NULL, '{\"alarm_id\":20,\"school_id\":17}', 1, '2026-03-11 17:17:57', '2026-03-18 02:05:20'),
+(4, 'fire_safety', 'fire_safety', 8, 1, 'room_update', 'Room Updated: 23', 'Adan Kristopher B. Dumpit updated room 23. Changes: Remarks updated', 'see_inspection', NULL, '{\"room_id\":87,\"school_id\":18,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 18:12:17', '2026-03-18 02:05:20'),
+(5, 'fire_safety', 'fire_safety', 4, 3, 'building_update', 'Building Updated: 02', 'Dolores A. Umbina updated building Okay room. Changes: Last Renovation: 2022, Description updated', NULL, NULL, '{\"building_id\":58,\"school_id\":14,\"updated_by\":\"Dolores A. Umbina\"}', 1, '2026-03-11 18:14:43', '2026-03-18 02:05:20'),
+(6, 'fire_safety', 'fire_safety', 3, 4, 'inspection', 'Inspection Completed: Fire', 'Fire inspection at Bangal Integrated School on 2026-03-15. Monitored by: Zaldy Danaytan, Jr.', 'see_inspection', NULL, '{\"inspection_id\":4,\"school_id\":\"13\"}', 1, '2026-03-11 18:18:52', '2026-03-11 18:26:26'),
+(7, 'fire_safety', 'fire_safety', 3, 4, 'room_approval', 'Room Update Pending Approval: 01', 'Zaldy Danaytan, Jr. updated room 01 and it requires administrator approval. Changes: Secondary Exit: No', 'see_inspection', NULL, '{\"room_id\":96,\"school_id\":13,\"status\":\"pending\",\"updated_by\":\"Zaldy Danaytan, Jr.\"}', 1, '2026-03-11 18:23:47', '2026-03-11 18:26:25'),
+(8, 'fire_safety', 'fire_safety', 3, 1, 'room_approval', 'Room Update Approved', 'Room 01 has been approved by Adan Kristopher B. Dumpit.', 'see_inspection', NULL, '{\"room_id\":96,\"school_id\":13,\"status\":\"approved\"}', 1, '2026-03-11 18:24:39', '2026-03-11 18:26:22'),
+(9, 'fire_safety', 'fire_safety', 3, 1, 'room_approval', 'Room Update Rejected', 'Room 01 has been rejected. Reason: The room info is incompleted and needed of fire extinguisher', 'see_inspection', NULL, '{\"room_id\":95,\"school_id\":13,\"status\":\"rejected\"}', 1, '2026-03-11 18:25:40', '2026-03-11 18:26:19'),
+(10, 'fire_safety', 'fire_safety', 4, 1, 'event', 'Event: The stray and stucky event', 'To provide stray animals more comfort adopt it for the students or pet them temporarily | Date: 2026-03-20 at 11:00 (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"event_date\":\"2026-03-20\",\"event_time\":\"11:00\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 18:42:54', '2026-03-18 02:05:20'),
+(11, 'fire_safety', 'fire_safety', 1, 1, 'alert', 'Alert: Evacuation area must clear', 'All schools need to check now (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"alert_type\":\"warning\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 19:01:21', '2026-03-18 02:05:20'),
+(12, 'fire_safety', 'fire_safety', 2, 1, 'alert', 'Alert: Evacuation area must clear', 'All schools need to check now (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"alert_type\":\"warning\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 19:01:21', '2026-03-18 02:05:20'),
+(13, 'fire_safety', 'fire_safety', 3, 1, 'alert', 'Alert: Evacuation area must clear', 'All schools need to check now (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"alert_type\":\"warning\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 19:01:21', '2026-03-18 02:05:20'),
+(14, 'fire_safety', 'fire_safety', 4, 1, 'alert', 'Alert: Evacuation area must clear', 'All schools need to check now (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"alert_type\":\"warning\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 19:01:21', '2026-03-18 02:05:20'),
+(15, 'fire_safety', 'fire_safety', 5, 1, 'alert', 'Alert: Evacuation area must clear', 'All schools need to check now (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"alert_type\":\"warning\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 19:01:21', '2026-03-18 02:05:20'),
+(16, 'fire_safety', 'fire_safety', 6, 1, 'alert', 'Alert: Evacuation area must clear', 'All schools need to check now (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"alert_type\":\"warning\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 19:01:21', '2026-03-18 02:05:20'),
+(17, 'fire_safety', 'fire_safety', 7, 1, 'alert', 'Alert: Evacuation area must clear', 'All schools need to check now (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"alert_type\":\"warning\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 19:01:21', '2026-03-18 02:05:20'),
+(18, 'fire_safety', 'fire_safety', 8, 1, 'alert', 'Alert: Evacuation area must clear', 'All schools need to check now (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"alert_type\":\"warning\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 19:01:21', '2026-03-18 02:05:20'),
+(19, 'fire_safety', 'fire_safety', 9, 1, 'alert', 'Alert: Evacuation area must clear', 'All schools need to check now (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"alert_type\":\"warning\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 19:01:21', '2026-03-18 02:05:20'),
+(20, 'fire_safety', 'fire_safety', 10, 1, 'alert', 'Alert: Evacuation area must clear', 'All schools need to check now (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"alert_type\":\"warning\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 19:01:21', '2026-03-18 02:05:20'),
+(21, 'fire_safety', 'fire_safety', 4, 3, 'room_approval', 'Room Update Pending Approval: 05', 'Dolores A. Umbina updated room 05 and it requires administrator approval. Changes: Name: Storage Room, filled, Remarks updated', 'see_inspection', NULL, '{\"room_id\":122,\"school_id\":14,\"status\":\"pending\",\"updated_by\":\"Dolores A. Umbina\"}', 1, '2026-03-11 19:05:08', '2026-03-18 02:05:20'),
+(22, 'fire_safety', 'fire_safety', 4, 1, 'alert', 'Alert: Suntukan', 'May nangyari (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"alert_type\":\"warning\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 19:25:06', '2026-03-18 02:05:20'),
+(23, 'fire_safety', 'fire_safety', 3, 4, 'evacuation_plan', 'Evacuation Plan Created: Plan A', 'Zaldy Danaytan, Jr. created a new evacuation plan \"Plan A\" - School-Wide Plan', NULL, NULL, '{\"plan_id\":3,\"plan_type\":\"school\",\"posted_by\":\"Zaldy Danaytan, Jr.\"}', 1, '2026-03-11 19:30:58', '2026-03-18 02:05:20'),
+(24, 'fire_safety', 'fire_safety', 3, 4, 'evacuation_plan', 'Evacuation Plan Updated: Plan A', 'Zaldy Danaytan, Jr. updated evacuation plan \"Plan A\" - School-Wide Plan', NULL, NULL, '{\"plan_id\":3,\"plan_type\":\"school\",\"posted_by\":\"Zaldy Danaytan, Jr.\"}', 1, '2026-03-11 19:31:18', '2026-03-18 02:05:20'),
+(25, 'fire_safety', 'fire_safety', 3, 4, 'evacuation_plan', 'Evacuation Plan Created: Pwede na', 'Zaldy Danaytan, Jr. created a new evacuation plan \"Pwede na\" - Building Plan (Unknown)', NULL, NULL, '{\"plan_id\":4,\"plan_type\":\"building\",\"posted_by\":\"Zaldy Danaytan, Jr.\"}', 1, '2026-03-11 19:31:49', '2026-03-18 02:05:20'),
+(26, 'fire_safety', 'fire_safety', 3, 4, 'evacuation_plan', 'Evacuation Map Updated: Bangal Integrated School', 'Zaldy Danaytan, Jr. updated the evacuation map layout. Details: New placement', NULL, NULL, '{\"plan_type\":\"map\",\"posted_by\":\"Zaldy Danaytan, Jr.\"}', 1, '2026-03-11 19:32:19', '2026-03-18 02:05:20'),
+(27, 'fire_safety', 'fire_safety', 8, 1, 'event', 'Event: Kono omoi wo', 'Ni hungry | Date: 2026-04-01 at 02:41 (Posted by: Adan Kristopher B. Dumpit)', NULL, NULL, '{\"event_date\":\"2026-04-01\",\"event_time\":\"02:41\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 19:41:33', '2026-03-18 02:05:20'),
+(28, 'fire_safety', 'fire_safety', 4, 3, 'alert', 'Alert: Pagbigyan mo ako', 'Pagbigyan mo ako (Posted by: Dolores A. Umbina)', NULL, NULL, '{\"alert_type\":\"danger\",\"posted_by\":\"Dolores A. Umbina\"}', 1, '2026-03-11 19:58:58', '2026-03-18 02:05:20'),
+(31, 'fire_safety', 'fire_safety', 1, 1, 'room_update', 'Room Updated: Room-010', 'Adan Kristopher B. Dumpit updated room Room-010. Changes: Remarks updated', 'see_inspection', NULL, '{\"room_id\":47,\"school_id\":11,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-11 23:55:05', '2026-03-18 02:05:20'),
+(32, 'fire_safety', 'fire_safety', 9, 1, 'evacuation_plan', 'Evacuation Map Updated: New Cabalan Elementary School', 'Adan Kristopher B. Dumpit updated the evacuation map layout. Details: Need buildings to register', NULL, NULL, '{\"plan_type\":\"map\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-12 00:00:32', '2026-03-18 02:05:20'),
+(33, 'fire_safety', 'fire_safety', 5, 1, 'extinguisher_inspection', 'Extinguisher Inspected: FRXT-01', 'Extinguisher FRXT-01 was inspected. Status: Maintenance, Pressure: 59%', 'update_now', NULL, '{\"extinguisher_id\":57,\"school_id\":15}', 1, '2026-03-12 00:03:05', '2026-03-18 02:05:20'),
+(34, 'fire_safety', 'fire_safety', 4, 1, 'extinguisher_inspection', 'Extinguisher Inspected: FRXT-09', 'Extinguisher FRXT-09 was inspected. Status: Active, Pressure: 70%', 'update_now', NULL, '{\"extinguisher_id\":56,\"school_id\":14}', 1, '2026-03-12 00:31:11', '2026-03-18 02:05:20'),
+(35, 'fire_safety', 'fire_safety', 2, 1, 'room_update', 'Room Updated: 01', 'Adan Kristopher B. Dumpit updated room 01. Changes: Secondary Exit: Yes, Remarks updated', 'see_inspection', NULL, '{\"room_id\":57,\"school_id\":12,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-12 00:32:17', '2026-03-18 02:05:20'),
+(36, 'fire_safety', 'fire_safety', 10, 5, 'room_update', 'Room Updated: 01', 'Erwin A. Castillejo updated room 01. Changes: Secondary Exit: Yes', 'see_inspection', NULL, '{\"room_id\":93,\"school_id\":20,\"updated_by\":\"Erwin A. Castillejo\"}', 1, '2026-03-12 00:32:49', '2026-03-18 02:05:20'),
+(37, 'fire_safety', 'fire_safety', 2, 1, 'evacuation_plan', 'Evacuation Plan Created: Olan a', 'Adan Kristopher B. Dumpit created a new evacuation plan \"Olan a\" - School-Wide Plan', NULL, NULL, '{\"plan_id\":5,\"plan_type\":\"school\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-12 00:32:59', '2026-03-18 02:05:20'),
+(38, 'fire_safety', 'fire_safety', 10, 5, 'room_update', 'Room Updated: 02', 'Erwin A. Castillejo updated room 02. Changes: Secondary Exit: Yes', 'see_inspection', NULL, '{\"room_id\":94,\"school_id\":20,\"updated_by\":\"Erwin A. Castillejo\"}', 1, '2026-03-12 00:33:08', '2026-03-18 02:05:20'),
+(39, 'fire_safety', 'fire_safety', 10, 5, 'extinguisher_inspection', 'Extinguisher Inspected: 01', 'Extinguisher 01 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":39,\"school_id\":20}', 1, '2026-03-12 00:35:46', '2026-03-18 02:05:20'),
+(40, 'fire_safety', 'fire_safety', 10, 5, 'extinguisher_inspection', 'Extinguisher Inspected: 02', 'Extinguisher 02 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":40,\"school_id\":20}', 1, '2026-03-12 00:38:55', '2026-03-18 02:05:20'),
+(41, 'fire_safety', 'fire_safety', 10, 5, 'building_update', 'Building Updated: 003', 'Erwin A. Castillejo updated building 3. Changes: Name: 3', NULL, NULL, '{\"building_id\":54,\"school_id\":20,\"updated_by\":\"Erwin A. Castillejo\"}', 1, '2026-03-12 00:41:28', '2026-03-18 02:05:20'),
+(42, 'fire_safety', 'fire_safety', 10, 5, 'extinguisher_inspection', 'Extinguisher Inspected: 09', 'Extinguisher 09 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":46,\"school_id\":20}', 1, '2026-03-12 00:43:27', '2026-03-18 02:05:20'),
+(43, 'fire_safety', 'fire_safety', 10, 5, 'extinguisher_inspection', 'Extinguisher Inspected: 10', 'Extinguisher 10 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":47,\"school_id\":20}', 1, '2026-03-12 00:44:03', '2026-03-18 02:05:20'),
+(44, 'fire_safety', 'fire_safety', 10, 5, 'extinguisher_inspection', 'Extinguisher Inspected: 12', 'Extinguisher 12 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":59,\"school_id\":20}', 1, '2026-03-12 00:48:29', '2026-03-18 02:05:20'),
+(45, 'fire_safety', 'fire_safety', 10, 5, 'extinguisher_inspection', 'Extinguisher Inspected: 06', 'Extinguisher 06 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":43,\"school_id\":20}', 1, '2026-03-12 00:58:41', '2026-03-18 02:05:20'),
+(46, 'fire_safety', 'fire_safety', 10, 5, 'extinguisher_inspection', 'Extinguisher Inspected: 07', 'Extinguisher 07 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":44,\"school_id\":20}', 1, '2026-03-12 00:59:08', '2026-03-18 02:05:20'),
+(47, 'fire_safety', 'fire_safety', 10, 5, 'extinguisher_inspection', 'Extinguisher Inspected: 04', 'Extinguisher 04 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":61,\"school_id\":20}', 1, '2026-03-12 00:59:47', '2026-03-18 02:05:20'),
+(48, 'fire_safety', 'fire_safety', 10, 5, 'extinguisher_inspection', 'Extinguisher Inspected: 08', 'Extinguisher 08 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":45,\"school_id\":20}', 1, '2026-03-12 01:04:49', '2026-03-18 02:05:20'),
+(49, 'fire_safety', 'fire_safety', 10, 5, 'building_update', 'Building Updated: 001', 'Erwin A. Castillejo updated building 001. Changes: Required Extinguishers: 2', NULL, NULL, '{\"building_id\":49,\"school_id\":20,\"updated_by\":\"Erwin A. Castillejo\"}', 1, '2026-03-12 01:05:57', '2026-03-18 02:05:20'),
+(50, 'fire_safety', 'fire_safety', 10, 1, 'extinguisher_inspection', 'Extinguisher Inspected: 15', 'Extinguisher 15 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":62,\"school_id\":20}', 1, '2026-03-16 00:53:44', '2026-03-18 02:05:20'),
+(51, 'fire_safety', 'fire_safety', 10, 1, 'extinguisher_inspection', 'Extinguisher Inspected: 14', 'Extinguisher 14 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":60,\"school_id\":20}', 1, '2026-03-16 00:53:58', '2026-03-18 02:05:20'),
+(52, 'fire_safety', 'fire_safety', 10, 1, 'extinguisher_inspection', 'Extinguisher Inspected: 13', 'Extinguisher 13 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":59,\"school_id\":20}', 1, '2026-03-16 00:57:16', '2026-03-18 02:05:20'),
+(53, 'fire_safety', 'fire_safety', 10, 1, 'extinguisher_inspection', 'Extinguisher Inspected: 12', 'Extinguisher 12 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":58,\"school_id\":20}', 1, '2026-03-16 00:57:36', '2026-03-18 02:05:20'),
+(54, 'fire_safety', 'fire_safety', 10, 1, 'extinguisher_inspection', 'Extinguisher Inspected: 11', 'Extinguisher 11 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":47,\"school_id\":20}', 1, '2026-03-16 00:58:10', '2026-03-18 02:05:20'),
+(55, 'fire_safety', 'fire_safety', 10, 1, 'extinguisher_inspection', 'Extinguisher Inspected: 10', 'Extinguisher 10 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":46,\"school_id\":20}', 1, '2026-03-16 00:58:38', '2026-03-18 02:05:20'),
+(56, 'fire_safety', 'fire_safety', 10, 1, 'extinguisher_inspection', 'Extinguisher Inspected: 09', 'Extinguisher 09 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":63,\"school_id\":20}', 1, '2026-03-16 00:59:00', '2026-03-18 02:05:20'),
+(57, 'fire_safety', 'fire_safety', 4, 1, 'building_update', 'Building Updated: 02', 'Adan Kristopher B. Dumpit updated building Okay room. Changes: Required Extinguishers: 4', NULL, NULL, '{\"building_id\":58,\"school_id\":14,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-16 17:25:10', '2026-03-18 02:05:20'),
+(58, 'fire_safety', 'fire_safety', 3, 1, 'room_update', 'Room Updated: 01', 'Adan Kristopher B. Dumpit updated room 01. Changes: Secondary Exit: Yes', 'see_inspection', NULL, '{\"room_id\":95,\"school_id\":13,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-16 17:37:18', '2026-03-18 02:05:20'),
+(59, 'fire_safety', 'fire_safety', 3, 1, 'alarm_due', 'Alarm Tested: 11', 'Alarm 11 has been tested successfully.', 'go_test', NULL, '{\"alarm_id\":33,\"school_id\":13}', 1, '2026-03-16 17:40:29', '2026-03-18 02:05:20'),
+(60, 'fire_safety', 'fire_safety', 3, 1, 'room_update', 'Room Updated: 01', 'Adan Kristopher B. Dumpit updated room 01. Changes: Secondary Exit: Yes', 'see_inspection', NULL, '{\"room_id\":96,\"school_id\":13,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-16 17:51:12', '2026-03-18 02:05:20'),
+(61, 'fire_safety', 'fire_safety', 3, 4, 'room_approval', 'New Room Created (Pending Approval)', 'Contributor Zaldy Danaytan, Jr. created a new room and it requires administrator approval.', NULL, NULL, '{\"posted_by\":\"Zaldy Danaytan, Jr.\"}', 1, '2026-03-16 18:07:56', '2026-03-18 02:05:20'),
+(62, 'fire_safety', 'fire_safety', 3, 4, 'extinguisher_inspection', 'Extinguisher Inspected: FR-XT 02', 'Extinguisher FR-XT 02 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":65,\"school_id\":13}', 1, '2026-03-16 18:09:56', '2026-03-18 02:05:20'),
+(63, 'fire_safety', 'fire_safety', 3, 1, 'room_approval', 'Room Update Approved', 'Room 04 has been approved by Adan Kristopher B. Dumpit.', 'see_inspection', NULL, '{\"room_id\":131,\"school_id\":13,\"status\":\"approved\"}', 1, '2026-03-16 18:10:48', '2026-03-18 02:05:20'),
+(64, 'fire_safety', 'fire_safety', 3, 1, 'evacuation_plan', 'Evacuation Map Updated: Bangal Integrated School', 'Adan Kristopher B. Dumpit updated the evacuation map layout. Details: attached file here in bangal', NULL, NULL, '{\"plan_type\":\"map\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-17 03:38:58', '2026-03-18 02:05:20'),
+(65, 'fire_safety', 'fire_safety', 3, 4, 'extinguisher_inspection', 'Extinguisher Inspected: FR-XT 01', 'Extinguisher FR-XT 01 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":66,\"school_id\":13}', 1, '2026-03-17 05:20:42', '2026-03-18 02:05:20'),
+(66, 'fire_safety', 'fire_safety', 3, 4, 'room_approval', 'New Room Created (Pending Approval)', 'Contributor Zaldy Danaytan, Jr. created a new room and it requires administrator approval.', NULL, NULL, '{\"posted_by\":\"Zaldy Danaytan, Jr.\"}', 1, '2026-03-17 05:22:24', '2026-03-18 02:05:20'),
+(67, 'fire_safety', 'fire_safety', 3, 4, 'room_approval', 'Room Update Pending Approval: 01', 'Zaldy Danaytan, Jr. updated room 01 and it requires administrator approval. Changes: Secondary Exit: Yes', 'see_inspection', NULL, '{\"room_id\":132,\"school_id\":13,\"status\":\"pending\",\"updated_by\":\"Zaldy Danaytan, Jr.\"}', 1, '2026-03-17 05:22:38', '2026-03-18 02:05:20'),
+(68, 'fire_safety', 'fire_safety', 3, 4, 'building_update', 'Building Updated: 03', 'Zaldy Danaytan, Jr. updated building 03. Changes: Required Extinguishers: 1', NULL, NULL, '{\"building_id\":53,\"school_id\":13,\"updated_by\":\"Zaldy Danaytan, Jr.\"}', 1, '2026-03-17 05:47:32', '2026-03-18 02:05:20'),
+(69, 'fire_safety', 'fire_safety', 3, 1, 'building_update', 'Building Updated: 03', 'Adan Kristopher B. Dumpit updated building 03. Changes: Description updated', NULL, NULL, '{\"building_id\":53,\"school_id\":13,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-17 06:06:32', '2026-03-18 02:05:20'),
+(70, 'fire_safety', 'fire_safety', 3, 1, 'building_update', 'Building Updated: 05', 'Adan Kristopher B. Dumpit updated building 05. Changes: Description updated', NULL, NULL, '{\"building_id\":61,\"school_id\":13,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-17 06:08:04', '2026-03-18 02:05:20'),
+(71, 'fire_safety', 'fire_safety', 3, 1, 'building_update', 'Building Updated: 04', 'Adan Kristopher B. Dumpit updated building 04. Changes: Building No: 04', NULL, NULL, '{\"building_id\":61,\"school_id\":13,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-17 06:08:42', '2026-03-18 02:05:20'),
+(72, 'fire_safety', 'fire_safety', 3, 1, 'extinguisher_inspection', 'Extinguisher Inspected: 04', 'Extinguisher 04 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":67,\"school_id\":13}', 1, '2026-03-17 06:12:08', '2026-03-18 02:05:20'),
+(73, 'fire_safety', 'fire_safety', 3, 1, 'extinguisher_inspection', 'Extinguisher Inspected: 02', 'Extinguisher 02 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":66,\"school_id\":13}', 1, '2026-03-17 06:12:36', '2026-03-18 02:05:20'),
+(74, 'fire_safety', 'fire_safety', 3, 1, 'extinguisher_inspection', 'Extinguisher Inspected: 03', 'Extinguisher 03 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":65,\"school_id\":13}', 1, '2026-03-17 06:12:57', '2026-03-18 02:05:20'),
+(75, 'fire_safety', 'fire_safety', 3, 1, 'building_update', 'Building Updated: 07', 'Adan Kristopher B. Dumpit updated building 07. Changes: Description updated', NULL, NULL, '{\"building_id\":64,\"school_id\":13,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-17 06:23:59', '2026-03-18 02:05:20'),
+(76, 'fire_safety', 'fire_safety', 3, 1, 'building_update', 'Building Updated: 06', 'Adan Kristopher B. Dumpit updated building 06. Changes: Description updated', NULL, NULL, '{\"building_id\":63,\"school_id\":13,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-17 06:24:32', '2026-03-18 02:05:20'),
+(77, 'fire_safety', 'fire_safety', 3, 1, 'room_update', 'Room Updated: 01', 'Adan Kristopher B. Dumpit updated room 01. Changes: Secondary Exit: No', 'see_inspection', NULL, '{\"room_id\":136,\"school_id\":13,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-17 06:28:19', '2026-03-18 02:05:20'),
+(78, 'fire_safety', 'fire_safety', 3, 1, 'extinguisher_inspection', 'Extinguisher Inspected: 06', 'Extinguisher 06 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":69,\"school_id\":13}', 1, '2026-03-17 06:41:29', '2026-03-18 02:05:20'),
+(79, 'fire_safety', 'fire_safety', 3, 1, 'room_update', 'Room Updated: 02', 'Adan Kristopher B. Dumpit updated room 02. Changes: Code: 01', 'see_inspection', NULL, '{\"room_id\":144,\"school_id\":13,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-17 06:47:55', '2026-03-18 02:05:20'),
+(80, 'fire_safety', 'fire_safety', 3, 1, 'building_update', 'Building Updated: 09', 'Adan Kristopher B. Dumpit updated building Fil-Chi. Changes: Name: Fil-Chi', NULL, NULL, '{\"building_id\":66,\"school_id\":13,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-17 07:02:48', '2026-03-18 02:05:20'),
+(81, 'fire_safety', 'fire_safety', 3, 1, 'evacuation_plan', 'Evacuation Map Updated: Bangal Integrated School', 'Adan Kristopher B. Dumpit updated the evacuation map layout. Details: Map updated', NULL, NULL, '{\"plan_type\":\"map\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-17 07:08:54', '2026-03-18 02:05:20'),
+(82, 'fire_safety', 'fire_safety', 3, 1, 'inspection', 'Inspection Completed: Fire', 'Fire inspection at Bangal Integrated School on 2026-03-17. Monitored by: John Benedict G. Pecson', 'see_inspection', NULL, '{\"inspection_id\":5,\"school_id\":\"13\"}', 1, '2026-03-17 07:17:36', '2026-03-18 02:05:20'),
+(83, 'fire_safety', 'fire_safety', 8, 1, 'alarm_update', 'Alarm Updated: 01', 'Adan Kristopher B. Dumpit updated alarm 01. Changes: Status: Active, Location: Between Room 8 and 9 and possibly 7, Notes updated', 'go_test', NULL, '{\"alarm_id\":25,\"school_id\":18,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-18 01:07:17', '2026-03-18 02:05:20'),
+(84, 'fire_safety', 'fire_safety', 1, 1, 'alarm_update', 'Alarm Updated: ALARM-03', 'Adan Kristopher B. Dumpit updated alarm ALARM-03. Changes: Last Test: 2026-03-19', 'go_test', NULL, '{\"alarm_id\":37,\"school_id\":21,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-19 02:32:35', '2026-03-29 02:31:03'),
+(85, 'fire_safety', 'fire_safety', 1, 1, 'extinguisher_inspection', 'Extinguisher Inspected: FRXT-08', 'Extinguisher FRXT-08 was inspected. Status: Maintenance, Pressure: 20%', 'update_now', NULL, '{\"extinguisher_id\":81,\"school_id\":21}', 1, '2026-03-19 02:58:31', '2026-03-29 02:31:03'),
+(86, 'fire_safety', 'fire_safety', 1, 1, 'room_update', 'Room Updated: 02', 'Adan Kristopher B. Dumpit updated room 02. Changes: Remarks updated', 'see_inspection', NULL, '{\"room_id\":171,\"school_id\":21,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-19 03:08:40', '2026-03-29 02:31:03'),
+(87, 'fire_safety', 'fire_safety', 1, 1, 'room_update', 'Room Updated: 01', 'Adan Kristopher B. Dumpit updated room 01. Changes: Smoke Detector Required: Yes', 'see_inspection', NULL, '{\"room_id\":176,\"school_id\":21,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-19 03:12:44', '2026-03-29 02:31:03'),
+(88, 'fire_safety', 'fire_safety', 1, 1, 'extinguisher_inspection', 'Extinguisher Inspected: FRXT-19', 'Extinguisher FRXT-19 was inspected. Status: Purchase, Pressure: 0%', 'update_now', NULL, '{\"extinguisher_id\":77,\"school_id\":21}', 1, '2026-03-19 03:18:41', '2026-03-29 02:31:03'),
+(89, 'fire_safety', 'fire_safety', 1, 1, 'building_update', 'Building Updated: 06', 'Adan Kristopher B. Dumpit updated building 06. Changes: Required Extinguishers: 6', NULL, NULL, '{\"building_id\":73,\"school_id\":21,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-19 03:25:57', '2026-03-29 02:31:03'),
+(90, 'fire_safety', 'fire_safety', 1, 1, 'building_update', 'Building Updated: 01', 'Adan Kristopher B. Dumpit updated building 01. Changes: Safety Features updated', NULL, NULL, '{\"building_id\":68,\"school_id\":21,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-19 06:29:17', '2026-03-29 02:31:03'),
+(91, 'fire_safety', 'fire_safety', 1, 1, 'alarm_update', 'Alarm Updated: ALARM-01', 'Adan Kristopher B. Dumpit updated alarm ALARM-01. Changes: Notes updated', 'go_test', NULL, '{\"alarm_id\":35,\"school_id\":21,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-19 06:33:39', '2026-03-29 02:31:03'),
+(92, 'fire_safety', 'fire_safety', 1, 1, 'alarm_update', 'Alarm Updated: ALARM-02', 'Adan Kristopher B. Dumpit updated alarm ALARM-02. Changes: Notes updated', 'go_test', NULL, '{\"alarm_id\":36,\"school_id\":21,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-19 06:47:34', '2026-03-29 02:31:03'),
+(93, 'fire_safety', 'fire_safety', 5, 1, 'extinguisher_inspection', 'Extinguisher Inspected: FRXT-01', 'Extinguisher FRXT-01 was inspected. Status: Maintenance, Pressure: 57%', 'update_now', NULL, '{\"extinguisher_id\":57,\"school_id\":15}', 1, '2026-03-19 08:00:17', '2026-03-29 02:31:03'),
+(94, 'fire_safety', 'fire_safety', 4, NULL, 'alarm_due', 'Alarm Test Due Today: ALRM-002', 'Alarm ALRM-002 is scheduled for testing today.', 'go_test', NULL, '{\"alarm_id\":32,\"school_id\":14}', 1, '2026-03-22 23:53:55', '2026-03-29 02:31:03'),
 (95, 'typhoon_flood', 'announcement', NULL, 1, 'announcement', 'Event Nomalization', 'To normalize the new gasoline savings', 'mark_read', NULL, '{\"urgency\":\"info\"}', 1, '2026-03-23 01:40:52', '2026-03-23 01:41:05'),
-(96, 'fire_safety', 'fire_safety', 17, NULL, 'alarm_due', 'Alarm Test Due Today: 001', 'Alarm 001 is scheduled for testing today.', 'go_test', NULL, '{\"alarm_id\":20,\"school_id\":17}', 0, '2026-03-25 02:47:08', '2026-03-25 02:47:08');
+(96, 'fire_safety', 'fire_safety', 7, NULL, 'alarm_due', 'Alarm Test Due Today: 001', 'Alarm 001 is scheduled for testing today.', 'go_test', NULL, '{\"alarm_id\":20,\"school_id\":17}', 1, '2026-03-25 02:47:08', '2026-03-29 02:31:03'),
+(97, 'fire_safety', 'fire_safety', 4, NULL, 'alarm_due', 'Alarm Test Due Today: AlRM-001', 'Alarm AlRM-001 is scheduled for testing today.', 'go_test', NULL, '{\"alarm_id\":31,\"school_id\":14}', 1, '2026-03-26 07:00:11', '2026-03-29 02:31:03'),
+(98, 'fire_safety', 'fire_safety', 1, 1, 'building_update', 'Building Updated: 011', 'Adan Kristopher B. Dumpit updated building 011. Changes: Building No: 011, Name: 011, Year Constructed: 1995, Last Renovation: 1996, Safety Features updated, Required Extinguishers: 5', NULL, NULL, '{\"building_id\":17,\"unified_school_id\":1,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-29 01:12:37', '2026-03-29 02:31:03'),
+(99, 'fire_safety', 'fire_safety', 1, 1, 'alarm_update', 'Alarm Updated: ALRM-003', 'Adan Kristopher B. Dumpit updated alarm ALRM-003. Changes: Status: Broken, Manufacturer: curuosh, Floor Level changed', 'go_test', NULL, '{\"alarm_id\":14,\"unified_school_id\":1,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-29 01:12:59', '2026-03-29 02:31:03'),
+(100, 'fire_safety', 'fire_safety', 1, 1, 'building_update', 'Building Updated: 011', 'Adan Kristopher B. Dumpit updated building 011. Changes: Safety Features updated, Floor 2 and its associated safety systems were archived and removed.', NULL, NULL, '{\"building_id\":17,\"unified_school_id\":1,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-29 02:26:32', '2026-03-29 02:31:03'),
+(101, 'fire_safety', 'fire_safety', 1, 1, 'building_update', 'Building Updated: 01', 'Adan Kristopher B. Dumpit updated building 011. Changes: Building No: 01, Emergency Exits: 0', NULL, NULL, '{\"building_id\":17,\"unified_school_id\":1,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-29 02:27:04', '2026-03-29 02:31:03'),
+(102, 'fire_safety', 'fire_safety', 1, 1, 'extinguisher_inspection', 'Extinguisher Inspected: EXT-0012', 'Extinguisher EXT-0012 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":19,\"unified_school_id\":1}', 1, '2026-03-29 02:30:29', '2026-03-29 02:31:03'),
+(103, 'fire_safety', 'fire_safety', 1, 1, 'extinguisher_inspection', 'Extinguisher Inspected: EXT-001', 'Extinguisher EXT-001 was inspected. Status: Active, Pressure: 100%', 'update_now', NULL, '{\"extinguisher_id\":19,\"unified_school_id\":1}', 1, '2026-03-29 02:30:42', '2026-03-29 02:31:03'),
+(104, 'fire_safety', 'fire_safety', 1, 1, 'evacuation_plan', 'Evacuation Plan Updated: PLAN AB', 'Adan Kristopher B. Dumpit updated evacuation plan \"PLAN AB\" - School-Wide Plan', NULL, NULL, '{\"plan_id\":1,\"plan_type\":\"school\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-29 02:32:51', '2026-04-07 01:00:54'),
+(105, 'fire_safety', 'fire_safety', 1, 1, 'evacuation_plan', 'Evacuation Plan Updated: PLAN A', 'Adan Kristopher B. Dumpit updated evacuation plan \"PLAN A\" - School-Wide Plan', NULL, NULL, '{\"plan_id\":1,\"plan_type\":\"school\",\"posted_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-29 02:32:59', '2026-04-07 01:00:54'),
+(106, 'fire_safety', 'fire_safety', 1, 1, 'alarm_update', 'Alarm Updated: ALRM-001', 'Adan Kristopher B. Dumpit updated alarm ALRM-001. Changes: Floor Level changed', 'go_test', NULL, '{\"alarm_id\":12,\"unified_school_id\":1,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-03-30 01:10:44', '2026-04-07 01:00:54'),
+(107, 'typhoon_flood', 'announcement', NULL, 1, 'announcement', 'Tropical Storms', 'B e ready', 'mark_read', NULL, '{\"urgency\":\"warning\"}', 1, '2026-04-07 00:20:54', '2026-04-07 00:21:05'),
+(108, 'fire_safety', 'fire_safety', 9, 1, 'alarm_update', 'Alarm Updated: 01', 'Adan Kristopher B. Dumpit updated alarm 01. Changes: Notes updated', 'go_test', NULL, '{\"alarm_id\":43,\"unified_school_id\":9,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-04-07 00:29:52', '2026-04-07 01:00:54'),
+(109, 'fire_safety', 'fire_safety', 9, 1, 'building_update', 'Building Updated: 01', 'Adan Kristopher B. Dumpit updated building 01. Changes: Required Extinguishers: 3', NULL, NULL, '{\"building_id\":75,\"unified_school_id\":9,\"updated_by\":\"Adan Kristopher B. Dumpit\"}', 1, '2026-04-07 00:45:51', '2026-04-07 01:00:54');
 
 -- --------------------------------------------------------
 
@@ -1888,6 +1655,125 @@ INSERT INTO `password_reset_tokens` (`email`, `token`, `created_at`) VALUES
 ('adankristopher.dumpit@gmail.com', '$2y$12$8CH4LamfoUmrt7Trg13ub.CM358r8nmWiZlEWHapo6MM2WB4zMQRm', '2026-03-16 17:22:51'),
 ('example@gmail.com', '$2y$12$fjGRid7.gJ86HnhRJWmZf.xvVD8GrOofoFYf.q4En00zGnsxA38re', '2026-03-04 21:49:18'),
 ('kristopheradan59@gmail.com', '$2y$12$S8N/qa.Ost6/Ghgkb3MmqebsZgw27CYT1yyOAW5gK5qHhrZgtwvP.', '2026-02-17 22:03:09');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `schools`
+--
+
+CREATE TABLE `schools` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `school_id` varchar(255) DEFAULT NULL COMMENT 'DepEd school ID from fire safety module',
+  `school_id_number` varchar(255) DEFAULT NULL COMMENT 'DepEd school ID from comprehensive module',
+  `school_name` varchar(255) NOT NULL COMMENT 'Canonical school name',
+  `address` text DEFAULT NULL,
+  `school_head` varchar(255) DEFAULT NULL,
+  `drrm_coordinator` varchar(255) DEFAULT NULL,
+  `contact_number` varchar(255) DEFAULT NULL,
+  `contact_number_2` varchar(255) DEFAULT NULL,
+  `district` varchar(255) DEFAULT NULL,
+  `division` varchar(255) DEFAULT NULL,
+  `region` varchar(255) DEFAULT NULL,
+  `evacuation_map_layout` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`evacuation_map_layout`)),
+  `attached_evacuation_map` varchar(255) DEFAULT NULL,
+  `fire_safety_status` varchar(255) NOT NULL DEFAULT 'unconfigured',
+  `alerts` longtext DEFAULT NULL,
+  `events` longtext DEFAULT NULL,
+  `replies` longtext DEFAULT NULL,
+  `identification` varchar(255) DEFAULT NULL,
+  `evacuation_identification` varchar(255) DEFAULT NULL COMMENT 'Evacuation center identification',
+  `evacuation_location` varchar(255) DEFAULT NULL COMMENT 'Readable evacuation center location',
+  `evacuation_capacity` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `number_students` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `number_personnel` int(10) UNSIGNED NOT NULL DEFAULT 0,
+  `operational_status` varchar(255) NOT NULL DEFAULT 'operational' COMMENT 'operational|partial|closed',
+  `evacuation_status` varchar(255) NOT NULL DEFAULT 'cleared' COMMENT 'occupied|full|cleared (was usage_status)',
+  `occupancy_safety` varchar(255) NOT NULL DEFAULT 'safe' COMMENT 'safe|warning|critical',
+  `emergency_resources` text DEFAULT NULL,
+  `emergency_resources_status` varchar(255) DEFAULT NULL COMMENT 'Low/Moderate/High',
+  `needs_summary` varchar(255) DEFAULT NULL COMMENT 'Quick badge summary on dashboard',
+  `monitoring_status` varchar(255) DEFAULT NULL,
+  `reports_status` varchar(255) DEFAULT NULL,
+  `incident_count` int(11) NOT NULL DEFAULT 0,
+  `last_incident_date` date DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `schools`
+--
+
+INSERT INTO `schools` (`id`, `school_id`, `school_id_number`, `school_name`, `address`, `school_head`, `drrm_coordinator`, `contact_number`, `contact_number_2`, `district`, `division`, `region`, `evacuation_map_layout`, `attached_evacuation_map`, `fire_safety_status`, `alerts`, `events`, `replies`, `identification`, `evacuation_identification`, `evacuation_location`, `evacuation_capacity`, `number_students`, `number_personnel`, `operational_status`, `evacuation_status`, `occupancy_safety`, `emergency_resources`, `emergency_resources_status`, `needs_summary`, `monitoring_status`, `reports_status`, `incident_count`, `last_incident_date`, `created_at`, `updated_at`) VALUES
+(1, '107121', '107121', 'Iram I Elementary School', 'Iram resettlement Area New Cabalan', 'Mr. Raymund F Camacho', 'Eleazar Arazadon', NULL, NULL, 'Unknown', NULL, NULL, '{\"building_17\":{\"x\":59,\"y\":765,\"rotation\":270,\"width\":280.66317038371176,\"height\":140},\"building_19\":{\"x\":549,\"y\":160,\"rotation\":0,\"width\":300,\"height\":136.66666666666669},\"building_20\":{\"x\":1328,\"y\":387,\"rotation\":90,\"width\":300,\"height\":185},\"building_21\":{\"x\":1061,\"y\":15,\"rotation\":90,\"width\":300,\"height\":185},\"building_22\":{\"x\":590,\"y\":0,\"rotation\":0,\"width\":220,\"height\":151.82492710705836},\"building_23\":{\"x\":239,\"y\":499,\"rotation\":270,\"width\":220,\"height\":140},\"building_24\":{\"x\":1093,\"y\":428,\"rotation\":90,\"width\":220,\"height\":140},\"building_25\":{\"x\":1241,\"y\":0,\"rotation\":90,\"width\":300,\"height\":136.66666666666669},\"building_26\":{\"x\":206,\"y\":0,\"rotation\":0,\"width\":220,\"height\":140},\"building_27\":{\"x\":4,\"y\":411,\"rotation\":270,\"width\":300,\"height\":136.66666666666669},\"building_28\":{\"x\":918,\"y\":736,\"rotation\":0,\"width\":300,\"height\":185},\"facility_1772669252052\":{\"type\":\"facility\",\"name\":\"Covered Court\",\"description\":\"Basketball Court\",\"color\":\"#e83e8c\",\"x\":483,\"y\":421,\"width\":271.1495340327758,\"height\":486.052},\"facility_1772669381877\":{\"type\":\"facility\",\"name\":\"Exit Area\",\"description\":\"For students to take a path exit to school\",\"color\":\"#6c757d\",\"x\":300,\"y\":845,\"width\":200,\"height\":100},\"facility_1773793742149\":{\"type\":\"facility\",\"name\":\"STAGE\",\"description\":null,\"color\":\"#20c997\",\"x\":521,\"y\":322,\"width\":200,\"height\":100}}', 'evacuation_maps/R2VPdmt74QpLkxvohRp1GoKo8XUeqgmwXi6DsX3Q.png', 'unconfigured', NULL, NULL, NULL, NULL, NULL, NULL, 800, 0, 0, 'operational', 'cleared', 'safe', NULL, NULL, NULL, 'Active', NULL, 0, NULL, '2026-02-10 17:03:08', '2026-03-26 08:53:05'),
+(2, '1', '1', 'Mabayuan Elementary School', 'Otero Avenue, Mabayuan, Olongapo City, Central Luzon, Philippines', 'Froilan N. Rivas', 'Jeffrey C. Mabini', NULL, NULL, 'Unknown', NULL, NULL, NULL, NULL, 'unconfigured', NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 'operational', 'cleared', 'safe', NULL, NULL, NULL, NULL, NULL, 0, NULL, '2026-02-12 19:21:22', '2026-03-26 08:53:05'),
+(3, '502678', '502678', 'Bangal Integrated School', 'National Hi-Way, Purok 6, New Cabalan, Olongapo City, Zambales, Philippines, 2200', 'Nestor Sison', 'Nestor Sison', NULL, NULL, 'Unknown', NULL, NULL, '{\"building_50\":{\"x\":574,\"y\":94,\"rotation\":0,\"width\":300,\"height\":330},\"building_51\":{\"x\":421,\"y\":475,\"rotation\":0,\"width\":307.198,\"height\":353.68138696814253},\"building_53\":{\"x\":1247,\"y\":55,\"rotation\":90,\"width\":300,\"height\":330},\"building_61\":{\"x\":103,\"y\":589,\"rotation\":270,\"width\":255.61356449469042,\"height\":140},\"building_62\":{\"x\":1008,\"y\":695,\"rotation\":90,\"width\":300,\"height\":136.66666666666669},\"building_63\":{\"x\":103,\"y\":954,\"rotation\":270,\"width\":341.98736660796465,\"height\":143.865},\"building_64\":{\"x\":720,\"y\":409,\"rotation\":0,\"width\":300,\"height\":185},\"building_65\":{\"x\":202,\"y\":80,\"rotation\":0,\"width\":300,\"height\":185},\"building_66\":{\"x\":1219,\"y\":487,\"rotation\":90,\"width\":300,\"height\":185}}', 'evacuation_maps/3mP2oJnOUg18vPj5jdnjkyxK7M1X7rRT448Wg32V.jpg', 'unconfigured', '[{\"id\":\"69a926ad26cad\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Zaldy Danaytan, Jr. created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-05 06:46:05\"},{\"id\":\"69a926f41d9ab\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Zaldy Danaytan, Jr. created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-05 06:47:16\"}]', NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 'operational', 'cleared', 'safe', NULL, NULL, NULL, NULL, NULL, 0, NULL, '2026-02-16 00:29:57', '2026-03-26 08:53:05'),
+(4, '107119', '107119', 'Boton ES', 'Pinagpala Street, Purok 4, New Cabalan, Olongapo City, 2200, Philippine', 'Dolores A. Umbina', 'Dolores A. Umbina', NULL, NULL, 'Unknown', NULL, NULL, '{\"building_57\":{\"x\":160,\"y\":595,\"rotation\":270,\"width\":300,\"height\":136.66666666666669},\"building_58\":{\"x\":394,\"y\":87,\"rotation\":0,\"width\":300,\"height\":233.33333333333334},\"building_59\":{\"x\":968,\"y\":130,\"rotation\":90,\"width\":300,\"height\":112.5},\"facility_1773213058363\":{\"type\":\"facility\",\"name\":\"Assembly Area\",\"description\":\"1st and largest assembly area\",\"color\":\"#fd7e14\",\"x\":338,\"y\":355,\"width\":409.6270893320134,\"height\":236.86817974826755},\"facility_1773213084435\":{\"type\":\"facility\",\"name\":\"Secondary Assembly Area\",\"description\":null,\"color\":\"#20c997\",\"x\":803,\"y\":512,\"width\":251.854994578796,\"height\":172.59699241031444},\"facility_1773213098851\":{\"type\":\"facility\",\"name\":\"Garden\",\"description\":null,\"color\":\"#28a745\",\"x\":40,\"y\":102,\"width\":308.4240795738462,\"height\":151.85481374628765}}', NULL, 'unconfigured', '[{\"id\":\"69b0d6458b7d4\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 02:41:09\"},{\"id\":\"69b0d96d0b07d\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 02:54:37\"},{\"id\":\"69b0d98697427\",\"title\":\"Room Update Approved\",\"description\":\"Your update for room 01 has been approved by the administrator.\",\"type\":\"success\",\"created_at\":\"2026-03-11 02:55:02\"},{\"id\":\"69b0d986c0e1e\",\"title\":\"Room Update Approved\",\"description\":\"Your update for room 01 has been approved by the administrator.\",\"type\":\"success\",\"created_at\":\"2026-03-11 02:55:02\"},{\"id\":\"69b0d9af997f1\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Dolores A. Umbina updated room 91 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 02:55:43\"},{\"id\":\"69b0d9afcf794\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Dolores A. Umbina updated room 01 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 02:55:43\"},{\"id\":\"69b0d9b77690d\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Dolores A. Umbina updated room 01 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 02:55:51\"},{\"id\":\"69b0d9d686b78\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 02:56:22\"},{\"id\":\"69b0da8ed5e05\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 02:59:26\"},{\"id\":\"69b0daa83d199\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Dolores A. Umbina updated room ADMN-01 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 02:59:52\"},{\"id\":\"69b0dadea8133\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:00:46\"},{\"id\":\"69b0db0304514\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Dolores A. Umbina updated room LB-01 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:01:23\"},{\"id\":\"69b0db35a952a\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:02:13\"},{\"id\":\"69b0e3209337f\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:36:00\"},{\"id\":\"69b0e348d75f5\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Dolores A. Umbina updated room te65 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:36:40\"},{\"id\":\"69b0e368149f6\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:37:12\"},{\"id\":\"69b0e3860b1b7\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:37:42\"},{\"id\":\"69b0e395a7b2e\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:37:57\"},{\"id\":\"69b0e41443c2a\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:40:04\"},{\"id\":\"69b0e42e21204\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Dolores A. Umbina updated room 04 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:40:30\"},{\"id\":\"69b0e460b0ab5\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:41:20\"},{\"id\":\"69b0e4c318101\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:42:59\"},{\"id\":\"69b0e57374c10\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:45:55\"},{\"id\":\"69b0e5a3cfde6\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:46:43\"},{\"id\":\"69b0e5be6ba49\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:47:10\"},{\"id\":\"69b0e5dd9a344\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Dolores A. Umbina created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 03:47:41\"},{\"id\":\"69b100f6cfe0d\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Dolores A. Umbina updated room 04 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 05:43:18\"},{\"id\":\"69b100f7461bb\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Dolores A. Umbina updated room 04 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 05:43:19\"},{\"id\":\"69b10161206da\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Dolores A. Umbina updated room 04 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-11 05:45:05\"},{\"id\":\"69b10180381bb\",\"title\":\"Room Update Approved\",\"description\":\"Your update for room 04 has been approved by the administrator.\",\"type\":\"success\",\"created_at\":\"2026-03-11 05:45:36\"},{\"id\":\"69b111ece3494\",\"title\":\"Room Update Approved\",\"description\":\"Your update for room 05 has been approved by the administrator.\",\"type\":\"success\",\"created_at\":\"2026-03-11 06:55:40\"},{\"id\":\"69b211f590fd8\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Dolores A. Umbina updated room 02 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-12 01:08:05\"},{\"id\":\"69b211f5e9f51\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Dolores A. Umbina updated room 02 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-12 01:08:05\"}]', '[{\"id\":\"69b2282e51c41\",\"title\":\"The stray and stucky event\",\"description\":\"To provide stray animals more comfort adopt it for the students or pet them temporarily\",\"date\":\"2026-03-20\",\"time\":\"11:00\",\"posted_by\":\"Adan Kristopher B. Dumpit\",\"created_at\":\"2026-03-12 02:42:54\"}]', NULL, NULL, NULL, NULL, 0, 0, 0, 'operational', 'cleared', 'safe', NULL, NULL, NULL, NULL, NULL, 0, NULL, '2026-02-16 00:30:55', '2026-03-26 08:53:05'),
+(5, '162002', '162002', 'Amelia Heights ES', 'Barangay New Cabalan, Olongapo City, Philippines', 'Laura Managbanag', 'Laura Managbanag', NULL, NULL, 'Unknown', NULL, NULL, NULL, NULL, 'unconfigured', NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 'operational', 'cleared', 'safe', NULL, NULL, NULL, NULL, NULL, 1, '2026-03-19', '2026-02-16 00:35:07', '2026-03-26 08:53:05'),
+(6, '305898', '305898', 'New Cabalan Senior High School', 'Lopez Jaena Street, Purok 2, in Barangay New Cabalan, Olongapo City, 2200 Zambales', 'Erwin A. Bucasas, EdD', 'Erwin A. Bucasas, EdD', NULL, NULL, 'Unknown', NULL, NULL, '{\"building_48\":{\"x\":608,\"y\":259,\"rotation\":90}}', NULL, 'unconfigured', '[{\"id\":\"6995083f52f87\",\"title\":\"Fire Evacuation Plan to be action\",\"description\":\"To evacuate students safely\",\"type\":\"warning\",\"created_at\":\"2026-02-18 00:30:55\"},{\"id\":\"69a7dbfaad964\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Ragdoll@gmail.com created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-04 07:15:06\"},{\"id\":\"69a7dc31bc036\",\"title\":\"Room Update Approved\",\"description\":\"Your update for room 01 has been approved by the administrator.\",\"type\":\"success\",\"created_at\":\"2026-03-04 07:16:01\"},{\"id\":\"69a7e3983dcf2\",\"title\":\"Room Update Pending Approval\",\"description\":\"Contributor Ragdoll@gmail.com updated room 01 and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-04 07:47:36\"},{\"id\":\"69a7e3c98fb46\",\"title\":\"Room Update Approved\",\"description\":\"Your update for room 01 has been approved by the administrator.\",\"type\":\"success\",\"created_at\":\"2026-03-04 07:48:25\"},{\"id\":\"69a917724226f\",\"title\":\"New Room Created (Pending Approval)\",\"description\":\"Contributor Zaldy Danaytan, Jr. created a new room and it requires administrator approval.\",\"type\":\"warning\",\"created_at\":\"2026-03-05 05:41:06\"}]', NULL, '[{\"id\":\"69967d78a2c13\",\"item_id\":\"6995083f52f87\",\"user_name\":\"Adan Kristopher B. Dumpit\",\"user_role\":\"admin\",\"message\":\"Not so okay?\",\"created_at\":\"2026-02-19 03:03:20\"}]', NULL, NULL, NULL, 0, 0, 0, 'operational', 'cleared', 'safe', NULL, NULL, NULL, NULL, NULL, 0, NULL, '2026-02-17 16:24:30', '2026-03-26 08:53:05'),
+(7, '345224', '345224', 'Mabayuan Senior High School', 'Otero Avenue, Mabayuan, Olongapo City', 'Albert Llego', 'ON PROCESS', NULL, NULL, 'Unknown', NULL, NULL, '{\"building_32\":{\"x\":50,\"y\":50},\"building_33\":{\"x\":370,\"y\":50},\"building_34\":{\"x\":674,\"y\":31},\"building_35\":{\"x\":1010,\"y\":50}}', NULL, 'unconfigured', NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 'operational', 'cleared', 'safe', NULL, NULL, NULL, NULL, NULL, 0, NULL, '2026-03-01 18:16:24', '2026-03-26 08:53:05'),
+(8, '107136', '107136', 'Nellie E. Brown Elementary School', '#17 Davidson St. West Bajac Bajac', 'Letecia F. Farne', 'Kriz Anne A Hemenez', NULL, NULL, 'Unknown', NULL, NULL, '{\"building_36\":{\"x\":1216,\"y\":513,\"rotation\":0,\"width\":538.876,\"height\":195.62027851791396},\"building_37\":{\"x\":435,\"y\":149,\"rotation\":0,\"width\":300,\"height\":136.66666666666669},\"building_38\":{\"x\":882,\"y\":1,\"rotation\":90,\"width\":300,\"height\":136.66666666666669},\"building_39\":{\"x\":339,\"y\":0,\"rotation\":0,\"width\":300,\"height\":136.66666666666669},\"building_40\":{\"x\":0,\"y\":369,\"rotation\":270,\"width\":391.42478314455144,\"height\":330},\"building_41\":{\"x\":417,\"y\":369,\"rotation\":0,\"width\":220,\"height\":184.6834374989679},\"building_42\":{\"x\":1118,\"y\":0,\"rotation\":90,\"width\":300,\"height\":136.66666666666669},\"building_43\":{\"x\":815,\"y\":615,\"rotation\":0,\"width\":300,\"height\":330},\"building_44\":{\"x\":1599,\"y\":485,\"rotation\":180,\"width\":404.03390958660714,\"height\":389.447},\"building_45\":{\"x\":193,\"y\":871,\"rotation\":0,\"width\":300,\"height\":330},\"building_46\":{\"x\":743,\"y\":370,\"rotation\":0,\"width\":220,\"height\":140},\"building_47\":{\"x\":589,\"y\":614,\"rotation\":0,\"width\":220,\"height\":276.3455611440555},\"facility_1773194696679\":{\"type\":\"facility\",\"name\":\"Evacuation Area\",\"description\":null,\"color\":\"#6f42c1\",\"x\":1448,\"y\":835,\"width\":326.9176772893508,\"height\":256.2063720484318}}', NULL, 'unconfigured', NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 'operational', 'cleared', 'safe', NULL, NULL, NULL, NULL, NULL, 0, NULL, '2026-03-02 22:54:00', '2026-03-26 08:53:05'),
+(9, '107122', '107122', 'New Cabalan Elementary School', 'Barangay New Cabalan, Olongapo City, Zambales, Philippines', 'Marites A. Calara', 'Denver Faenticilia', NULL, NULL, 'Unknown', NULL, NULL, '{\"building_75\":{\"x\":100,\"y\":100,\"rotation\":0,\"width\":300,\"height\":707},\"building_76\":{\"x\":420,\"y\":100,\"rotation\":0,\"width\":300,\"height\":391},\"specific_1775524130884\":{\"type\":\"specific\",\"subType\":\"stairs\",\"x\":284,\"y\":148,\"rotation\":0,\"width\":60.736,\"height\":102.20809100155027}}', NULL, 'unconfigured', NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 'operational', 'cleared', 'safe', NULL, NULL, NULL, NULL, NULL, 0, NULL, '2026-03-04 18:32:48', '2026-04-07 01:09:01'),
+(10, '500135', '500135', 'Sergia Soriano Esteban Integrated School - Coral', 'Coral St. Kalaklan Olongapo City', 'Judith Jao', 'Judith Jao', NULL, NULL, 'Unknown', NULL, NULL, '{\"building_49\":{\"x\":58,\"y\":118,\"rotation\":0,\"width\":300,\"height\":185},\"building_52\":{\"x\":469,\"y\":158,\"rotation\":0,\"width\":274.2390041718834,\"height\":219.0985477506633},\"building_54\":{\"x\":836,\"y\":104,\"rotation\":0,\"width\":300,\"height\":185},\"building_55\":{\"x\":591,\"y\":562,\"rotation\":0,\"width\":300,\"height\":112.5},\"building_56\":{\"x\":177,\"y\":558,\"rotation\":0,\"width\":300,\"height\":330}}', NULL, 'unconfigured', NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 'operational', 'cleared', 'safe', NULL, NULL, NULL, NULL, NULL, 0, NULL, '2026-03-04 22:13:06', '2026-03-26 08:53:05'),
+(11, '107141', '107141', 'Tapinac Elementary School', '13th Street, East Tapinac', 'Joseph Gregorio', 'Joseph Gregorio', NULL, NULL, 'Unknown', NULL, NULL, '{\"building_68\":{\"x\":667,\"y\":70,\"rotation\":0,\"width\":220,\"height\":437.4289282601542},\"building_69\":{\"x\":1097,\"y\":29,\"rotation\":0,\"width\":220,\"height\":205.51749618564207},\"building_70\":{\"x\":1479,\"y\":354,\"rotation\":90,\"width\":220,\"height\":292.2754415181643},\"building_71\":{\"x\":1179,\"y\":275,\"rotation\":90,\"width\":294.0166934253433,\"height\":207.51193171052765},\"building_72\":{\"x\":568,\"y\":564,\"rotation\":0,\"width\":460,\"height\":275},\"building_73\":{\"x\":25,\"y\":518,\"rotation\":0,\"width\":540.7042869889913,\"height\":353.4307631499679},\"facility_1773891450543\":{\"type\":\"facility\",\"name\":\"STAGE\",\"description\":null,\"color\":\"#28a745\",\"x\":300,\"y\":253,\"width\":200,\"height\":100},\"facility_1773891474740\":{\"type\":\"facility\",\"name\":\"Covered Court\",\"description\":null,\"color\":\"#007bff\",\"x\":1,\"y\":114,\"width\":650.3576973248234,\"height\":348.11307812970654}}', NULL, 'unconfigured', NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 'operational', 'cleared', 'safe', NULL, NULL, NULL, NULL, NULL, 0, NULL, '2026-03-19 02:16:39', '2026-03-26 08:53:05'),
+(18, NULL, NULL, 'Integrated School at the Mabini High School', NULL, NULL, NULL, NULL, NULL, 'Unknown', NULL, NULL, NULL, NULL, 'unconfigured', NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 'operational', 'cleared', 'safe', NULL, NULL, NULL, NULL, NULL, 4, '2026-03-23', '2026-02-09 00:04:51', '2026-03-23 15:43:12'),
+(27, NULL, NULL, 'Deped SDO department', NULL, NULL, NULL, NULL, NULL, 'Unknown', NULL, NULL, NULL, NULL, 'unconfigured', NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 'operational', 'cleared', 'safe', NULL, NULL, NULL, NULL, NULL, 1, '2026-03-12', '2026-03-12 00:05:29', '2026-03-12 00:05:29'),
+(30, NULL, NULL, 'OLONGAPO CITY NATIONAL HIGH SCHOOL', NULL, NULL, NULL, NULL, NULL, 'Unknown', NULL, NULL, NULL, NULL, 'unconfigured', NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 'operational', 'cleared', 'safe', NULL, NULL, NULL, NULL, NULL, 1, '2026-03-19', '2026-03-19 00:33:45', '2026-03-19 00:33:45'),
+(31, NULL, NULL, 'Gordon Heights National High School', NULL, NULL, NULL, NULL, NULL, 'Unknown', NULL, NULL, NULL, NULL, 'unconfigured', NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 'operational', 'cleared', 'safe', NULL, NULL, NULL, NULL, NULL, 1, '2026-03-19', '2026-03-19 00:41:18', '2026-03-19 00:41:18');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `school_specifics_information`
+--
+
+CREATE TABLE `school_specifics_information` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `school_id` bigint(20) UNSIGNED NOT NULL,
+  `module` varchar(255) NOT NULL COMMENT 'fire_safety|incident|typhoon_flood|comprehensive',
+  `key` varchar(255) NOT NULL COMMENT 'The metadata key (e.g., original_id, needs_summary)',
+  `value` longtext DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `school_specifics_information`
+--
+
+INSERT INTO `school_specifics_information` (`id`, `school_id`, `module`, `key`, `value`, `created_at`, `updated_at`) VALUES
+(1, 1, 'fire_safety', 'original_fire_safety_id', '11', '2026-03-26 08:53:04', '2026-03-26 08:53:04'),
+(2, 2, 'fire_safety', 'original_fire_safety_id', '12', '2026-03-26 08:53:04', '2026-03-26 08:53:04'),
+(3, 3, 'fire_safety', 'original_fire_safety_id', '13', '2026-03-26 08:53:04', '2026-03-26 08:53:04'),
+(4, 4, 'fire_safety', 'original_fire_safety_id', '14', '2026-03-26 08:53:04', '2026-03-26 08:53:04'),
+(5, 5, 'fire_safety', 'original_fire_safety_id', '15', '2026-03-26 08:53:04', '2026-03-26 08:53:04'),
+(6, 6, 'fire_safety', 'original_fire_safety_id', '16', '2026-03-26 08:53:04', '2026-03-26 08:53:04'),
+(7, 7, 'fire_safety', 'original_fire_safety_id', '17', '2026-03-26 08:53:04', '2026-03-26 08:53:04'),
+(8, 8, 'fire_safety', 'original_fire_safety_id', '18', '2026-03-26 08:53:04', '2026-03-26 08:53:04'),
+(9, 9, 'fire_safety', 'original_fire_safety_id', '19', '2026-03-26 08:53:04', '2026-03-26 08:53:04'),
+(10, 10, 'fire_safety', 'original_fire_safety_id', '20', '2026-03-26 08:53:04', '2026-03-26 08:53:04'),
+(11, 11, 'fire_safety', 'original_fire_safety_id', '21', '2026-03-26 08:53:04', '2026-03-26 08:53:04'),
+(13, 1, 'comprehensive', 'original_cmpr_school_id', '1', '2026-03-26 08:53:04', '2026-03-26 08:53:04'),
+(24, 18, 'incident', 'marked_for_deletion', 'true', '2026-03-26 08:53:05', '2026-03-26 08:53:05'),
+(25, 18, 'incident', 'original_incident_school_id', '6', '2026-03-26 08:53:05', '2026-03-26 08:53:05'),
+(43, 27, 'incident', 'marked_for_deletion', 'true', '2026-03-26 08:53:05', '2026-03-26 08:53:05'),
+(44, 27, 'incident', 'original_incident_school_id', '16', '2026-03-26 08:53:05', '2026-03-26 08:53:05'),
+(49, 5, 'incident', 'original_incident_school_id', '19', '2026-03-26 08:53:05', '2026-03-26 08:53:05'),
+(50, 30, 'incident', 'original_incident_school_id', '20', '2026-03-26 08:53:05', '2026-03-26 08:53:05'),
+(51, 31, 'incident', 'original_incident_school_id', '21', '2026-03-26 08:53:05', '2026-03-26 08:53:05'),
+(52, 1, 'incident', 'original_incident_school_id', '22', '2026-03-26 08:53:05', '2026-03-26 08:53:05'),
+(53, 2, 'incident', 'original_incident_school_id', '23', '2026-03-26 08:53:05', '2026-03-26 08:53:05'),
+(54, 3, 'incident', 'original_incident_school_id', '24', '2026-03-26 08:53:05', '2026-03-26 08:53:05'),
+(55, 4, 'incident', 'original_incident_school_id', '25', '2026-03-26 08:53:05', '2026-03-26 08:53:05'),
+(56, 6, 'incident', 'original_incident_school_id', '26', '2026-03-26 08:53:05', '2026-03-26 08:53:05'),
+(57, 7, 'incident', 'original_incident_school_id', '27', '2026-03-26 08:53:05', '2026-03-26 08:53:05'),
+(58, 8, 'incident', 'original_incident_school_id', '28', '2026-03-26 08:53:05', '2026-03-26 08:53:05'),
+(59, 9, 'incident', 'original_incident_school_id', '29', '2026-03-26 08:53:05', '2026-03-26 08:53:05'),
+(60, 10, 'incident', 'original_incident_school_id', '30', '2026-03-26 08:53:05', '2026-03-26 08:53:05'),
+(61, 11, 'incident', 'original_incident_school_id', '31', '2026-03-26 08:53:05', '2026-03-26 08:53:05'),
+(62, 1, 'typhoon_flood', 'original_evacuation_center_id', '25', '2026-03-26 08:53:05', '2026-03-26 08:53:05'),
+(64, 30, 'comprehensive', 'original_cmpr_school_id', '30', '2026-04-06 08:27:27', '2026-04-06 08:27:27');
 
 -- --------------------------------------------------------
 
@@ -2035,44 +1921,12 @@ INSERT INTO `system_configurations` (`id`, `config_type`, `parent_id`, `name`, `
 -- --------------------------------------------------------
 
 --
--- Table structure for table `typ_fld_evacuation_centers`
---
-
-CREATE TABLE `typ_fld_evacuation_centers` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `school_id` bigint(20) UNSIGNED NOT NULL,
-  `identification` varchar(255) DEFAULT NULL,
-  `location` varchar(255) DEFAULT NULL,
-  `capacity` int(10) UNSIGNED NOT NULL DEFAULT 0,
-  `operational_status` varchar(255) NOT NULL DEFAULT 'operational',
-  `needs_summary` varchar(255) DEFAULT NULL,
-  `occupancy_safety` varchar(255) NOT NULL DEFAULT 'safe',
-  `usage_status` varchar(255) NOT NULL DEFAULT 'cleared',
-  `emergency_resources` text DEFAULT NULL,
-  `emergency_resources_usage_status` varchar(255) DEFAULT NULL,
-  `monitoring_status` varchar(255) DEFAULT NULL,
-  `reports_status` varchar(255) DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
-
---
--- Dumping data for table `typ_fld_evacuation_centers`
---
-
-INSERT INTO `typ_fld_evacuation_centers` (`id`, `school_id`, `identification`, `location`, `capacity`, `operational_status`, `needs_summary`, `occupancy_safety`, `usage_status`, `emergency_resources`, `emergency_resources_usage_status`, `monitoring_status`, `reports_status`, `created_at`, `updated_at`) VALUES
-(25, 11, NULL, NULL, 800, 'operational', NULL, 'safe', 'cleared', NULL, NULL, 'Active', NULL, '2026-03-23 01:13:43', '2026-03-23 01:13:43'),
-(26, 22, '122005', 'Rizal Heritage Drive', 800, 'operational', NULL, 'safe', 'cleared', 'OKS NATO', NULL, 'Active', NULL, '2026-03-23 01:41:39', '2026-03-23 01:41:39');
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `typ_fld_families`
 --
 
 CREATE TABLE `typ_fld_families` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `evacuation_center_id` bigint(20) UNSIGNED NOT NULL,
+  `school_id` bigint(20) UNSIGNED DEFAULT NULL,
   `head_family_name` varchar(255) NOT NULL,
   `collective_needs` text DEFAULT NULL,
   `has_pregnant` tinyint(1) NOT NULL DEFAULT 0,
@@ -2113,7 +1967,7 @@ CREATE TABLE `typ_fld_family_members` (
 
 CREATE TABLE `typ_fld_monitoring_snapshots` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `evacuation_center_id` bigint(20) UNSIGNED NOT NULL,
+  `school_id` bigint(20) UNSIGNED DEFAULT NULL,
   `type` varchar(255) NOT NULL,
   `payload` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`payload`)),
   `recorded_at` timestamp NULL DEFAULT NULL,
@@ -2138,6 +1992,7 @@ CREATE TABLE `users` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `role` enum('admin','contributor') NOT NULL DEFAULT 'contributor',
+  `position` varchar(255) DEFAULT NULL,
   `school_id` bigint(20) UNSIGNED DEFAULT NULL,
   `typhoon_school_id` bigint(20) UNSIGNED DEFAULT NULL,
   `incident_school_id` bigint(20) UNSIGNED DEFAULT NULL,
@@ -2150,15 +2005,15 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `is_active`, `remember_token`, `created_at`, `updated_at`, `role`, `school_id`, `typhoon_school_id`, `incident_school_id`, `needs_fs_registration`, `needs_tf_registration`, `module_access`) VALUES
-(1, 'Adan Kristopher B. Dumpit', 'adankristopher.dumpit@gmail.com', NULL, '$2y$12$f/IBhh/RpO6ADlpoIqSna.FDNT9DBaQxckg/zZV5xdqRHDLtqgUhK', 1, NULL, '2026-01-29 17:42:14', '2026-02-15 23:58:44', 'admin', NULL, NULL, NULL, 0, 0, '[\"fire_safety\",\"typhoon_flood\",\"incident_checklist\",\"comprehensive_school_safety\",\"hazard_mapping\"]'),
-(3, 'Dolores A. Umbina', 'doloresU@yahoo.com', NULL, '$2y$12$UlKNWpc6A70R4BGHJcfzt.YlXIdUlXyt1E7mHOcvrIBMXbDUluDEi', 1, NULL, '2026-02-02 23:02:12', '2026-03-04 19:58:26', 'contributor', 14, NULL, NULL, 0, 0, '[\"fire_safety\"]'),
-(4, 'Zaldy Danaytan, Jr.', 'zaldydanaytan@gmail.com', NULL, '$2y$12$l3WSaFNirGrPGyJV6ikzYekeqgZTPCTLL9mRQNOqoJxMdWcLoa7Cy', 1, NULL, '2026-02-15 23:37:41', '2026-03-25 07:31:52', 'contributor', 11, NULL, NULL, 0, 0, '[\"fire_safety\",\"comprehensive_school_safety\"]'),
-(5, 'Erwin A. Castillejo', 'erwin.castillejo@deped.gov.ph', NULL, '$2y$12$0oYX2QkQ/5gVDmUISOaCie.kLG2VzbpjCu/ye4qhyz.a/F7R76yIW', 1, NULL, '2026-02-17 22:02:34', '2026-03-12 00:14:02', 'admin', NULL, NULL, NULL, 0, 0, '[]'),
-(6, 'Test', 'test@example.com', NULL, '$2y$12$aUG3/2YVk8Y718./5hhasudwDWPLFaYyJ4Mz1q3bxus9wc/w3QsIm', 1, NULL, '2026-03-04 01:02:07', '2026-03-17 02:43:21', 'contributor', NULL, NULL, NULL, 0, 0, '[\"typhoon_flood\"]'),
-(7, 'Denver Faenticilia', 'dennieverrycilia@gmail.com', NULL, '$2y$12$m1REED1J8/zgGX5UFpKFbOr40a/JdtJdpH40/nvVqRzJA73msAgCG', 1, NULL, '2026-03-04 18:19:34', '2026-03-23 01:19:46', 'contributor', 19, NULL, 6, 0, 0, '[\"fire_safety\",\"incident_checklist\"]'),
-(8, 'example', 'example@gmail.com', NULL, '$2y$12$zs31NOMzJCJNPh2Qzg7fN.PncEUd5K3kEriz8ZiZnN.gyIWPSrm7W', 1, NULL, '2026-03-04 21:11:53', '2026-03-10 16:14:26', 'contributor', 11, NULL, NULL, 0, 0, '[\"fire_safety\",\"typhoon_flood\",\"incident_checklist\",\"comprehensive_school_safety\",\"hazard_mapping\"]'),
-(9, 'Subagent', 'subagent@example.com', NULL, '$2y$12$bfGBW3Gy28q3QKklp2uHW.hCDPaJFa/TvUQ1YE4tN1AAEE.Sd.3UW', 0, NULL, '2026-03-18 05:50:27', '2026-03-23 02:35:26', 'contributor', NULL, NULL, NULL, 0, 0, NULL);
+INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `is_active`, `remember_token`, `created_at`, `updated_at`, `role`, `position`, `school_id`, `typhoon_school_id`, `incident_school_id`, `needs_fs_registration`, `needs_tf_registration`, `module_access`) VALUES
+(1, 'Adan Kristopher B. Dumpit', 'adankristopher.dumpit@gmail.com', NULL, '$2y$12$f/IBhh/RpO6ADlpoIqSna.FDNT9DBaQxckg/zZV5xdqRHDLtqgUhK', 1, NULL, '2026-01-29 17:42:14', '2026-02-15 23:58:44', 'admin', NULL, NULL, NULL, NULL, 0, 0, '[\"fire_safety\",\"typhoon_flood\",\"incident_checklist\",\"comprehensive_school_safety\",\"hazard_mapping\"]'),
+(3, 'Dolores A. Umbina', 'doloresU@yahoo.com', NULL, '$2y$12$scwhOjfpK5qqr91XJEP1ke5e6mTQnwCLfE4JNQFdXV3RNLHhptLgu', 1, NULL, '2026-02-02 23:02:12', '2026-04-06 03:37:41', 'contributor', 'School Head', 4, NULL, NULL, 0, 0, '[\"fire_safety\"]'),
+(4, 'Zaldy Danaytan, Jr.', 'zaldydanaytan@gmail.com', NULL, '$2y$12$8q/N0j0E/yciGkEQL41CHucDsK85ip5Z0zF/Ec567K477K84K.JhK', 1, NULL, '2026-02-15 23:37:41', '2026-04-06 05:58:51', 'contributor', 'School Head', 1, NULL, NULL, 0, 0, '[\"fire_safety\",\"comprehensive_school_safety\"]'),
+(5, 'Erwin A. Castillejo', 'erwin.castillejo@deped.gov.ph', NULL, '$2y$12$0oYX2QkQ/5gVDmUISOaCie.kLG2VzbpjCu/ye4qhyz.a/F7R76yIW', 1, NULL, '2026-02-17 22:02:34', '2026-03-12 00:14:02', 'admin', NULL, NULL, NULL, NULL, 0, 0, '[]'),
+(6, 'Test', 'test@example.com', NULL, '$2y$12$8K1mUZDkVQLWM71Nomvb/ebTbN2mWD7Bn/fHa73acRWKx.xCMlyUK', 1, NULL, '2026-03-04 01:02:07', '2026-04-06 05:58:41', 'contributor', 'School Head', NULL, NULL, NULL, 0, 0, '[\"typhoon_flood\"]'),
+(7, 'Denver Faenticilia', 'dennieverrycilia@gmail.com', NULL, '$2y$12$vdbXKy.XedE/IG8fcy5K2ufF7PtmsE6fefrjnpjpU15nxuVfUnNay', 1, NULL, '2026-03-04 18:19:34', '2026-04-06 03:37:55', 'contributor', 'School Head', 9, NULL, 9, 0, 0, '[\"fire_safety\",\"incident_checklist\"]'),
+(8, 'example', 'example@gmail.com', NULL, '$2y$12$yi9.rTefhqJGOWOAWnpPL.W5EDUkaCZWqOa4AkCqM44A3RNO4hx22', 1, NULL, '2026-03-04 21:11:53', '2026-04-06 05:58:24', 'contributor', 'School Head', 1, NULL, NULL, 0, 0, '[\"fire_safety\",\"typhoon_flood\",\"incident_checklist\",\"comprehensive_school_safety\",\"hazard_mapping\"]'),
+(9, 'Subagent', 'subagent@example.com', NULL, '$2y$12$LvfQTg7xEGgPtKFJstHClu1Fvbnifl0wAw9iH3GTQc310H.cwH86q', 0, NULL, '2026-03-18 05:50:27', '2026-04-07 02:35:49', 'contributor', 'School Head', 5, NULL, 4, 0, 0, '[\"fire_safety\",\"typhoon_flood\",\"incident_checklist\",\"comprehensive_school_safety\",\"hazard_mapping\"]');
 
 --
 -- Indexes for dumped tables
@@ -2201,13 +2056,6 @@ ALTER TABLE `cmpr_schl_sfty_facilities`
   ADD KEY `cmpr_schl_sfty_facilities_school_id_foreign` (`school_id`);
 
 --
--- Indexes for table `cmpr_schl_sfty_schools`
---
-ALTER TABLE `cmpr_schl_sfty_schools`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `cmpr_schl_sfty_schools_school_id_number_unique` (`school_id_number`);
-
---
 -- Indexes for table `cmpr_schl_sfty_students`
 --
 ALTER TABLE `cmpr_schl_sfty_students`
@@ -2227,15 +2075,16 @@ ALTER TABLE `cmpr_schl_sfty_student_pathways`
 --
 ALTER TABLE `firesafety_alarm_systems`
   ADD PRIMARY KEY (`id`) USING BTREE,
-  ADD KEY `firesafety_alarm_systems_school_id_foreign` (`school_id`) USING BTREE,
-  ADD KEY `firesafety_alarm_systems_building_id_foreign` (`building_id`) USING BTREE;
+  ADD KEY `firesafety_alarm_systems_building_id_foreign` (`building_id`) USING BTREE,
+  ADD KEY `firesafety_alarm_systems_unified_school_id_foreign` (`unified_school_id`),
+  ADD KEY `firesafety_alarm_systems_anchor_building_id_foreign` (`anchor_building_id`);
 
 --
 -- Indexes for table `firesafety_buildings`
 --
 ALTER TABLE `firesafety_buildings`
   ADD PRIMARY KEY (`id`) USING BTREE,
-  ADD KEY `firesafety_buildings_school_id_foreign` (`school_id`) USING BTREE;
+  ADD KEY `firesafety_buildings_unified_school_id_foreign` (`unified_school_id`);
 
 --
 -- Indexes for table `firesafety_evacuationplans`
@@ -2245,7 +2094,8 @@ ALTER TABLE `firesafety_evacuationplans`
   ADD UNIQUE KEY `evacuationplans_school_planno_unique` (`school_id`,`plan_no`) USING BTREE,
   ADD UNIQUE KEY `unique_plan_per_building` (`school_id`,`building_id`) USING BTREE,
   ADD UNIQUE KEY `evacuationplans_school_building_unique` (`school_id`,`building_id`) USING BTREE,
-  ADD KEY `firesafety_evacuationplans_building_id_foreign` (`building_id`) USING BTREE;
+  ADD KEY `firesafety_evacuationplans_building_id_foreign` (`building_id`) USING BTREE,
+  ADD KEY `firesafety_evacuationplans_unified_school_id_foreign` (`unified_school_id`);
 
 --
 -- Indexes for table `firesafety_fire_extinguishers`
@@ -2253,15 +2103,8 @@ ALTER TABLE `firesafety_evacuationplans`
 ALTER TABLE `firesafety_fire_extinguishers`
   ADD PRIMARY KEY (`id`) USING BTREE,
   ADD KEY `firesafety_fire_extinguishers_room_id_foreign` (`room_id`) USING BTREE,
-  ADD KEY `firesafety_fire_extinguishers_school_id_foreign` (`school_id`) USING BTREE,
-  ADD KEY `firesafety_fire_extinguishers_building_id_foreign` (`building_id`) USING BTREE;
-
---
--- Indexes for table `firesafety_school_information`
---
-ALTER TABLE `firesafety_school_information`
-  ADD PRIMARY KEY (`id`) USING BTREE,
-  ADD UNIQUE KEY `firesafety_school_information_school_id_unique` (`school_id`) USING BTREE;
+  ADD KEY `firesafety_fire_extinguishers_building_id_foreign` (`building_id`) USING BTREE,
+  ADD KEY `firesafety_fire_extinguishers_unified_school_id_foreign` (`unified_school_id`);
 
 --
 -- Indexes for table `firesafety_school_snapshots`
@@ -2283,7 +2126,7 @@ ALTER TABLE `fire_safety_alarm_building`
 --
 ALTER TABLE `fire_safety_archives`
   ADD PRIMARY KEY (`id`) USING BTREE,
-  ADD KEY `fire_safety_archives_school_id_foreign` (`school_id`) USING BTREE;
+  ADD KEY `fire_safety_archives_unified_school_id_foreign` (`unified_school_id`);
 
 --
 -- Indexes for table `fire_safety_extinguisher_inspections`
@@ -2305,18 +2148,19 @@ ALTER TABLE `fire_safety_extinguisher_room_coverage`
 --
 ALTER TABLE `fire_safety_inspections`
   ADD PRIMARY KEY (`id`) USING BTREE,
-  ADD KEY `fire_safety_inspections_school_id_foreign` (`school_id`) USING BTREE;
+  ADD KEY `fire_safety_inspections_unified_school_id_foreign` (`unified_school_id`);
 
 --
 -- Indexes for table `fire_safety_rooms`
 --
 ALTER TABLE `fire_safety_rooms`
   ADD PRIMARY KEY (`id`) USING BTREE,
-  ADD KEY `fire_safety_rooms_school_id_building_id_index` (`school_id`,`building_id`) USING BTREE,
+  ADD KEY `fire_safety_rooms_school_id_building_id_index` (`building_id`) USING BTREE,
   ADD KEY `fire_safety_rooms_nearest_extinguisher_room_id_foreign` (`nearest_extinguisher_room_id`) USING BTREE,
   ADD KEY `fire_safety_rooms_room_type_config_id_foreign` (`room_type_config_id`) USING BTREE,
   ADD KEY `fire_safety_rooms_building_id_foreign` (`building_id`) USING BTREE,
-  ADD KEY `fire_safety_rooms_last_inspector_id_foreign` (`last_inspector_id`) USING BTREE;
+  ADD KEY `fire_safety_rooms_last_inspector_id_foreign` (`last_inspector_id`) USING BTREE,
+  ADD KEY `fire_safety_rooms_unified_school_id_foreign` (`unified_school_id`);
 
 --
 -- Indexes for table `incident_calendars`
@@ -2336,13 +2180,6 @@ ALTER TABLE `incident_calendars`
 ALTER TABLE `incident_checklists`
   ADD PRIMARY KEY (`id`) USING BTREE,
   ADD KEY `incident_checklists_user_id_checklist_date_index` (`user_id`,`checklist_date`) USING BTREE;
-
---
--- Indexes for table `incident_schools`
---
-ALTER TABLE `incident_schools`
-  ADD PRIMARY KEY (`id`) USING BTREE,
-  ADD UNIQUE KEY `incident_schools_name_district_unique` (`name`,`district`) USING BTREE;
 
 --
 -- Indexes for table `incident_statuses`
@@ -2378,6 +2215,24 @@ ALTER TABLE `password_reset_tokens`
   ADD PRIMARY KEY (`email`) USING BTREE;
 
 --
+-- Indexes for table `schools`
+--
+ALTER TABLE `schools`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `schools_school_name_index` (`school_name`),
+  ADD KEY `schools_school_id_index` (`school_id`),
+  ADD KEY `schools_school_id_number_index` (`school_id_number`),
+  ADD KEY `schools_district_index` (`district`);
+
+--
+-- Indexes for table `school_specifics_information`
+--
+ALTER TABLE `school_specifics_information`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `school_specifics_information_school_id_module_key_unique` (`school_id`,`module`,`key`),
+  ADD KEY `school_specifics_information_school_id_module_index` (`school_id`,`module`);
+
+--
 -- Indexes for table `sessions`
 --
 ALTER TABLE `sessions`
@@ -2392,18 +2247,11 @@ ALTER TABLE `system_configurations`
   ADD PRIMARY KEY (`id`) USING BTREE;
 
 --
--- Indexes for table `typ_fld_evacuation_centers`
---
-ALTER TABLE `typ_fld_evacuation_centers`
-  ADD PRIMARY KEY (`id`) USING BTREE,
-  ADD UNIQUE KEY `typ_fld_evacuation_centers_school_id_unique` (`school_id`) USING BTREE;
-
---
 -- Indexes for table `typ_fld_families`
 --
 ALTER TABLE `typ_fld_families`
   ADD PRIMARY KEY (`id`) USING BTREE,
-  ADD KEY `typ_fld_families_evacuation_center_id_foreign` (`evacuation_center_id`) USING BTREE;
+  ADD KEY `typ_fld_families_school_id_foreign` (`school_id`);
 
 --
 -- Indexes for table `typ_fld_family_members`
@@ -2417,7 +2265,8 @@ ALTER TABLE `typ_fld_family_members`
 --
 ALTER TABLE `typ_fld_monitoring_snapshots`
   ADD PRIMARY KEY (`id`) USING BTREE,
-  ADD KEY `typ_fld_monitoring_snapshots_evacuation_center_id_type_index` (`evacuation_center_id`,`type`) USING BTREE;
+  ADD KEY `typ_fld_monitoring_snapshots_evacuation_center_id_type_index` (`type`) USING BTREE,
+  ADD KEY `typ_fld_monitoring_snapshots_school_id_foreign` (`school_id`);
 
 --
 -- Indexes for table `users`
@@ -2437,7 +2286,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `activity_logs`
 --
 ALTER TABLE `activity_logs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=258;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=293;
 
 --
 -- AUTO_INCREMENT for table `announcements`
@@ -2449,13 +2298,13 @@ ALTER TABLE `announcements`
 -- AUTO_INCREMENT for table `cmpr_schl_sfty_assessments`
 --
 ALTER TABLE `cmpr_schl_sfty_assessments`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `cmpr_schl_sfty_assessment_items`
 --
 ALTER TABLE `cmpr_schl_sfty_assessment_items`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=39;
 
 --
 -- AUTO_INCREMENT for table `cmpr_schl_sfty_facilities`
@@ -2464,16 +2313,10 @@ ALTER TABLE `cmpr_schl_sfty_facilities`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT for table `cmpr_schl_sfty_schools`
---
-ALTER TABLE `cmpr_schl_sfty_schools`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
 -- AUTO_INCREMENT for table `cmpr_schl_sfty_students`
 --
 ALTER TABLE `cmpr_schl_sfty_students`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT for table `cmpr_schl_sfty_student_pathways`
@@ -2485,13 +2328,13 @@ ALTER TABLE `cmpr_schl_sfty_student_pathways`
 -- AUTO_INCREMENT for table `firesafety_alarm_systems`
 --
 ALTER TABLE `firesafety_alarm_systems`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=41;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=44;
 
 --
 -- AUTO_INCREMENT for table `firesafety_buildings`
 --
 ALTER TABLE `firesafety_buildings`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=74;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=77;
 
 --
 -- AUTO_INCREMENT for table `firesafety_evacuationplans`
@@ -2503,13 +2346,7 @@ ALTER TABLE `firesafety_evacuationplans`
 -- AUTO_INCREMENT for table `firesafety_fire_extinguishers`
 --
 ALTER TABLE `firesafety_fire_extinguishers`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=94;
-
---
--- AUTO_INCREMENT for table `firesafety_school_information`
---
-ALTER TABLE `firesafety_school_information`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=101;
 
 --
 -- AUTO_INCREMENT for table `firesafety_school_snapshots`
@@ -2521,25 +2358,25 @@ ALTER TABLE `firesafety_school_snapshots`
 -- AUTO_INCREMENT for table `fire_safety_alarm_building`
 --
 ALTER TABLE `fire_safety_alarm_building`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=49;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
 
 --
 -- AUTO_INCREMENT for table `fire_safety_archives`
 --
 ALTER TABLE `fire_safety_archives`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=51;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=54;
 
 --
 -- AUTO_INCREMENT for table `fire_safety_extinguisher_inspections`
 --
 ALTER TABLE `fire_safety_extinguisher_inspections`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=106;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=108;
 
 --
 -- AUTO_INCREMENT for table `fire_safety_extinguisher_room_coverage`
 --
 ALTER TABLE `fire_safety_extinguisher_room_coverage`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=168;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=173;
 
 --
 -- AUTO_INCREMENT for table `fire_safety_inspections`
@@ -2551,7 +2388,7 @@ ALTER TABLE `fire_safety_inspections`
 -- AUTO_INCREMENT for table `fire_safety_rooms`
 --
 ALTER TABLE `fire_safety_rooms`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=183;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=187;
 
 --
 -- AUTO_INCREMENT for table `incident_calendars`
@@ -2564,12 +2401,6 @@ ALTER TABLE `incident_calendars`
 --
 ALTER TABLE `incident_checklists`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=83;
-
---
--- AUTO_INCREMENT for table `incident_schools`
---
-ALTER TABLE `incident_schools`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=36;
 
 --
 -- AUTO_INCREMENT for table `incident_statuses`
@@ -2587,25 +2418,31 @@ ALTER TABLE `incident_types`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=96;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=116;
 
 --
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=97;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=110;
+
+--
+-- AUTO_INCREMENT for table `schools`
+--
+ALTER TABLE `schools`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=32;
+
+--
+-- AUTO_INCREMENT for table `school_specifics_information`
+--
+ALTER TABLE `school_specifics_information`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=65;
 
 --
 -- AUTO_INCREMENT for table `system_configurations`
 --
 ALTER TABLE `system_configurations`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=166;
-
---
--- AUTO_INCREMENT for table `typ_fld_evacuation_centers`
---
-ALTER TABLE `typ_fld_evacuation_centers`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `typ_fld_families`
@@ -2639,7 +2476,7 @@ ALTER TABLE `users`
 -- Constraints for table `cmpr_schl_sfty_assessments`
 --
 ALTER TABLE `cmpr_schl_sfty_assessments`
-  ADD CONSTRAINT `cmpr_schl_sfty_assessments_school_id_foreign` FOREIGN KEY (`school_id`) REFERENCES `cmpr_schl_sfty_schools` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `cmpr_schl_sfty_assessments_school_id_foreign` FOREIGN KEY (`school_id`) REFERENCES `schools` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `cmpr_schl_sfty_assessment_items`
@@ -2651,13 +2488,13 @@ ALTER TABLE `cmpr_schl_sfty_assessment_items`
 -- Constraints for table `cmpr_schl_sfty_facilities`
 --
 ALTER TABLE `cmpr_schl_sfty_facilities`
-  ADD CONSTRAINT `cmpr_schl_sfty_facilities_school_id_foreign` FOREIGN KEY (`school_id`) REFERENCES `cmpr_schl_sfty_schools` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `cmpr_schl_sfty_facilities_school_id_foreign` FOREIGN KEY (`school_id`) REFERENCES `schools` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `cmpr_schl_sfty_students`
 --
 ALTER TABLE `cmpr_schl_sfty_students`
-  ADD CONSTRAINT `cmpr_schl_sfty_students_school_id_foreign` FOREIGN KEY (`school_id`) REFERENCES `cmpr_schl_sfty_schools` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `cmpr_schl_sfty_students_school_id_foreign` FOREIGN KEY (`school_id`) REFERENCES `schools` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `cmpr_schl_sfty_student_pathways`
@@ -2669,21 +2506,22 @@ ALTER TABLE `cmpr_schl_sfty_student_pathways`
 -- Constraints for table `firesafety_alarm_systems`
 --
 ALTER TABLE `firesafety_alarm_systems`
+  ADD CONSTRAINT `firesafety_alarm_systems_anchor_building_id_foreign` FOREIGN KEY (`anchor_building_id`) REFERENCES `firesafety_buildings` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `firesafety_alarm_systems_building_id_foreign` FOREIGN KEY (`building_id`) REFERENCES `firesafety_buildings` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `firesafety_alarm_systems_school_id_foreign` FOREIGN KEY (`school_id`) REFERENCES `firesafety_school_information` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `firesafety_alarm_systems_unified_school_id_foreign` FOREIGN KEY (`unified_school_id`) REFERENCES `schools` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `firesafety_buildings`
 --
 ALTER TABLE `firesafety_buildings`
-  ADD CONSTRAINT `firesafety_buildings_school_id_foreign` FOREIGN KEY (`school_id`) REFERENCES `firesafety_school_information` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `firesafety_buildings_unified_school_id_foreign` FOREIGN KEY (`unified_school_id`) REFERENCES `schools` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `firesafety_evacuationplans`
 --
 ALTER TABLE `firesafety_evacuationplans`
   ADD CONSTRAINT `firesafety_evacuationplans_building_id_foreign` FOREIGN KEY (`building_id`) REFERENCES `firesafety_buildings` (`id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `firesafety_evacuationplans_school_id_foreign` FOREIGN KEY (`school_id`) REFERENCES `firesafety_school_information` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `firesafety_evacuationplans_unified_school_id_foreign` FOREIGN KEY (`unified_school_id`) REFERENCES `schools` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `firesafety_fire_extinguishers`
@@ -2691,7 +2529,7 @@ ALTER TABLE `firesafety_evacuationplans`
 ALTER TABLE `firesafety_fire_extinguishers`
   ADD CONSTRAINT `firesafety_fire_extinguishers_building_id_foreign` FOREIGN KEY (`building_id`) REFERENCES `firesafety_buildings` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `firesafety_fire_extinguishers_room_id_foreign` FOREIGN KEY (`room_id`) REFERENCES `fire_safety_rooms` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `firesafety_fire_extinguishers_school_id_foreign` FOREIGN KEY (`school_id`) REFERENCES `firesafety_school_information` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `firesafety_fire_extinguishers_unified_school_id_foreign` FOREIGN KEY (`unified_school_id`) REFERENCES `schools` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `fire_safety_alarm_building`
@@ -2704,7 +2542,7 @@ ALTER TABLE `fire_safety_alarm_building`
 -- Constraints for table `fire_safety_archives`
 --
 ALTER TABLE `fire_safety_archives`
-  ADD CONSTRAINT `fire_safety_archives_school_id_foreign` FOREIGN KEY (`school_id`) REFERENCES `firesafety_school_information` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `fire_safety_archives_unified_school_id_foreign` FOREIGN KEY (`unified_school_id`) REFERENCES `schools` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `fire_safety_extinguisher_inspections`
@@ -2723,7 +2561,7 @@ ALTER TABLE `fire_safety_extinguisher_room_coverage`
 -- Constraints for table `fire_safety_inspections`
 --
 ALTER TABLE `fire_safety_inspections`
-  ADD CONSTRAINT `fire_safety_inspections_school_id_foreign` FOREIGN KEY (`school_id`) REFERENCES `firesafety_school_information` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fire_safety_inspections_unified_school_id_foreign` FOREIGN KEY (`unified_school_id`) REFERENCES `schools` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `fire_safety_rooms`
@@ -2733,7 +2571,7 @@ ALTER TABLE `fire_safety_rooms`
   ADD CONSTRAINT `fire_safety_rooms_last_inspector_id_foreign` FOREIGN KEY (`last_inspector_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fire_safety_rooms_nearest_extinguisher_room_id_foreign` FOREIGN KEY (`nearest_extinguisher_room_id`) REFERENCES `fire_safety_rooms` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fire_safety_rooms_room_type_config_id_foreign` FOREIGN KEY (`room_type_config_id`) REFERENCES `system_configurations` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fire_safety_rooms_school_id_foreign` FOREIGN KEY (`school_id`) REFERENCES `firesafety_school_information` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `fire_safety_rooms_unified_school_id_foreign` FOREIGN KEY (`unified_school_id`) REFERENCES `schools` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `incident_calendars`
@@ -2744,16 +2582,16 @@ ALTER TABLE `incident_calendars`
   ADD CONSTRAINT `incident_calendars_incident_type_id_foreign` FOREIGN KEY (`incident_type_id`) REFERENCES `incident_types` (`id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `typ_fld_evacuation_centers`
+-- Constraints for table `school_specifics_information`
 --
-ALTER TABLE `typ_fld_evacuation_centers`
-  ADD CONSTRAINT `typ_fld_evacuation_centers_school_id_foreign` FOREIGN KEY (`school_id`) REFERENCES `firesafety_school_information` (`id`) ON DELETE CASCADE;
+ALTER TABLE `school_specifics_information`
+  ADD CONSTRAINT `school_specifics_information_school_id_foreign` FOREIGN KEY (`school_id`) REFERENCES `schools` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `typ_fld_families`
 --
 ALTER TABLE `typ_fld_families`
-  ADD CONSTRAINT `typ_fld_families_evacuation_center_id_foreign` FOREIGN KEY (`evacuation_center_id`) REFERENCES `typ_fld_evacuation_centers` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `typ_fld_families_school_id_foreign` FOREIGN KEY (`school_id`) REFERENCES `schools` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `typ_fld_family_members`
@@ -2765,15 +2603,15 @@ ALTER TABLE `typ_fld_family_members`
 -- Constraints for table `typ_fld_monitoring_snapshots`
 --
 ALTER TABLE `typ_fld_monitoring_snapshots`
-  ADD CONSTRAINT `typ_fld_monitoring_snapshots_evacuation_center_id_foreign` FOREIGN KEY (`evacuation_center_id`) REFERENCES `typ_fld_evacuation_centers` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `typ_fld_monitoring_snapshots_school_id_foreign` FOREIGN KEY (`school_id`) REFERENCES `schools` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `users`
 --
 ALTER TABLE `users`
-  ADD CONSTRAINT `users_incident_school_id_foreign` FOREIGN KEY (`incident_school_id`) REFERENCES `incident_schools` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `users_school_id_foreign` FOREIGN KEY (`school_id`) REFERENCES `firesafety_school_information` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `users_typhoon_school_id_foreign` FOREIGN KEY (`typhoon_school_id`) REFERENCES `typ_fld_evacuation_centers` (`id`) ON DELETE SET NULL;
+  ADD CONSTRAINT `users_incident_school_id_foreign` FOREIGN KEY (`incident_school_id`) REFERENCES `schools` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `users_school_id_foreign` FOREIGN KEY (`school_id`) REFERENCES `schools` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `users_typhoon_school_id_foreign` FOREIGN KEY (`typhoon_school_id`) REFERENCES `schools` (`id`) ON DELETE SET NULL;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

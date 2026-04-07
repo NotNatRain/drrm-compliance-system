@@ -12,6 +12,7 @@ class FireSafetyAlarmSystem extends Model
     protected $fillable = [
         'unified_school_id',
         'building_id',
+        'anchor_building_id',
         'floor_id',
         'code',
         'location', // ← Make sure this is here
@@ -32,6 +33,11 @@ class FireSafetyAlarmSystem extends Model
     public function building()
     {
         return $this->belongsTo(FireSafetyBuilding::class, 'building_id');
+    }
+
+    public function anchorBuilding()
+    {
+        return $this->belongsTo(FireSafetyBuilding::class, 'anchor_building_id');
     }
     public function school()
     {

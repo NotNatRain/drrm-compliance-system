@@ -64,6 +64,14 @@ class FireSafetyBuilding extends Model
         return $this->belongsToMany(FireSafetyAlarmSystem::class, 'fire_safety_alarm_building', 'building_id', 'alarm_id');
     }
 
+    /**
+     * Alarms with no primary building; listed on this building for reassignment.
+     */
+    public function anchoredAlarmSystems(): HasMany
+    {
+        return $this->hasMany(FireSafetyAlarmSystem::class, 'anchor_building_id');
+    }
+
     public function fireExtinguishers(): HasMany
     {
         return $this->hasMany(FireSafetyExtinguisher::class, 'building_id');
@@ -88,7 +96,23 @@ class FireSafetyBuilding extends Model
     // Helper methods
     public function getFunctionalAlarmsCountAttribute(): int
     {
-        return $this->alarmSystems()->whereIn('status', ['active', 'functional'])->count();
+        $ids = collect();
+        foreach ($this->alarmSystems()->whereIn('status', ['active', 'functional'])->pluck('id') as $id) {
+            $ids->push($id);
+        }
+        foreach ($this->alarmSystemsMany()
+            ->whereIn('status', ['active', 'functional'])
+            ->pluck('firesafety_alarm_systems.id') as $id) {
+            $ids->push($id);
+        }
+        foreach (FireSafetyAlarmSystem::whereNull('building_id')
+            ->where('anchor_building_id', $this->id)
+            ->whereIn('status', ['active', 'functional'])
+            ->pluck('id') as $id) {
+            $ids->push($id);
+        }
+
+        return $ids->unique()->count();
     }
 
     public function getActiveExtinguishersCountAttribute(): int

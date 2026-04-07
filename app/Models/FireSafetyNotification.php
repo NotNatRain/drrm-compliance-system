@@ -11,7 +11,7 @@ class FireSafetyNotification extends Model
     protected $fillable = [
         'compliance_type',
         'module',
-        'unified_school_id',
+        'school_id',
         'user_id',
         'type',
         'title',
@@ -29,7 +29,7 @@ class FireSafetyNotification extends Model
 
     public function school()
     {
-        return $this->belongsTo(School::class, 'unified_school_id');
+        return $this->belongsTo(School::class, 'school_id');
     }
 
     public function user()

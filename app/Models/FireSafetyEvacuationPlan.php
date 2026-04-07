@@ -11,6 +11,7 @@ class FireSafetyEvacuationPlan extends Model
     
     protected $fillable = [
         'unified_school_id',
+        'school_id',
         'building_id',
         'plan_no',
         'exits',

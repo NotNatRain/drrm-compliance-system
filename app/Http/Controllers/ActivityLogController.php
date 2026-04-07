@@ -25,7 +25,7 @@ class ActivityLogController extends Controller
      */
     public function index(Request $request)
     {
-        $query = ActivityLog::with('user')
+        $query = ActivityLog::with(['user', 'school'])
             ->orderBy('created_at', 'desc');
 
         // Filters
