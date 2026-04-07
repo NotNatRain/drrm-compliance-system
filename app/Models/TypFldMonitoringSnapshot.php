@@ -10,7 +10,7 @@ class TypFldMonitoringSnapshot extends Model
     protected $table = 'typ_fld_monitoring_snapshots';
 
     protected $fillable = [
-        'evacuation_center_id',
+        'school_id',
         'type',
         'payload',
         'recorded_at',
@@ -21,9 +21,9 @@ class TypFldMonitoringSnapshot extends Model
         'recorded_at' => 'datetime',
     ];
 
-    public function evacuationCenter(): BelongsTo
+    public function school(): BelongsTo
     {
-        return $this->belongsTo(TypFldEvacuationCenter::class, 'evacuation_center_id');
+        return $this->belongsTo(School::class, 'school_id');
     }
 }
 

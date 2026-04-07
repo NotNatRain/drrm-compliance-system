@@ -540,7 +540,7 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4 text-dark">
-                    <input type="hidden" name="school_id" value="{{ $ec->school_id }}">
+                    <input type="hidden" name="school_id" value="{{ $ec->id }}">
                     <div class="mb-3">
                         <label class="form-label fw-bold text-muted small">TITLE / SUBJECT</label>
                         <input type="text" name="title" class="form-control" placeholder="e.g. Relief Distribution Notice" required>

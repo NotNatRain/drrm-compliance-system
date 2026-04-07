@@ -4,10 +4,6 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
-use App\Models\FireSafetySchool;
-use App\Models\ComprehensiveSchool;
-use App\Models\TypFldEvacuationCenter;
-use App\Models\IncidentSchool;
 use App\Models\Announcement;
 use App\Models\School;
 use App\Models\SchoolSpecificsInformation;
@@ -15,51 +11,20 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\QueryException;
+use App\Services\SchoolPermanentDeletionService;
 
 class DashboardController extends Controller
 {
-    private function resolveComprehensiveSchoolIdFromFireSafetyId(?int $fireSafetySchoolId): ?int
+    private function resolveComprehensiveSchoolIdFromFireSafetyId(?int $schoolId): ?int
     {
-        if (!$fireSafetySchoolId) {
-            return null;
-        }
-
-        $fireSafetySchool = FireSafetySchool::find($fireSafetySchoolId);
-        if (!$fireSafetySchool) {
-            return null;
-        }
-
-        $comprehensiveSchool = ComprehensiveSchool::where('school_id_number', $fireSafetySchool->school_id)->first();
-        if ($comprehensiveSchool) {
-            return (int) $comprehensiveSchool->id;
-        }
-
-        $fallbackByName = ComprehensiveSchool::where('name', $fireSafetySchool->school_name)->first();
-
-        return $fallbackByName ? (int) $fallbackByName->id : null;
+        return $schoolId ? (int) $schoolId : null;
     }
 
-    private function resolveFireSafetySchoolIdFromComprehensiveSchoolId(?int $comprehensiveSchoolId): ?int
+    private function resolveFireSafetySchoolIdFromComprehensiveSchoolId(?int $schoolId): ?int
     {
-        if (!$comprehensiveSchoolId) {
-            return null;
-        }
-
-        $comprehensiveSchool = ComprehensiveSchool::find($comprehensiveSchoolId);
-        if (!$comprehensiveSchool) {
-            return null;
-        }
-
-        if (!empty($comprehensiveSchool->school_id_number)) {
-            $fireByCode = FireSafetySchool::where('school_id', $comprehensiveSchool->school_id_number)->first();
-            if ($fireByCode) {
-                return (int) $fireByCode->id;
-            }
-        }
-
-        $fireByName = FireSafetySchool::where('school_name', $comprehensiveSchool->name)->first();
-
-        return $fireByName ? (int) $fireByName->id : null;
+        return $schoolId ? (int) $schoolId : null;
     }
 
     /**
@@ -78,10 +43,9 @@ class DashboardController extends Controller
         $user = Auth::user();
         $isAdmin = $user->role === 'admin';
         
-        $schools = FireSafetySchool::all();
-        // If user is contributor, only pass their assigned school
+        $schools = School::orderBy('school_name')->get();
         if ($user->role === 'contributor' && $user->school_id) {
-            $schools = FireSafetySchool::where('id', $user->school_id)->get();
+            $schools = School::where('id', $user->school_id)->get();
         }
         
         $allSchools = [];
@@ -113,9 +77,33 @@ class DashboardController extends Controller
             'hazard_mapping' => false // Still to be developed
         ];
 
+        $assignedUsers = User::query()
+            ->where('school_id', $school->id)
+            ->whereIn('role', ['contributor', 'viewer'])
+            ->orderBy('name')
+            ->get(['id', 'name', 'email', 'role', 'position']);
+
+        $availableUsers = User::query()
+            ->whereNull('school_id')
+            ->whereNull('position')
+            ->whereIn('role', ['contributor', 'viewer'])
+            ->orderBy('name')
+            ->get(['id', 'name', 'email', 'role', 'position']);
+
+        $schoolHeadUser = $assignedUsers->firstWhere('position', 'School Head');
+        $schoolDrrmUser = $assignedUsers->firstWhere('position', 'School DRRM');
+        $schoolAccountUsers = $assignedUsers
+            ->where('position', 'School Account')
+            ->values();
+
         return response()->json([
             'school' => $school,
-            'modules' => $modulesSatus
+            'modules' => $modulesSatus,
+            'assigned_users' => $assignedUsers,
+            'available_users' => $availableUsers,
+            'school_head_user' => $schoolHeadUser,
+            'school_drrm_user' => $schoolDrrmUser,
+            'school_account_users' => $schoolAccountUsers,
         ]);
     }
 
@@ -128,7 +116,7 @@ class DashboardController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        $validator = Validator::make($request->all(), [
+        $rules = [
             'school_name' => 'required|string|max:255|unique:schools,school_name',
             'school_id' => 'nullable|string|max:255',
             'address' => 'required|string',
@@ -137,13 +125,45 @@ class DashboardController extends Controller
             'district' => 'nullable|string|max:255',
             'division' => 'nullable|string|max:255',
             'region' => 'nullable|string|max:255',
-        ]);
+            'contact_number' => 'nullable|string|max:255',
+            'contact_number_2' => 'nullable|string|max:255',
+            'number_students' => 'nullable|integer|min:0',
+            'number_personnel' => 'nullable|integer|min:0',
+            'emergency_resources' => 'nullable|string',
+        ];
+
+        if (Schema::hasColumn('schools', 'number_gates')) {
+            $rules['number_gates'] = 'nullable|integer|min:0';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
         }
 
-        $school = School::create($request->all());
+        $payload = $request->only([
+            'school_name',
+            'school_id',
+            'address',
+            'school_head',
+            'drrm_coordinator',
+            'district',
+            'division',
+            'region',
+            'contact_number',
+            'contact_number_2',
+            'number_students',
+            'number_personnel',
+            'number_gates',
+            'emergency_resources',
+        ]);
+
+        if (!Schema::hasColumn('schools', 'number_gates')) {
+            unset($payload['number_gates']);
+        }
+
+        $school = School::create($payload);
 
         return response()->json(['success' => true, 'message' => 'School added successfully!', 'school' => $school]);
     }
@@ -159,7 +179,7 @@ class DashboardController extends Controller
 
         $school = School::findOrFail($id);
 
-        $validator = Validator::make($request->all(), [
+        $rules = [
             'school_name' => 'required|string|max:255|unique:schools,school_name,' . $id,
             'school_id' => 'nullable|string|max:255',
             'address' => 'required|string',
@@ -170,17 +190,76 @@ class DashboardController extends Controller
             'region' => 'nullable|string|max:255',
             'contact_number' => 'nullable|string|max:255',
             'contact_number_2' => 'nullable|string|max:255',
-            'evacuation_capacity' => 'nullable|integer',
+            'number_students' => 'nullable|integer|min:0',
+            'number_personnel' => 'nullable|integer|min:0',
             'emergency_resources' => 'nullable|string',
-        ]);
+        ];
+
+        if (Schema::hasColumn('schools', 'number_gates')) {
+            $rules['number_gates'] = 'nullable|integer|min:0';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
         }
 
-        $school->update($request->all());
+        $payload = $request->only([
+            'school_name',
+            'school_id',
+            'address',
+            'school_head',
+            'drrm_coordinator',
+            'district',
+            'division',
+            'region',
+            'contact_number',
+            'contact_number_2',
+            'number_students',
+            'number_personnel',
+            'number_gates',
+            'emergency_resources',
+        ]);
+
+        if (!Schema::hasColumn('schools', 'number_gates')) {
+            unset($payload['number_gates']);
+        }
+
+        $school->update($payload);
 
         return response()->json(['success' => true, 'message' => 'School updated successfully!']);
+    }
+
+    public function destroyUnifiedSchool(Request $request, $id)
+    {
+        if (Auth::user()->role !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $password = (string) $request->input('password', '');
+        if ($password === '' || !Hash::check($password, Auth::user()->password)) {
+            return response()->json(['success' => false, 'message' => 'Invalid password.'], 403);
+        }
+
+        $school = School::findOrFail($id);
+
+        try {
+            $name = $school->school_name;
+            app(SchoolPermanentDeletionService::class)->deletePermanently($school);
+
+            return response()->json(['success' => true, 'message' => "School and related compliance data permanently deleted: {$name}"]);
+        } catch (QueryException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot complete deletion (database constraint). If this persists, contact support.',
+            ], 409);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete school.',
+            ], 500);
+        }
     }
 
     public function getUsers(Request $request)
@@ -188,7 +267,7 @@ class DashboardController extends Controller
         $isAdmin = Auth::user()->role === 'admin';
 
         if ($isAdmin) {
-            $query = User::with(['school', 'typhoonSchool.school', 'incidentSchool']);
+            $query = User::with(['school', 'typhoonSchool', 'incidentSchool']);
 
             // Filters
             if ($request->filled('role')) {
@@ -206,17 +285,13 @@ class DashboardController extends Controller
 
             $users = $query->get();
         } else {
-            $users = User::with(['school', 'typhoonSchool.school', 'incidentSchool'])->whereKey(Auth::id())->get();
+            $users = User::with(['school', 'typhoonSchool', 'incidentSchool'])->whereKey(Auth::id())->get();
         }
 
-        $schools = FireSafetySchool::all();
-        $comprehensiveSchools = ComprehensiveSchool::orderBy('name')->get(['id', 'name', 'school_id_number', 'district', 'division']);
-        $typhoonSchools = TypFldEvacuationCenter::with('school')->get();
-        $this->syncIncidentSchoolsFromSources();
-        $incidentSchools = IncidentSchool::selectRaw('MIN(id) as id, name')
-            ->groupBy('name')
-            ->orderBy('name')
-            ->get();
+        $schools = School::orderBy('school_name')->get();
+        $comprehensiveSchools = School::orderBy('school_name')->get(['id', 'school_name', 'school_id_number', 'district', 'division']);
+        $typhoonSchools = School::orderBy('school_name')->get();
+        $incidentSchools = School::orderBy('school_name')->get(['id', 'school_name']);
         $adminCount = User::where('role', 'admin')->count();
 
         if ($request->expectsJson()) {
@@ -224,45 +299,6 @@ class DashboardController extends Controller
         }
 
         return view('users.index', compact('users', 'schools', 'comprehensiveSchools', 'typhoonSchools', 'incidentSchools', 'adminCount', 'isAdmin'));
-    }
-
-    /**
-     * Keep IncidentSchool options in sync with Fire Safety and Typhoon/Flood sources.
-     */
-    private function syncIncidentSchoolsFromSources(): void
-    {
-        $sourceNames = collect();
-
-        $sourceNames = $sourceNames
-            ->merge(FireSafetySchool::whereNotNull('school_name')->pluck('school_name'))
-            ->merge(IncidentSchool::whereNotNull('name')->pluck('name'))
-            ->merge(
-                TypFldEvacuationCenter::with('school:id,school_name')
-                    ->get()
-                    ->map(function ($center) {
-                        return $center->school?->school_name ?: $center->identification;
-                    })
-            );
-
-        $normalized = [];
-        foreach ($sourceNames as $name) {
-            $clean = trim((string) $name);
-            if ($clean === '') {
-                continue;
-            }
-
-            $key = mb_strtolower(preg_replace('/\s+/', ' ', $clean));
-            if (!isset($normalized[$key])) {
-                $normalized[$key] = $clean;
-            }
-        }
-
-        foreach ($normalized as $schoolName) {
-            IncidentSchool::firstOrCreate(
-                ['name' => $schoolName, 'district' => 'Unknown'],
-                ['division' => null, 'region' => null, 'school_id' => null]
-            );
-        }
     }
 
     public function storeUser(Request $request)
@@ -276,6 +312,7 @@ class DashboardController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
             'role' => 'required|string|in:admin,contributor,viewer',
+            'position' => 'nullable|string|in:School Head,School DRRM,School Account',
             'admin_confirmation' => 'required_if:role,admin'
         ]);
 
@@ -298,6 +335,7 @@ class DashboardController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $request->role,
+            'position' => $request->role === 'admin' ? null : $request->position,
             'module_access' => [], // Start empty
             'needs_fs_registration' => ($request->role === 'contributor'),
             'needs_tf_registration' => ($request->role === 'contributor'),
@@ -336,6 +374,7 @@ class DashboardController extends Controller
 
         if ($isAdmin) {
             $rules['role'] = 'required|string|in:admin,contributor,viewer';
+            $rules['position'] = 'nullable|string|in:School Head,School DRRM,School Account';
         }
 
         $validator = Validator::make($request->all(), $rules);
@@ -349,6 +388,7 @@ class DashboardController extends Controller
 
         if ($isAdmin) {
             $user->role = $request->role;
+            $user->position = $request->role === 'admin' ? null : $request->position;
         }
 
         if ($request->filled('password')) {
@@ -386,6 +426,14 @@ class DashboardController extends Controller
 
         $user = User::findOrFail($id);
 
+        $allModules = [
+            'fire_safety',
+            'typhoon_flood',
+            'incident_checklist',
+            'comprehensive_school_safety',
+            'hazard_mapping',
+        ];
+
         $user->module_access = $request->modules ?? [];
 
         // Fire Safety school assignment
@@ -412,12 +460,21 @@ class DashboardController extends Controller
             $user->typhoon_school_id = null;
             $user->needs_tf_registration = true;
         } else {
-            $user->typhoon_school_id = $request->typhoon_school_id;
+            $user->typhoon_school_id = $request->filled('typhoon_school_id') ? (int) $request->typhoon_school_id : null;
             $user->needs_tf_registration = false;
         }
 
         // Incident Checklist school assignment
         $user->incident_school_id = $request->incident_school_id ?: null;
+
+        $hasSchoolAssignment = !empty($user->school_id)
+            || !empty($user->typhoon_school_id)
+            || !empty($user->incident_school_id);
+
+        // If a user has an assigned school, grant all modules by default.
+        if ($hasSchoolAssignment && $user->role !== 'admin') {
+            $user->module_access = $allModules;
+        }
 
         $user->save();
 
@@ -429,8 +486,78 @@ class DashboardController extends Controller
         return response()->json(['success' => false, 'message' => 'User deletion is disabled. Please deactivate the account instead.'], 400);
     }
 
+    public function assignUserToSchool(Request $request, $schoolId, $userId)
+    {
+        if (Auth::user()->role !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $school = School::findOrFail($schoolId);
+        $user = User::findOrFail($userId);
+
+        $validator = Validator::make($request->all(), [
+            'position' => 'required|string|in:School Head,School DRRM,School Account',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $position = (string) $request->position;
+
+        if (!in_array($user->role, ['contributor', 'viewer'], true)) {
+            return response()->json(['success' => false, 'message' => 'Only contributors/viewers can be assigned.'], 422);
+        }
+
+        if (!empty($user->school_id) && (int) $user->school_id !== (int) $school->id) {
+            return response()->json(['success' => false, 'message' => 'This user is already assigned to another school.'], 422);
+        }
+
+        // School Head and School DRRM should have only one account each per school.
+        if (in_array($position, ['School Head', 'School DRRM'], true)) {
+            $existing = User::query()
+                ->where('school_id', $school->id)
+                ->where('position', $position)
+                ->where('id', '!=', $user->id)
+                ->first();
+
+            if ($existing) {
+                return response()->json(['success' => false, 'message' => "{$position} is already assigned. Remove it first."], 422);
+            }
+        }
+
+        $user->school_id = $school->id;
+        $user->position = $position;
+        $user->needs_fs_registration = false;
+        $user->save();
+
+        return response()->json(['success' => true, 'message' => 'User assigned successfully.']);
+    }
+
+    public function removeUserSchoolAssignment(Request $request, $schoolId, $userId)
+    {
+        if (Auth::user()->role !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        School::findOrFail($schoolId);
+        $user = User::findOrFail($userId);
+
+        if ((int) $user->school_id !== (int) $schoolId) {
+            return response()->json(['success' => false, 'message' => 'User is not assigned to this school.'], 422);
+        }
+
+        $user->school_id = null;
+        $user->position = null;
+        $user->needs_fs_registration = true;
+        $user->save();
+
+        return response()->json(['success' => true, 'message' => 'Assignment removed successfully.']);
+    }
+
     public function registerMySchool(Request $request)
     {
+        /** @var User $user */
         $user = Auth::user();
         if ($user->role !== 'contributor') {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
@@ -438,7 +565,7 @@ class DashboardController extends Controller
 
         $validator = Validator::make($request->all(), [
             'school_name' => 'required|string|max:255',
-            'school_id_number' => 'required|string|unique:firesafety_school_information,school_id',
+            'school_id_number' => 'required|string|unique:schools,school_id',
             'address' => 'required|string|max:2000',
         ]);
 
@@ -448,30 +575,43 @@ class DashboardController extends Controller
 
         try {
             DB::transaction(function () use ($request, &$user) {
-                // Create the base school record
-                $school = FireSafetySchool::create([
+                $school = School::create([
                     'school_name' => $request->school_name,
                     'school_id' => $request->school_id_number,
+                    'school_id_number' => $request->school_id_number,
                     'address' => $request->address,
-                    'status' => 'unconfigured',
+                    'fire_safety_status' => 'unconfigured',
+                    'evacuation_identification' => $request->school_id_number,
+                    'identification' => $request->school_id_number,
+                    'evacuation_location' => $request->address,
+                    'evacuation_status' => 'cleared',
                 ]);
 
-                // Link to Fire Safety if needed
+                SchoolSpecificsInformation::updateOrInsert(
+                    [
+                        'school_id' => $school->id,
+                        'module' => 'fire_safety',
+                        'key' => 'original_fire_safety_id',
+                    ],
+                    ['value' => (string) $school->id, 'created_at' => now(), 'updated_at' => now()]
+                );
+
+                SchoolSpecificsInformation::updateOrInsert(
+                    [
+                        'school_id' => $school->id,
+                        'module' => 'typhoon_flood',
+                        'key' => 'original_evacuation_center_id',
+                    ],
+                    ['value' => (string) $school->id, 'created_at' => now(), 'updated_at' => now()]
+                );
+
                 if ($user->needs_fs_registration) {
                     $user->school_id = $school->id;
                     $user->needs_fs_registration = false;
                 }
 
-                // Link to Typhoon if needed
                 if ($user->needs_tf_registration) {
-                    // Create evacuation center record
-                    $ec = TypFldEvacuationCenter::create([
-                        'school_id' => $school->id,
-                        'identification' => $request->school_id_number,
-                        'location' => $request->address,
-                        'usage_status' => 'cleared',
-                    ]);
-                    $user->typhoon_school_id = $ec->id;
+                    $user->typhoon_school_id = $school->id;
                     $user->needs_tf_registration = false;
                 }
 

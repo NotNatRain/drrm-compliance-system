@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Models\School;
 
 class ActivityLog extends Model
 {
@@ -29,12 +30,12 @@ class ActivityLog extends Model
     public static function log(string $module, string $activity, array $options = []): ?self
     {
         $user = auth()->user();
-        $schoolId = $options['school_id'] ?? null;
+        $schoolId = $options['school_id'] ?? ($options['unified_school_id'] ?? null);
         $schoolName = $options['school_name'] ?? null;
 
-        // Resolve school name from Fire Safety school if we have school_id and no name
-        if ($schoolId && $schoolName === null && in_array($module, ['fire_safety', 'typhoon_flood'], true)) {
-            $school = FireSafetySchool::find($schoolId);
+        // Resolve school name if we have a school id but no display name
+        if ($schoolId && $schoolName === null) {
+            $school = School::find($schoolId);
             $schoolName = $school ? $school->school_name : null;
         }
 
@@ -52,6 +53,24 @@ class ActivityLog extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function school(): BelongsTo
+    {
+        return $this->belongsTo(School::class, 'school_id');
+    }
+
+    public function getSchoolDisplayAttribute(): string
+    {
+        if (!empty($this->school_name)) {
+            return (string) $this->school_name;
+        }
+
+        if ($this->relationLoaded('school') && $this->school) {
+            return (string) ($this->school->school_name ?? '—');
+        }
+
+        return $this->school_id ? ('School #' . $this->school_id) : '—';
     }
 
     /**

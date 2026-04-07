@@ -123,6 +123,8 @@
                                             aria-selected="false">
                                         <i class="fas fa-sliders-h me-2"></i> System Customization
                                     </button>
+                                    {{-- Backup & Restore: hidden temporarily (re-enable tab + pane + script block + routes in web.php) --}}
+                                    {{--
                                     <button class="nav-link settings-tab-btn"
                                             id="backup-tab"
                                             data-bs-toggle="tab"
@@ -133,6 +135,7 @@
                                             aria-selected="false">
                                         <i class="fas fa-database me-2"></i> Backup &amp; Restore
                                     </button>
+                                    --}}
                                 </div>
                             </nav>
                         </div>
@@ -154,7 +157,7 @@
                                 </h6>
                                 <div class="d-flex flex-wrap gap-1">
                                     <button class="btn btn-primary btn-sm flex-grow-1" data-bs-toggle="modal" data-bs-target="#addSchoolModal">
-                                        <i class="fas fa-plus me-1"></i> Add
+                                        <i class="fas fa-plus me-1"></i> Register
                                     </button>
                                     <button class="btn btn-sm btn-outline-secondary flex-grow-1" type="button" onclick="openSchoolHistoryModal()">
                                         <i class="fas fa-history me-1"></i> History
@@ -726,7 +729,8 @@
                 </div>
             </div>
 
-            <!-- Backup & Restore Tab -->
+            {{-- Backup & Restore Tab (see note on nav backup-tab) --}}
+            {{--
             <div class="tab-pane fade" id="backup-tab-pane">
                 <div class="row">
                     <div class="col-lg-10">
@@ -764,6 +768,7 @@
                     </div>
                 </div>
             </div>
+            --}}
 
 
         </div>
@@ -913,53 +918,69 @@
 
     <!-- Modals for Admin -->
     @if(auth()->user()->role === 'admin')
-    <!-- Add School Modal -->
+    <!-- Register school from main directory -->
     <div class="modal fade" id="addSchoolModal" tabindex="-1">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header" style="background-color: var(--fire-red); color: white;">
                     <h5 class="modal-title">
-                        <i class="fas fa-plus me-2"></i> Add New School
+                        <i class="fas fa-school me-2"></i> Register school for Fire Safety
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <form id="addSchoolForm">
                         @csrf
+                        <p class="text-muted small">Schools are created on <strong>DRRM Main Dashboard → Schools</strong>. Here you link an existing directory school to Fire Safety.</p>
                         <div class="mb-3">
-                            <label class="form-label">School Name *</label>
-                            <input type="text" class="form-control" name="school_name" required>
+                            <label class="form-label fw-bold">Select school *</label>
+                            <select class="form-select" id="fs_custom_reg_select" required>
+                                <option value="">— Choose a school —</option>
+                                @foreach($directorySchoolsForFireRegistration ?? [] as $dir)
+                                    <option
+                                        value="{{ $dir->id }}"
+                                        data-school-name="{{ e($dir->school_name) }}"
+                                        data-school-id="{{ e($dir->school_id ?? '') }}"
+                                        data-school-id-num="{{ e($dir->school_id_number ?? '') }}"
+                                        data-address="{{ e($dir->address ?? '') }}"
+                                        data-head="{{ e($dir->school_head ?? '') }}"
+                                        data-drrm="{{ e($dir->drrm_coordinator ?? '') }}"
+                                    >
+                                        {{ $dir->school_name }}
+                                    </option>
+                                @endforeach
+                            </select>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">School ID *</label>
-                            <input type="text" class="form-control" name="school_id" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Address *</label>
-                            <textarea class="form-control" name="address" rows="3" required></textarea>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label">School Head *</label>
-                                <input type="text" class="form-control" name="school_head" required>
+                        <div id="fs_custom_reg_readonly" class="border rounded p-3 bg-light" style="display:none;">
+                            <div class="row g-2 small">
+                                <div class="col-md-6">
+                                    <strong>ID / Code:</strong>
+                                    <input type="text" id="fs_cr_code" class="form-control form-control-sm mt-1" value="" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Name:</strong>
+                                    <input type="text" id="fs_cr_name" class="form-control form-control-sm mt-1" value="" readonly>
+                                </div>
+                                <div class="col-12">
+                                    <strong>Address:</strong>
+                                    <input type="text" id="fs_cr_addr" class="form-control form-control-sm mt-1" value="" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Head:</strong>
+                                    <input type="text" id="fs_cr_head" class="form-control form-control-sm mt-1" value="" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>DRRM:</strong>
+                                    <input type="text" id="fs_cr_drrm" class="form-control form-control-sm mt-1" value="" readonly>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <label class="form-label">DRRM Coordinator *</label>
-                                <input type="text" class="form-control" name="school_drrm_coordinator" required>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Initial Status</label>
-                            <input type="text" class="form-control bg-light" value="Unconfigured" readonly disabled>
-                            <input type="hidden" name="status" value="unconfigured">
-                            <small class="text-muted">Status is automatically determined based on configuration.</small>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" onclick="saveNewSchool()">
-                        <i class="fas fa-save me-2"></i> Save School
+                        <i class="fas fa-link me-2"></i> Register for Fire Safety
                     </button>
                 </div>
             </div>
@@ -1603,10 +1624,11 @@
                 loadUsers();
             }
 
-            // Load backups list when Backup tab is opened
+            /* Backup tab (hidden): loadFireSafetyBackups on shown.bs.tab
             document.getElementById('backup-tab')?.addEventListener('shown.bs.tab', function () {
                 loadFireSafetyBackups();
             });
+            */
 
             // Set up edit school buttons
             document.querySelectorAll('.edit-school-btn').forEach(button => {
@@ -1762,57 +1784,56 @@
             }
         }
 
-        // Admin: Save new school
-        async function saveNewSchool() {
-            const form = document.getElementById('addSchoolForm');
+        const fsCustomRegSelect = document.getElementById('fs_custom_reg_select');
+        if (fsCustomRegSelect) {
+            fsCustomRegSelect.addEventListener('change', function() {
+                const opt = this.options[this.selectedIndex];
+                const box = document.getElementById('fs_custom_reg_readonly');
+                if (!opt || !opt.value) {
+                    box.style.display = 'none';
+                    return;
+                }
+                box.style.display = 'block';
+                const code = opt.dataset.schoolIdNum || opt.dataset.schoolId || '—';
+            document.getElementById('fs_cr_code').value = code;
+            document.getElementById('fs_cr_name').value = opt.dataset.schoolName || '';
+            document.getElementById('fs_cr_addr').value = opt.dataset.address || '—';
+            document.getElementById('fs_cr_head').value = opt.dataset.head || '—';
+            document.getElementById('fs_cr_drrm').value = opt.dataset.drrm || '—';
+            });
+        }
 
-            if (!form.checkValidity()) {
+        async function saveNewSchool() {
+            const sel = document.getElementById('fs_custom_reg_select');
+            if (!sel || !sel.value) {
+                Swal.fire({ icon: 'warning', title: 'Select a school', text: 'Choose a school from the main directory.' });
+                return;
+            }
+            const form = document.getElementById('addSchoolForm');
+            if (form && !form.checkValidity()) {
                 form.reportValidity();
                 return;
             }
-
-            const formData = new FormData(form);
-
             try {
-                const response = await fetch('/fire-safety/school', {
+                const response = await fetch('{{ route("fire-safety.school.register-from-directory") }}', {
                     method: 'POST',
                     headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                     },
-                    body: formData
+                    body: JSON.stringify({ unified_school_id: parseInt(sel.value, 10) })
                 });
-
                 const data = await response.json();
-
                 if (response.ok && data.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success!',
-                        text: 'School added successfully!',
-                        confirmButtonText: 'OK'
-                    }).then(() => {
-                        location.reload();
-                    });
+                    Swal.fire({ icon: 'success', title: 'Registered', text: data.message || 'School registered for Fire Safety.', confirmButtonText: 'OK' })
+                    .then(() => location.reload());
                 } else {
-                    let errorMsg = data.message || 'Failed to add school';
-                    if (data.errors) {
-                        errorMsg = Object.values(data.errors)[0][0];
-                    }
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Notice',
-                        text: errorMsg
-                    });
+                    Swal.fire({ icon: 'error', title: 'Notice', text: data.message || 'Failed to register school.' });
                 }
-
             } catch (error) {
                 console.error('Error:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'System Error',
-                    text: 'Failed to add school. Please check your connection.'
-                });
+                Swal.fire({ icon: 'error', title: 'System Error', text: 'Request failed.' });
             }
         }
 
@@ -1883,31 +1904,37 @@
                         This will also delete all associated buildings, alarm systems, fire extinguishers, rooms, and evacuation plans.
                         This action cannot be undone.
                     </p>
-                    <div class="mb-2 text-start">
-                        <label class="form-label fw-bold small">Confirm with your account password</label>
-                        <input type="password" id="swal-delete-password" class="form-control form-control-sm" placeholder="Enter your password to enable deletion">
-                    </div>
                 `,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
                 cancelButtonColor: '#3085d6',
                 confirmButtonText: 'Yes, delete it!',
+                input: 'password',
+                inputLabel: 'Confirm with your account password',
+                inputPlaceholder: 'Enter your password to enable deletion',
+                inputAttributes: {
+                    autocapitalize: 'off',
+                    autocorrect: 'off',
+                    autocomplete: 'current-password'
+                },
                 didOpen: () => {
-                    const input = document.getElementById('swal-delete-password');
+                    const input = Swal.getInput();
                     const confirmBtn = Swal.getConfirmButton();
-                    confirmBtn.disabled = true;
+                    if (confirmBtn) confirmBtn.disabled = true;
+                    if (!input) return;
                     input.addEventListener('input', () => {
-                        confirmBtn.disabled = input.value.trim().length === 0;
+                        if (!confirmBtn) return;
+                        confirmBtn.disabled = (input.value || '').trim().length === 0;
                     });
                 },
-                preConfirm: () => {
-                    const pwd = document.getElementById('swal-delete-password').value.trim();
-                    if (!pwd) {
+                preConfirm: (pwd) => {
+                    const trimmed = (pwd || '').trim();
+                    if (!trimmed) {
                         Swal.showValidationMessage('Password is required');
                         return false;
                     }
-                    return pwd;
+                    return trimmed;
                 }
             });
 
@@ -2165,7 +2192,7 @@
             }
         }
 
-        // Backup & Restore (Fire Safety)
+        /* Backup & Restore (Fire Safety) — UI/routes disabled; uncomment with tab + web.php routes
         async function loadFireSafetyBackups() {
             const tbody = document.getElementById('fireSafetyBackupsTbody');
             if (!tbody) return;
@@ -2227,6 +2254,7 @@
                 Swal.fire({ icon: 'error', title: 'Backup Failed', text: 'Failed to create backup.' });
             }
         }
+        */
 
         async function saveInspectionConfig(type) {
             const formId = type === 'inspection_checklist' ? 'addInspectionChecklistForm' : 'addInspectionObserverForm';

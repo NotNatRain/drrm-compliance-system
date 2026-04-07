@@ -543,7 +543,7 @@
                                                             </button>
                                                             @if(Auth::user()->role !== 'viewer')
                                                             <button class="btn btn-sm btn-outline-danger remove-alarm-btn-table"
-                                                                    onclick="currentAlarmId = '{{ $alarm->id }}'; removeAlarmSystem();">
+                                                                    onclick="currentAlarmId = '{{ $alarm->id }}'; currentAlarmPrimaryBuildingId = {{ $alarm->building_id ?? 'null' }}; removeAlarmSystem();">
                                                                 <i class="fas fa-trash"></i> Remove
                                                             </button>
                                                             @endif
@@ -879,6 +879,7 @@
         // Store current school and alarm data
         let currentSchoolId = "{{ $activeSchool->id ?? '' }}";
         let currentAlarmId = null;
+        let currentAlarmPrimaryBuildingId = null;
         let currentAlarmType = null;
         const userRole = "{{ auth()->user()->role }}";
 
@@ -911,10 +912,13 @@
                 const response = await fetch(`/fire-safety/alarm/${alarmId}`);
                 const alarm = await response.json();
 
+                currentAlarmPrimaryBuildingId = alarm.building_id != null ? alarm.building_id : null;
                 currentAlarmType = alarm.alarm_type;
 
                 // Populate form basics
                 document.getElementById('updateAlarmId').value = alarmId;
+                document.getElementById('updateAlarmId').dataset.primaryBuildingId =
+                    alarm.building_id != null ? String(alarm.building_id) : '';
                 document.getElementById('updateAlarmCode').value = alarm.code;
                 document.getElementById('originalAlarmCode').value = alarm.code;
                 document.getElementById('updateAlarmTypeDisplay').value = alarm.alarm_type;
@@ -1475,6 +1479,12 @@
             if (!window.currentAlarmId) {
                  window.currentAlarmId = document.getElementById('updateAlarmId').value;
             }
+            if (currentAlarmPrimaryBuildingId == null) {
+                const hid = document.getElementById('updateAlarmId')?.dataset.primaryBuildingId;
+                if (hid) {
+                    currentAlarmPrimaryBuildingId = parseInt(hid, 10);
+                }
+            }
 
             // Close update modal if open
             const updateModal = bootstrap.Modal.getInstance(document.getElementById('updateAlarmModal'));
@@ -1503,7 +1513,10 @@
                         'Accept': 'application/json',
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ reason: reason })
+                    body: JSON.stringify({
+                        reason: reason,
+                        from_building_id: currentAlarmPrimaryBuildingId != null ? parseInt(currentAlarmPrimaryBuildingId, 10) : null,
+                    })
                 });
 
                 const data = await response.json().catch(() => ({}));

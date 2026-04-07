@@ -614,7 +614,7 @@
                 <div class="modal-body">
                     <form id="addBuildingPlanForm" action="{{ route('fire-safety.evacuation-plan.store') }}" method="POST">
                         @csrf
-                        <input type="hidden" name="school_id" class="school-id-field">
+                        <input type="hidden" name="unified_school_id" class="school-id-field">
                         <input type="hidden" name="building_id" class="building-id-field">
                         <input type="hidden" name="plan_type" value="building">
                         <input type="hidden" name="status" value="active">
@@ -676,7 +676,7 @@
                 <div class="modal-body">
                     <form id="addSchoolPlanForm" action="{{ route('fire-safety.evacuation-plan.store') }}" method="POST">
                         @csrf
-                        <input type="hidden" name="school_id" class="school-id-field">
+                        <input type="hidden" name="unified_school_id" class="school-id-field">
                         <input type="hidden" name="plan_type" value="school">
                         <input type="hidden" name="status" value="active">
 
@@ -1240,17 +1240,19 @@
             if (addBldgModal) {
                 addBldgModal.addEventListener('show.bs.modal', function(event) {
                     const btn = event.relatedTarget;
-                    const bId = btn.getAttribute('data-building-id');
-                    const bCode = btn.getAttribute('data-building-code');
-                    const sId = btn.getAttribute('data-school-id') || currentSchoolId;
+                    const bId = btn ? btn.getAttribute('data-building-id') : null;
+                    const bCode = btn ? btn.getAttribute('data-building-code') : '';
+                    const sId = (btn && btn.getAttribute('data-school-id')) || currentSchoolId;
 
                     const form = document.getElementById('addBuildingPlanForm');
                     form.reset();
-                    form.querySelector('.school-id-field').value = sId;
-                    form.querySelector('.building-id-field').value = bId;
-                    document.getElementById('addBuildBldgCode').textContent = bCode;
+                    form.querySelector('.school-id-field').value = sId || '';
+                    form.querySelector('.building-id-field').value = bId || '';
+                    document.getElementById('addBuildBldgCode').textContent = bCode || '—';
 
-                    loadBuildingDetailsForPlan(bId, sId, form);
+                    if (bId && sId) {
+                        loadBuildingDetailsForPlan(bId, sId, form);
+                    }
                     checkViewerAccess('addBuildingPlanForm');
                 });
             }
@@ -1260,7 +1262,7 @@
             if (addSchoolModal) {
                 addSchoolModal.addEventListener('show.bs.modal', function(event) {
                     const btn = event.relatedTarget;
-                    const sId = btn.getAttribute('data-school-id') || currentSchoolId;
+                    const sId = (btn && btn.getAttribute('data-school-id')) || currentSchoolId;
                     const form = document.getElementById('addSchoolPlanForm');
                     form.reset();
                     form.querySelector('.school-id-field').value = sId;

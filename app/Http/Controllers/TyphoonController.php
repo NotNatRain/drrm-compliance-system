@@ -2,70 +2,94 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ActivityLog;
+use App\Models\FireSafetyNotification;
+use App\Models\School;
+use App\Models\TypFldFamily;
+use App\Models\TypFldFamilyMember;
+use App\Models\TypFldMonitoringSnapshot;
+use App\Models\SchoolSpecificsInformation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use App\Models\FireSafetySchool;
-use App\Models\TypFldEvacuationCenter;
-use App\Models\TypFldFamily;
-use App\Models\TypFldFamilyMember;
-use App\Models\TypFldMonitoringSnapshot;
-use App\Models\ActivityLog;
-use App\Models\FireSafetyNotification;
 
 class TyphoonController extends Controller
 {
-    /**
-     * Create a new controller instance.
-     */
     public function __construct()
     {
         $this->middleware('auth');
     }
 
     /**
-     * Show the typhoon/flooding dashboard.
+     * Schools that completed Typhoon/Flood evacuation-center registration (not the whole directory).
      */
+    private function typhoonRegisteredEvacuationCentersQuery()
+    {
+        return School::query()
+            ->whereHas('specifics', function ($q) {
+                $q->where('module', 'typhoon_flood')->where('key', 'original_evacuation_center_id');
+            })
+            ->orderBy('school_name');
+    }
+
+    /**
+     * Main-directory schools not yet registered for Typhoon/Flood monitoring.
+     */
+    private function schoolsNotYetRegisteredForTyphoon()
+    {
+        return School::query()
+            ->whereDoesntHave('specifics', function ($q) {
+                $q->where('module', 'typhoon_flood')->where('key', 'original_evacuation_center_id');
+            })
+            ->orderBy('school_name')
+            ->get();
+    }
+
+    private function contributorTyphoonSchoolIds($user): ?array
+    {
+        if ($user->role === 'admin') {
+            return null;
+        }
+        if ($user->typhoon_school_id) {
+            return [(int) $user->typhoon_school_id];
+        }
+        if ($user->school_id) {
+            return [(int) $user->school_id];
+        }
+
+        return [];
+    }
+
+    private function attachCurrentOccupancy($ec)
+    {
+        $ec->current_occupancy = TypFldFamilyMember::query()
+            ->join('typ_fld_families', 'typ_fld_families.id', '=', 'typ_fld_family_members.family_id')
+            ->where('typ_fld_families.school_id', $ec->id)
+            ->whereNull('typ_fld_families.checked_out_at')
+            ->count();
+
+        return $ec;
+    }
+
     public function dashboard()
     {
         $user = auth()->user();
 
-        // For contributors: resolve their assigned typhoon school
-        $contributorActiveSchoolId = null;
+        $evacuationCentersQuery = $this->typhoonRegisteredEvacuationCentersQuery();
         if ($user->role !== 'admin') {
-            if ($user->typhoon_school_id) {
-                $assignedEc = TypFldEvacuationCenter::find($user->typhoon_school_id);
-                $contributorActiveSchoolId = $assignedEc ? $assignedEc->school_id : null;
-            }
-        }
-
-        // ─── EVACUATION CENTERS for the bottom section ──────────────────────────
-        // Admins → ALL centers (no filter); Contributors → only their school's center
-        $evacuationCentersQuery = TypFldEvacuationCenter::query()->with('school');
-
-        if ($user->role !== 'admin') {
-            if ($contributorActiveSchoolId) {
-                $evacuationCentersQuery->where('school_id', $contributorActiveSchoolId);
-            } else {
+            $ids = $this->contributorTyphoonSchoolIds($user);
+            if ($ids === null || count($ids) === 0) {
                 $evacuationCentersQuery->whereRaw('1=0');
+            } else {
+                $evacuationCentersQuery->whereIn('id', $ids);
             }
         }
-        // admin: no where clause → all centers
 
-        $evacuationCenters = $evacuationCentersQuery->get()->map(function ($ec) {
-            $ec->current_occupancy = TypFldFamilyMember::query()
-                ->join('typ_fld_families', 'typ_fld_families.id', '=', 'typ_fld_family_members.family_id')
-                ->where('typ_fld_families.evacuation_center_id', $ec->id)
-                ->whereNull('typ_fld_families.checked_out_at')
-                ->count();
-            return $ec;
-        });
+        $evacuationCenters = $evacuationCentersQuery->get()->map(fn ($ec) => $this->attachCurrentOccupancy($ec));
 
-        // ─── GLOBAL stat queries (ALWAYS all schools, all user types) ────────────
         $globalFamiliesQuery = TypFldFamily::query();
-        $globalMembersQuery  = TypFldFamilyMember::query();
-
+        $globalMembersQuery = TypFldFamilyMember::query();
         $activeFamiliesQuery = (clone $globalFamiliesQuery)->whereNull('checked_out_at');
 
         $totalFamilies = (clone $activeFamiliesQuery)->count();
@@ -74,39 +98,38 @@ class TyphoonController extends Controller
             ->whereNull('f.checked_out_at')
             ->count();
 
-        $missingCount  = (clone $globalMembersQuery)->where('status', 'missing')->count();
-        $injuredCount  = (clone $globalMembersQuery)->where('status', 'injured')->count();
+        $missingCount = (clone $globalMembersQuery)->where('status', 'missing')->count();
+        $injuredCount = (clone $globalMembersQuery)->where('status', 'injured')->count();
         $deceasedCount = (clone $globalMembersQuery)->where('status', 'deceased')->count();
 
         $vulnerableCounts = [
             'pregnant' => (clone $activeFamiliesQuery)->where('has_pregnant', true)->count(),
-            'pwd'      => (clone $activeFamiliesQuery)->where('has_pwd', true)->count(),
-            'senior'   => (clone $activeFamiliesQuery)->where('has_senior', true)->count(),
+            'pwd' => (clone $activeFamiliesQuery)->where('has_pwd', true)->count(),
+            'senior' => (clone $activeFamiliesQuery)->where('has_senior', true)->count(),
         ];
 
-        // All centers count (always global for header badge)
-        $openEvacuationCentersCount = TypFldEvacuationCenter::where('usage_status', '!=', 'cleared')->count();
+        $openEvacuationCentersCount = School::where('evacuation_status', '!=', 'cleared')->count();
 
-        // Latest monitoring snapshots (from contributor's active center, if any)
-        $activeCenter    = $contributorActiveSchoolId
-            ? TypFldEvacuationCenter::where('school_id', $contributorActiveSchoolId)->first()
+        $contributorIds = $this->contributorTyphoonSchoolIds($user);
+        $activeCenter = ($contributorIds && count($contributorIds) === 1)
+            ? School::find($contributorIds[0])
             : null;
-        $floodMonitoring = null;
 
+        $floodMonitoring = null;
         if ($activeCenter) {
-            $floodMonitoring = TypFldMonitoringSnapshot::where('evacuation_center_id', $activeCenter->id)
+            $floodMonitoring = TypFldMonitoringSnapshot::where('school_id', $activeCenter->id)
                 ->where('type', 'flood')
                 ->latest('recorded_at')
                 ->first();
         }
 
-        // Fetch Real-time Weather Data from Open-Meteo (Olongapo City)
         $weatherData = cache()->remember('typhoon_weather_data', 1800, function () {
             try {
                 $lat = 14.83;
                 $lon = 120.28;
                 $url = "https://api.open-meteo.com/v1/forecast?latitude={$lat}&longitude={$lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Asia%2FSingapore";
                 $response = file_get_contents($url);
+
                 return json_decode($response, true);
             } catch (\Exception $e) {
                 return null;
@@ -115,9 +138,9 @@ class TyphoonController extends Controller
 
         $weatherDesc = 'Clear';
         if (isset($weatherData['current']['weather_code'])) {
-            $code  = $weatherData['current']['weather_code'];
+            $code = $weatherData['current']['weather_code'];
             $codes = [
-                0  => 'Clear Sky', 1 => 'Mainly Clear', 2 => 'Partly Cloudy', 3 => 'Overcast',
+                0 => 'Clear Sky', 1 => 'Mainly Clear', 2 => 'Partly Cloudy', 3 => 'Overcast',
                 45 => 'Fog', 48 => 'Depositing Rime Fog',
                 51 => 'Light Drizzle', 53 => 'Moderate Drizzle', 55 => 'Dense Drizzle',
                 61 => 'Slight Rain', 63 => 'Moderate Rain', 65 => 'Heavy Rain',
@@ -129,13 +152,10 @@ class TyphoonController extends Controller
 
         $dailyRainfallSum = $weatherData['daily']['precipitation_sum'][0] ?? 0.0;
 
-        // ─── Active Typhoon near Olongapo City / Zambales (via GDACS) ───────────────
-        // Only alert if the typhoon's centre is within ~500 km of Olongapo City
         $activeTyphoon = cache()->remember('gdacs_active_typhoon_ph', 1800, function () {
-            // Olongapo City, Zambales coordinates
             $targetLat = 14.838;
             $targetLon = 120.282;
-            $radiusKm  = 500; // 500 km impact radius around Olongapo
+            $radiusKm = 500;
 
             try {
                 $url = 'https://www.gdacs.org/gdacsapi/api/events/geteventlist/SEARCH'
@@ -145,109 +165,123 @@ class TyphoonController extends Controller
 
                 $ctx = stream_context_create(['http' => ['timeout' => 8]]);
                 $raw = @file_get_contents($url, false, $ctx);
-                if (!$raw) return null;
+                if (!$raw) {
+                    return null;
+                }
 
-                $data     = json_decode($raw, true);
+                $data = json_decode($raw, true);
                 $features = $data['features'] ?? [];
 
-                // Helper: Haversine distance in km between two lat/lon points
                 $haversine = function ($lat1, $lon1, $lat2, $lon2) {
-                    $R  = 6371; // Earth radius in km
+                    $R = 6371;
                     $dLat = deg2rad($lat2 - $lat1);
                     $dLon = deg2rad($lon2 - $lon1);
-                    $a    = sin($dLat / 2) ** 2
+                    $a = sin($dLat / 2) ** 2
                             + cos(deg2rad($lat1)) * cos(deg2rad($lat2))
                             * sin($dLon / 2) ** 2;
+
                     return $R * 2 * atan2(sqrt($a), sqrt(1 - $a));
                 };
 
-                $closest     = null;
+                $closest = null;
                 $closestDist = PHP_INT_MAX;
 
                 foreach ($features as $f) {
                     $coords = $f['geometry']['coordinates'] ?? null;
-                    if (!$coords) continue;
+                    if (!$coords) {
+                        continue;
+                    }
 
                     $lon = (float) $coords[0];
                     $lat = (float) $coords[1];
 
                     $distKm = $haversine($targetLat, $targetLon, $lat, $lon);
 
-                    // Only consider typhoons within the impact radius
                     if ($distKm <= $radiusKm && $distKm < $closestDist) {
                         $closestDist = $distKm;
-                        $props       = $f['properties'] ?? [];
-                        $rawName     = $props['name'] ?? ($props['htmldescription'] ?? 'Unnamed');
-                        $alertLevel  = strtolower($props['alertlevel'] ?? 'green');
-                        $windKph     = isset($props['maxwind']) ? round($props['maxwind'] * 3.6) : 0;
+                        $props = $f['properties'] ?? [];
+                        $rawName = $props['name'] ?? ($props['htmldescription'] ?? 'Unnamed');
+                        $alertLevel = strtolower($props['alertlevel'] ?? 'green');
+                        $windKph = isset($props['maxwind']) ? round($props['maxwind'] * 3.6) : 0;
 
-                        // PAGASA TCWS Signal mapping
-                        if ($windKph >= 221)     $signal = 5;
-                        elseif ($windKph >= 180) $signal = 4;
-                        elseif ($windKph >= 120) $signal = 3;
-                        elseif ($windKph >= 60)  $signal = 2;
-                        else {
+                        if ($windKph >= 221) {
+                            $signal = 5;
+                        } elseif ($windKph >= 180) {
+                            $signal = 4;
+                        } elseif ($windKph >= 120) {
+                            $signal = 3;
+                        } elseif ($windKph >= 60) {
+                            $signal = 2;
+                        } else {
                             $signal = $alertLevel === 'red' ? 3 : ($alertLevel === 'orange' ? 2 : 1);
                         }
 
-                        // Typhoon category label (PAGASA style)
-                        if ($signal >= 5)      $category = 'Super Typhoon';
-                        elseif ($signal >= 3)  $category = 'Typhoon';
-                        elseif ($signal >= 2)  $category = 'Tropical Storm';
-                        else                   $category = 'Tropical Depression';
+                        if ($signal >= 5) {
+                            $category = 'Super Typhoon';
+                        } elseif ($signal >= 3) {
+                            $category = 'Typhoon';
+                        } elseif ($signal >= 2) {
+                            $category = 'Tropical Storm';
+                        } else {
+                            $category = 'Tropical Depression';
+                        }
 
-                        // Clean GDACS-style internal names (e.g. "TC 2026001N11142")
                         $cleanName = trim(preg_replace('/^TC\s*\d+[A-Z\d]+\s*/i', '', $rawName));
                         if (empty($cleanName) || strlen($cleanName) < 2) {
                             $cleanName = $props['eventid'] ?? 'Unnamed';
                         }
 
                         $closest = [
-                            'name'        => strtoupper($cleanName),
-                            'category'    => $category,
-                            'signal'      => $signal,
-                            'wind_kph'    => $windKph,
+                            'name' => strtoupper($cleanName),
+                            'category' => $category,
+                            'signal' => $signal,
+                            'wind_kph' => $windKph,
                             'distance_km' => round($distKm),
-                            'lat'         => $lat,
-                            'lon'         => $lon,
+                            'lat' => $lat,
+                            'lon' => $lon,
                         ];
                     }
                 }
 
-                return $closest; // null if nothing within 500 km of Olongapo
+                return $closest;
             } catch (\Exception $e) {
                 return null;
             }
         });
 
+        $contributorActiveSchoolId = ($contributorIds && count($contributorIds) === 1) ? $contributorIds[0] : null;
+
+        $unregisteredSchools = $this->schoolsNotYetRegisteredForTyphoon();
+
         return view('typhoon.dashboard', [
-            'evacuationCenters'          => $evacuationCenters,
-            'totalFamilies'              => $totalFamilies,
-            'totalEvacuees'              => $totalEvacuees,
+            'evacuationCenters' => $evacuationCenters,
+            'totalFamilies' => $totalFamilies,
+            'totalEvacuees' => $totalEvacuees,
             'openEvacuationCentersCount' => $openEvacuationCentersCount,
-            'incidentMonitoring'         => ['major' => 0, 'minor' => 0],
+            'incidentMonitoring' => ['major' => 0, 'minor' => 0],
             'rainfall' => [
-                'bangal'   => number_format($dailyRainfallSum * 0.95, 2),
+                'bangal' => number_format($dailyRainfallSum * 0.95, 2),
                 'kalaklan' => number_format($dailyRainfallSum * 1.05, 2),
             ],
-            'missingCount'       => $missingCount,
-            'injuredCount'       => $injuredCount,
-            'deceasedCount'      => $deceasedCount,
-            'vulnerableCounts'   => $vulnerableCounts,
-            'recentEvacuees'     => $totalEvacuees > 0,
+            'missingCount' => $missingCount,
+            'injuredCount' => $injuredCount,
+            'deceasedCount' => $deceasedCount,
+            'vulnerableCounts' => $vulnerableCounts,
+            'recentEvacuees' => $totalEvacuees > 0,
             'recentlyRegistered' => (clone $activeFamiliesQuery)->whereDate('created_at', Carbon::today())->count(),
-            'floodMonitoring'    => $floodMonitoring ? (object) ($floodMonitoring->payload ?? []) : null,
-            'typhoonData'        => (object) [
+            'floodMonitoring' => $floodMonitoring ? (object) ($floodMonitoring->payload ?? []) : null,
+            'typhoonData' => (object) [
                 'name' => $weatherDesc,
                 'temp' => $weatherData['current']['temperature_2m'] ?? '--',
                 'wind' => $weatherData['current']['wind_speed_10m'] ?? '--',
             ],
             'activeSchoolId' => $contributorActiveSchoolId,
-            'activeTyphoon'  => $activeTyphoon,
-            'unregisteredSchools' => FireSafetySchool::whereDoesntHave('typhoonEvacuationCenter')->orderBy('school_name')->get(),
+            'activeTyphoon' => $activeTyphoon,
+            'unregisteredSchools' => $unregisteredSchools,
             'quickAnnouncements' => FireSafetyNotification::forCompliance('typhoon_flood')
-                ->where(function($q) use ($contributorActiveSchoolId) {
-                    $q->whereNull('school_id')->orWhere('school_id', $contributorActiveSchoolId);
+                ->where(function ($q) use ($contributorActiveSchoolId) {
+                    $q->whereNull('school_id')
+                        ->orWhere('school_id', $contributorActiveSchoolId);
                 })
                 ->where('type', 'announcement')
                 ->latest()
@@ -260,36 +294,27 @@ class TyphoonController extends Controller
     {
         $user = auth()->user();
 
-        $centersQuery = TypFldEvacuationCenter::query()->with('school');
+        $centersQuery = $this->typhoonRegisteredEvacuationCentersQuery();
         if ($user->role !== 'admin') {
-            if ($user->typhoon_school_id) {
-                $centersQuery->where('id', $user->typhoon_school_id);
-            } elseif ($user->school_id) {
-                $centersQuery->where('school_id', $user->school_id);
-            } else {
+            $ids = $this->contributorTyphoonSchoolIds($user);
+            if (!$ids || count($ids) === 0) {
                 $centersQuery->whereRaw('1=0');
+            } else {
+                $centersQuery->whereIn('id', $ids);
             }
         }
 
         $schools = $centersQuery->get()->map(function ($ec) {
             $occupancy = TypFldFamilyMember::query()
                 ->join('typ_fld_families', 'typ_fld_families.id', '=', 'typ_fld_family_members.family_id')
-                ->where('typ_fld_families.evacuation_center_id', $ec->id)
+                ->where('typ_fld_families.school_id', $ec->id)
                 ->whereNull('typ_fld_families.checked_out_at')
                 ->count();
 
-            $school = $ec->school;
-            if (!$school) {
-                $school = new FireSafetySchool([
-                    'id' => $ec->school_id,
-                    'school_name' => $ec->identification ?: ('Center #' . $ec->id),
-                    'school_id' => $ec->identification,
-                    'address' => $ec->location,
-                ]);
-            }
-
+            $school = $ec;
             $school->typ_ec = $ec;
             $school->typ_ec_current_occupancy = $occupancy;
+
             return $school;
         });
 
@@ -306,20 +331,21 @@ class TyphoonController extends Controller
 
     public function setActiveSchool(Request $request, $id)
     {
-        $school = FireSafetySchool::findOrFail($id);
+        $school = School::findOrFail($id);
 
-        if (auth()->user()->role !== 'admin' && auth()->user()->school_id != $id) {
+        if (auth()->user()->role !== 'admin' && (int) auth()->user()->school_id !== (int) $school->id && (int) auth()->user()->typhoon_school_id !== (int) $school->id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
         session(['typhoon_active_school_id' => $school->id]);
+
         return response()->json(['success' => true]);
     }
 
     public function storeFamily(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'evacuation_center_id' => 'required|integer|exists:typ_fld_evacuation_centers,id',
+            'evacuation_center_id' => 'required|integer|exists:schools,id',
             'head_family_name' => 'required|string|max:255',
             'collective_needs' => 'nullable|string|max:2000',
             'has_pregnant' => 'nullable|boolean',
@@ -339,33 +365,27 @@ class TyphoonController extends Controller
             return redirect()->back()->with('error', $validator->errors()->first())->withInput();
         }
 
-        $ec = TypFldEvacuationCenter::with('school')->findOrFail($request->evacuation_center_id);
+        $ec = School::findOrFail($request->evacuation_center_id);
 
-        // Capacity check logic:
-        // "Capacity is 500 and Occupancy are currently in 498 if there were a new family ... forced it to register ... but if another new family ... do not allow it anymore"
-        // This means if CURRENT occupancy < CAPACITY, allow registration (even if result > capacity).
-        // If CURRENT occupancy >= CAPACITY, block.
-        
         $currentOccupancyCount = TypFldFamilyMember::query()
             ->join('typ_fld_families', 'typ_fld_families.id', '=', 'typ_fld_family_members.family_id')
-            ->where('typ_fld_families.evacuation_center_id', $ec->id)
+            ->where('typ_fld_families.school_id', $ec->id)
             ->whereNull('typ_fld_families.checked_out_at')
             ->count();
 
-        // Check if full
-        if ($ec->capacity > 0 && $currentOccupancyCount >= $ec->capacity) {
-            return redirect()->back()->with('error', "Evacuation Center is full (Capacity: {$ec->capacity}, Current: {$currentOccupancyCount}). Cannot register more families.")->withInput();
+        $capacity = $ec->evacuation_capacity;
+        if ($capacity > 0 && $currentOccupancyCount >= $capacity) {
+            return redirect()->back()->with('error', "Evacuation Center is full (Capacity: {$capacity}, Current: {$currentOccupancyCount}). Cannot register more families.")->withInput();
         }
 
-        // permission: contributor can only create under their school
         $user = auth()->user();
-        if ($user->role !== 'admin' && $user->school_id != $ec->school_id && $user->typhoon_school_id != $ec->id) {
+        if ($user->role !== 'admin' && (int) $user->school_id !== (int) $ec->id && (int) $user->typhoon_school_id !== (int) $ec->id) {
             return redirect()->back()->with('error', 'Unauthorized evacuation center.');
         }
 
         DB::transaction(function () use ($request, $ec) {
             $family = TypFldFamily::create([
-                'evacuation_center_id' => $ec->id,
+                'school_id' => $ec->id,
                 'head_family_name' => $request->head_family_name,
                 'collective_needs' => $request->collective_needs,
                 'has_pregnant' => (bool) $request->has_pregnant,
@@ -388,30 +408,28 @@ class TyphoonController extends Controller
                     'status' => 'normal',
                 ]);
             }
-
-            $ec->save();
-
-            ActivityLog::log('typhoon_flood', 'Registered family: ' . $family->head_family_name, [
-                'school_id' => $ec->school_id,
-                'notes' => $family->collective_needs,
-            ]);
         });
+
+        ActivityLog::log('typhoon_flood', 'Registered family: ' . $request->head_family_name, [
+            'school_id' => $ec->id,
+            'notes' => $request->collective_needs,
+        ]);
 
         return redirect()->route('typhoon.dashboard')->with('success', 'Family registered successfully.');
     }
 
     public function showEvacuationCenter($id)
     {
-        $ec = TypFldEvacuationCenter::with('school')->findOrFail($id);
+        $ec = School::findOrFail($id);
         $user = auth()->user();
-        if ($user->role !== 'admin' && $user->school_id != $ec->school_id && $user->typhoon_school_id != $ec->id) {
+        if ($user->role !== 'admin' && (int) $user->school_id !== (int) $ec->id && (int) $user->typhoon_school_id !== (int) $ec->id) {
             abort(403, 'Unauthorized');
         }
 
-        session(['typhoon_active_school_id' => $ec->school_id]);
+        session(['typhoon_active_school_id' => $ec->id]);
 
         $families = TypFldFamily::withCount('members')
-            ->where('evacuation_center_id', $ec->id)
+            ->where('school_id', $ec->id)
             ->latest()
             ->get();
 
@@ -419,22 +437,17 @@ class TyphoonController extends Controller
 
         $currentOccupancy = TypFldFamilyMember::query()
             ->join('typ_fld_families', 'typ_fld_families.id', '=', 'typ_fld_family_members.family_id')
-            ->where('typ_fld_families.evacuation_center_id', $ec->id)
+            ->where('typ_fld_families.school_id', $ec->id)
             ->whereNull('typ_fld_families.checked_out_at')
             ->count();
 
-        $evacuationCenters = TypFldEvacuationCenter::with('school')->get()->map(function ($center) {
-            $center->current_occupancy = TypFldFamilyMember::query()
-                ->join('typ_fld_families', 'typ_fld_families.id', '=', 'typ_fld_family_members.family_id')
-                ->where('typ_fld_families.evacuation_center_id', $center->id)
-                ->whereNull('typ_fld_families.checked_out_at')
-                ->count();
-            return $center;
+        $evacuationCenters = $this->typhoonRegisteredEvacuationCentersQuery()->get()->map(function ($center) {
+            return $this->attachCurrentOccupancy($center);
         });
 
         $quickAnnouncements = FireSafetyNotification::forCompliance('typhoon_flood')
-            ->where(function($q) use ($ec) {
-                $q->whereNull('school_id')->orWhere('school_id', $ec->school_id);
+            ->where(function ($q) use ($ec) {
+                $q->whereNull('school_id')->orWhere('school_id', $ec->id);
             })
             ->where('type', 'announcement')
             ->latest()
@@ -459,10 +472,7 @@ class TyphoonController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'existing_school_id' => 'nullable|integer|exists:firesafety_school_information,id',
-            'identification' => 'required_without:existing_school_id|string|max:255',
-            'school_name' => 'required_without:existing_school_id|string|max:255',
-            'location' => 'required_without:existing_school_id|string|max:2000',
+            'existing_school_id' => 'required|integer|exists:schools,id',
             'usage_status' => 'required|string|in:cleared,occupied,full,decamp',
             'emergency_resources' => 'nullable|string|max:2000',
             'capacity' => 'required|integer|min:0',
@@ -472,60 +482,42 @@ class TyphoonController extends Controller
             return redirect()->back()->with('error', $validator->errors()->first())->withInput();
         }
 
-        $schoolId = $request->existing_school_id;
-        $identification = $request->identification;
-        $location = $request->location;
-        $displaySchoolName = $request->school_name ?: $request->identification;
+        $schoolRow = School::findOrFail($request->existing_school_id);
 
-        if (!$schoolId) {
-            // Create minimal FireSafetySchool entry for new school
-            $encodedBy = trim((string) ($user->name ?? 'System User'));
-            $school = FireSafetySchool::create([
-                'school_name' => $request->school_name ?: ($request->identification ?: 'New Evacuation School'),
-                'school_id' => $request->identification ?: ('EVAC-' . strtoupper(uniqid())),
-                'address' => $request->location,
-                'school_head' => $encodedBy,
-                'school_drrm_coordinator' => $encodedBy,
-                'status' => 'unconfigured',
-                'evacuation_map_layout' => null,
-                'alerts' => null,
-                'events' => null,
-            ]);
-            $schoolId = $school->id;
-            $displaySchoolName = $school->school_name;
-            $identification = $identification ?: $school->school_id;
-            $location = $location ?: $school->address;
-        } else {
-            $existingSchool = FireSafetySchool::find($schoolId);
-            $displaySchoolName = $existingSchool?->school_name ?: $displaySchoolName;
-            $identification = $identification ?: ($existingSchool?->school_id);
-            $location = $location ?: ($existingSchool?->address);
+        if (SchoolSpecificsInformation::where('school_id', $schoolRow->id)
+            ->where('module', 'typhoon_flood')
+            ->where('key', 'original_evacuation_center_id')
+            ->exists()) {
+            return redirect()->back()->with('error', 'This school is already registered as an evacuation center.');
         }
 
-        if (empty($identification) || empty($location)) {
-            return redirect()->back()->with('error', 'Identification and location are required.')->withInput();
-        }
+        $schoolRow->identification = $schoolRow->identification ?: $schoolRow->school_id ?: $schoolRow->school_id_number;
+        $schoolRow->evacuation_identification = $schoolRow->identification;
+        $schoolRow->evacuation_location = $schoolRow->evacuation_location ?: $schoolRow->address;
+        $schoolRow->evacuation_capacity = (int) $request->capacity;
+        $schoolRow->evacuation_status = $request->usage_status;
+        $schoolRow->emergency_resources = $request->emergency_resources;
+        $schoolRow->operational_status = $schoolRow->operational_status ?: 'operational';
+        $schoolRow->monitoring_status = $schoolRow->monitoring_status ?: 'Active';
+        $schoolRow->save();
 
-        TypFldEvacuationCenter::firstOrCreate(
-            ['school_id' => $schoolId],
+        DB::table('school_specifics_information')->updateOrInsert(
             [
-                'identification' => $identification,
-                'location' => $location,
-                'capacity' => $request->capacity ?? 0,
-                'operational_status' => 'operational',
-                'needs_summary' => null,
-                'occupancy_safety' => 'safe',
-                'usage_status' => $request->usage_status,
-                'emergency_resources' => $request->emergency_resources,
-                'monitoring_status' => 'Active',
-                'reports_status' => null,
+                'school_id' => $schoolRow->id,
+                'module' => 'typhoon_flood',
+                'key' => 'original_evacuation_center_id',
+            ],
+            [
+                'value' => (string) $schoolRow->id,
+                'created_at' => now(),
+                'updated_at' => now(),
             ]
         );
 
-        session(['typhoon_active_school_id' => $schoolId]);
+        session(['typhoon_active_school_id' => $schoolRow->id]);
 
-        ActivityLog::log('typhoon_flood', 'Created evacuation center: ' . $displaySchoolName, [
-            'school_id' => $schoolId,
+        ActivityLog::log('typhoon_flood', 'Created evacuation center: ' . $schoolRow->school_name, [
+            'school_id' => $schoolRow->id,
         ]);
 
         return redirect()->route('typhoon.dashboard')->with('success', 'Evacuation center created.');
@@ -533,9 +525,9 @@ class TyphoonController extends Controller
 
     public function updateEvacuationCenter(Request $request, $id)
     {
-        $ec = TypFldEvacuationCenter::with('school')->findOrFail($id);
+        $ec = School::findOrFail($id);
         $user = auth()->user();
-        if ($user->role !== 'admin' && $user->school_id != $ec->school_id && $user->typhoon_school_id != $ec->id) {
+        if ($user->role !== 'admin' && (int) $user->school_id !== (int) $ec->id && (int) $user->typhoon_school_id !== (int) $ec->id) {
             abort(403, 'Unauthorized');
         }
 
@@ -549,27 +541,26 @@ class TyphoonController extends Controller
             return redirect()->back()->with('error', $validator->errors()->first())->withInput();
         }
 
-        $ec->usage_status = $request->usage_status;
+        $ec->evacuation_status = $request->usage_status;
         $ec->emergency_resources = $request->emergency_resources;
         $ec->reports_status = $request->reports_status;
         $ec->save();
 
-        // Create notification for site update
         FireSafetyNotification::create([
             'compliance_type' => 'typhoon_flood',
             'module' => 'evacuation_center',
-            'school_id' => $ec->school_id,
+            'school_id' => $ec->id,
             'user_id' => $user->id,
             'type' => 'update',
             'title' => 'Site Intelligence Updated',
-            'message' => "Contributor {$user->name} updated site {$ec->school->school_name}. Status: " . strtoupper($ec->usage_status),
+            'message' => "Contributor {$user->name} updated site {$ec->school_name}. Status: " . strtoupper($ec->usage_status),
             'action_type' => 'view_site',
             'action_url' => route('typhoon.evacuation-center.show', $ec->id),
             'is_read' => false,
         ]);
 
-        ActivityLog::log('typhoon_flood', 'Updated evacuation center: ' . $ec->identification, [
-            'school_id' => $ec->school_id,
+        ActivityLog::log('typhoon_flood', 'Updated evacuation center: ' . ($ec->identification ?? $ec->school_name), [
+            'school_id' => $ec->id,
             'notes' => "Status: {$ec->usage_status}",
         ]);
 
@@ -581,7 +572,7 @@ class TyphoonController extends Controller
         $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:255',
             'message' => 'required|string|max:2000',
-            'school_id' => 'nullable|integer|exists:firesafety_school_information,id',
+            'school_id' => 'nullable|integer|exists:schools,id',
             'urgency' => 'required|in:info,warning,danger',
         ]);
 
@@ -594,14 +585,14 @@ class TyphoonController extends Controller
         FireSafetyNotification::create([
             'compliance_type' => 'typhoon_flood',
             'module' => 'announcement',
-            'school_id' => $request->school_id, // Null means all schools
+            'school_id' => $request->school_id,
             'user_id' => $user->id,
             'type' => 'announcement',
             'title' => $request->title,
             'message' => $request->message,
             'action_type' => 'mark_read',
             'is_read' => false,
-            'action_data' => ['urgency' => $request->urgency]
+            'action_data' => ['urgency' => $request->urgency],
         ]);
 
         return redirect()->back()->with('success', 'Announcement posted successfully.');
@@ -614,44 +605,27 @@ class TyphoonController extends Controller
             ->latest();
 
         if ($user->role !== 'admin') {
-            // Conributors see:
-            // 1. Announcements (global: school_id is null)
-            // 2. Announcements for their assigned school
-            // 3. Their own updates
-            $query->where(function($q) use ($user) {
+            $query->where(function ($q) use ($user) {
                 $q->whereNull('school_id')
-                  ->orWhere('school_id', $user->school_id)
-                  ->orWhere('user_id', $user->id);
+                    ->orWhere('school_id', $user->typhoon_school_id)
+                    ->orWhere('school_id', $user->school_id)
+                    ->orWhere('user_id', $user->id);
             });
         }
-        // Admins see everything (no filter)
 
         $notifications = $query->paginate(15);
 
-        $evacuationCentersQuery = TypFldEvacuationCenter::query()->with('school');
+        $evacuationCentersQuery = $this->typhoonRegisteredEvacuationCentersQuery();
         if ($user->role !== 'admin') {
-            if ($user->typhoon_school_id) {
-                $assignedCenter = TypFldEvacuationCenter::find($user->typhoon_school_id);
-                if ($assignedCenter) {
-                    $evacuationCentersQuery->where('school_id', $assignedCenter->school_id);
-                } else {
-                    $evacuationCentersQuery->whereRaw('1=0');
-                }
-            } elseif ($user->school_id) {
-                $evacuationCentersQuery->where('school_id', $user->school_id);
-            } else {
+            $ids = $this->contributorTyphoonSchoolIds($user);
+            if (!$ids || count($ids) === 0) {
                 $evacuationCentersQuery->whereRaw('1=0');
+            } else {
+                $evacuationCentersQuery->whereIn('id', $ids);
             }
         }
 
-        $evacuationCenters = $evacuationCentersQuery->get()->map(function ($ec) {
-            $ec->current_occupancy = TypFldFamilyMember::query()
-                ->join('typ_fld_families', 'typ_fld_families.id', '=', 'typ_fld_family_members.family_id')
-                ->where('typ_fld_families.evacuation_center_id', $ec->id)
-                ->whereNull('typ_fld_families.checked_out_at')
-                ->count();
-            return $ec;
-        });
+        $evacuationCenters = $evacuationCentersQuery->get()->map(fn ($ec) => $this->attachCurrentOccupancy($ec));
 
         return view('typhoon.notifications', compact('notifications', 'evacuationCenters'));
     }
@@ -660,6 +634,7 @@ class TyphoonController extends Controller
     {
         $notification = FireSafetyNotification::findOrFail($id);
         $notification->update(['is_read' => true]);
+
         return response()->json(['success' => true]);
     }
 
@@ -669,9 +644,10 @@ class TyphoonController extends Controller
         $query = FireSafetyNotification::forCompliance('typhoon_flood')->unread();
 
         if ($user->role !== 'admin') {
-            $query->where(function($q) use ($user) {
+            $query->where(function ($q) use ($user) {
                 $q->whereNull('school_id')
-                  ->orWhere('school_id', $user->school_id);
+                    ->orWhere('school_id', $user->school_id)
+                    ->orWhere('school_id', $user->typhoon_school_id);
             });
         }
 
@@ -685,7 +661,7 @@ class TyphoonController extends Controller
         $user = auth()->user();
         $activeSchoolId = session('typhoon_active_school_id');
         if ($user->role !== 'admin') {
-            $activeSchoolId = $user->school_id;
+            $activeSchoolId = $user->typhoon_school_id ?: $user->school_id;
         }
 
         if (!$activeSchoolId) {
@@ -700,22 +676,22 @@ class TyphoonController extends Controller
             ]);
         }
 
-        $ec = TypFldEvacuationCenter::where('school_id', $activeSchoolId)->first();
+        $ec = School::find($activeSchoolId);
         if (!$ec) {
             return response()->json([
                 'last_updated_label' => now()->format('h:i A'),
             ]);
         }
 
-        $flood = TypFldMonitoringSnapshot::where('evacuation_center_id', $ec->id)
+        $flood = TypFldMonitoringSnapshot::where('school_id', $ec->id)
             ->where('type', 'flood')
             ->latest('recorded_at')
             ->first();
-        $typhoon = TypFldMonitoringSnapshot::where('evacuation_center_id', $ec->id)
+        $typhoon = TypFldMonitoringSnapshot::where('school_id', $ec->id)
             ->where('type', 'typhoon')
             ->latest('recorded_at')
             ->first();
-        $routes = TypFldMonitoringSnapshot::where('evacuation_center_id', $ec->id)
+        $routes = TypFldMonitoringSnapshot::where('school_id', $ec->id)
             ->where('type', 'routes')
             ->latest('recorded_at')
             ->first();

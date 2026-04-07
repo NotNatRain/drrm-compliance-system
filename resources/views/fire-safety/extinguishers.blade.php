@@ -216,6 +216,15 @@
                                                     data-school-id="{{ $school->id }}">
                                                 <i class="fas fa-plus me-2"></i> Add Extinguisher
                                             </button>
+                                            @endif
+
+                                            <a href="{{ route('fire-safety.report.extinguisher-details', $school->id) }}" target="_blank"
+                                                    class="btn btn-sm ms-2"
+                                                    style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;">
+                                                <i class="fas fa-print me-1"></i> Print Details
+                                            </a>
+
+                                            @if(auth()->user()->role !== 'viewer')
                                             <button class="btn btn-sm ms-2"
                                                     style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;"
                                                     data-bs-toggle="modal"
@@ -223,11 +232,6 @@
                                                 <i class="fas fa-history me-1"></i> History
                                             </button>
                                             @endif
-                                            <a href="{{ route('fire-safety.report.extinguisher-details', $school->id) }}" target="_blank"
-                                                    class="btn btn-sm ms-2"
-                                                    style="background-color: #e9ecef; color: #495057; border: 1px solid #ced4da;">
-                                                <i class="fas fa-print me-1"></i> Print Details
-                                            </a>
                                         </div>
                                     </div>
 
@@ -928,7 +932,7 @@
                 <div class="modal-body p-4">
                     <form id="addRoomForm">
                         @csrf
-                        <input type="hidden" name="school_id" id="roomSchoolId">
+                        <input type="hidden" name="unified_school_id" id="roomSchoolId">
 
                         <!-- 1st row: Building, Floor, Room Code, Room Name -->
                         <div class="row g-3 mb-4">
@@ -1062,7 +1066,7 @@
                 <div class="modal-body">
                     <form id="addExtForm">
                         @csrf
-                        <input type="hidden" name="school_id" id="extSchoolId">
+                        <input type="hidden" name="unified_school_id" id="extSchoolId">
 
                         <!-- Required Information -->
                         <h6 class="fw-bold">Required Information</h6>
@@ -1487,34 +1491,39 @@
             updateRoomFloors(this.value);
         });
 
-        // Hook modal open events to set school_id and populate buildings
+        const PAGE_ACTIVE_SCHOOL_ID = @json((string)($activeSchool->id ?? ''));
+
+        // Hook modal open events to set unified_school_id and populate buildings
         document.getElementById('addRoomModal').addEventListener('show.bs.modal', function (event) {
             const btn = event.relatedTarget;
-            if (!btn) return; // Ignore if opened manually via JS (which handles its own population)
-
-            const schoolId = btn.getAttribute('data-school-id');
+            const existing = document.getElementById('roomSchoolId').value;
+            const schoolId = (btn && btn.getAttribute('data-school-id')) || existing || PAGE_ACTIVE_SCHOOL_ID;
             document.getElementById('roomSchoolId').value = schoolId || '';
-            populateBuildingsForSchool(schoolId);
+            if (btn && schoolId) {
+                populateBuildingsForSchool(schoolId);
+            } else if (!btn && schoolId && !document.getElementById('roomBuildingSelect').value) {
+                populateBuildingsForSchool(schoolId);
+            }
 
-            // Enforce viewer role restrictions
             checkViewerAccess('addRoomForm');
         });
 
         document.getElementById('addExtModal').addEventListener('show.bs.modal', function (event) {
             const btn = event.relatedTarget;
-            if (!btn) return; // Ignore if opened manually
-
-            const schoolId = btn.getAttribute('data-school-id');
+            const existing = document.getElementById('extSchoolId').value;
+            const schoolId = (btn && btn.getAttribute('data-school-id')) || existing || PAGE_ACTIVE_SCHOOL_ID;
             document.getElementById('extSchoolId').value = schoolId || '';
-            populateBuildingsForSchool(schoolId);
+            if (btn && schoolId) {
+                populateBuildingsForSchool(schoolId);
+            } else if (!btn && schoolId && !document.getElementById('extBuildingSelect').value) {
+                populateBuildingsForSchool(schoolId);
+            }
 
-            // reset room selects
             document.getElementById('centerRoomSelect').innerHTML = '<option value="">Select Center Room</option>';
             document.getElementById('coveredRoomsSelect').innerHTML = '';
 
             setTodayIfEmpty(document.querySelector('#addExtForm input[name="date_checked"]'));
 
-            // Enforce viewer role restrictions
             checkViewerAccess('addExtForm');
         });
 
@@ -3375,15 +3384,15 @@
             const urlParams = new URLSearchParams(window.location.search);
             const buildingId = urlParams.get('building_id');
             const schoolId = "{{ $activeSchool->id ?? '' }}";
-            
+
             if (buildingId && schoolId) {
                 const targetId = `collapse-${schoolId}-${buildingId}`;
                 const targetEl = document.getElementById(targetId);
-                
+
                 if (targetEl) {
                     const accordion = bootstrap.Collapse.getOrCreateInstance(targetEl);
                     accordion.show();
-                    
+
                     // Scroll to the building
                     setTimeout(() => {
                         targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });

@@ -6,10 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\IncidentCalendar;
 use App\Models\IncidentType;
 use App\Models\IncidentStatus;
-use App\Models\IncidentSchool;
 use App\Models\IncidentChecklist;
-use App\Models\FireSafetySchool;
-use App\Models\TypFldEvacuationCenter;
+use App\Models\School;
 use App\Models\ActivityLog;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -33,12 +31,19 @@ class IncidentController extends Controller
     {
         $year = (int) $request->input('year', date('Y'));
         $month = (int) $request->input('month', date('n'));
+        $autoOpenIncidentModal = $request->boolean('open_log');
+        $autoOpenIncidentTab = $request->input('log_tab') === 'compliance' ? 'compliance' : 'incident';
+        $requestedIncidentSchoolName = null;
+
+        if ($request->filled('school_id')) {
+            $requestedIncidentSchoolName = School::find((int) $request->input('school_id'))?->school_name;
+        }
 
         // Role-based redirection
         $user = auth()->user();
         if (in_array($user->role, ['contributor', 'viewer'], true)) {
             $user->load('incidentSchool');
-            $assignedIncidentSchoolName = $user->incidentSchool?->name;
+            $assignedIncidentSchoolName = $user->incidentSchool?->school_name;
 
             $weekOffset = (int) $request->input('week_offset', 0);
             $weekStart = Carbon::now()->startOfWeek(Carbon::MONDAY)->addWeeks($weekOffset)->startOfDay();
@@ -65,7 +70,10 @@ class IncidentController extends Controller
                 'assignedIncidentSchoolName',
                 'weekOffset',
                 'weekStart',
-                'weekEnd'
+                'weekEnd',
+                'autoOpenIncidentModal',
+                'autoOpenIncidentTab',
+                'requestedIncidentSchoolName'
             ));
         }
 
@@ -183,7 +191,7 @@ class IncidentController extends Controller
         $incidentStatuses = IncidentStatus::orderBy('name')->get();
 
         // Get unique schools for autocomplete
-        $schools = IncidentSchool::orderBy('name')->pluck('name')->toArray();
+        $schools = School::orderBy('school_name')->pluck('school_name')->toArray();
 
         // Unified schools for dropdown (Fire Safety + Typhoon/Flood centers + Incident inputs)
         $fireSafetySchools = $this->getUnifiedIncidentSchoolOptions();
@@ -202,7 +210,10 @@ class IncidentController extends Controller
             'checklistDate',
             'yesterdayItems',
             'yesterdayDate',
-            'historyData'
+            'historyData',
+            'autoOpenIncidentModal',
+            'autoOpenIncidentTab',
+            'requestedIncidentSchoolName'
         ));
     }
 
@@ -545,8 +556,6 @@ class IncidentController extends Controller
             $validated['school_name'] = $request->input('school_name_existing');
         } elseif ($request->input('incident_source_type') === 'all') {
              $validated['school_name'] = 'All Schools';
-        } else {
-            $validated['school_name'] = $request->input('school_name_manual');
         }
 
         // Compliance extraction fixes as well for source
@@ -555,8 +564,6 @@ class IncidentController extends Controller
                 $validated['school_name'] = $request->input('compliance_school_name_existing');
             } elseif ($request->input('compliance_source_type') === 'all') {
                  $validated['school_name'] = 'All Schools';
-            } else {
-                $validated['school_name'] = $request->input('compliance_school_name_manual');
             }
         }
 
@@ -844,8 +851,8 @@ class IncidentController extends Controller
      */
     private function updateSchoolRecord($schoolName)
     {
-        $school = IncidentSchool::firstOrCreate(
-            ['name' => $schoolName],
+        $school = School::firstOrCreate(
+            ['school_name' => $schoolName],
             ['district' => 'Unknown']
         );
 
@@ -859,45 +866,11 @@ class IncidentController extends Controller
      */
     private function getUnifiedIncidentSchoolOptions()
     {
-        $sourceNames = collect();
-
-        $sourceNames = $sourceNames
-            ->merge(FireSafetySchool::whereNotNull('school_name')->pluck('school_name'))
-            ->merge(IncidentSchool::whereNotNull('name')->pluck('name'))
-            ->merge(
-                TypFldEvacuationCenter::with('school:id,school_name')
-                    ->get()
-                    ->map(function ($center) {
-                        return $center->school?->school_name ?: $center->identification;
-                    })
-            );
-
-        $normalized = [];
-        foreach ($sourceNames as $name) {
-            $clean = trim((string) $name);
-            if ($clean === '') {
-                continue;
-            }
-
-            $key = mb_strtolower(preg_replace('/\s+/', ' ', $clean));
-            if (!isset($normalized[$key])) {
-                $normalized[$key] = $clean;
-            }
-        }
-
-        foreach ($normalized as $schoolName) {
-            IncidentSchool::firstOrCreate(
-                ['name' => $schoolName, 'district' => 'Unknown'],
-                ['division' => null, 'region' => null, 'school_id' => null]
-            );
-        }
-
-        return collect(array_values($normalized))
-            ->sort()
-            ->values()
-            ->map(function ($name) {
-                return (object) ['school_name' => $name];
-            });
+        return School::whereNotNull('school_name')
+            ->orderBy('school_name')
+            ->get(['school_name'])
+            ->map(fn ($row) => (object) ['school_name' => $row->school_name])
+            ->values();
     }
 
     /**
@@ -906,11 +879,14 @@ class IncidentController extends Controller
     public function searchSchools(Request $request)
     {
         $query = $request->input('q');
-        $schools = IncidentSchool::where('name', 'like', "%{$query}%")
+        $schools = School::where('school_name', 'like', "%{$query}%")
             ->limit(10)
-            ->get(['name', 'district']);
+            ->get(['school_name', 'district']);
 
-        return response()->json($schools);
+        return response()->json($schools->map(fn ($s) => [
+            'name' => $s->school_name,
+            'district' => $s->district,
+        ]));
     }
 
     /**
@@ -924,7 +900,7 @@ class IncidentController extends Controller
             'incident_calendars' => IncidentCalendar::all(),
             'incident_types' => IncidentType::all(),
             'incident_statuses' => IncidentStatus::all(),
-            'incident_schools' => IncidentSchool::all(),
+            'schools' => School::orderBy('school_name')->get(['id', 'school_name', 'district', 'incident_count', 'last_incident_date']),
         ];
 
         $json = json_encode($payload, JSON_PRETTY_PRINT);
@@ -969,10 +945,6 @@ class IncidentController extends Controller
             if (isset($data['incident_statuses']) && is_array($data['incident_statuses'])) {
                 IncidentStatus::truncate();
             }
-            if (isset($data['incident_schools']) && is_array($data['incident_schools'])) {
-                IncidentSchool::truncate();
-            }
-
             // Restore lookup tables first
             if (isset($data['incident_types']) && is_array($data['incident_types'])) {
                 foreach ($data['incident_types'] as $row) {
@@ -998,9 +970,20 @@ class IncidentController extends Controller
                 }
             }
 
-            if (isset($data['incident_schools']) && is_array($data['incident_schools'])) {
-                foreach ($data['incident_schools'] as $row) {
-                    IncidentSchool::create($row);
+            if (isset($data['schools']) && is_array($data['schools'])) {
+                foreach ($data['schools'] as $row) {
+                    if (!isset($row['id'], $row['school_name'])) {
+                        continue;
+                    }
+                    School::updateOrCreate(
+                        ['id' => $row['id']],
+                        [
+                            'school_name' => $row['school_name'],
+                            'district' => $row['district'] ?? null,
+                            'incident_count' => $row['incident_count'] ?? 0,
+                            'last_incident_date' => $row['last_incident_date'] ?? null,
+                        ]
+                    );
                 }
             }
 

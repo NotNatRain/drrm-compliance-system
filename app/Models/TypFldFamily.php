@@ -11,7 +11,7 @@ class TypFldFamily extends Model
     protected $table = 'typ_fld_families';
 
     protected $fillable = [
-        'evacuation_center_id',
+        'school_id',
         'head_family_name',
         'collective_needs',
         'has_pregnant',
@@ -33,9 +33,9 @@ class TypFldFamily extends Model
         'checked_out_at' => 'datetime',
     ];
 
-    public function evacuationCenter(): BelongsTo
+    public function school(): BelongsTo
     {
-        return $this->belongsTo(TypFldEvacuationCenter::class, 'evacuation_center_id');
+        return $this->belongsTo(School::class, 'school_id');
     }
 
     public function members(): HasMany
