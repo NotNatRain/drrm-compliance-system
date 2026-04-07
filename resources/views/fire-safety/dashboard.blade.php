@@ -122,7 +122,7 @@
 
                             @if(auth()->user()->role === 'admin' || (auth()->user()->role === 'contributor' && !auth()->user()->school_id))
                                 <button class="btn btn-outline-primary flex-grow-1 flex-md-grow-0" data-bs-toggle="modal" data-bs-target="#addInspectionModal">
-                                    <i class="fas fa-plus-circle me-1"></i> Add School
+                                    <i class="fas fa-plus-circle me-1"></i> Register School
                                 </button>
                                 <button class="btn btn-info flex-grow-1 flex-md-grow-0" data-bs-toggle="modal" data-bs-target="#evacInfoModal">
                                     <i class="fas fa-map-signs me-2"></i> View Evacuation Plans
@@ -697,42 +697,78 @@
                 </div>
             </div>
         </div>
-        <!-- Add Inspection Modal -->
+        <!-- Register school for Fire Safety (from main directory) -->
         <div class="modal fade" id="addInspectionModal" tabindex="-1">
-            <div class="modal-dialog">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Add New School Inspection</h5>
+                        <h5 class="modal-title">Register school for Fire Safety</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <form id="addSchoolForm" action="{{ route('fire-safety.school.store') }}" method="POST">
+                    <form id="addSchoolForm">
                         @csrf
                         <div class="modal-body">
+                            <p class="text-muted small">Schools are created on <strong>DRRM Main Dashboard → Schools</strong>. Here you only <em>register</em> an existing directory school into this module.</p>
                             <div class="mb-3">
-                                <label>School Name *</label>
-                                <input type="text" class="form-control" name="name" required>
+                                <label class="form-label fw-bold">Select school *</label>
+                                <select class="form-select" id="fs_register_school_select" required>
+                                    <option value="">— Choose a school —</option>
+                                    @forelse($schoolsAvailableForFireRegistration ?? [] as $dir)
+                                        <option
+                                            value="{{ $dir->id }}"
+                                            data-school-name="{{ e($dir->school_name) }}"
+                                            data-school-id="{{ e($dir->school_id ?? '') }}"
+                                            data-school-id-num="{{ e($dir->school_id_number ?? '') }}"
+                                            data-address="{{ e($dir->address ?? '') }}"
+                                            data-head="{{ e($dir->school_head ?? '') }}"
+                                            data-drrm="{{ e($dir->drrm_coordinator ?? '') }}"
+                                            data-c1="{{ e($dir->contact_number ?? '') }}"
+                                            data-c2="{{ e($dir->contact_number_2 ?? '') }}"
+                                            data-district="{{ e($dir->district ?? '') }}"
+                                            data-division="{{ e($dir->division ?? '') }}"
+                                            data-region="{{ e($dir->region ?? '') }}"
+                                        >
+                                            {{ $dir->school_name }}
+                                        </option>
+                                    @empty
+                                        <option value="" disabled>All directory schools are already registered, or none exist yet.</option>
+                                    @endforelse
+                                </select>
                             </div>
-                            <div class="mb-3">
-                                <label>School ID *</label>
-                                <input type="text" class="form-control" name="school_id" required>
-                            </div>
-                            <div class="mb-3">
-                                <label>Address *</label>
-                                <textarea class="form-control" name="address" rows="2" required></textarea>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label>School Head *</label>
-                                    <input type="text" class="form-control" name="school_head" required>
+                            <div id="fs_register_preview" class="row g-2 small text-muted" style="display:none;">
+                                <div class="col-md-6">
+                                    <strong>School ID / Code:</strong>
+                                    <input type="text" id="fs_pv_id" class="form-control form-control-sm mt-1" value="" readonly>
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label>DRRM Coordinator *</label>
-                                    <input type="text" class="form-control" name="drrm_coordinator" required>
+                                <div class="col-md-6">
+                                    <strong>Name:</strong>
+                                    <input type="text" id="fs_pv_name" class="form-control form-control-sm mt-1" value="" readonly>
+                                </div>
+                                <div class="col-12">
+                                    <strong>Address:</strong>
+                                    <input type="text" id="fs_pv_addr" class="form-control form-control-sm mt-1" value="" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Head:</strong>
+                                    <input type="text" id="fs_pv_head" class="form-control form-control-sm mt-1" value="" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>DRRM Coordinator:</strong>
+                                    <input type="text" id="fs_pv_drrm" class="form-control form-control-sm mt-1" value="" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>District / Division:</strong>
+                                    <input type="text" id="fs_pv_dist" class="form-control form-control-sm mt-1" value="" readonly>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Region:</strong>
+                                    <input type="text" id="fs_pv_reg" class="form-control form-control-sm mt-1" value="" readonly>
                                 </div>
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="submit" class="btn btn-primary">Add School</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary" id="fs_register_submit" @if(($schoolsAvailableForFireRegistration ?? collect())->isEmpty()) disabled @endif>Register for Fire Safety</button>
                         </div>
                     </form>
                 </div>
@@ -1150,37 +1186,55 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Add School Form Submission
     const addSchoolForm = document.getElementById('addSchoolForm');
+    const fsRegSelect = document.getElementById('fs_register_school_select');
+    if (fsRegSelect) {
+        fsRegSelect.addEventListener('change', function() {
+            const opt = this.options[this.selectedIndex];
+            const prev = document.getElementById('fs_register_preview');
+            if (!opt || !opt.value) {
+                prev.style.display = 'none';
+                return;
+            }
+            prev.style.display = 'flex';
+            const code = opt.dataset.schoolIdNum || opt.dataset.schoolId || '—';
+            document.getElementById('fs_pv_id').value = code;
+            document.getElementById('fs_pv_name').value = opt.dataset.schoolName || '';
+            document.getElementById('fs_pv_addr').value = opt.dataset.address || '—';
+            document.getElementById('fs_pv_head').value = opt.dataset.head || '—';
+            document.getElementById('fs_pv_drrm').value = opt.dataset.drrm || '—';
+            document.getElementById('fs_pv_dist').value = [opt.dataset.district, opt.dataset.division].filter(Boolean).join(' / ') || '—';
+            document.getElementById('fs_pv_reg').value = opt.dataset.region || '—';
+        });
+    }
     if (addSchoolForm) {
         addSchoolForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            fetch(this.action, {
+            const sel = document.getElementById('fs_register_school_select');
+            const id = sel && sel.value ? parseInt(sel.value, 10) : 0;
+            if (!id) {
+                Swal.fire({ icon: 'warning', title: 'Select a school', text: 'Choose a school from the directory first.' });
+                return;
+            }
+            fetch('{{ route('fire-safety.school.register-from-directory') }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 },
-                body: JSON.stringify({
-                    school_name: this.name.value,
-                    school_id: this.school_id.value.trim(),
-                    address: this.address.value.trim(),
-                    school_head: this.school_head.value.trim(),
-                    school_drrm_coordinator: this.drrm_coordinator.value.trim(),
-                    status: 'unconfigured'
-                })
+                body: JSON.stringify({ unified_school_id: id })
             })
             .then(async response => {
                 const data = await response.json();
                 if (response.ok && data.success) {
-                    Swal.fire({ icon: 'success', title: 'Success!', text: 'School added successfully!', confirmButtonText: 'OK' })
+                    Swal.fire({ icon: 'success', title: 'Registered', text: data.message || 'School registered for Fire Safety.', confirmButtonText: 'OK' })
                     .then(() => location.reload());
                 } else {
-                    let errorMsg = data.message || 'Failed to add school.';
-                    if (data.errors) errorMsg = Object.values(data.errors)[0][0];
-                    Swal.fire({ icon: 'error', title: 'Notice', text: errorMsg });
+                    Swal.fire({ icon: 'error', title: 'Notice', text: data.message || 'Failed to register school.' });
                 }
-            });
+            })
+            .catch(() => Swal.fire({ icon: 'error', title: 'Error', text: 'Request failed.' }));
         });
     }
 

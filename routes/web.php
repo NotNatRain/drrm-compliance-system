@@ -53,6 +53,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/schools/details/{id}', [DashboardController::class, 'getUnifiedSchoolDetails'])->name('schools.unified-details');
     Route::post('/schools/store', [DashboardController::class, 'storeUnifiedSchool'])->name('schools.unified-store');
     Route::put('/schools/update/{id}', [DashboardController::class, 'updateUnifiedSchool'])->name('schools.unified-update');
+    Route::delete('/schools/delete/{id}', [DashboardController::class, 'destroyUnifiedSchool'])->name('schools.unified-destroy');
+    Route::post('/schools/{schoolId}/users/{userId}/assign', [DashboardController::class, 'assignUserToSchool'])->name('schools.user.assign');
+    Route::delete('/schools/{schoolId}/users/{userId}/assign', [DashboardController::class, 'removeUserSchoolAssignment'])->name('schools.user.unassign');
 });
 
 // Subsystem dashboards
@@ -96,10 +99,10 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     Route::put('/config/{type}/{id}', [FireSafetyController::class, 'updateConfig'])->name('fire-safety.config.update');
     Route::delete('/config/{type}/{id}', [FireSafetyController::class, 'deleteConfig'])->name('fire-safety.config.destroy');
 
-    // Backup & Restore (Fire Safety module)
-    Route::get('/backup/list', [FireSafetyController::class, 'listFireSafetyBackups'])->name('fire-safety.backup.list');
-    Route::post('/backup/create', [FireSafetyController::class, 'createFireSafetyBackup'])->name('fire-safety.backup.create');
-    Route::post('/backup/restore', [FireSafetyController::class, 'restoreFireSafetyBackup'])->name('fire-safety.backup.restore');
+    // Backup & Restore (Fire Safety) — disabled with customization UI; uncomment to re-enable
+    // Route::get('/backup/list', [FireSafetyController::class, 'listFireSafetyBackups'])->name('fire-safety.backup.list');
+    // Route::post('/backup/create', [FireSafetyController::class, 'createFireSafetyBackup'])->name('fire-safety.backup.create');
+    // Route::post('/backup/restore', [FireSafetyController::class, 'restoreFireSafetyBackup'])->name('fire-safety.backup.restore');
     Route::get('/schools/export', [FireSafetyController::class, 'exportSchools'])->name('fire-safety.schools.export');
 
     // SPECIFIC ROUTES FIRST - Put these BEFORE the general school routes
@@ -130,6 +133,9 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     Route::post('/school', [FireSafetyController::class, 'storeSchool'])
         ->name('fire-safety.school.store')
         ->middleware('auth');
+    Route::post('/school/register-from-directory', [FireSafetyController::class, 'registerSchoolFromDirectory'])
+        ->name('fire-safety.school.register-from-directory')
+        ->middleware('auth');
     Route::post('/school/{id}/upload-map', [FireSafetyController::class, 'uploadMap'])
         ->name('fire-safety.school.upload-map')
         ->middleware('auth');
@@ -155,6 +161,7 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     Route::post('/alarm/{id}/update', [FireSafetyController::class, 'updateAlarm'])->name('fire-safety.alarm.update');
     Route::post('/alarm/{id}/test', [FireSafetyController::class, 'testAlarm'])->name('fire-safety.alarm.test');
     Route::post('/alarm/{id}/remove', [FireSafetyController::class, 'removeAlarm'])->name('fire-safety.alarm.remove');
+    Route::post('/alarm/{id}/unassign-building', [FireSafetyController::class, 'unassignAlarmFromBuilding'])->name('fire-safety.alarm.unassign-building');
     Route::get('/alarm/history/{schoolId}', [FireSafetyController::class, 'getAlarmHistory'])->name('fire-safety.alarm.history');
     Route::get('/check-alarm-code/{schoolId}/{code}', [FireSafetyController::class, 'checkAlarmCode']);
 
@@ -259,17 +266,30 @@ Route::prefix('comprehensive-school-safety')
         Route::get('/dashboard', [ComprehensiveSchoolSafetyController::class, 'dashboard'])->name('dashboard');
 
         Route::get('/schools', [ComprehensiveSchoolSafetyController::class, 'schools'])->name('schools.index');
-        Route::post('/schools', [ComprehensiveSchoolSafetyController::class, 'storeSchool'])->name('schools.store');
-
-        Route::get('/schools/register-existing', [ComprehensiveSchoolSafetyController::class, 'registerExistingForm'])->name('schools.register-existing');
-        Route::post('/schools/register-existing', [ComprehensiveSchoolSafetyController::class, 'registerExistingStore'])->name('schools.register-existing.store');
+        Route::post('/schools/register-from-directory', [ComprehensiveSchoolSafetyController::class, 'registerSchoolFromDirectory'])
+            ->name('schools.register-from-directory');
 
         // School-specific routes
         Route::get('/schools/{schoolId}/dashboard', [ComprehensiveSchoolSafetyController::class, 'schoolDashboard'])->name('school.dashboard');
         Route::get('/schools/{schoolId}/assessments', [ComprehensiveSchoolSafetyController::class, 'schoolAssessments'])->name('school.assessments');
+        Route::post('/schools/{schoolId}/assessments', [ComprehensiveSchoolSafetyController::class, 'storeAssessment'])->name('school.assessments.store');
         Route::get('/schools/{schoolId}/assessments/new', [ComprehensiveSchoolSafetyController::class, 'newSafetyAssessmentForm'])->name('school.assessments.new');
+        Route::get('/schools/{schoolId}/assessments/questionnaire/edit', [ComprehensiveSchoolSafetyController::class, 'editAssessmentQuestionnaire'])
+            ->middleware('role:admin')
+            ->name('school.assessments.questionnaire.edit');
+        Route::post('/schools/{schoolId}/assessments/questionnaire/edit', [ComprehensiveSchoolSafetyController::class, 'updateAssessmentQuestionnaire'])
+            ->middleware('role:admin')
+            ->name('school.assessments.questionnaire.update');
+        Route::get('/schools/{schoolId}/assessments/{assessmentId}', [ComprehensiveSchoolSafetyController::class, 'viewAssessment'])->name('school.assessments.view');
+        Route::get('/schools/{schoolId}/assessments/{assessmentId}/edit', [ComprehensiveSchoolSafetyController::class, 'editAssessmentForm'])->name('school.assessments.edit');
+        Route::put('/schools/{schoolId}/assessments/{assessmentId}', [ComprehensiveSchoolSafetyController::class, 'updateAssessment'])->name('school.assessments.update');
         Route::get('/schools/{schoolId}/students', [ComprehensiveSchoolSafetyController::class, 'schoolStudents'])->name('school.students');
+        Route::post('/schools/{schoolId}/students', [ComprehensiveSchoolSafetyController::class, 'storeStudent'])->name('school.students.store');
+        Route::put('/schools/{schoolId}/students/{studentId}', [ComprehensiveSchoolSafetyController::class, 'updateStudent'])->name('school.students.update');
+        Route::post('/schools/{schoolId}/students/import', [ComprehensiveSchoolSafetyController::class, 'importStudents'])->name('school.students.import');
+        Route::get('/schools/{schoolId}/students/export', [ComprehensiveSchoolSafetyController::class, 'exportStudents'])->name('school.students.export');
         Route::get('/schools/{schoolId}/facilities', [ComprehensiveSchoolSafetyController::class, 'schoolFacilities'])->name('school.facilities');
+        Route::post('/schools/{schoolId}/facilities', [ComprehensiveSchoolSafetyController::class, 'storeFacility'])->name('school.facilities.store');
         Route::get('/schools/{schoolId}/reports', [ComprehensiveSchoolSafetyController::class, 'schoolReports'])->name('school.reports');
     });
 

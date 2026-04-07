@@ -807,18 +807,7 @@
                             @endforeach
                         @endforeach
                     </div>
-                    <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
-                        <div class="d-flex align-items-center gap-2">
-                            <button id="exportIncidentsBtn" type="button" class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-file-export me-1"></i> Export Backup
-                            </button>
-                            <label class="btn btn-sm btn-outline-secondary mb-0">
-                                <i class="fas fa-file-import me-1"></i> Import Backup
-                                <input type="file" id="importIncidentsInput" accept=".json" hidden>
-                            </label>
-                            <small class="text-muted ms-2" style="font-size: 0.8rem;">Backup & restore data</small>
-                        </div>
-                    </div>
+
 
                     <!-- Legend & Filters Inside Calendar -->
                     <div class="mt-4 pt-3 border-top">
@@ -951,22 +940,32 @@
                             </div>
                             <div class="row g-3">
                                 <!-- Left Chart: Incident Type Distribution -->
-                                <div class="col-md-6 border-end">
+                                <div class="col-lg-4 border-end">
                                     <h6 class="text-muted text-uppercase mb-3" style="font-size: 10px; font-weight: 700;">
                                         <i class="fas fa-chart-pie me-1 text-warning"></i> Incident Type Distribution
                                     </h6>
-                                    <div style="height: 200px; position: relative;">
+                                    <div style="height: 180px; position: relative;">
                                         <canvas id="incidentTypeChart"></canvas>
                                     </div>
                                 </div>
 
-                                <!-- Right Chart: Compliance Status Distribution -->
-                                <div class="col-md-6 ps-md-4">
+                                <!-- Middle Chart: Compliance Status Distribution -->
+                                <div class="col-lg-4 border-end ps-lg-4">
                                     <h6 class="text-muted text-uppercase mb-3" style="font-size: 10px; font-weight: 700;">
                                         <i class="fas fa-chart-bar me-1 text-warning"></i> Compliance Status / Events
                                     </h6>
-                                    <div style="height: 200px; position: relative;">
+                                    <div style="height: 180px; position: relative;">
                                         <canvas id="complianceDistributionChart"></canvas>
+                                    </div>
+                                </div>
+
+                                <!-- Right Chart: Monthly Trend -->
+                                <div class="col-lg-4 ps-lg-4">
+                                    <h6 class="text-muted text-uppercase mb-3" style="font-size: 10px; font-weight: 700;">
+                                        <i class="fas fa-chart-line me-1 text-warning"></i> Monthly Incident Trend
+                                    </h6>
+                                    <div style="height: 180px; position: relative;">
+                                        <canvas id="incidentTrendChart"></canvas>
                                     </div>
                                 </div>
                             </div>
@@ -1351,175 +1350,140 @@
 
 
 
-        // Day hover: custom info box (Incident/Event Type + School name)
-        let tooltipEl = null;
-        document.querySelectorAll('.calendar-day').forEach(dayEl => {
-            dayEl.addEventListener('mouseenter', function(e) {
-                const raw = this.getAttribute('data-day-hover');
-                if (!raw || raw === '[]') return;
-                let items;
-                try {
-                    items = JSON.parse(raw);
-                    if (!items || items.length === 0) return;
-                } catch (err) { return; }
-                if (tooltipEl) tooltipEl.remove();
-                tooltipEl = document.createElement('div');
-                tooltipEl.className = 'day-tooltip';
-                tooltipEl.innerHTML = items.map(it => {
-                    const typeLabel = (it.type === 'Incident' ? 'Incident' : 'Event') + ': ' + (it.name || it.type);
-                    const school = (it.school || '').trim() || '—';
-                    return '<div class="hover-item"><span class="hover-type">' + escapeHtml(typeLabel) + '</span><br><span class="hover-school">' + escapeHtml(school) + '</span></div>';
-                }).join('');
-                document.body.appendChild(tooltipEl);
-                const rect = this.getBoundingClientRect();
-                tooltipEl.style.left = (rect.left + rect.width / 2 - tooltipEl.offsetWidth / 2) + 'px';
-                tooltipEl.style.top = (rect.top - tooltipEl.offsetHeight - 8) + 'px';
-                if (rect.top - tooltipEl.offsetHeight < 8) tooltipEl.style.top = (rect.bottom + 8) + 'px';
-            });
-            dayEl.addEventListener('mouseleave', function() {
-                if (tooltipEl) { tooltipEl.remove(); tooltipEl = null; }
-            });
-        });
         function escapeHtml(s) {
             const d = document.createElement('div');
             d.textContent = s;
             return d.innerHTML;
         }
 
+        function formatFileSize(bytes) {
+            if (!bytes) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
         // Calendar day click: fetch and show day details
-        document.querySelectorAll('.calendar-day').forEach(dayEl => {
-            dayEl.addEventListener('click', function() {
-                if (this.classList.contains('other-month')) return;
-                const date = this.getAttribute('data-date');
-                if (!date) return;
-                const d = new Date(date + 'T12:00:00');
-                document.getElementById('modalDayDate').textContent = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-                document.getElementById('dayIncidentsList').innerHTML = '<div class="text-center text-muted py-3"><small>Loading...</small></div>';
-                document.getElementById('dayComplianceList').innerHTML = '<div class="text-center text-muted py-3"><small>Loading...</small></div>';
-                const modal = new bootstrap.Modal(document.getElementById('dayDetailsModal'));
-                modal.show();
-                window._selectedDateForLog = date;
+        document.addEventListener('DOMContentLoaded', function() {
+            // Day hover: custom info box
+            let tooltipEl = null;
+            document.querySelectorAll('.calendar-day').forEach(dayEl => {
+                dayEl.addEventListener('mouseenter', function(e) {
+                    const raw = this.getAttribute('data-day-hover');
+                    if (!raw || raw === '[]') return;
+                    let items;
+                    try { items = JSON.parse(raw); if (!items || items.length === 0) return; } catch (err) { return; }
+                    if (tooltipEl) tooltipEl.remove();
+                    tooltipEl = document.createElement('div');
+                    tooltipEl.className = 'day-tooltip';
+                    tooltipEl.innerHTML = items.map(it => {
+                        const typeLabel = (it.type === 'Incident' ? 'Incident' : 'Event') + ': ' + (it.name || it.type);
+                        const school = (it.school || '').trim() || '—';
+                        return '<div class="hover-item"><span class="hover-type">' + escapeHtml(typeLabel) + '</span><br><span class="hover-school">' + escapeHtml(school) + '</span></div>';
+                    }).join('');
+                    document.body.appendChild(tooltipEl);
+                    const rect = this.getBoundingClientRect();
+                    tooltipEl.style.left = (rect.left + rect.width / 2 - tooltipEl.offsetWidth / 2) + 'px';
+                    tooltipEl.style.top = (rect.top - tooltipEl.offsetHeight - 8) + 'px';
+                    if (rect.top - tooltipEl.offsetHeight < 8) tooltipEl.style.top = (rect.bottom + 8) + 'px';
+                });
+                dayEl.addEventListener('mouseleave', function() {
+                    if (tooltipEl) { tooltipEl.remove(); tooltipEl = null; }
+                });
+            });
 
-                fetch(incidentsDateUrl + '/' + date, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
-                    .then(r => r.json())
-                    .then(data => {
-                        window._currentDayData = data; // Store for edit access
-                        const incList = document.getElementById('dayIncidentsList');
-                        const compList = document.getElementById('dayComplianceList');
-                        const toArray = (x) => Array.isArray(x) ? x : (x && typeof x === 'object' ? Object.values(x) : []);
-                        const incidents = toArray(data.incidents);
-                        const compliance = toArray(data.compliance);
-                        // In your fetch callback, replace the incident list HTML with:
-                        if (incidents.length) {
-                            incList.innerHTML = incidents.map(i => `
-                                <div class="incident-list-item border-left mb-3 p-3" style="border-color:#667eea; border-width:4px;">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <div>
-                                            <span class="badge bg-danger mb-2">INCIDENT</span>
-                                            <h6 class="fw-bold mb-2">${escapeHtml(i.incident_type?.name || 'Incident')}</h6>
-                                        </div>
-                                        <small class="text-muted">Reported by: ${escapeHtml(i.contributor?.name || i.reported_by || 'Unknown')}</small>
-                                    </div>
+            document.querySelectorAll('.calendar-day').forEach(dayEl => {
+                dayEl.addEventListener('click', function() {
+                    if (this.classList.contains('other-month')) return;
+                    const date = this.getAttribute('data-date');
+                    if (!date) return;
+                    const d = new Date(date + 'T12:00:00');
+                    const modalDayDate = document.getElementById('modalDayDate');
+                    const incList = document.getElementById('dayIncidentsList');
+                    const compList = document.getElementById('dayComplianceList');
 
-                                    <div class="mb-2">
-                                        <i class="fas fa-school text-muted me-2"></i> ${escapeHtml(i.school_name || 'N/A')}
-                                    </div>
+                    if (modalDayDate) modalDayDate.textContent = d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+                    if (incList) incList.innerHTML = '<div class="text-center text-muted py-3"><small>Loading...</small></div>';
+                    if (compList) compList.innerHTML = '<div class="text-center text-muted py-3"><small>Loading...</small></div>';
 
-                                    <div class="row mb-2">
-                                        <div class="col-6">
-                                            <small class="text-muted d-block">
-                                                <i class="fas fa-users me-1"></i> Personnel: ${i.affected_personnel || 0}
-                                            </small>
-                                        </div>
-                                        <div class="col-6">
-                                            <small class="text-muted d-block">
-                                                <i class="fas fa-child me-1"></i> Students: ${i.affected_students || 0}
-                                            </small>
-                                        </div>
-                                    </div>
+                    const modalEl = document.getElementById('dayDetailsModal');
+                    if (!modalEl) return;
+                    let modal = bootstrap.Modal.getInstance(modalEl);
+                    if (!modal) modal = new bootstrap.Modal(modalEl);
+                    modal.show();
+                    window._selectedDateForLog = date;
 
-                                    <div class="bg-light p-2 rounded mb-2">
-                                        <i class="fas fa-comment-alt text-muted me-2"></i> ${escapeHtml(i.remarks || 'No remarks')}
-                                    </div>
-
-                                    ${i.attachment_path ? `
-                                        <div class="mt-2">
-                                            <a href="${i.attachment_url}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                <i class="fas fa-paperclip me-1"></i> ${escapeHtml(i.attachment_name || 'Attachment')}
-                                                <span class="badge bg-secondary ms-1">${formatFileSize(i.attachment_size)}</span>
-                                            </a>
-                                        </div>
-                                    ` : ''}
-
-                                    <div class="mt-2 d-flex justify-content-between align-items-center">
-                                        <div class="btn-group">
-                                            <button class="btn btn-sm btn-outline-warning" onclick="editIncidentEntry(${i.id}, 'incident')">
-                                                <i class="fas fa-edit me-1"></i> Edit
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteIncidentEntry(${i.id})">
-                                                <i class="fas fa-trash me-1"></i>
-                                            </button>
-                                        </div>
-                                        <small class="text-muted">
-                                            <i class="fas fa-clock me-1"></i> ${new Date(i.created_at).toLocaleString()}
-                                        </small>
-                                    </div>
-                                </div>
-                            `).join('');
-                        } else {
-                            incList.innerHTML = '<div class="text-center text-muted py-5"><i class="fas fa-folder-open fa-3x mb-3"></i><p>No incidents for this day</p><a href="#" class="text-warning fw-bold" onclick="logForSelectedDateWithTab(event, \'incident\');">Log new entry?</a></div>';
-                        }
-                        if (compliance.length) {
-                            compList.innerHTML = compliance.map(c => `
-                                <div class="incident-list-item border-left mb-3 p-3" style="border-color:#1ed760; border-width:4px;">
-                                    <div class="d-flex justify-content-between align-items-start">
-                                        <div>
-                                            <span class="badge bg-success mb-2">COMPLIANCE EVENT</span>
-                                            <h6 class="fw-bold mb-2">${escapeHtml(c.incident_status?.name || 'Event')}</h6>
-                                        </div>
-                                        <small class="text-muted">Reported by: ${escapeHtml(c.contributor?.name || c.reported_by || 'Unknown')}</small>
-                                    </div>
-
-                                    <div class="mb-2">
-                                        <i class="fas fa-school text-muted me-2"></i> ${escapeHtml(c.school_name || 'N/A')}
-                                    </div>
-
-                                    <div class="bg-light p-2 rounded mb-2">
-                                        <i class="fas fa-comment-alt text-muted me-2"></i> ${escapeHtml(c.remarks || 'No remarks')}
-                                    </div>
-
-                                    ${c.attachment_path ? `
-                                        <div class="mt-2">
-                                            <a href="${c.attachment_url}" target="_blank" class="btn btn-sm btn-outline-success">
-                                                <i class="fas fa-paperclip me-1"></i> ${escapeHtml(c.attachment_name || 'Attachment')}
-                                                <span class="badge bg-secondary ms-1">${formatFileSize(c.attachment_size)}</span>
-                                            </a>
-                                        </div>
-                                    ` : ''}
-
-                                    <div class="mt-2 d-flex justify-content-between align-items-center">
-                                        <div class="btn-group">
-                                            <button class="btn btn-sm btn-outline-warning" onclick="editIncidentEntry(${c.id}, 'compliance')">
-                                                <i class="fas fa-edit me-1"></i> Edit
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteIncidentEntry(${c.id})">
-                                                <i class="fas fa-trash me-1"></i>
-                                            </button>
-                                        </div>
-                                        <small class="text-muted">
-                                            <i class="fas fa-clock me-1"></i> ${new Date(c.created_at).toLocaleString()}
-                                        </small>
-                                    </div>
-                                </div>
-                            `).join('');
-                        } else {
-                            compList.innerHTML = '<div class="text-center text-muted py-5"><i class="fas fa-calendar fa-3x mb-3"></i><p>No compliance events for this day</p><a href="#" class="text-warning fw-bold" onclick="logForSelectedDateWithTab(event, \'compliance\');">Log new entry?</a></div>';
-                        }
-                    })
-                    .catch(() => {
-                        document.getElementById('dayIncidentsList').innerHTML = '<div class="text-center text-muted py-5"><p>Failed to load</p></div>';
-                        document.getElementById('dayComplianceList').innerHTML = '<div class="text-center text-muted py-5"><p>Failed to load</p></div>';
-                    });
+                    fetch(incidentsDateUrl + '/' + date, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+                        .then(r => r.json())
+                        .then(data => {
+                            window._currentDayData = data; 
+                            const toArray = (x) => Array.isArray(x) ? x : (x && typeof x === 'object' ? Object.values(x) : []);
+                            const incidents = toArray(data.incidents);
+                            const compliance = toArray(data.compliance);
+                            
+                            if (incList) {
+                                if (incidents.length) {
+                                    incList.innerHTML = incidents.map(i => `
+                                        <div class="incident-list-item border-left mb-3 p-3" style="border-color:#667eea; border-width:4px;">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <span class="badge bg-danger mb-2">INCIDENT</span>
+                                                    <h6 class="fw-bold mb-2">${escapeHtml(i.incident_type?.name || 'Incident')}</h6>
+                                                </div>
+                                                <small class="text-muted">Reported by: ${escapeHtml(i.contributor?.name || i.reported_by || 'Unknown')}</small>
+                                            </div>
+                                            <div class="mb-2"><i class="fas fa-school text-muted me-2"></i> ${escapeHtml(i.school_name || 'N/A')}</div>
+                                            <div class="row mb-2">
+                                                <div class="col-6"><small class="text-muted d-block"><i class="fas fa-users me-1"></i> Personnel: ${i.affected_personnel || 0}</small></div>
+                                                <div class="col-6"><small class="text-muted d-block"><i class="fas fa-child me-1"></i> Students: ${i.affected_students || 0}</small></div>
+                                            </div>
+                                            <div class="bg-light p-2 rounded mb-2"><i class="fas fa-comment-alt text-muted me-2"></i> ${escapeHtml(i.remarks || 'No remarks')}</div>
+                                            ${i.attachment_path ? `<div class="mt-2"><a href="${i.attachment_url}" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-paperclip me-1"></i> ${escapeHtml(i.attachment_name || 'Attachment')} <span class="badge bg-secondary ms-1">${formatFileSize(i.attachment_size)}</span></a></div>` : ''}
+                                            <div class="mt-2 d-flex justify-content-between align-items-center">
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-warning" onclick="editIncidentEntry(${i.id}, 'incident')"><i class="fas fa-edit me-1"></i> Edit</button>
+                                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteIncidentEntry(${i.id})"><i class="fas fa-trash me-1"></i></button>
+                                                </div>
+                                                <small class="text-muted"><i class="fas fa-clock me-1"></i> ${new Date(i.created_at).toLocaleString()}</small>
+                                            </div>
+                                        </div>`).join('');
+                                } else {
+                                    incList.innerHTML = '<div class="text-center text-muted py-5"><i class="fas fa-folder-open fa-3x mb-3"></i><p>No incidents for this day</p><a href="#" class="text-warning fw-bold" onclick="logForSelectedDateWithTab(event, \'incident\');">Log new entry?</a></div>';
+                                }
+                            }
+                            if (compList) {
+                                if (compliance.length) {
+                                    compList.innerHTML = compliance.map(c => `
+                                        <div class="incident-list-item border-left mb-3 p-3" style="border-color:#1ed760; border-width:4px;">
+                                            <div class="d-flex justify-content-between align-items-start">
+                                                <div>
+                                                    <span class="badge bg-success mb-2">COMPLIANCE EVENT</span>
+                                                    <h6 class="fw-bold mb-2">${escapeHtml(c.incident_status?.name || 'Event')}</h6>
+                                                </div>
+                                                <small class="text-muted">Reported by: ${escapeHtml(c.contributor?.name || c.reported_by || 'Unknown')}</small>
+                                            </div>
+                                            <div class="mb-2"><i class="fas fa-school text-muted me-2"></i> ${escapeHtml(c.school_name || 'N/A')}</div>
+                                            <div class="bg-light p-2 rounded mb-2"><i class="fas fa-comment-alt text-muted me-2"></i> ${escapeHtml(c.remarks || 'No remarks')}</div>
+                                            ${c.attachment_path ? `<div class="mt-2"><a href="${c.attachment_url}" target="_blank" class="btn btn-sm btn-outline-success"><i class="fas fa-paperclip me-1"></i> ${escapeHtml(c.attachment_name || 'Attachment')} <span class="badge bg-secondary ms-1">${formatFileSize(c.attachment_size)}</span></a></div>` : ''}
+                                            <div class="mt-2 d-flex justify-content-between align-items-center">
+                                                <div class="btn-group">
+                                                    <button class="btn btn-sm btn-outline-warning" onclick="editIncidentEntry(${c.id}, 'compliance')"><i class="fas fa-edit me-1"></i> Edit</button>
+                                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteIncidentEntry(${c.id})"><i class="fas fa-trash me-1"></i></button>
+                                                </div>
+                                                <small class="text-muted"><i class="fas fa-clock me-1"></i> ${new Date(c.created_at).toLocaleString()}</small>
+                                            </div>
+                                        </div>`).join('');
+                                } else {
+                                    compList.innerHTML = '<div class="text-center text-muted py-5"><i class="fas fa-calendar fa-3x mb-3"></i><p>No compliance events for this day</p><a href="#" class="text-warning fw-bold" onclick="logForSelectedDateWithTab(event, \'compliance\');">Log new entry?</a></div>';
+                                }
+                            }
+                        })
+                        .catch(() => {
+                            if (incList) incList.innerHTML = '<div class="text-center text-muted py-5"><p>Failed to load</p></div>';
+                            if (compList) compList.innerHTML = '<div class="text-center text-muted py-5"><p>Failed to load</p></div>';
+                        });
+                });
             });
         });
 
@@ -1556,8 +1520,6 @@
                     formData.set('school_name', 'All Schools');
                 } else if (source === 'existing') {
                     formData.set('school_name', form.querySelector('#incident_school_existing_select').value);
-                } else {
-                    formData.set('school_name', form.querySelector('#incident_school_name_manual').value);
                 }
             } else {
                 const sourceInput = form.querySelector('input[name="compliance_source_type"]:checked');
@@ -1566,8 +1528,6 @@
                     formData.set('school_name', 'All Schools');
                 } else if (source === 'existing') {
                     formData.set('school_name', form.querySelector('#compliance_school_existing_select').value);
-                } else {
-                    formData.set('school_name', form.querySelector('#compliance_school_name_manual').value);
                 }
             }
 
@@ -1632,7 +1592,7 @@
             });
         }
 
-        window.editIncidentEntry = function(id, type) {
+        window.editIncidentEntry = async function(id, type) {
             const data = window._currentDayData;
             if (!data) return;
 
@@ -1641,10 +1601,14 @@
             if (!item) return;
 
             // Hide the details modal
-            bootstrap.Modal.getInstance(document.getElementById('dayDetailsModal')).hide();
+            const dayModal = bootstrap.Modal.getInstance(document.getElementById('dayDetailsModal'));
+            if (dayModal) dayModal.hide();
 
-            setTimeout(() => {
-                const logModal = new bootstrap.Modal(document.getElementById('logIncidentModal'));
+            setTimeout(async () => {
+                const logModalEl = document.getElementById('logIncidentModal');
+                let logModal = bootstrap.Modal.getInstance(logModalEl);
+                if (!logModal) logModal = new bootstrap.Modal(logModalEl);
+
                 const modalTitle = document.getElementById('logIncidentModalLabel');
                 const tabs = document.getElementById('incidentTab');
 
@@ -1673,17 +1637,14 @@
                     if (item.school_name === 'All Schools') {
                         document.getElementById('incident_source_all').checked = true;
                         document.getElementById('incident_existing_school_container').style.display = 'none';
-                        document.getElementById('incident_new_school_container').style.display = 'none';
                     } else if (match) {
                         document.getElementById('incident_source_existing').checked = true;
                         existingSelect.value = item.school_name;
                         document.getElementById('incident_existing_school_container').style.display = 'block';
-                        document.getElementById('incident_new_school_container').style.display = 'none';
                     } else {
-                        document.getElementById('incident_source_new').checked = true;
-                        document.getElementById('incident_school_name_manual').value = item.school_name;
                         document.getElementById('incident_existing_school_container').style.display = 'none';
-                        document.getElementById('incident_new_school_container').style.display = 'block';
+                        await showNotify('This log uses an unregistered school name. Please pick a registered school or set "All Schools".', 'School Name Not Found', 'fa-school');
+                        return;
                     }
 
                     document.getElementById('affected_personnel').value = item.affected_personnel;
@@ -1728,17 +1689,14 @@
                     if (item.school_name === 'All Schools') {
                         document.getElementById('compliance_source_all').checked = true;
                         document.getElementById('compliance_existing_school_container').style.display = 'none';
-                        document.getElementById('compliance_new_school_container').style.display = 'none';
                     } else if (match) {
                         document.getElementById('compliance_source_existing').checked = true;
                         existingSelect.value = item.school_name;
                         document.getElementById('compliance_existing_school_container').style.display = 'block';
-                        document.getElementById('compliance_new_school_container').style.display = 'none';
                     } else {
-                        document.getElementById('compliance_source_new').checked = true;
-                        document.getElementById('compliance_school_name_manual').value = item.school_name;
                         document.getElementById('compliance_existing_school_container').style.display = 'none';
-                        document.getElementById('compliance_new_school_container').style.display = 'block';
+                        await showNotify('This log uses an unregistered school name. Please pick a registered school or set "All Schools".', 'School Name Not Found', 'fa-school');
+                        return;
                     }
 
                     document.getElementById('compliance_remarks').value = item.remarks;
@@ -1792,22 +1750,38 @@
             attachHint.classList.add('text-muted');
         });
 
-        document.getElementById('incidentForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            submitIncidentForm(this, false);
-        });
+        // Global Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const incForm = document.getElementById('incidentForm');
+            const compForm = document.getElementById('complianceForm');
+            const incDateInput = document.getElementById('incident_date_input');
+            const compDateInput = document.getElementById('compliance_date_input');
 
-        document.getElementById('complianceForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            submitIncidentForm(this, true);
-        });
+            if (incForm) {
+                incForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    submitIncidentForm(this, false);
+                });
+            }
 
-        document.getElementById('incident_date_input').addEventListener('change', function() {
-            document.getElementById('incident_date').value = this.value;
-        });
+            if (compForm) {
+                compForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    submitIncidentForm(this, true);
+                });
+            }
 
-        document.getElementById('compliance_date_input').addEventListener('change', function() {
-            document.getElementById('compliance_incident_date').value = this.value;
+            if (incDateInput) {
+                incDateInput.addEventListener('change', function() {
+                    document.getElementById('incident_date').value = this.value;
+                });
+            }
+
+            if (compDateInput) {
+                compDateInput.addEventListener('change', function() {
+                    document.getElementById('compliance_incident_date').value = this.value;
+                });
+            }
         });
 
         function logForSelectedDate() {
@@ -1837,253 +1811,137 @@
             }, 300);
         }
 
-        // School selection toggles
-        document.querySelectorAll('.incident-school-source').forEach(radio => {
-            radio.addEventListener('change', function() {
-                const existingContainer = document.getElementById('incident_existing_school_container');
-                const newContainer = document.getElementById('incident_new_school_container');
-                if (this.value === 'existing') {
-                    existingContainer.style.display = 'block';
-                    newContainer.style.display = 'none';
-                } else if (this.value === 'new') {
-                    existingContainer.style.display = 'none';
-                    newContainer.style.display = 'block';
-                } else {
-                    existingContainer.style.display = 'none';
-                    newContainer.style.display = 'none';
-                }
-            });
-        });
 
-        document.querySelectorAll('.compliance-school-source').forEach(radio => {
-            radio.addEventListener('change', function() {
-                const existingContainer = document.getElementById('compliance_existing_school_container');
-                const newContainer = document.getElementById('compliance_new_school_container');
-                if (this.value === 'existing') {
-                    existingContainer.style.display = 'block';
-                    newContainer.style.display = 'none';
-                } else if (this.value === 'new') {
-                    existingContainer.style.display = 'none';
-                    newContainer.style.display = 'block';
-                } else {
-                    existingContainer.style.display = 'none';
-                    newContainer.style.display = 'none';
-                }
-            });
-        });
 
-        // Sidebar Toggle
-        const toggleBtn = document.getElementById('toggleChecklistSidebar');
-        const closeBtn = document.getElementById('closeSidebar');
-        const sidebar = document.getElementById('checklistSidebar');
-        const overlay = document.getElementById('sidebarOverlay');
-
-        if (toggleBtn && sidebar && overlay) {
-            toggleBtn.addEventListener('click', () => {
-                sidebar.classList.add('open');
-                overlay.classList.add('active');
-            });
-
-            const closeSidebar = () => {
-                sidebar.classList.remove('open');
-                overlay.classList.remove('active');
-            };
-
-            closeBtn.addEventListener('click', closeSidebar);
-            overlay.addEventListener('click', closeSidebar);
-        }
-
-        // Charts
+        // --- Consolidated DOMContentLoaded for Chart & UI Logic ---
         document.addEventListener('DOMContentLoaded', function () {
-        const typeCtx = document.getElementById('incidentTypeChart');
-        if (typeCtx && typeChartData.labels.length) {
-            new Chart(typeCtx, {
-                type: 'pie',
-                data: {
-                    labels: typeChartData.labels,
-                    datasets: [{
-                        data: typeChartData.values,
-                        backgroundColor: [
-                            '#4facfe', '#00f2fe', '#667eea', '#a18cd1', '#38f9d7',
-                            '#ff0844', '#f093fb', '#84fab0', '#f2c94c'
-                        ],
-                    }]
-                },
-                options: {
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                font: { size: 10 }, // Smaller font for compact size
-                                boxWidth: 12, // Smaller legend boxes
-                                padding: 8 // Less padding
-                            }
-                        }
-                    },
-                    responsive: true,
-                    maintainAspectRatio: true
-                }
-            });
-        }
+            // Charts
+            const typeCtx = document.getElementById('incidentTypeChart');
+            const complianceCtx = document.getElementById('complianceDistributionChart');
+            const trendCtx = document.getElementById('incidentTrendChart');
 
-        const complianceCtx = document.getElementById('complianceDistributionChart');
-        if (complianceCtx && complianceChartData.labels.length) {
-            new Chart(complianceCtx, {
-                type: 'bar',
-                data: {
-                    labels: complianceChartData.labels,
-                    datasets: [{
-                        label: 'Events',
-                        data: complianceChartData.values,
-                        backgroundColor: '#1ed760',
-                        borderRadius: 8,
-                        borderWidth: 0,
-                        barThickness: 25,
-                    }]
-                },
-                options: {
-                    indexAxis: 'y', // Horizontal bars look cleaner for labels
-                    scales: {
-                        x: {
-                            beginAtZero: true,
-                            ticks: { font: { size: 9 } },
-                            grid: { display: false }
-                        },
-                        y: {
-                            ticks: { font: { size: 10, weight: '600' } },
-                            grid: { display: false }
-                        }
-                    },
-                    plugins: {
-                        legend: { display: false }
-                    },
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
+            if (typeCtx && typeChartData.labels.length) {
+                new Chart(typeCtx, {
+                    type: 'pie', data: { labels: typeChartData.labels, datasets: [{ data: typeChartData.values, backgroundColor: ['#4facfe', '#00f2fe', '#667eea', '#a18cd1', '#38f9d7', '#ff0844', '#f093fb', '#84fab0', '#f2c94c'] }] },
+                    options: { plugins: { legend: { position: 'bottom', labels: { font: { size: 9 }, boxWidth: 10, padding: 8 } } }, responsive: true, maintainAspectRatio: false }
+                });
+            }
+            if (complianceCtx && complianceChartData.labels.length) {
+                new Chart(complianceCtx, {
+                    type: 'bar', data: { labels: complianceChartData.labels, datasets: [{ label: 'Events', data: complianceChartData.values, backgroundColor: '#1ed760', borderRadius: 6, barThickness: 15 }] },
+                    options: { indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { font: { size: 8 } }, grid: { display: false } }, y: { ticks: { font: { size: 9, weight: '600' } }, grid: { display: false } } }, plugins: { legend: { display: false } }, responsive: true, maintainAspectRatio: false }
+                });
+            }
+            if (trendCtx && trendChartData.labels.length) {
+                new Chart(trendCtx, {
+                    type: 'line', data: { labels: trendChartData.labels.map(l => l.split('-')[2]), datasets: [{ label: 'Incidents', data: trendChartData.values, borderColor: '#F2994A', backgroundColor: 'rgba(242, 153, 74, 0.1)', fill: true, tension: 0.4, pointRadius: 3, borderWidth: 2 }] },
+                    options: { scales: { x: { ticks: { font: { size: 8 } }, grid: { display: false } }, y: { beginAtZero: true, ticks: { font: { size: 8 }, stepSize: 1 }, grid: { color: 'rgba(0,0,0,0.05)' } } }, plugins: { legend: { display: false } }, responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            // Sidebar Toggle
+            const toggleBtn = document.getElementById('toggleChecklistSidebar');
+            const closeBtn = document.getElementById('closeSidebar');
+            const sidebar = document.getElementById('checklistSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            if (toggleBtn && sidebar && overlay) {
+                const closeSidebar = () => { sidebar.classList.remove('open'); overlay.classList.remove('active'); };
+                toggleBtn.addEventListener('click', () => { sidebar.classList.add('open'); overlay.classList.add('active'); });
+                if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
+                overlay.addEventListener('click', closeSidebar);
+            }
+
+            // School selection toggles
+            document.querySelectorAll('.incident-school-source').forEach(radio => { radio.addEventListener('change', function() { const c = document.getElementById('incident_existing_school_container'); if (c) c.style.display = this.value === 'existing' ? 'block' : 'none'; }); });
+            document.querySelectorAll('.compliance-school-source').forEach(radio => { radio.addEventListener('change', function() { const c = document.getElementById('compliance_existing_school_container'); if (c) c.style.display = this.value === 'existing' ? 'block' : 'none'; }); });
+
+            // Notification print buttons
+            document.querySelectorAll('.analytics-print-btn').forEach((btn) => {
+                btn.addEventListener('click', function (event) {
+                    const targetCanvasId = this.getAttribute('data-chart-target');
+                    const canvas = targetCanvasId ? document.getElementById(targetCanvasId) : null;
+                    if (!canvas) return;
+                    event.preventDefault();
+                    let chartImageData = '';
+                    try { chartImageData = canvas.toDataURL('image/png'); } catch (e) { chartImageData = ''; }
+                    const printUrl = new URL(this.href, window.location.origin);
+                    if (chartImageData) {
+                        const chartKey = `incident_chart_print_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+                        localStorage.setItem(chartKey, chartImageData);
+                        printUrl.searchParams.set('chart_key', chartKey);
+                    }
+                    window.open(printUrl.toString(), '_blank', 'noopener');
+                });
             });
-        }
+
+            // Add Incident Type & Status listeners
+            const addTypeBtn = document.getElementById('addIncidentTypeBtn');
+            const addStatusBtn = document.getElementById('addIncidentStatusBtn');
+            const typeModalEl = document.getElementById('addIncidentTypeModal');
+            const statusModalEl = document.getElementById('addIncidentStatusModal');
+
+            let isTypeEdit = false; let activeTypeId = null;
+            let isStatusEdit = false; let activeStatusId = null;
+
+            if (addTypeBtn && typeModalEl) {
+                const typeModal = new bootstrap.Modal(typeModalEl);
+                addTypeBtn.addEventListener('click', () => {
+                    isTypeEdit = false; activeTypeId = null;
+                    document.getElementById('addIncidentTypeModalLabel').innerHTML = '<i class="fas fa-plus-circle me-1 text-warning"></i> New Incident Type';
+                    document.getElementById('saveIncidentTypeBtn').innerHTML = '<i class="fas fa-save me-1"></i> Save';
+                    document.getElementById('newIncidentTypeName').value = '';
+                    typeModal.show();
+                });
+                document.querySelectorAll('.edit-type-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        isTypeEdit = true; activeTypeId = this.getAttribute('data-id');
+                        document.getElementById('addIncidentTypeModalLabel').innerHTML = '<i class="fas fa-edit me-1 text-warning"></i> Edit Incident Type';
+                        document.getElementById('saveIncidentTypeBtn').innerHTML = '<i class="fas fa-save me-1"></i> Update';
+                        document.getElementById('newIncidentTypeName').value = this.getAttribute('data-name');
+                        typeModal.show();
+                    });
+                });
+                document.getElementById('saveIncidentTypeBtn').addEventListener('click', async () => {
+                    const name = document.getElementById('newIncidentTypeName').value.trim();
+                    if (!name) return;
+                    const url = isTypeEdit ? (incidentTypeUpdateBaseUrl + '/' + activeTypeId) : incidentTypeStoreUrl;
+                    fetch(url, { method: isTypeEdit ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, body: JSON.stringify({ name }) })
+                    .then(r => r.json()).then(resp => { if (resp.success) location.reload(); else showNotify('Failed to save.'); }).catch(() => showNotify('Connection Error'));
+                });
+            }
+
+            if (addStatusBtn && statusModalEl) {
+                const statusModal = new bootstrap.Modal(statusModalEl);
+                addStatusBtn.addEventListener('click', () => {
+                    isStatusEdit = false; activeStatusId = null;
+                    document.getElementById('addIncidentStatusModalLabel').innerHTML = '<i class="fas fa-plus-circle me-1 text-warning"></i> New Status / Event';
+                    document.getElementById('saveIncidentStatusBtn').innerHTML = '<i class="fas fa-save me-1"></i> Save';
+                    document.getElementById('newIncidentStatusName').value = '';
+                    statusModal.show();
+                });
+                document.querySelectorAll('.edit-status-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        isStatusEdit = true; activeStatusId = this.getAttribute('data-id');
+                        document.getElementById('addIncidentStatusModalLabel').innerHTML = '<i class="fas fa-edit me-1 text-warning"></i> Edit Status / Event';
+                        document.getElementById('saveIncidentStatusBtn').innerHTML = '<i class="fas fa-save me-1"></i> Update';
+                        document.getElementById('newIncidentStatusName').value = this.getAttribute('data-name');
+                        statusModal.show();
+                    });
+                });
+                document.getElementById('saveIncidentStatusBtn').addEventListener('click', async () => {
+                    const name = document.getElementById('newIncidentStatusName').value.trim();
+                    if (!name) return;
+                    const url = isStatusEdit ? (incidentStatusUpdateBaseUrl + '/' + activeStatusId) : incidentStatusStoreUrl;
+                    fetch(url, { method: isStatusEdit ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, body: JSON.stringify({ name }) })
+                    .then(r => r.json()).then(resp => { if (resp.success) location.reload(); else showNotify('Failed to save.'); }).catch(() => showNotify('Connection Error'));
+                });
+            }
+
+            // Initial calls
+            @if(auth()->user()->role === 'admin')
+                if (typeof refreshPendingCount === 'function') refreshPendingCount();
+            @endif
         });
-
-        // Dynamic incident type/status add/edit buttons
-        const addIncidentTypeBtn = document.getElementById('addIncidentTypeBtn');
-        const addIncidentStatusBtn = document.getElementById('addIncidentStatusBtn');
-        const addIncidentTypeModalEl = document.getElementById('addIncidentTypeModal');
-        const addIncidentStatusModalEl = document.getElementById('addIncidentStatusModal');
-
-        let isTypeEditMode = false;
-        let currentTypeId = null;
-        let isStatusEditMode = false;
-        let currentStatusId = null;
-
-        if (addIncidentTypeBtn && addIncidentTypeModalEl) {
-            const addIncidentTypeModal = new bootstrap.Modal(addIncidentTypeModalEl);
-            addIncidentTypeBtn.addEventListener('click', function () {
-                isTypeEditMode = false;
-                currentTypeId = null;
-                document.getElementById('addIncidentTypeModalLabel').innerHTML = '<i class="fas fa-plus-circle me-1 text-warning"></i> New Incident Type';
-                document.getElementById('saveIncidentTypeBtn').innerHTML = '<i class="fas fa-save me-1"></i> Save';
-                document.getElementById('newIncidentTypeName').value = '';
-                addIncidentTypeModal.show();
-            });
-
-            // Edit Type listeners
-            document.querySelectorAll('.edit-type-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    isTypeEditMode = true;
-                    currentTypeId = this.getAttribute('data-id');
-                    const name = this.getAttribute('data-name');
-                    document.getElementById('addIncidentTypeModalLabel').innerHTML = '<i class="fas fa-edit me-1 text-warning"></i> Edit Incident Type';
-                    document.getElementById('saveIncidentTypeBtn').innerHTML = '<i class="fas fa-save me-1"></i> Update';
-                    document.getElementById('newIncidentTypeName').value = name;
-                    addIncidentTypeModal.show();
-                });
-            });
-
-            document.getElementById('saveIncidentTypeBtn').addEventListener('click', async function () {
-                const nameInput = document.getElementById('newIncidentTypeName');
-                const name = nameInput.value.trim();
-                if (!name) {
-                    nameInput.focus();
-                    return;
-                }
-
-                const url = isTypeEditMode ? (incidentTypeUpdateBaseUrl + '/' + currentTypeId) : incidentTypeStoreUrl;
-                const method = isTypeEditMode ? 'PUT' : 'POST';
-
-                fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken,
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify({ name })
-                }).then(r => r.json()).then(async resp => {
-                    if (!resp.success) {
-                        await showNotify('Failed to save incident type.', 'Error', 'fa-exclamation-triangle');
-                        return;
-                    }
-                    addIncidentTypeModal.hide();
-                    location.reload();
-                }).catch(async () => await showNotify('Failed to save incident type.', 'Connection Error', 'fa-wifi'));
-            });
-        }
-
-        if (addIncidentStatusBtn && addIncidentStatusModalEl) {
-            const addIncidentStatusModal = new bootstrap.Modal(addIncidentStatusModalEl);
-            addIncidentStatusBtn.addEventListener('click', function () {
-                isStatusEditMode = false;
-                currentStatusId = null;
-                document.getElementById('addIncidentStatusModalLabel').innerHTML = '<i class="fas fa-plus-circle me-1 text-warning"></i> New Status / Event';
-                document.getElementById('saveIncidentStatusBtn').innerHTML = '<i class="fas fa-save me-1"></i> Save';
-                document.getElementById('newIncidentStatusName').value = '';
-                addIncidentStatusModal.show();
-            });
-
-            // Edit Status listeners
-            document.querySelectorAll('.edit-status-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    isStatusEditMode = true;
-                    currentStatusId = this.getAttribute('data-id');
-                    const name = this.getAttribute('data-name');
-                    document.getElementById('addIncidentStatusModalLabel').innerHTML = '<i class="fas fa-edit me-1 text-warning"></i> Edit Status / Event';
-                    document.getElementById('saveIncidentStatusBtn').innerHTML = '<i class="fas fa-save me-1"></i> Update';
-                    document.getElementById('newIncidentStatusName').value = name;
-                    addIncidentStatusModal.show();
-                });
-            });
-
-            document.getElementById('saveIncidentStatusBtn').addEventListener('click', async function () {
-                const nameInput = document.getElementById('newIncidentStatusName');
-                const name = nameInput.value.trim();
-                if (!name) {
-                    nameInput.focus();
-                    return;
-                }
-
-                const url = isStatusEditMode ? (incidentStatusUpdateBaseUrl + '/' + currentStatusId) : incidentStatusStoreUrl;
-                const method = isStatusEditMode ? 'PUT' : 'POST';
-
-                fetch(url, {
-                    method: method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken,
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify({ name })
-                }).then(r => r.json()).then(async resp => {
-                    if (!resp.success) {
-                        await showNotify('Failed to save status/event.', 'Error', 'fa-exclamation-triangle');
-                        return;
-                    }
-                    addIncidentStatusModal.hide();
-                    location.reload();
-                }).catch(async () => await showNotify('Failed to save status/event.', 'Connection Error', 'fa-wifi'));
-            });
-        }
 
         // Quick Compliance Checklist JS
         async function updateChecklistItem(id, payload) {
@@ -2406,35 +2264,29 @@
 
         // --- Admin Report Approval Logic ---
         @if(auth()->user()->role === 'admin')
-        const adminNotifBtn = document.getElementById('adminNotifBtn');
-        const pendingNotifCount = document.getElementById('pendingNotifCount');
-        const pendingReportsModal = new bootstrap.Modal(document.getElementById('pendingReportsModal'));
-        const pendingReportsTable = document.getElementById('pendingReportsTable');
-        const pendingEmptyState = document.getElementById('pendingEmptyState');
-
-        async function refreshPendingCount() {
+        window.refreshPendingCount = async function() {
+            const pNotifCount = document.getElementById('pendingNotifCount');
             try {
                 const r = await fetch('{{ route("incidents.pending") }}');
                 const resp = await r.json();
                 if (resp.success) {
                     if (resp.count > 0) {
-                        pendingNotifCount.textContent = resp.count;
-                        pendingNotifCount.classList.remove('d-none');
+                        if (pNotifCount) {
+                            pNotifCount.textContent = resp.count;
+                            pNotifCount.classList.remove('d-none');
+                        }
                     } else {
-                        pendingNotifCount.classList.add('d-none');
+                        if (pNotifCount) pNotifCount.classList.add('d-none');
                     }
                 }
             } catch (e) {}
-        }
+        };
 
-        adminNotifBtn.addEventListener('click', async () => {
-            await loadPendingReports();
-            pendingReportsModal.show();
-        });
-
-        async function loadPendingReports() {
-            pendingReportsTable.innerHTML = '<tr><td colspan="6" class="text-center py-4"><span class="spinner-border spinner-border-sm me-2"></span>Loading...</td></tr>';
-            pendingEmptyState.classList.add('d-none');
+        window.loadPendingReports = async function() {
+            const pReportsTable = document.getElementById('pendingReportsTable');
+            const pEmptyState = document.getElementById('pendingEmptyState');
+            if (pReportsTable) pReportsTable.innerHTML = '<tr><td colspan="6" class="text-center py-4"><span class="spinner-border spinner-border-sm me-2"></span>Loading...</td></tr>';
+            if (pEmptyState) pEmptyState.classList.add('d-none');
 
             try {
                 const r = await fetch('{{ route("incidents.pending") }}');
@@ -2443,9 +2295,9 @@
                     let html = '';
                     resp.reports.forEach(report => {
                         const date = new Date(report.incident_date).toLocaleDateString('en-PH', { month: 'short', day: '2-digit', year: 'numeric' });
-                        const type = report.entry_type === 'incident' ?
-                            `<span class="badge bg-warning text-dark"><i class="fas fa-exclamation-triangle me-1"></i> ${report.incident_type?.name || 'Incident'}</span>` :
-                            `<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> ${report.incident_status?.name || 'Compliance'}</span>`;
+                        const typeBadge = report.entry_type === 'incident' ?
+                            `<span class="badge bg-warning text-dark"><i class="fas fa-exclamation-triangle me-1"></i> ${escapeHtml(report.incident_type?.name || 'Incident')}</span>` :
+                            `<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i> ${escapeHtml(report.incident_status?.name || 'Compliance')}</span>`;
 
                         html += `
                             <tr>
@@ -2455,12 +2307,12 @@
                                         <div class="rounded-circle bg-light d-flex align-items-center justify-content-center p-2 me-2" style="width:30px;height:30px;">
                                             <i class="fas fa-user-circle text-secondary"></i>
                                         </div>
-                                        <span class="small fw-600">${report.contributor?.name || 'Unknown'}</span>
+                                        <span class="small fw-600">${escapeHtml(report.contributor?.name || 'Unknown')}</span>
                                     </div>
                                 </td>
-                                <td><span class="small">${report.school_name}</span></td>
-                                <td>${type}</td>
-                                <td><p class="mb-0 small text-truncate" style="max-width: 250px;" title="${report.remarks}">${report.remarks}</p></td>
+                                <td><span class="small">${escapeHtml(report.school_name)}</span></td>
+                                <td>${typeBadge}</td>
+                                <td><p class="mb-0 small text-truncate" style="max-width: 250px;" title="${escapeHtml(report.remarks)}">${escapeHtml(report.remarks)}</p></td>
                                 <td class="text-end pe-4">
                                     <div class="btn-group">
                                         <button class="btn btn-sm btn-outline-success" onclick="approveReport(${report.id})" title="Accept">
@@ -2474,16 +2326,16 @@
                             </tr>
                         `;
                     });
-                    pendingReportsTable.innerHTML = html;
-                    pendingEmptyState.classList.add('d-none');
+                    if (pReportsTable) pReportsTable.innerHTML = html;
+                    if (pEmptyState) pEmptyState.classList.add('d-none');
                 } else {
-                    pendingReportsTable.innerHTML = '';
-                    pendingEmptyState.classList.remove('d-none');
+                    if (pReportsTable) pReportsTable.innerHTML = '';
+                    if (pEmptyState) pEmptyState.classList.remove('d-none');
                 }
             } catch (e) {
-                pendingReportsTable.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-danger">Failed to load reports.</td></tr>';
+                if (pReportsTable) pReportsTable.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-danger">Failed to load reports.</td></tr>';
             }
-        }
+        };
 
         window.approveReport = async (id) => {
             if (!(await showConfirm('Accept this report and log it to the calendar?', 'Approve Report'))) return;
@@ -2498,7 +2350,6 @@
                     await showNotify(resp.message, 'Success', 'fa-check-circle');
                     await loadPendingReports();
                     await refreshPendingCount();
-                    // Optional: reload calendar if admin was on dashboard
                     if (typeof window.location.reload === 'function') setTimeout(() => window.location.reload(), 1000);
                 } else {
                     await showNotify(resp.message || 'Action failed', 'Error', 'fa-times-circle');
@@ -2509,48 +2360,66 @@
         };
 
         let activeRejectionId = null;
-        const rejectModal = new bootstrap.Modal(document.getElementById('rejectionReasonModal'));
+        let rejectModal = null;
 
         window.initiateRejection = (id) => {
             activeRejectionId = id;
             document.getElementById('rejectionReasonText').value = '';
-            rejectModal.show();
+            const modalEl = document.getElementById('rejectionReasonModal');
+            if (modalEl) {
+                if (!rejectModal) rejectModal = new bootstrap.Modal(modalEl);
+                rejectModal.show();
+            }
         };
 
-        document.getElementById('confirmRejectBtn').addEventListener('click', async () => {
-            const reason = document.getElementById('rejectionReasonText').value.trim();
-            if (!reason) {
-                await showNotify('Please provide a reason for rejection.', 'Reason Required', 'fa-info-circle');
-                return;
-            }
+        document.addEventListener('DOMContentLoaded', () => {
+            const adminNotifyBtn = document.getElementById('adminNotifBtn');
+            const pReportsModalEl = document.getElementById('pendingReportsModal');
+            let pReportsModal = null;
+            if (pReportsModalEl) pReportsModal = new bootstrap.Modal(pReportsModalEl);
 
-            try {
-                const r = await fetch(`{{ url("incidents") }}/${activeRejectionId}/reject`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': csrfToken,
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ reason })
-                });
-                const resp = await r.json();
-                if (resp.success) {
-                    rejectModal.hide();
-                    await showNotify(resp.message, 'Rejected', 'fa-times-circle');
+            if (adminNotifyBtn && pReportsModal) {
+                adminNotifyBtn.addEventListener('click', async () => {
                     await loadPendingReports();
-                    await refreshPendingCount();
-                } else {
-                    await showNotify(resp.message || 'Action failed', 'Error', 'fa-times-circle');
-                }
-            } catch (e) {
-                await showNotify('Connection failed', 'Error', 'fa-wifi');
+                    pReportsModal.show();
+                });
             }
-        });
 
-        // Initial check and set interval for notification badge
-        refreshPendingCount();
-        setInterval(refreshPendingCount, 60000); // Every minute
+            const confirmBtn = document.getElementById('confirmRejectBtn');
+            if (confirmBtn) {
+                confirmBtn.addEventListener('click', async () => {
+                    const reason = document.getElementById('rejectionReasonText').value.trim();
+                    if (!reason) {
+                        await showNotify('Please provide a reason for rejection.', 'Reason Required', 'fa-info-circle');
+                        return;
+                    }
+                    try {
+                        const r = await fetch(`{{ url("incidents") }}/${activeRejectionId}/reject`, {
+                            method: 'POST',
+                            headers: {
+                                'X-CSRF-TOKEN': csrfToken,
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ reason })
+                        });
+                        const resp = await r.json();
+                        if (resp.success) {
+                            if (rejectModal) rejectModal.hide();
+                            await showNotify(resp.message, 'Rejected', 'fa-times-circle');
+                            await loadPendingReports();
+                            await refreshPendingCount();
+                        } else {
+                            await showNotify(resp.message || 'Action failed', 'Error', 'fa-times-circle');
+                        }
+                    } catch (e) {
+                        await showNotify('Connection failed', 'Error', 'fa-wifi');
+                    }
+                });
+            }
+
+            setInterval(refreshPendingCount, 60000); // Every minute
+        });
         @endif
     </script>
 </body>

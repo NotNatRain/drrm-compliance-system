@@ -47,6 +47,10 @@
             flex-direction: column;
             gap: 1rem;
             box-shadow: 4px 0 24px rgba(0, 0, 0, 0.2);
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            align-self: flex-start;
         }
 
         .csss-brand {
@@ -113,6 +117,7 @@
             display: flex;
             flex-direction: column;
             min-width: 0;
+            min-height: 100vh;
         }
 
         .csss-topbar {
@@ -210,13 +215,34 @@
         $sessionSchoolId = session('csss_active_school_id');
 
         if (!$selectedSchool && $isAdmin && !empty($sessionSchoolId)) {
-            $selectedSchool = \App\Models\ComprehensiveSchool::find($sessionSchoolId);
+            $selectedSchool = \App\Models\School::find($sessionSchoolId);
         }
 
         $headerLabel = trim($__env->yieldContent('headerLabel'));
 
         if ($headerLabel === '') {
             $headerLabel = $selectedSchool ? $selectedSchool->name : 'All Schools';
+        }
+
+        $switchSchoolRouteByMenu = [
+            'assessments' => 'comprehensive-school-safety.school.assessments',
+            'facilities' => 'comprehensive-school-safety.school.facilities',
+            'reports' => 'comprehensive-school-safety.school.reports',
+            'students' => 'comprehensive-school-safety.school.students',
+        ];
+
+        $switchSchoolRouteName = $switchSchoolRouteByMenu[$activeMenu] ?? 'comprehensive-school-safety.dashboard';
+
+        if (!isset($directorySchoolsForComprehensiveRegistration)) {
+            $directorySchoolsForComprehensiveRegistration = \App\Models\School::query()
+                ->whereDoesntHave('specifics', function ($q) {
+                    $q->where('module', 'comprehensive')->where('key', 'original_cmpr_school_id');
+                })
+                ->orderBy('school_name')
+                ->get([
+                    'id', 'school_name', 'school_id', 'school_id_number', 'address', 'school_head',
+                    'drrm_coordinator', 'contact_number', 'district', 'division', 'region',
+                ]);
         }
     @endphp
 
@@ -238,21 +264,26 @@
             </div>
         </div>
 
+        @if($isAdmin)
+            <div class="csss-menu-label">Dashboard</div>
+            <a class="csss-menu-link {{ $activeMenu === 'dashboard' ? 'active' : '' }}"
+               href="{{ route('comprehensive-school-safety.dashboard') }}">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </a>
+        @endif
+
         <div class="csss-menu-label">School Menu</div>
 
-          <a class="csss-menu-link {{ $activeMenu === 'dashboard' ? 'active' : '' }}"
-              href="{{ route('comprehensive-school-safety.dashboard') }}">
-            <i class="fas fa-chart-line"></i> Dashboard
-        </a>
+        @if(!$isAdmin)
+            <a class="csss-menu-link {{ $activeMenu === 'dashboard' ? 'active' : '' }}"
+               href="{{ $selectedSchool ? route('comprehensive-school-safety.school.dashboard', $selectedSchool->id) : route('comprehensive-school-safety.dashboard') }}">
+                <i class="fas fa-chart-line"></i> Dashboard
+            </a>
+        @endif
 
         <a class="csss-menu-link {{ $activeMenu === 'assessments' ? 'active' : '' }}"
            href="{{ $selectedSchool ? route('comprehensive-school-safety.school.assessments', $selectedSchool->id) : route('comprehensive-school-safety.dashboard') }}">
-            <i class="fas fa-clipboard-check"></i> Assessments
-        </a>
-
-        <a class="csss-menu-link {{ $activeMenu === 'students' ? 'active' : '' }}"
-           href="{{ $selectedSchool ? route('comprehensive-school-safety.school.students', $selectedSchool->id) : route('comprehensive-school-safety.dashboard') }}">
-            <i class="fas fa-users"></i> Students
+            <i class="fas fa-list-check"></i> Assessments
         </a>
 
         <a class="csss-menu-link {{ $activeMenu === 'facilities' ? 'active' : '' }}"
@@ -266,14 +297,19 @@
             <i class="fas fa-chart-pie"></i> Analytics &amp; Reports
         </a>
 
+        <a class="csss-menu-link {{ $activeMenu === 'students' ? 'active' : '' }}"
+           href="{{ $selectedSchool ? route('comprehensive-school-safety.school.students', $selectedSchool->id) : route('comprehensive-school-safety.dashboard') }}">
+            <i class="fas fa-users"></i> Students
+        </a>
+
         @if($isAdmin)
             <div class="mt-auto pt-3 border-top border-secondary-subtle">
                 <button type="button" class="csss-menu-link w-100" data-bs-toggle="modal" data-bs-target="#switchSchoolModal">
                     <i class="fas fa-school"></i> Switch School
                 </button>
-                <a class="csss-menu-link w-100 mt-2" href="{{ route('comprehensive-school-safety.dashboard') }}#schoolsDirectory">
+                <button type="button" class="csss-menu-link w-100 mt-2 js-open-register-from-directory" data-bs-toggle="modal" data-bs-target="#registerSchoolFromDirectoryModal">
                     <i class="fas fa-plus-circle"></i> Add School
-                </a>
+                </button>
             </div>
         @endif
     </aside>
@@ -288,10 +324,38 @@
                     </h5>
                 </div>
             </div>
-            <div class="csss-topbar-side">
-                <button type="button" class="csss-notification" aria-label="Notifications">
-                    <i class="fas fa-bell"></i>
-                </button>
+            <div class="d-flex align-items-center gap-2">
+                <div class="dropdown" style="display:flex; gap: .5rem; align-items:center;">
+                    <button type="button" class="csss-notification" aria-label="Notifications">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        {{ auth()->user()->name ?? 'Account' }}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" href="{{ route('users.index') }}">
+                                <i class="fas fa-users-cog me-2"></i>User Accounts
+                            </a>
+                        </li>
+                        @if($isAdmin)
+                            <li>
+                                <a class="dropdown-item" href="{{ route('activity-logs.index') }}">
+                                    <i class="fas fa-clipboard-list me-2"></i>Logs
+                                </a>
+                            </li>
+                        @endif
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form action="{{ route('logout') }}" method="POST" class="m-0">
+                                @csrf
+                                <button type="submit" class="dropdown-item text-danger">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Log Out
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
 
@@ -302,6 +366,90 @@
 </div>
 
 @if($isAdmin)
+    <div class="modal fade" id="registerSchoolFromDirectoryModal" tabindex="-1" aria-labelledby="registerSchoolFromDirectoryModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content" style="border-radius: 16px; border: 1px solid var(--csss-border);">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold" id="registerSchoolFromDirectoryModalLabel">Register school for Comprehensive School Safety</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body pt-3">
+                    <p class="text-muted small">School master data is maintained on <strong>DRRM Main Dashboard → Schools</strong>. Here you only link a directory school to this module.</p>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Select school *</label>
+                        <select class="form-select" id="csssDirectorySchoolSelect" required @if(($directorySchoolsForComprehensiveRegistration ?? collect())->isEmpty()) disabled @endif>
+                            <option value="">— Choose a school —</option>
+                            @foreach($directorySchoolsForComprehensiveRegistration ?? [] as $dir)
+                                <option
+                                    value="{{ $dir->id }}"
+                                    data-school-name="{{ e($dir->school_name) }}"
+                                    data-school-id="{{ e($dir->school_id ?? '') }}"
+                                    data-school-id-num="{{ e($dir->school_id_number ?? '') }}"
+                                    data-address="{{ e($dir->address ?? '') }}"
+                                    data-head="{{ e($dir->school_head ?? '') }}"
+                                    data-drrm="{{ e($dir->drrm_coordinator ?? '') }}"
+                                    data-contact="{{ e($dir->contact_number ?? '') }}"
+                                    data-district="{{ e($dir->district ?? '') }}"
+                                    data-division="{{ e($dir->division ?? '') }}"
+                                    data-region="{{ e($dir->region ?? '') }}"
+                                >
+                                    {{ $dir->school_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div id="csssDirectoryReadonly" class="border rounded p-3 bg-light" style="display:none;">
+                        <p class="small fw-semibold text-uppercase text-muted mb-2">School information (read-only)</p>
+                        <div class="row g-2 small">
+                            <div class="col-md-6">
+                                <strong>ID / Code:</strong>
+                                <input type="text" id="csss_ro_code" class="form-control form-control-sm mt-1" value="" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Name:</strong>
+                                <input type="text" id="csss_ro_name" class="form-control form-control-sm mt-1" value="" readonly>
+                            </div>
+                            <div class="col-12">
+                                <strong>Address:</strong>
+                                <input type="text" id="csss_ro_addr" class="form-control form-control-sm mt-1" value="" readonly>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Region:</strong>
+                                <input type="text" id="csss_ro_region" class="form-control form-control-sm mt-1" value="" readonly>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>Division:</strong>
+                                <input type="text" id="csss_ro_division" class="form-control form-control-sm mt-1" value="" readonly>
+                            </div>
+                            <div class="col-md-4">
+                                <strong>District:</strong>
+                                <input type="text" id="csss_ro_district" class="form-control form-control-sm mt-1" value="" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Head:</strong>
+                                <input type="text" id="csss_ro_head" class="form-control form-control-sm mt-1" value="" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <strong>DRRM coordinator:</strong>
+                                <input type="text" id="csss_ro_drrm" class="form-control form-control-sm mt-1" value="" readonly>
+                            </div>
+                            <div class="col-12">
+                                <strong>Contact:</strong>
+                                <input type="text" id="csss_ro_contact" class="form-control form-control-sm mt-1" value="" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-dark" id="csssRegisterSubmitBtn" onclick="csssRegisterFromDirectory()" @if(($directorySchoolsForComprehensiveRegistration ?? collect())->isEmpty()) disabled @endif>
+                        <i class="fas fa-link me-1"></i> Register for this module
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- School Selection Modal -->
     <div class="modal fade" id="switchSchoolModal" tabindex="-1" role="dialog" aria-labelledby="switchSchoolLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
@@ -314,43 +462,128 @@
                 </div>
                 <div class="modal-body p-4">
                     @php
-                        $allSchools = \App\Models\ComprehensiveSchool::orderBy('name')->get();
+                        $allSchools = \App\Models\School::query()
+                            ->whereHas('specifics', function ($q) {
+                                $q->where('module', 'comprehensive')->where('key', 'original_cmpr_school_id');
+                            })
+                            ->orderBy('school_name')
+                            ->get();
                     @endphp
                     @if($allSchools->isEmpty())
                         <div class="text-center py-4">
                             <i class="fas fa-inbox text-muted" style="font-size: 2.5rem; margin-bottom: 1rem;"></i>
                             <p class="text-muted mb-3">No schools registered yet.</p>
-                            <a href="{{ route('comprehensive-school-safety.dashboard') }}#schoolsDirectory" class="btn btn-sm btn-primary">
-                                <i class="fas fa-plus me-1"></i> Create New School
-                            </a>
                         </div>
                     @else
                         <div class="d-grid gap-2">
                             @foreach($allSchools as $switchSchool)
-                                <a href="{{ route('comprehensive-school-safety.school.dashboard', $switchSchool->id) }}" class="btn btn-outline-secondary text-start p-3" style="border-radius: 10px; transition: all 0.2s ease;">
+                                @php
+                                    $isCurrentSwitchSchool = $selectedSchool && (int) $selectedSchool->id === (int) $switchSchool->id;
+                                    $switchUrl = $switchSchoolRouteName === 'comprehensive-school-safety.dashboard'
+                                        ? route('comprehensive-school-safety.dashboard', ['school_id' => $switchSchool->id])
+                                        : route($switchSchoolRouteName, $switchSchool->id);
+                                @endphp
+                                <a href="{{ $switchUrl }}"
+                                   class="btn text-start p-3 {{ $isCurrentSwitchSchool ? 'text-white' : 'btn-outline-secondary' }}"
+                                   style="border-radius: 10px; transition: all 0.2s ease; {{ $isCurrentSwitchSchool ? 'background: var(--csss-primary); border-color: var(--csss-primary);' : '' }}">
                                     <div class="d-flex align-items-start justify-content-between">
                                         <div>
-                                            <h6 class="mb-1 fw-bold" style="color: var(--csss-primary);">{{ $switchSchool->name }}</h6>
-                                            <small class="text-muted">
+                                            <h6 class="mb-1 fw-bold" style="color: {{ $isCurrentSwitchSchool ? '#ffffff' : 'var(--csss-primary)' }};">{{ $switchSchool->name }}</h6>
+                                            <small style="color: {{ $isCurrentSwitchSchool ? 'rgba(255,255,255,0.9)' : 'var(--csss-muted)' }};">
                                                 <i class="fas fa-map-marker-alt me-1"></i>{{ $switchSchool->district ?? 'N/A' }} • {{ $switchSchool->division ?? 'N/A' }}
                                             </small>
                                         </div>
-                                        <i class="fas fa-chevron-right text-muted" style="margin-top: 5px;"></i>
+                                        <i class="fas fa-chevron-right" style="margin-top: 5px; color: {{ $isCurrentSwitchSchool ? '#ffffff' : 'var(--csss-muted)' }};"></i>
                                     </div>
                                 </a>
                             @endforeach
-                        </div>
-                        <div class="mt-4 pt-3 border-top">
-                            <a href="{{ route('comprehensive-school-safety.dashboard') }}#schoolsDirectory" class="btn btn-outline-primary w-100">
-                                <i class="fas fa-plus me-2"></i> Add New School
-                            </a>
                         </div>
                     @endif
                 </div>
             </div>
         </div>
     </div>
-@endif
+
+        <script>
+            const csssDirectorySchoolSelect = document.getElementById('csssDirectorySchoolSelect');
+            if (csssDirectorySchoolSelect) {
+                csssDirectorySchoolSelect.addEventListener('change', function() {
+                    const opt = this.options[this.selectedIndex];
+                    const box = document.getElementById('csssDirectoryReadonly');
+                    if (!opt || !opt.value) {
+                        box.style.display = 'none';
+                        return;
+                    }
+
+                    box.style.display = 'block';
+                    const code = opt.dataset.schoolIdNum || opt.dataset.schoolId || '—';
+                    document.getElementById('csss_ro_code').value = code;
+                    document.getElementById('csss_ro_name').value = opt.dataset.schoolName || '';
+                    document.getElementById('csss_ro_addr').value = opt.dataset.address || '—';
+                    document.getElementById('csss_ro_region').value = opt.dataset.region || '—';
+                    document.getElementById('csss_ro_division').value = opt.dataset.division || '—';
+                    document.getElementById('csss_ro_district').value = opt.dataset.district || '—';
+                    document.getElementById('csss_ro_head').value = opt.dataset.head || '—';
+                    document.getElementById('csss_ro_drrm').value = opt.dataset.drrm || '—';
+                    document.getElementById('csss_ro_contact').value = opt.dataset.contact || '—';
+                });
+            }
+
+            async function csssRegisterFromDirectory() {
+                const sel = document.getElementById('csssDirectorySchoolSelect');
+                if (!sel || !sel.value) {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({ icon: 'warning', title: 'Select a school', text: 'Choose a school from the main directory.' });
+                    } else {
+                        alert('Select a school from the main directory.');
+                    }
+                    return;
+                }
+
+                try {
+                    const response = await fetch('{{ route("comprehensive-school-safety.schools.register-from-directory") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify({ unified_school_id: parseInt(sel.value, 10) })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.success) {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({ icon: 'success', title: 'Registered', text: data.message || 'School registered.', confirmButtonText: 'OK' })
+                                .then(() => location.reload());
+                        } else {
+                            location.reload();
+                        }
+                    } else {
+                        const msg = data.message || 'Failed to register school.';
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({ icon: 'error', title: 'Notice', text: msg });
+                        } else {
+                            alert(msg);
+                        }
+                    }
+                } catch (e) {
+                    console.error(e);
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({ icon: 'error', title: 'Error', text: 'Request failed.' });
+                    }
+                }
+            }
+
+            if (typeof bootstrap !== 'undefined' && window.location.hash === '#schoolsDirectory' && document.getElementById('registerSchoolFromDirectoryModal')) {
+                const modalElement = document.getElementById('registerSchoolFromDirectoryModal');
+                if (modalElement && document.querySelector('#csssDirectorySchoolSelect option:not([value=""])')) {
+                    new bootstrap.Modal(modalElement).show();
+                }
+            }
+        </script>
+    @endif
 
 @stack('scripts')
 </body>

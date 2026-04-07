@@ -31,6 +31,9 @@ class School extends Model
         'evacuation_identification',
         'evacuation_location',
         'evacuation_capacity',
+        'number_students',
+        'number_personnel',
+        'number_gates',
         'operational_status',
         'evacuation_status',
         'occupancy_safety',
@@ -50,6 +53,9 @@ class School extends Model
         'replies' => 'array',
         'last_incident_date' => 'date',
         'evacuation_capacity' => 'integer',
+        'number_students' => 'integer',
+        'number_personnel' => 'integer',
+        'number_gates' => 'integer',
         'incident_count' => 'integer',
     ];
 
@@ -239,5 +245,101 @@ class School extends Model
             ->where('module', $module)
             ->where('key', $key)
             ->value('value');
+    }
+
+    /* ── Comprehensive School Safety (cmpr_*) ─────────────────────────── */
+
+    public function assessments()
+    {
+        return $this->hasMany(ComprehensiveAssessment::class, 'school_id');
+    }
+
+    public function facilities()
+    {
+        return $this->hasMany(ComprehensiveFacility::class, 'school_id');
+    }
+
+    public function students()
+    {
+        return $this->hasMany(ComprehensiveStudent::class, 'school_id');
+    }
+
+    /* ── Presentation aliases for legacy views / APIs ───────────────────── */
+
+    public function getNameAttribute(): string
+    {
+        return (string) ($this->attributes['school_name'] ?? '');
+    }
+
+    public function getStatusAttribute(): ?string
+    {
+        return $this->attributes['fire_safety_status'] ?? null;
+    }
+
+    public function setStatusAttribute(?string $value): void
+    {
+        $this->attributes['fire_safety_status'] = $value;
+    }
+
+    public function getSchoolDrrmCoordinatorAttribute(): ?string
+    {
+        return $this->drrm_coordinator;
+    }
+
+    public function setSchoolDrrmCoordinatorAttribute(?string $value): void
+    {
+        $this->attributes['drrm_coordinator'] = $value;
+    }
+
+    /**
+     * Typhoon module: mirrors old TypFldEvacuationCenter field names in Blade/API.
+     */
+    public function getUsageStatusAttribute(): ?string
+    {
+        return $this->attributes['evacuation_status'] ?? null;
+    }
+
+    public function setUsageStatusAttribute(?string $value): void
+    {
+        $this->attributes['evacuation_status'] = $value;
+    }
+
+    public function getLocationAttribute(): ?string
+    {
+        if (! empty($this->attributes['evacuation_location'])) {
+            return $this->attributes['evacuation_location'];
+        }
+
+        return $this->attributes['address'] ?? null;
+    }
+
+    public function setLocationAttribute(?string $value): void
+    {
+        $this->attributes['evacuation_location'] = $value;
+    }
+
+    public function getCapacityAttribute(): int
+    {
+        return (int) ($this->attributes['evacuation_capacity'] ?? 0);
+    }
+
+    public function setCapacityAttribute($value): void
+    {
+        $this->attributes['evacuation_capacity'] = (int) $value;
+    }
+
+    public function getSchoolAttribute(): self
+    {
+        return $this;
+    }
+
+    public function getEmergencyResourcesUsageStatusAttribute(): ?string
+    {
+        return $this->attributes['emergency_resources_status'] ?? null;
+    }
+
+    public function typFldFamilies()
+    {
+        return $this->hasMany(TypFldFamily::class, 'school_id');
     }
 }

@@ -74,7 +74,7 @@
                         <tr>
                             <th class="ps-4">Username</th>
                             <th>Email Address</th>
-                            <th>Role</th>
+                            <th>Role & Position</th>
                             <th>Module Access</th>
                             <th>Assigned School</th>
                             <th>Status</th>
@@ -89,10 +89,14 @@
                             <td>
                                 @php
                                     $roleLabel = ucfirst($user->role ?? 'user');
+                                    $positionLabel = $user->position ?: 'Not set';
                                 @endphp
                                 <span class="badge {{ $user->role === 'admin' ? 'bg-danger' : ($user->role === 'contributor' ? 'bg-success' : 'bg-info text-dark') }}">
                                     {{ $roleLabel }}
                                 </span>
+                                @if($user->role !== 'admin')
+                                    <div class="small text-muted mt-1">{{ $positionLabel }}</div>
+                                @endif
                             </td>
                             <td>
                                 @if($user->role === 'admin')
@@ -107,11 +111,12 @@
                                             'comprehensive_school_safety',
                                             'hazard_mapping',
                                         ];
+                                        $hasAssignedSchool = !empty($user->school_id) || !empty($user->typhoon_school_id) || !empty($user->incident_school_id);
                                         $hasAllModules = $user->role === 'contributor'
                                             && empty(array_diff($allAvailableModules, $modules));
                                     @endphp
 
-                                    @if($hasAllModules)
+                                    @if($hasAssignedSchool || $hasAllModules)
                                         <span class="text-muted small">All Modules</span>
                                     @else
                                         @foreach($modules as $mod)
@@ -128,61 +133,16 @@
                                 @if($user->role === 'admin')
                                     <span class="badge bg-light text-dark border"><i class="fas fa-globe me-1"></i> Full Access</span>
                                 @else
-                                    @php
-                                        $assignedModules = $user->module_access ?? [];
-                                    @endphp
-
-                                    @if(in_array('fire_safety', $assignedModules, true))
-                                        <div class="mb-2">
-                                            <div class="small fw-bold text-muted mb-1 text-uppercase" style="font-size: 0.65rem;">Fire Safety:</div>
-                                            @if($user->school)
-                                                <div class="d-flex align-items-center">
-                                                    <i class="fas fa-school text-primary me-2 shadow-sm p-1 rounded bg-light" style="font-size: 0.8rem;"></i>
-                                                    <div>
-                                                        <div class="fw-bold small" style="font-size: 0.75rem;">{{ $user->school->school_name }}</div>
-                                                        <div class="text-muted" style="font-size: 0.65rem;">ID: {{ $user->school->school_id }}</div>
-                                                    </div>
-                                                </div>
-                                            @elseif($user->needs_fs_registration)
-                                                <span class="badge bg-warning text-dark" style="font-size: 0.65rem;"><i class="fas fa-keyboard me-1"></i> To be encoded</span>
-                                            @endif
-                                        </div>
-                                    @endif
-
-                                    @if(in_array('typhoon_flood', $assignedModules, true))
-                                        <div class="mb-2">
-                                            <div class="small fw-bold text-muted mb-1 text-uppercase" style="font-size: 0.65rem;">Typhoon/Flood:</div>
-                                            @if($user->typhoonSchool)
-                                                <div class="d-flex align-items-center">
-                                                    <i class="fas fa-cloud-showers-heavy text-info me-2 shadow-sm p-1 rounded bg-light" style="font-size: 0.8rem;"></i>
-                                                    <div>
-                                                        <div class="fw-bold small" style="font-size: 0.75rem;">{{ $user->typhoonSchool->school->school_name }}</div>
-                                                        <div class="text-muted" style="font-size: 0.65rem;">{{ $user->typhoonSchool->identification ?: 'Evac Center' }}</div>
-                                                    </div>
-                                                </div>
-                                            @elseif($user->needs_tf_registration)
-                                                <span class="badge bg-warning text-dark" style="font-size: 0.65rem;"><i class="fas fa-keyboard me-1"></i> To be encoded</span>
-                                            @endif
-                                        </div>
-                                    @endif
-
-                                    @if(in_array('incident_checklist', $assignedModules, true))
-                                        <div>
-                                            <div class="small fw-bold text-muted mb-1 text-uppercase" style="font-size: 0.65rem;">Incident Checklist:</div>
-                                            @if($user->incidentSchool)
-                                                <div class="d-flex align-items-center">
-                                                    <i class="fas fa-clipboard-list text-warning me-2 shadow-sm p-1 rounded bg-light" style="font-size: 0.8rem;"></i>
-                                                    <div>
-                                                        <div class="fw-bold small" style="font-size: 0.75rem;">{{ $user->incidentSchool->name }}</div>
-                                                        <div class="text-muted" style="font-size: 0.65rem;">Assigned Incident School</div>
-                                                    </div>
-                                                </div>
-                                            @endif
-                                        </div>
-                                    @endif
-
-                                    @if(empty($assignedModules))
-                                        <span class="text-muted small italic">No module school assignments</span>
+                                    @if($user->school)
+                                        <span class="fw-semibold">{{ $user->school->school_name }}</span>
+                                    @elseif($user->typhoonSchool)
+                                        <span class="fw-semibold">{{ $user->typhoonSchool->school_name }}</span>
+                                    @elseif($user->incidentSchool)
+                                        <span class="fw-semibold">{{ $user->incidentSchool->school_name ?? $user->incidentSchool->name }}</span>
+                                    @elseif($user->needs_fs_registration || $user->needs_tf_registration)
+                                        <span class="badge bg-warning text-dark" style="font-size: 0.65rem;"><i class="fas fa-keyboard me-1"></i> To be encoded</span>
+                                    @else
+                                        <span class="text-muted small italic">Unassigned</span>
                                     @endif
                                 @endif
                             </td>
@@ -263,6 +223,15 @@
                             <div class="form-text text-danger">Maximum of 2 Administrators reached (~ Admin role disabled).</div>
                         @endif
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Position</label>
+                        <select name="position" id="addUserPosition" class="form-select">
+                            <option value="">-- Select Position --</option>
+                            <option value="School Head">School Head</option>
+                            <option value="School DRRM">School DRRM</option>
+                            <option value="School Account">School Account</option>
+                        </select>
+                    </div>
                     <div id="adminConfirmation" class="mb-3 d-none">
                         <label class="form-label text-danger fw-bold">Admin Password Confirmation</label>
                         <input type="password" name="admin_confirmation" class="form-control" placeholder="Your password to confirm admin creation">
@@ -310,6 +279,15 @@
                                 <option value="contributor">Contributor</option>
                                 <option value="viewer">Viewer</option>
                                 <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Position</label>
+                            <select name="position" id="editUserPosition" class="form-select">
+                                <option value="">-- Select Position --</option>
+                                <option value="School Head">School Head</option>
+                                <option value="School DRRM">School DRRM</option>
+                                <option value="School Account">School Account</option>
                             </select>
                         </div>
                     @endif
@@ -383,7 +361,7 @@
                                     @else
                                         <option value="">-- Select Existing Evacuation Center --</option>
                                         @foreach($typhoonSchools as $tSchool)
-                                            <option value="{{ $tSchool->id }}">{{ $tSchool->school ? $tSchool->school->school_name : ($tSchool->identification ?: 'ID: ' . $tSchool->id) }}</option>
+                                            <option value="{{ $tSchool->id }}">{{ $tSchool->school_name ?? ($tSchool->identification ?: 'School #' . $tSchool->id) }}</option>
                                         @endforeach
                                     @endif
                                 </select>
@@ -459,6 +437,26 @@
 document.addEventListener('DOMContentLoaded', function() {
     const isAdminView = {{ $isAdminView ? 'true' : 'false' }};
 
+    function syncAddPositionByRole() {
+        const roleSelect = document.querySelector('#addUserForm select[name="role"]');
+        const posSelect = document.getElementById('addUserPosition');
+        if (!roleSelect || !posSelect) return;
+
+        const isAdmin = roleSelect.value === 'admin';
+        posSelect.disabled = isAdmin;
+        if (isAdmin) posSelect.value = '';
+    }
+
+    function syncEditPositionByRole() {
+        const roleSelect = document.getElementById('editUserRole');
+        const posSelect = document.getElementById('editUserPosition');
+        if (!roleSelect || !posSelect) return;
+
+        const isAdmin = roleSelect.value === 'admin';
+        posSelect.disabled = isAdmin;
+        if (isAdmin) posSelect.value = '';
+    }
+
     // Role monitoring for Admin password
     if (isAdminView) {
         const roleSelect = document.querySelector('#addUserForm select[name="role"]');
@@ -472,7 +470,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     adminConfirm.classList.add('d-none');
                     adminConfirm.querySelector('input').removeAttribute('required');
                 }
+                syncAddPositionByRole();
             });
+
+            syncAddPositionByRole();
         }
     }
 
@@ -488,6 +489,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     adminConfirm.classList.add('d-none');
                     adminConfirm.querySelector('input').removeAttribute('required');
                 }
+                syncAddPositionByRole();
             });
         }
     }
@@ -599,6 +601,26 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+function syncAddPositionByRole() {
+    const roleSelect = document.querySelector('#addUserForm select[name="role"]');
+    const posSelect = document.getElementById('addUserPosition');
+    if (!roleSelect || !posSelect) return;
+
+    const isAdmin = roleSelect.value === 'admin';
+    posSelect.disabled = isAdmin;
+    if (isAdmin) posSelect.value = '';
+}
+
+function syncEditPositionByRole() {
+    const roleSelect = document.getElementById('editUserRole');
+    const posSelect = document.getElementById('editUserPosition');
+    if (!roleSelect || !posSelect) return;
+
+    const isAdmin = roleSelect.value === 'admin';
+    posSelect.disabled = isAdmin;
+    if (isAdmin) posSelect.value = '';
+}
+
 function editUser(userId) {
     const modalEl = document.getElementById('editUserModal');
     if (!modalEl) return;
@@ -618,11 +640,20 @@ function editUser(userId) {
             const nameInput = document.getElementById('editUserName');
             const emailInput = document.getElementById('editUserEmail');
             const roleSelect = document.getElementById('editUserRole');
+            const positionSelect = document.getElementById('editUserPosition');
 
             if (idInput) idInput.value = user.id;
             if (nameInput) nameInput.value = user.name;
             if (emailInput) emailInput.value = user.email;
             if (roleSelect) roleSelect.value = user.role;
+            if (positionSelect) positionSelect.value = user.position || '';
+            syncEditPositionByRole();
+
+            if (roleSelect) {
+                roleSelect.onchange = function () {
+                    syncEditPositionByRole();
+                };
+            }
             
             const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
             modal.show();

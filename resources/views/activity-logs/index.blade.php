@@ -138,7 +138,7 @@
                                 </span>
                             </td>
                             <td>{{ $log->activity }}</td>
-                            <td>{{ $log->school_name ?? ($log->school_id ? 'School #' . $log->school_id : '—') }}</td>
+                            <td>{{ $log->school_display }}</td>
                             <td>{{ $log->module_label }}</td>
                             <td class="pe-4 text-muted small" style="max-width: 280px;">{{ \Illuminate\Support\Str::limit($log->notes, 80) }}</td>
                         </tr>

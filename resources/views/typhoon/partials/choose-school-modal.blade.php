@@ -26,17 +26,17 @@
                                                 <i class="fas fa-hotel text-info"></i>
                                             </div>
                                             <h6 class="fw-bold text-white mb-0" style="font-family: 'Rajdhani', sans-serif;">
-                                                {{ strtoupper($ec->school->school_name ?? $ec->identification ?? ('Center #' . $ec->id)) }}
+                                                {{ strtoupper($ec->school_name ?? $ec->identification ?? ('Center #' . $ec->id)) }}
                                             </h6>
                                         </div>
                                         <div class="small text-white-50 mb-3">
                                             <i class="fas fa-map-marker-alt me-2 text-danger"></i>
-                                            {{ Str::limit($ec->location ?? $ec->school->address ?? 'No Location Set', 50) }}
+                                            {{ Str::limit($ec->location ?? $ec->address ?? 'No Location Set', 50) }}
                                         </div>
                                         <div class="d-flex justify-content-between align-items-center bg-black bg-opacity-20 p-2 rounded">
                                             <div class="text-center flex-grow-1">
                                                 <div class="small text-white-50 text-uppercase" style="font-size: 0.6rem; letter-spacing: 1px;">Capacity</div>
-                                                <div class="fw-bold text-white">{{ $ec->capacity ?? 0 }}</div>
+                                                <div class="fw-bold text-white">{{ $ec->evacuation_capacity ?? 0 }}</div>
                                             </div>
                                             <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.1);"></div>
                                             <div class="text-center flex-grow-1">

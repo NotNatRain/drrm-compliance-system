@@ -1,4 +1,7 @@
-<div class="modal fade" id="logIncidentModal" tabindex="-1" aria-labelledby="logIncidentModalLabel" aria-hidden="true">
+<div class="modal fade" id="logIncidentModal" tabindex="-1" aria-labelledby="logIncidentModalLabel" aria-hidden="true"
+    data-auto-open="{{ !empty($autoOpenIncidentModal) ? '1' : '0' }}"
+    data-auto-tab="{{ $autoOpenIncidentTab ?? 'incident' }}"
+    data-default-school="{{ $requestedIncidentSchoolName ?? '' }}">
     <div class="modal-dialog modal-lg">
         <div class="modal-content incident-modal">
             <div class="modal-header bg-warning text-white">
@@ -63,11 +66,7 @@
                                         <div class="d-flex flex-wrap gap-3 mb-2">
                                             <div class="form-check">
                                                 <input class="form-check-input incident-school-source" type="radio" name="incident_source_type" id="incident_source_existing" value="existing" checked>
-                                                <label class="form-check-label small fw-600" for="incident_source_existing">Use Existing Registered School</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input incident-school-source" type="radio" name="incident_source_type" id="incident_source_new" value="new">
-                                                <label class="form-check-label small fw-600" for="incident_source_new">Input New School Name</label>
+                                                <label class="form-check-label small fw-600" for="incident_source_existing">Select School</label>
                                             </div>
                                             @if(auth()->user()->role === 'admin')
                                             <div class="form-check">
@@ -79,18 +78,12 @@
 
                                         <div id="incident_existing_school_container">
                                             <select class="form-select" id="incident_school_existing_select" name="school_name_existing">
-                                                <option value="">-- Select Registered School --</option>
+                                                <option value="">-- School Choices --</option>
                                                 @foreach($fireSafetySchools as $fsSchool)
                                                     <option value="{{ $fsSchool->school_name }}">{{ $fsSchool->school_name }}</option>
                                                 @endforeach
                                             </select>
                                             <small class="text-muted small">Choose a school from the registered list.</small>
-                                        </div>
-
-                                        <div id="incident_new_school_container" style="display: none;">
-                                            <input type="text" class="form-control" id="incident_school_name_manual" name="school_name_manual"
-                                                   placeholder="Enter new school name...">
-                                            <small class="text-muted small">Manually type the school name if not registered.</small>
                                         </div>
                                     @endif
                                 </div>
@@ -175,11 +168,7 @@
                                         <div class="d-flex flex-wrap gap-3 mb-2">
                                             <div class="form-check">
                                                 <input class="form-check-input compliance-school-source" type="radio" name="compliance_source_type" id="compliance_source_existing" value="existing" checked>
-                                                <label class="form-check-label small fw-600" for="compliance_source_existing">Use Existing Registered School</label>
-                                            </div>
-                                            <div class="form-check">
-                                                <input class="form-check-input compliance-school-source" type="radio" name="compliance_source_type" id="compliance_source_new" value="new">
-                                                <label class="form-check-label small fw-600" for="compliance_source_new">Input New School Name</label>
+                                                <label class="form-check-label small fw-600" for="compliance_source_existing">Select School</label>
                                             </div>
                                             @if(auth()->user()->role === 'admin')
                                             <div class="form-check">
@@ -191,16 +180,11 @@
 
                                         <div id="compliance_existing_school_container">
                                             <select class="form-select" id="compliance_school_existing_select" name="compliance_school_name_existing">
-                                                <option value="">-- Select Registered School --</option>
+                                                <option value="">-- School Choices --</option>
                                                 @foreach($fireSafetySchools as $fsSchool)
                                                     <option value="{{ $fsSchool->school_name }}">{{ $fsSchool->school_name }}</option>
                                                 @endforeach
                                             </select>
-                                        </div>
-
-                                        <div id="compliance_new_school_container" style="display: none;">
-                                            <input type="text" class="form-control" id="compliance_school_name_manual" name="compliance_school_name_manual"
-                                                   placeholder="Enter new school name...">
                                         </div>
                                     @endif
                                 </div>
@@ -240,6 +224,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const logModalEl = document.getElementById('logIncidentModal');
         const incidentTypeSelect = document.getElementById('incident_type_id');
         const incidentOtherGroup = document.getElementById('incident_other_type_group');
         const incidentOtherInput = document.getElementById('incident_other_type');
@@ -273,5 +258,61 @@
             complianceStatusSelect.addEventListener('change', toggleComplianceOther);
             toggleComplianceOther();
         }
+
+        if (!logModalEl || typeof bootstrap === 'undefined' || logModalEl.dataset.autoOpen !== '1') {
+            return;
+        }
+
+        const defaultSchoolName = logModalEl.dataset.defaultSchool || '';
+        const autoTab = logModalEl.dataset.autoTab === 'compliance' ? 'compliance' : 'incident';
+
+        const applySchoolSelection = () => {
+            const selectMap = autoTab === 'compliance'
+                ? [
+                    {
+                        sourceRadioId: 'compliance_source_existing',
+                        containerId: 'compliance_existing_school_container',
+                        selectId: 'compliance_school_existing_select',
+                    },
+                ]
+                : [
+                    {
+                        sourceRadioId: 'incident_source_existing',
+                        containerId: 'incident_existing_school_container',
+                        selectId: 'incident_school_existing_select',
+                    },
+                ];
+
+            selectMap.forEach(({ sourceRadioId, containerId, selectId }) => {
+                const sourceRadio = document.getElementById(sourceRadioId);
+                const container = document.getElementById(containerId);
+                const select = document.getElementById(selectId);
+
+                if (!sourceRadio || !container || !select) return;
+
+                const matchingOption = Array.from(select.options).find((option) => option.value === defaultSchoolName);
+                if (matchingOption) {
+                    sourceRadio.checked = true;
+                    select.value = defaultSchoolName;
+                    container.style.display = 'block';
+                }
+            });
+        };
+
+        const openModal = () => {
+            applySchoolSelection();
+
+            const modal = bootstrap.Modal.getOrCreateInstance(logModalEl);
+            modal.show();
+
+            setTimeout(() => {
+                const targetTab = document.getElementById(autoTab === 'compliance' ? 'compliance-tab' : 'incident-tab');
+                if (targetTab) {
+                    new bootstrap.Tab(targetTab).show();
+                }
+            }, 150);
+        };
+
+        setTimeout(openModal, 250);
     });
 </script>

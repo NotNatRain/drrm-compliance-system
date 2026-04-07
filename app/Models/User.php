@@ -6,6 +6,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class User extends Authenticatable
 {
@@ -22,13 +24,13 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
+        'position',
         'school_id',
         'typhoon_school_id',
         'incident_school_id',
         'needs_fs_registration',
         'needs_tf_registration',
         'module_access',
-        'unified_school_id',
         'is_active',
     ];
 
@@ -47,31 +49,23 @@ class User extends Authenticatable
      */
     public function school()
     {
-        return $this->belongsTo(FireSafetySchool::class, 'school_id');
+        return $this->belongsTo(School::class, 'school_id');
     }
 
     /**
-     * Get the evacuation center that the user belongs to (Typhoon).
+     * Typhoon / flood module assignment (same `schools` row as evacuation center profile).
      */
     public function typhoonSchool()
     {
-        return $this->belongsTo(TypFldEvacuationCenter::class, 'typhoon_school_id');
+        return $this->belongsTo(School::class, 'typhoon_school_id');
     }
 
     /**
-     * Get the incident school assigned to the user.
+     * Incident checklist assignment.
      */
     public function incidentSchool()
     {
-        return $this->belongsTo(IncidentSchool::class, 'incident_school_id');
-    }
-
-    /**
-     * Get the centralized school that the user belongs to.
-     */
-    public function unifiedSchool()
-    {
-        return $this->belongsTo(School::class, 'unified_school_id');
+        return $this->belongsTo(School::class, 'incident_school_id');
     }
 
     /**
@@ -100,10 +94,10 @@ class User extends Authenticatable
         // Instead of the token, we'll store a 6-digit code in the password_resets table
         $code = random_int(100000, 999999);
         
-        \DB::table('password_reset_tokens')->updateOrInsert(
+        DB::table('password_reset_tokens')->updateOrInsert(
             ['email' => $this->email],
             [
-                'token' => \Hash::make($code),
+                'token' => Hash::make($code),
                 'created_at' => now()
             ]
         );

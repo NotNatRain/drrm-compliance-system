@@ -113,7 +113,7 @@
         border-radius: 50%;
         background-size: 50% 50%;
     }
-    
+
     /* Remove gap between header and announcement */
     .dashboard-container {
         margin-top: -24px; /* Offsets the main py-4 padding-top */
@@ -219,6 +219,14 @@
         opacity: 0.4;
         cursor: not-allowed;
     }
+    .school-info-modal-dialog {
+        max-width: 980px;
+    }
+    #btn_fire_safety:hover { background-color: #D12428; border-color: #D12428; color: #fff; }
+    #btn_typhoon:hover { background-color: #1B4C6D; border-color: #1B4C6D; color: #fff; }
+    #btn_incident:hover { background-color: #F2C94C; border-color: #F2C94C; color: #212529; }
+    #btn_comprehensive:hover { background-color: #5C4033; border-color: #5C4033; color: #fff; }
+    #btn_hazard:hover { background-color: #0D7377; border-color: #0D7377; color: #fff; }
 
     /* Margins for the layout as requested */
     .schools-tab-container {
@@ -492,7 +500,7 @@
 
         <!-- View School Details Modal -->
         <div class="modal fade" id="viewSchoolModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-dialog modal-lg school-info-modal-dialog modal-dialog-centered">
                 <div class="modal-content border-0 shadow-lg rounded-4">
                     <div class="modal-header bg-dark text-white p-4">
                         <h5 class="modal-title fw-bold">
@@ -516,16 +524,22 @@
                                             <div class="school-detail-value" id="detail_name">-</div>
                                         </div>
                                         <div class="col-12">
-                                            <div class="school-detail-label">Complete Address</div>
+                                            <div class="school-detail-label">School Address</div>
                                             <div class="school-detail-value" id="detail_address">-</div>
                                         </div>
                                         <div class="col-6">
                                             <div class="school-detail-label">School Head</div>
                                             <div class="school-detail-value" id="detail_head">-</div>
+                                            <div class="small text-muted" id="detail_head_email">No assigned school head account</div>
+                                            <div class="small fw-semibold" id="detail_head_user">-</div>
+                                            <button type="button" class="btn btn-sm btn-outline-danger mt-1 d-none" id="removeHeadAssignmentBtn">Remove Assignment</button>
                                         </div>
                                         <div class="col-6">
                                             <div class="school-detail-label">DRRM Coordinator</div>
                                             <div class="school-detail-value" id="detail_coordinator">-</div>
+                                            <div class="small text-muted" id="detail_coordinator_email">No assigned DRRM account</div>
+                                            <div class="small fw-semibold" id="detail_coordinator_user">-</div>
+                                            <button type="button" class="btn btn-sm btn-outline-danger mt-1 d-none" id="removeCoordinatorAssignmentBtn">Remove Assignment</button>
                                         </div>
                                     </div>
                                 </div>
@@ -554,8 +568,16 @@
                                             <div class="school-detail-value" id="detail_region">-</div>
                                         </div>
                                         <div class="col-6">
-                                            <div class="school-detail-label">Evac Capacity</div>
-                                            <div class="school-detail-value badge bg-light text-dark border p-2" id="detail_capacity">0</div>
+                                            <div class="school-detail-label">Number of Students</div>
+                                            <div class="school-detail-value badge bg-light text-dark border p-2" id="detail_students">0</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="school-detail-label">Number of Personnel</div>
+                                            <div class="school-detail-value badge bg-light text-dark border p-2" id="detail_personnel">0</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="school-detail-label">Number of Gates</div>
+                                            <div class="school-detail-value badge bg-light text-dark border p-2" id="detail_gates">0</div>
                                         </div>
                                         <div class="col-12 mt-3">
                                             <div class="school-detail-label">Emergency Resources</div>
@@ -569,7 +591,7 @@
                             <div class="col-md-5 border-start">
                                 <h6 class="fw-bold border-bottom pb-2 mb-3">Module Connections</h6>
                                 <p class="small text-muted mb-4">Redirection depends on registration status.</p>
-                                
+
                                 <div class="d-grid gap-2">
                                     <button id="btn_fire_safety" class="btn btn-module text-start mb-2 py-3 border">
                                         <i class="fas fa-fire me-2 d-inline"></i> Fire Safety
@@ -587,6 +609,20 @@
                                         <i class="fas fa-map-marked-alt me-2 d-inline"></i> Hazard (Dev)
                                     </button>
                                 </div>
+
+                                <div class="mt-4 pt-3 border-top">
+                                    <h6 class="fw-bold mb-2">Unassigned Contributors/Viewers</h6>
+                                    <div id="availableSchoolUsersMenu" class="d-grid gap-2 small">
+                                        <div class="text-muted small">No available users.</div>
+                                    </div>
+
+                                    <div class="small text-muted mt-2" id="schoolAssignmentHint">Only unassigned contributors/viewers are listed here.</div>
+                                </div>
+
+                                <div class="mt-3">
+                                    <h6 class="fw-bold mb-2">School Account Users</h6>
+                                    <div id="schoolAccountUsersList" class="small text-muted">No assigned school account users.</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -594,7 +630,58 @@
                         <button type="button" class="btn btn-dark px-4" id="editSchoolBtn">
                             <i class="fas fa-edit me-2"></i> Update Details
                         </button>
+                        {{--
+                        <button type="button" class="btn btn-outline-danger px-4" id="deleteSchoolBtn" style="display:none;">
+                            <i class="fas fa-trash me-2"></i> Delete
+                        </button>
+                        --}}
                         <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete School Password Modal -->
+        <div class="modal fade" id="deleteSchoolPasswordModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-md modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg rounded-4">
+                    <div class="modal-header bg-dark text-white p-4">
+                        <h5 class="modal-title fw-bold">
+                            <i class="fas fa-trash me-2"></i> Delete School Confirmation
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <p class="mb-3 text-muted">
+                            You are about to delete: <strong id="deleteSchoolName">-</strong>
+                        </p>
+
+                        <div class="mb-2">
+                            <label class="form-label fw-bold small">Admin password required</label>
+                            <input
+                                type="password"
+                                id="deleteSchoolPasswordInput"
+                                class="form-control"
+                                placeholder="Enter your account password"
+                                autocomplete="current-password"
+                                style="pointer-events:auto;"
+                            >
+                        </div>
+
+                        <div id="deleteSchoolPasswordError" class="alert alert-danger py-2 px-3" style="display:none;">
+                            Password is required.
+                        </div>
+
+                        <input type="hidden" id="deleteSchoolIdInput" value="">
+                    </div>
+
+                    <div class="modal-footer bg-light border-0 p-4">
+                        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+                            Cancel
+                        </button>
+                        <button type="button" class="btn btn-danger px-5 fw-bold" id="deleteSchoolConfirmBtn">
+                            Delete now
+                        </button>
                     </div>
                 </div>
             </div>
@@ -617,7 +704,7 @@
                                 <input type="text" name="school_id" class="form-control p-3" placeholder="DepEd School ID (Optional)">
                             </div>
                             <div class="mb-3">
-                                <label class="form-label fw-bold small text-uppercase">Physical Location</label>
+                                <label class="form-label fw-bold small text-uppercase">School's Address</label>
                                 <textarea name="address" class="form-control p-3" rows="2" required placeholder="Complete School Address"></textarea>
                             </div>
                             <div class="row">
@@ -642,6 +729,20 @@
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label fw-bold small text-uppercase">Region</label>
                                     <input type="text" name="region" class="form-control" placeholder="Reg.">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label fw-bold small text-uppercase">Number of Students</label>
+                                    <input type="number" name="number_students" class="form-control" min="0" value="0">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label fw-bold small text-uppercase">Number of Personnel</label>
+                                    <input type="number" name="number_personnel" class="form-control" min="0" value="0">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label fw-bold small text-uppercase">Number of Gates</label>
+                                    <input type="number" name="number_gates" class="form-control" min="0" value="0">
                                 </div>
                             </div>
                         </div>
@@ -676,7 +777,7 @@
                                     <input type="text" name="school_id" class="form-control">
                                 </div>
                                 <div class="col-md-12 mb-2">
-                                    <label class="form-label fw-bold small">Complete Address</label>
+                                    <label class="form-label fw-bold small">School Address</label>
                                     <textarea name="address" class="form-control" rows="2" required></textarea>
                                 </div>
                                 <div class="col-md-6 mb-2">
@@ -708,8 +809,16 @@
                                     <input type="text" name="region" class="form-control">
                                 </div>
                                 <div class="col-md-6 mb-2">
-                                    <label class="form-label fw-bold small">Evacuation Capacity</label>
-                                    <input type="number" name="evacuation_capacity" class="form-control">
+                                    <label class="form-label fw-bold small">Number of Students</label>
+                                    <input type="number" name="number_students" class="form-control" min="0">
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label fw-bold small">Number of Personnel</label>
+                                    <input type="number" name="number_personnel" class="form-control" min="0">
+                                </div>
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label fw-bold small">Number of Gates</label>
+                                    <input type="number" name="number_gates" class="form-control" min="0">
                                 </div>
                                 <div class="col-md-12">
                                     <label class="form-label fw-bold small">Emergency Resources</label>
@@ -719,7 +828,7 @@
                         </div>
                         <div class="modal-footer bg-light border-0 p-4 rounded-bottom-4">
                             <button type="button" class="btn btn-outline-secondary px-4 text-uppercase fw-bold small" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-dark px-5 text-uppercase fw-bold small">Update Database</button>
+                            <button type="submit" class="btn btn-dark px-5 text-uppercase fw-bold small">Update School</button>
                         </div>
                     </form>
                 </div>
@@ -743,7 +852,7 @@
                             <div class="alert alert-info">
                                 <i class="fas fa-info-circle me-2"></i> Before you can access the compliance modules, you need to provide your school's official information. This will automatically link your account to your newly created school.
                             </div>
-                            
+
                             <div class="row g-3">
                                 <div class="col-md-8">
                                     <label class="form-label fw-bold">Official School Name <span class="text-danger">*</span></label>
@@ -754,7 +863,7 @@
                                     <input type="text" name="school_id_number" class="form-control" placeholder="e.g. 106883" required>
                                 </div>
                                 <div class="col-12">
-                                    <label class="form-label fw-bold">Complete School Address <span class="text-danger">*</span></label>
+                                    <label class="form-label fw-bold">School Address <span class="text-danger">*</span></label>
                                     <textarea name="address" class="form-control" rows="3" placeholder="Enter full address..." required></textarea>
                                 </div>
                             </div>
@@ -826,6 +935,31 @@
             });
         </script>
     @endif
+
+<!-- Incident Module Choice Modal -->
+<div class="modal fade" id="incidentModuleChoiceModal" tabindex="-1" aria-labelledby="incidentModuleChoiceLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 18px; overflow: hidden;">
+            <div class="modal-header text-white" style="background: linear-gradient(135deg, #F2C94C 0%, #F2994A 100%);">
+                <h5 class="modal-title" id="incidentModuleChoiceLabel">
+                    <i class="fas fa-clipboard-list me-2"></i>Choose Incident Entry Type
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p class="mb-3 text-muted">Open <strong id="incidentModuleChoiceSchoolName">Selected school</strong> in the Incident Checklist module, then choose the log type.</p>
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-warning py-3 fw-semibold" id="incidentModuleChoiceIncidentBtn">
+                        <i class="fas fa-exclamation-triangle me-2"></i> Log Incident
+                    </button>
+                    <button type="button" class="btn btn-outline-warning py-3 fw-semibold" id="incidentModuleChoiceComplianceBtn">
+                        <i class="fas fa-calendar-check me-2"></i> Log Compliance Status / Event
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- No Access Modal -->
 <div class="modal fade" id="noModuleAccessModal" tabindex="-1" aria-labelledby="noModuleAccessModalLabel" aria-hidden="true">
@@ -905,6 +1039,154 @@
 
 @push('scripts')
 <script>
+    let currentSchoolDetail = null;
+
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function renderSchoolAssignmentPanels(data) {
+        const availableMenu = document.getElementById('availableSchoolUsersMenu');
+        const schoolAccountWrap = document.getElementById('schoolAccountUsersList');
+        const headEmail = document.getElementById('detail_head_email');
+        const drrmEmail = document.getElementById('detail_coordinator_email');
+        const headUser = document.getElementById('detail_head_user');
+        const drrmUser = document.getElementById('detail_coordinator_user');
+        const removeHeadBtn = document.getElementById('removeHeadAssignmentBtn');
+        const removeCoordinatorBtn = document.getElementById('removeCoordinatorAssignmentBtn');
+
+        if (!availableMenu || !schoolAccountWrap || !headEmail || !drrmEmail || !headUser || !drrmUser || !removeHeadBtn || !removeCoordinatorBtn) return;
+
+        const availableUsers = Array.isArray(data.available_users) ? data.available_users : [];
+        const schoolAccountUsers = Array.isArray(data.school_account_users) ? data.school_account_users : [];
+
+        headEmail.textContent = data.school_head_user?.email || 'No assigned school head account';
+        drrmEmail.textContent = data.school_drrm_user?.email || 'No assigned DRRM account';
+
+        if (data.school_head_user) {
+            headUser.textContent = data.school_head_user.name || '-';
+            removeHeadBtn.classList.remove('d-none');
+            removeHeadBtn.onclick = async () => {
+                if (!currentSchoolDetail) return;
+                await removeSchoolAssignment(currentSchoolDetail.id, data.school_head_user.id);
+            };
+        } else {
+            headUser.textContent = '-';
+            removeHeadBtn.classList.add('d-none');
+            removeHeadBtn.onclick = null;
+        }
+
+        if (data.school_drrm_user) {
+            drrmUser.textContent = data.school_drrm_user.name || '-';
+            removeCoordinatorBtn.classList.remove('d-none');
+            removeCoordinatorBtn.onclick = async () => {
+                if (!currentSchoolDetail) return;
+                await removeSchoolAssignment(currentSchoolDetail.id, data.school_drrm_user.id);
+            };
+        } else {
+            drrmUser.textContent = '-';
+            removeCoordinatorBtn.classList.add('d-none');
+            removeCoordinatorBtn.onclick = null;
+        }
+
+        if (!availableUsers.length) {
+            availableMenu.innerHTML = '<div class="text-muted small px-2 py-1">No available users.</div>';
+        } else {
+            availableMenu.innerHTML = availableUsers.map((u) => {
+                const roleLabel = u.role === 'viewer' ? 'Viewer' : 'Contributor';
+                return `
+                    <div class="border rounded p-2">
+                        <div class="fw-semibold">${escapeHtml(u.name)} <span class="text-muted">(${escapeHtml(roleLabel)})</span></div>
+                        <div class="text-muted mb-2">${escapeHtml(u.email)}</div>
+                        <div class="d-flex gap-2">
+                            <select class="form-select form-select-sm assign-position-select" data-user-id="${u.id}">
+                                <option value="">Select position</option>
+                                <option value="School Head">School Head</option>
+                                <option value="School DRRM">School DRRM Coordinator</option>
+                                <option value="School Account">School Account</option>
+                            </select>
+                            <button type="button" class="btn btn-sm btn-dark assign-school-user-btn" data-user-id="${u.id}">Assign</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        if (!schoolAccountUsers.length) {
+            schoolAccountWrap.textContent = 'No assigned school account users.';
+        } else {
+            schoolAccountWrap.innerHTML = schoolAccountUsers.map((u) => `${escapeHtml(u.name)} (${escapeHtml(u.email)})`).join('<br>');
+        }
+
+        availableMenu.querySelectorAll('.assign-school-user-btn').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+                if (!currentSchoolDetail) return;
+                const userId = btn.getAttribute('data-user-id');
+                if (!userId) return;
+
+                const positionSelect = availableMenu.querySelector(`.assign-position-select[data-user-id="${userId}"]`);
+                const position = positionSelect ? (positionSelect.value || '') : '';
+                if (!position) {
+                    Swal.fire('Position required', 'Please select a position before assigning.', 'warning');
+                    return;
+                }
+
+                await assignSchoolUser(currentSchoolDetail.id, userId, position);
+            });
+        });
+    }
+
+    async function assignSchoolUser(schoolId, userId, position) {
+        try {
+            const resp = await fetch(`/schools/${schoolId}/users/${userId}/assign`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ position })
+            });
+            const data = await resp.json();
+            if (!resp.ok || !data.success) {
+                Swal.fire('Error', data.message || 'Failed to assign user.', 'error');
+                return;
+            }
+            await viewSchoolDetails(schoolId, true);
+        } catch (err) {
+            console.error(err);
+            Swal.fire('Error', 'Failed to assign user.', 'error');
+        }
+    }
+
+    async function removeSchoolAssignment(schoolId, userId) {
+        try {
+            const resp = await fetch(`/schools/${schoolId}/users/${userId}/assign`, {
+                method: 'DELETE',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
+                }
+            });
+            const data = await resp.json();
+            if (!resp.ok || !data.success) {
+                Swal.fire('Error', data.message || 'Failed to remove assignment.', 'error');
+                return;
+            }
+            await viewSchoolDetails(schoolId, true);
+        } catch (err) {
+            console.error(err);
+            Swal.fire('Error', 'Failed to remove assignment.', 'error');
+        }
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         const links = document.querySelectorAll('a.module-card-link[data-module]');
         const modalEl = document.getElementById('noModuleAccessModal');
@@ -1022,7 +1304,7 @@
         const schoolsBtn = document.getElementById('schoolsTabBtn');
         const complianceContent = document.getElementById('complianceTabContent');
         const schoolsContent = document.getElementById('schoolsTabContent');
-        
+
         if (tabName === 'schools') {
             complianceBtn.classList.remove('active');
             schoolsBtn.classList.add('active');
@@ -1030,6 +1312,13 @@
             complianceContent.classList.remove('tab-content-active');
             schoolsContent.classList.remove('d-none');
             schoolsContent.classList.add('tab-content-active');
+
+            const schoolSearchInput = document.getElementById('schoolSearchInput');
+            if (schoolSearchInput) {
+                schoolSearchInput.value = '';
+                schoolSearchInput.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+
             localStorage.setItem('activeDashboardTab', 'schools');
         } else {
             schoolsBtn.classList.remove('active');
@@ -1090,21 +1379,23 @@
     });
 
     // View Details Logic
-    function viewSchoolDetails(id) {
+    async function viewSchoolDetails(id, keepOpen = false) {
         const viewModalEl = document.getElementById('viewSchoolModal');
         const viewModal = new bootstrap.Modal(viewModalEl);
-        
+
         // Show loading state or reset content
         document.getElementById('schoolDetailName').innerText = 'Loading...';
-        
-        fetch(`/schools/details/${id}`, {
-            headers: { 'X-Requested-With': 'XMLHttpRequest' }
-        })
-        .then(res => res.json())
-        .then(data => {
+
+        try {
+            const res = await fetch(`/schools/details/${id}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const data = await res.json();
+
             const s = data.school;
             const m = data.modules;
-            
+            currentSchoolDetail = s;
+
             // Populate Basic Info
             document.getElementById('schoolDetailName').innerText = s.school_name;
             document.getElementById('detail_id').innerText = s.school_id || s.school_id_number || 'N/A';
@@ -1112,37 +1403,57 @@
             document.getElementById('detail_address').innerText = s.address;
             document.getElementById('detail_head').innerText = s.school_head || 'Not set';
             document.getElementById('detail_coordinator').innerText = s.drrm_coordinator || 'Not set';
-            
+
             // Additional Info
             document.getElementById('detail_head_contact').innerText = s.contact_number || 'N/A';
             document.getElementById('detail_coord_contact').innerText = s.contact_number_2 || 'N/A';
             document.getElementById('detail_district').innerText = s.district || 'N/A';
             document.getElementById('detail_division').innerText = s.division || 'N/A';
             document.getElementById('detail_region').innerText = s.region || 'N/A';
-            document.getElementById('detail_capacity').innerText = s.evacuation_capacity || '0';
+            document.getElementById('detail_students').innerText = (s.number_students ?? 0);
+            document.getElementById('detail_personnel').innerText = (s.number_personnel ?? 0);
+            document.getElementById('detail_gates').innerText = (s.number_gates ?? 0);
             document.getElementById('detail_resources').innerText = s.emergency_resources || 'None specified';
-            
+            renderSchoolAssignmentPanels(data);
+
             // Configure Module Buttons
-            configureModuleButton('btn_fire_safety', m.fire_safety, `/fire-safety/dashboard?school_id=${s.id}`);
-            configureModuleButton('btn_typhoon', m.typhoon_flood, `/typhoon/dashboard?school_id=${s.id}`);
-            configureModuleButton('btn_incident', m.incident_checklist, `/incidents/dashboard`);
-            configureModuleButton('btn_comprehensive', m.comprehensive_school_safety, `/comprehensive-school-safety/schools/${s.id}/dashboard`);
+            configureModuleButton('btn_fire_safety', m.fire_safety, `/fire-safety/buildings?school_id=${s.id}`);
+            configureModuleButton('btn_typhoon', m.typhoon_flood, `/typhoon/evacuation-center/${s.id}`);
+            configureModuleButton('btn_incident', m.incident_checklist, null, () => showIncidentModuleChoice(s));
+            configureModuleButton('btn_comprehensive', m.comprehensive_school_safety, `/comprehensive-school-safety/schools/${s.id}/assessments`);
             configureModuleButton('btn_hazard', m.hazard_mapping, `#`);
 
             // Setup Edit Button
             document.getElementById('editSchoolBtn').onclick = () => openEditModal(s);
-            
-            viewModal.show();
-        });
+            const delBtn = document.getElementById('deleteSchoolBtn');
+            if (delBtn) {
+                delBtn.style.display = @json($isAdmin) ? '' : 'none';
+                delBtn.onclick = () => confirmDeleteSchool(s);
+            }
+
+            if (keepOpen) {
+                const existing = bootstrap.Modal.getInstance(viewModalEl);
+                if (!existing) viewModal.show();
+            } else {
+                viewModal.show();
+            }
+        } catch (err) {
+            console.error(err);
+            Swal.fire('Error', 'Failed to load school details.', 'error');
+        }
     }
 
-    function configureModuleButton(id, isActive, url) {
+    function configureModuleButton(id, isActive, url, action = null) {
         const btn = document.getElementById(id);
         if (isActive) {
             btn.classList.remove('disabled');
             btn.classList.add('btn-outline-dark');
             btn.classList.remove('btn-light', 'text-muted');
-            btn.onclick = () => window.location.href = url;
+            if (typeof action === 'function') {
+                btn.onclick = action;
+            } else {
+                btn.onclick = () => window.location.href = url;
+            }
         } else {
             btn.classList.add('disabled');
             btn.classList.add('btn-light', 'text-muted');
@@ -1151,13 +1462,58 @@
         }
     }
 
+    function showIncidentModuleChoice(school) {
+        const modalEl = document.getElementById('incidentModuleChoiceModal');
+        if (!modalEl || typeof bootstrap === 'undefined') return;
+        const parentModalEl = document.getElementById('viewSchoolModal');
+
+        const schoolNameEl = document.getElementById('incidentModuleChoiceSchoolName');
+        const incidentBtn = document.getElementById('incidentModuleChoiceIncidentBtn');
+        const complianceBtn = document.getElementById('incidentModuleChoiceComplianceBtn');
+        const baseUrl = '{{ route('incidents.dashboard') }}';
+
+        if (schoolNameEl) {
+            schoolNameEl.textContent = school?.school_name || 'Selected school';
+        }
+
+        const openWithTab = (tabName) => {
+            const params = new URLSearchParams({
+                school_id: String(school.id),
+                open_log: '1',
+                log_tab: tabName,
+            });
+            window.location.href = `${baseUrl}?${params.toString()}`;
+        };
+
+        if (incidentBtn) {
+            incidentBtn.onclick = () => openWithTab('incident');
+        }
+
+        if (complianceBtn) {
+            complianceBtn.onclick = () => openWithTab('compliance');
+        }
+
+        const showChoiceModal = () => bootstrap.Modal.getOrCreateInstance(modalEl).show();
+
+        if (parentModalEl) {
+            const parentModal = bootstrap.Modal.getInstance(parentModalEl);
+            if (parentModal) {
+                parentModalEl.addEventListener('hidden.bs.modal', showChoiceModal, { once: true });
+                parentModal.hide();
+                return;
+            }
+        }
+
+        showChoiceModal();
+    }
+
     function openEditModal(school) {
         // Close view modal first
         bootstrap.Modal.getInstance(document.getElementById('viewSchoolModal')).hide();
-        
+
         const form = document.getElementById('editSchoolForm');
         form.action = `/schools/update/${school.id}`;
-        
+
         // Populate form
         form.querySelector('[name="school_name"]').value = school.school_name;
         form.querySelector('[name="school_id"]').value = school.school_id || '';
@@ -1169,11 +1525,111 @@
         form.querySelector('[name="region"]').value = school.region || '';
         form.querySelector('[name="contact_number"]').value = school.contact_number || '';
         form.querySelector('[name="contact_number_2"]').value = school.contact_number_2 || '';
-        form.querySelector('[name="evacuation_capacity"]').value = school.evacuation_capacity || 0;
+        form.querySelector('[name="number_students"]').value = school.number_students || 0;
+        form.querySelector('[name="number_personnel"]').value = school.number_personnel || 0;
+        form.querySelector('[name="number_gates"]').value = school.number_gates || 0;
         form.querySelector('[name="emergency_resources"]').value = school.emergency_resources || '';
-        
+
         new bootstrap.Modal(document.getElementById('editSchoolModal')).show();
     }
+
+    async function confirmDeleteSchool(school) {
+        const doOpenPasswordModal = () => {
+            // Hide view modal first to avoid focus/overlay conflicts.
+            const viewEl = document.getElementById('viewSchoolModal');
+            if (viewEl && bootstrap?.Modal) {
+                const viewInst = bootstrap.Modal.getInstance(viewEl);
+                viewInst?.hide();
+            }
+
+            const modalEl = document.getElementById('deleteSchoolPasswordModal');
+            const nameEl = document.getElementById('deleteSchoolName');
+            const idEl = document.getElementById('deleteSchoolIdInput');
+            const pwdEl = document.getElementById('deleteSchoolPasswordInput');
+            const errEl = document.getElementById('deleteSchoolPasswordError');
+            const confirmBtn = document.getElementById('deleteSchoolConfirmBtn');
+
+            if (nameEl) nameEl.textContent = school.school_name || '—';
+            if (idEl) idEl.value = school.id;
+            if (pwdEl) pwdEl.value = '';
+            if (errEl) errEl.style.display = 'none';
+            if (confirmBtn) confirmBtn.disabled = false;
+
+            if (modalEl && bootstrap?.Modal) {
+                new bootstrap.Modal(modalEl).show();
+                setTimeout(() => pwdEl?.focus(), 100);
+            }
+        };
+
+        // Step 1: simple confirmation first (no typing), then open password modal.
+        if (typeof Swal !== 'undefined') {
+            const first = await Swal.fire({
+                title: 'Delete this school?',
+                text: `This will delete: ${school.school_name}`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Continue'
+            });
+            if (!first.isConfirmed) return;
+        }
+
+        doOpenPasswordModal();
+    }
+
+    // One-time handler for modal confirm button
+    (function () {
+        const confirmBtn = document.getElementById('deleteSchoolConfirmBtn');
+        const pwdEl = document.getElementById('deleteSchoolPasswordInput');
+        const idEl = document.getElementById('deleteSchoolIdInput');
+        const errEl = document.getElementById('deleteSchoolPasswordError');
+        const modalEl = document.getElementById('deleteSchoolPasswordModal');
+
+        if (!confirmBtn || !pwdEl || !idEl || !errEl || !modalEl) return;
+
+        confirmBtn.addEventListener('click', async () => {
+            const schoolId = idEl.value;
+            const pwd = (pwdEl.value || '').trim();
+
+            if (!pwd) {
+                errEl.style.display = 'block';
+                return;
+            }
+
+            confirmBtn.disabled = true;
+
+            try {
+                const resp = await fetch(`/schools/delete/${schoolId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ password: pwd })
+                });
+
+                const data = await resp.json();
+                if (!resp.ok || !data.success) {
+                    errEl.textContent = data.message || 'Failed to delete school.';
+                    errEl.style.display = 'block';
+                    confirmBtn.disabled = false;
+                    return;
+                }
+
+                // Hide modal and refresh after success.
+                const modalInst = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                modalInst.hide();
+                location.reload();
+            } catch (e) {
+                console.error(e);
+                errEl.textContent = 'Failed to delete school.';
+                errEl.style.display = 'block';
+                confirmBtn.disabled = false;
+            }
+        });
+    })();
 
     document.getElementById('editSchoolForm')?.addEventListener('submit', function(e) {
         e.preventDefault();
