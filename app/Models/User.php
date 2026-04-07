@@ -28,6 +28,7 @@ class User extends Authenticatable
         'needs_fs_registration',
         'needs_tf_registration',
         'module_access',
+        'unified_school_id',
         'is_active',
     ];
 
@@ -63,6 +64,14 @@ class User extends Authenticatable
     public function incidentSchool()
     {
         return $this->belongsTo(IncidentSchool::class, 'incident_school_id');
+    }
+
+    /**
+     * Get the centralized school that the user belongs to.
+     */
+    public function unifiedSchool()
+    {
+        return $this->belongsTo(School::class, 'unified_school_id');
     }
 
     /**

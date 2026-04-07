@@ -10,7 +10,7 @@ class FireSafetyEvacuationPlan extends Model
     protected $table = 'firesafety_evacuationplans';
     
     protected $fillable = [
-        'school_id',
+        'unified_school_id',
         'building_id',
         'plan_no',
         'exits',
@@ -40,7 +40,7 @@ class FireSafetyEvacuationPlan extends Model
     // Relationships
     public function school(): BelongsTo
     {
-        return $this->belongsTo(FireSafetySchool::class, 'school_id');
+        return $this->belongsTo(School::class, 'unified_school_id');
     }
 
     public function building(): BelongsTo

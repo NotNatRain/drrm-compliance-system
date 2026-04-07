@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class FireSafetyArchive extends Model
 {
     protected $fillable = [
-        'school_id',
+        'unified_school_id',
         'type',
         'item_id',
         'item_code',

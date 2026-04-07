@@ -27,14 +27,11 @@ control model with three user roles:
 The system is composed of FIVE (5) major compliance modules accessible from the
 main dashboard:
 
-  1. Fire Safety Compliance
-  2. Typhoon / Flooding Compliance
-  3. Incident Checklist
-  4. Comprehensive School Safety  (currently under development)
-  5. Hazard Mapping               (currently under development)
-
-Additionally, the system includes a PIE-PRA sub-module (Pre-Disaster Intelligent
-Evacuation Predictor & Resource Allocator) integrated within the Typhoon module.
+  1. Fire Safety Compliance        (Completed)
+  2. Typhoon / Flooding Monitoring (Needs Validation)
+  3. Incident Checklist		   (Completed)
+  4. Comprehensive School Safety   (Under Development)
+  5. Hazard Mapping                (To be develop)
 
 The main dashboard also supports:
   • System Announcements — Admins can post image-based announcements (posters/

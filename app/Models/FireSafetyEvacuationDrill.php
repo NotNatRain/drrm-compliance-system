@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class FireSafetyEvacuationDrill extends Model
 {
     protected $fillable = [
-        'school_id',
+        'unified_school_id',
         'drill_type',
         'drill_date',
         'start_time',

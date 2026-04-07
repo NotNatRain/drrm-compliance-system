@@ -9,6 +9,8 @@ use App\Models\ComprehensiveSchool;
 use App\Models\TypFldEvacuationCenter;
 use App\Models\IncidentSchool;
 use App\Models\Announcement;
+use App\Models\School;
+use App\Models\SchoolSpecificsInformation;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -73,13 +75,112 @@ class DashboardController extends Controller
      */
     public function index()
     {
+        $user = Auth::user();
+        $isAdmin = $user->role === 'admin';
+        
         $schools = FireSafetySchool::all();
         // If user is contributor, only pass their assigned school
-        if (Auth::user()->role === 'contributor' && Auth::user()->school_id) {
-            $schools = FireSafetySchool::where('id', Auth::user()->school_id)->get();
+        if ($user->role === 'contributor' && $user->school_id) {
+            $schools = FireSafetySchool::where('id', $user->school_id)->get();
         }
+        
+        $allSchools = [];
+        if ($isAdmin) {
+            $allSchools = School::orderBy('school_name')->get();
+        }
+        
         $announcements = Announcement::where('is_active', true)->latest()->get();
-        return view('dashboard', compact('schools', 'announcements'));
+        return view('dashboard', compact('schools', 'announcements', 'allSchools', 'isAdmin'));
+    }
+
+    /**
+     * Get detailed school info for the View Details modal
+     */
+    public function getUnifiedSchoolDetails($id)
+    {
+        if (Auth::user()->role !== 'admin') {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $school = School::with('specifics')->findOrFail($id);
+        
+        // Modules registration status mapping
+        $modulesSatus = [
+            'fire_safety' => $school->specifics->where('module', 'fire_safety')->where('key', 'original_fire_safety_id')->isNotEmpty(),
+            'typhoon_flood' => $school->specifics->where('module', 'typhoon_flood')->where('key', 'original_evacuation_center_id')->isNotEmpty(),
+            'incident_checklist' => $school->specifics->where('module', 'incident')->where('key', 'original_incident_school_id')->isNotEmpty(),
+            'comprehensive_school_safety' => $school->specifics->where('module', 'comprehensive')->where('key', 'original_cmpr_school_id')->isNotEmpty(),
+            'hazard_mapping' => false // Still to be developed
+        ];
+
+        return response()->json([
+            'school' => $school,
+            'modules' => $modulesSatus
+        ]);
+    }
+
+    /**
+     * Store a new school from the Schools tab
+     */
+    public function storeUnifiedSchool(Request $request)
+    {
+        if (Auth::user()->role !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'school_name' => 'required|string|max:255|unique:schools,school_name',
+            'school_id' => 'nullable|string|max:255',
+            'address' => 'required|string',
+            'school_head' => 'nullable|string|max:255',
+            'drrm_coordinator' => 'nullable|string|max:255',
+            'district' => 'nullable|string|max:255',
+            'division' => 'nullable|string|max:255',
+            'region' => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $school = School::create($request->all());
+
+        return response()->json(['success' => true, 'message' => 'School added successfully!', 'school' => $school]);
+    }
+
+    /**
+     * Update school details
+     */
+    public function updateUnifiedSchool(Request $request, $id)
+    {
+        if (Auth::user()->role !== 'admin') {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $school = School::findOrFail($id);
+
+        $validator = Validator::make($request->all(), [
+            'school_name' => 'required|string|max:255|unique:schools,school_name,' . $id,
+            'school_id' => 'nullable|string|max:255',
+            'address' => 'required|string',
+            'school_head' => 'nullable|string|max:255',
+            'drrm_coordinator' => 'nullable|string|max:255',
+            'district' => 'nullable|string|max:255',
+            'division' => 'nullable|string|max:255',
+            'region' => 'nullable|string|max:255',
+            'contact_number' => 'nullable|string|max:255',
+            'contact_number_2' => 'nullable|string|max:255',
+            'evacuation_capacity' => 'nullable|integer',
+            'emergency_resources' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $school->update($request->all());
+
+        return response()->json(['success' => true, 'message' => 'School updated successfully!']);
     }
 
     public function getUsers(Request $request)

@@ -5,13 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Models\School;
 
 class FireSafetyBuilding extends Model
 {
     protected $table = 'firesafety_buildings';
 
     protected $fillable = [
-        'school_id',
+        'unified_school_id',
         'building_no',
         'building_name',
         'floors',
@@ -50,7 +51,7 @@ class FireSafetyBuilding extends Model
     // Relationships
     public function school()
     {
-        return $this->belongsTo(FireSafetySchool::class, 'school_id');
+        return $this->belongsTo(School::class, 'unified_school_id');
     }
 
     public function alarmSystems(): HasMany
@@ -119,11 +120,11 @@ class FireSafetyBuilding extends Model
         $extScore = (int) round($extRatio * 45);
 
         // Alarm score: 45 if building or school has a functional/active alarm
-        $schoolHasAlarm = $this->school->alarmSystems()->whereIn('status', ['active', 'functional'])->exists();
-        $alarmScore = ($this->functionalAlarmsCount > 0 || $schoolHasAlarm) ? 45 : 0;
+        $schoolHasAlarm = $this->school->fireSafetyAlarms()->whereIn('status', ['active', 'functional'])->exists();
+        $alarmScore = ($this->getFunctionalAlarmsCountAttribute() > 0 || $schoolHasAlarm) ? 45 : 0;
 
         // Plan score: school-level = 5, building-level = additional 5
-        $schoolHasPlan = FireSafetyEvacuationPlan::where('school_id', $this->school_id)
+        $schoolHasPlan = FireSafetyEvacuationPlan::where('unified_school_id', $this->unified_school_id)
             ->whereNull('building_id')
             ->where('status', 'active')
             ->exists();

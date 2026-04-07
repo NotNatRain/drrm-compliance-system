@@ -48,6 +48,11 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::post('/announcements', [DashboardController::class, 'storeAnnouncement'])->name('announcements.store');
     Route::delete('/announcements/{id}', [DashboardController::class, 'deleteAnnouncement'])->name('announcements.destroy');
+
+    // Unified School Management (Phase 2)
+    Route::get('/schools/details/{id}', [DashboardController::class, 'getUnifiedSchoolDetails'])->name('schools.unified-details');
+    Route::post('/schools/store', [DashboardController::class, 'storeUnifiedSchool'])->name('schools.unified-store');
+    Route::put('/schools/update/{id}', [DashboardController::class, 'updateUnifiedSchool'])->name('schools.unified-update');
 });
 
 // Subsystem dashboards

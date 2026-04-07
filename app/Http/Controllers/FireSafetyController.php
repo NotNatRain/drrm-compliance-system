@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\FireSafetySchoolSnapshot;
 use Illuminate\Http\Request;
-use App\Models\FireSafetySchool;
+use App\Models\School;
 use App\Models\FireSafetyExtinguisher;
 use App\Models\FireSafetyAlarmSystem;
 use App\Models\FireSafetyBuilding;
@@ -35,16 +35,16 @@ class FireSafetyController extends Controller
 
     public function dashboard()
     {
-        $query = FireSafetySchool::with([
-            'buildings.actualRooms',
-            'buildings.alarmSystems',
-            'buildings.alarmSystemsMany',
-            'buildings.fireExtinguishers.coveredRooms',
-            'buildings.evacuationPlan'
-        ])->withCount(['extinguishers', 'alarmSystems', 'buildings', 'evacuationPlans']);
+        $query = School::with([
+            'fireSafetyBuildings.actualRooms',
+            'fireSafetyBuildings.alarmSystems',
+            'fireSafetyBuildings.alarmSystemsMany',
+            'fireSafetyBuildings.fireExtinguishers.coveredRooms',
+            'fireSafetyBuildings.evacuationPlan'
+        ])->withCount(['fireSafetyExtinguishers as extinguishers_count', 'fireSafetyAlarms as alarm_systems_count', 'fireSafetyBuildings as buildings_count', 'fireSafetyEvacuationPlans as evacuation_plans_count']);
 
         if (auth()->user()->role !== 'admin') {
-            $query->where('id', auth()->user()->school_id);
+            $query->where('id', auth()->user()->unified_school_id);
         }
 
         $schools = $query->get()
@@ -61,17 +61,17 @@ class FireSafetyController extends Controller
             ->limit(10);
 
         if (auth()->user()->role !== 'admin') {
-            $userSchoolId = auth()->user()->school_id;
+            $userSchoolId = auth()->user()->unified_school_id;
             $alertQuery->where(function($q) use ($userSchoolId) {
-                $q->where('school_id', $userSchoolId)->orWhereNull('school_id');
+                $q->where('unified_school_id', $userSchoolId)->orWhereNull('unified_school_id');
             });
             $eventQuery->where(function($q) use ($userSchoolId) {
-                $q->where('school_id', $userSchoolId)->orWhereNull('school_id');
+                $q->where('unified_school_id', $userSchoolId)->orWhereNull('unified_school_id');
             });
         }
 
         $allAlerts = $alertQuery->get()->map(function($n) use ($schools) {
-            $school = $schools->firstWhere('id', $n->school_id);
+            $school = $schools->firstWhere('id', $n->unified_school_id);
             $actionData = $n->action_data ?? [];
             return [
                 'id' => $n->id,
@@ -85,7 +85,7 @@ class FireSafetyController extends Controller
         })->toArray();
 
         $allEvents = $eventQuery->get()->map(function($n) use ($schools) {
-            $school = $schools->firstWhere('id', $n->school_id);
+            $school = $schools->firstWhere('id', $n->unified_school_id);
             $actionData = $n->action_data ?? [];
             return [
                 'id' => $n->id,
@@ -123,19 +123,19 @@ class FireSafetyController extends Controller
         $planIssuesList = [];
 
         $schoolConfig = [
-            'has_buildings' => $school->buildings->count() > 0,
+            'has_buildings' => $school->fireSafetyBuildings->count() > 0,
             'has_alarms' => false,
             'has_rooms' => false,
             'has_extinguishers' => false,
             'has_plans' => false,
-            'needs_building' => $school->buildings->count() === 0,
+            'needs_building' => $school->fireSafetyBuildings->count() === 0,
             'needs_alarm' => false,
             'needs_room' => false,
             'needs_extinguisher' => false,
             'needs_plan' => false
         ];
 
-        if ($school->buildings->count() === 0) {
+        if ($school->fireSafetyBuildings->count() === 0) {
             $isUnconfigured = true;
             $issues[] = 'Setup Needed';
         } else {
@@ -144,15 +144,15 @@ class FireSafetyController extends Controller
                 $buildingsWithAllRooms = 0;
                 $buildingsWithPlan = 0;
                 $buildingsWithExtinguishers = 0;
-                $totalBldgs = $school->buildings->count();
+                $totalBldgs = $school->fireSafetyBuildings->count();
 
-                foreach ($school->buildings as $b) {
+                foreach ($school->fireSafetyBuildings as $b) {
                     $bldAlarms = $b->alarmSystems->count();
-                    $schoolHasAlarm = $school->alarmSystems()->where('status', 'active')->exists();
+                    $schoolHasAlarm = $school->fireSafetyAlarms()->where('status', 'active')->exists();
                     $bldRoomsReady = $b->rooms > 0 && $b->actualRooms->count() >= $b->rooms;
                     $bldPlan = $b->evacuationPlan !== null;
                     if (!$bldPlan) {
-                        $bldPlan = FireSafetyEvacuationPlan::where('school_id', $school->id)
+                        $bldPlan = FireSafetyEvacuationPlan::where('unified_school_id', $school->id)
                             ->whereNull('building_id')
                             ->where('status', 'active')
                             ->exists();
@@ -214,7 +214,7 @@ class FireSafetyController extends Controller
                 $schoolConfig['has_rooms'] = $buildingsWithAllRooms > 0;
                 $schoolConfig['has_extinguishers'] = $buildingsWithExtinguishers > 0;
 
-                $schoolHasPlan = FireSafetyEvacuationPlan::where('school_id', $school->id)
+                $schoolHasPlan = FireSafetyEvacuationPlan::where('unified_school_id', $school->id)
                     ->whereNull('building_id')
                     ->where('status', 'active')
                     ->exists();
@@ -243,7 +243,7 @@ class FireSafetyController extends Controller
             }
         }
 
-        if ($school->buildings->count() === 0 || (!$schoolConfig['has_alarms'] && !$schoolConfig['has_plans'] && !$schoolConfig['has_rooms'])) {
+        if ($school->fireSafetyBuildings->count() === 0 || (!$schoolConfig['has_alarms'] && !$schoolConfig['has_plans'] && !$schoolConfig['has_rooms'])) {
             $isUnconfigured = true;
             $issues = ['Setup Needed'];
         } else {
@@ -302,14 +302,14 @@ class FireSafetyController extends Controller
 
     public function setActiveSchool(Request $request, $id)
     {
-        $school = FireSafetySchool::findOrFail($id);
+        $school = School::findOrFail($id);
 
-        // If user is not admin and trying to set a school that isn't theirs (though middleware/logic should prevent fetching others)
-        if (auth()->user()->role !== 'admin' && auth()->user()->school_id != $id) {
+        // If user is not admin and trying to set a school that isn't theirs
+        if (auth()->user()->role !== 'admin' && auth()->user()->unified_school_id != $id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        session(['fire_safety_active_school_id' => $id]);
+        session(['fire_safety_active_unified_school_id' => $id]);
 
         return response()->json(['success' => true]);
     }
@@ -317,7 +317,7 @@ class FireSafetyController extends Controller
     private function getActiveSchool($schools) {
         if ($schools->isEmpty()) return null;
 
-        $activeId = session('fire_safety_active_school_id');
+        $activeId = session('fire_safety_active_unified_school_id');
 
         // If specific school is inactive or deleted, fallback
         $activeSchool = $schools->where('id', $activeId)->first();
@@ -327,10 +327,10 @@ class FireSafetyController extends Controller
 
     public function alarmSystems()
     {
-        $query = FireSafetySchool::with(['alarmSystems.buildings', 'buildings']);
+        $query = School::with(['alarmSystems.buildings', 'buildings']);
 
         if (auth()->user()->role !== 'admin') {
-            $query->where('id', auth()->user()->school_id);
+            $query->where('id', auth()->user()->unified_school_id);
         }
 
         $schools = $query->get();
@@ -350,7 +350,7 @@ class FireSafetyController extends Controller
     // Get buildings for a school (AJAX)
     public function getBuildings($schoolId)
     {
-        $buildings = FireSafetyBuilding::where('school_id', $schoolId)->with(['alarmSystems', 'alarmSystemsMany'])->get();
+        $buildings = FireSafetyBuilding::where('unified_school_id', $schoolId)->with(['alarmSystems', 'alarmSystemsMany'])->get();
         return response()->json($buildings);
     }
 
@@ -381,7 +381,7 @@ class FireSafetyController extends Controller
             Log::info('Alarm store request received:', $request->all());
 
             $validated = $request->validate([
-                'school_id' => 'required|exists:firesafety_school_information,id',
+                'unified_school_id' => 'required|exists:schools,id',
                 'building_id' => 'nullable|exists:firesafety_buildings,id',
                 'building_ids' => 'nullable|array',
                 'building_ids.*' => 'exists:firesafety_buildings,id',
@@ -417,7 +417,7 @@ class FireSafetyController extends Controller
 
             // Check if code already exists
             // Check if code already exists for this school
-            $exists = FireSafetyAlarmSystem::where('school_id', $validated['school_id'])
+            $exists = FireSafetyAlarmSystem::where('unified_school_id', $validated['unified_school_id'])
                 ->where('code', $validated['code'])
                 ->exists();
             if ($exists) {
@@ -436,7 +436,7 @@ class FireSafetyController extends Controller
             }
 
             ActivityLog::log('fire_safety', 'Created alarm: ' . $alarm->code, [
-                'school_id' => $alarm->school_id,
+                'unified_school_id' => $alarm->unified_school_id,
                 'notes' => $validated['notes'] ?? null,
             ]);
 
@@ -475,7 +475,7 @@ class FireSafetyController extends Controller
 
         $alarm = FireSafetyAlarmSystem::findOrFail($id);
 
-        if (auth()->user()->role !== 'admin' && (int)$alarm->school_id !== (int)auth()->user()->school_id) {
+        if (auth()->user()->role !== 'admin' && (int)$alarm->unified_school_id !== (int)auth()->user()->unified_school_id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized access to this alarm.'], 403);
         }
 
@@ -496,7 +496,7 @@ class FireSafetyController extends Controller
 
         // Check if code changes to an existing one
         if ($validated['code'] !== $alarm->code) {
-            $exists = FireSafetyAlarmSystem::where('school_id', $alarm->school_id)
+            $exists = FireSafetyAlarmSystem::where('unified_school_id', $alarm->unified_school_id)
                 ->where('code', $validated['code'])
                 ->where('id', '!=', $id)
                 ->exists();
@@ -509,8 +509,7 @@ class FireSafetyController extends Controller
         }
 
         $statusMap = [
-        'functional' => 'active',
-        'broken' => 'maintenance',
+            'functional' => 'active',
         ];
         $originalStatus = strtolower(str_replace(' ', '_', $validated['status']));
         $validated['status'] = $statusMap[$originalStatus] ?? $originalStatus;
@@ -539,26 +538,34 @@ class FireSafetyController extends Controller
 
         $alarm->save();
 
-        if ($request->has('building_ids')) {
-            $alarm->buildings()->sync($request->building_ids);
+        // Pivot: additional covered buildings only (primary is firesafety_alarm_systems.building_id).
+        if ($request->has('covers_multiple') && ! $request->boolean('covers_multiple')) {
+            $alarm->buildings()->sync([]);
+        } elseif ($request->has('building_ids')) {
+            $incoming = array_filter(array_map('intval', (array) $request->building_ids));
+            $existingPivot = $alarm->buildings()->pluck('firesafety_buildings.id')->all();
+            $primaryId = (int) $alarm->building_id;
+            $existingAdditional = array_values(array_diff(array_map('intval', $existingPivot), [$primaryId]));
+            $mergedAdditional = array_values(array_unique(array_merge($existingAdditional, $incoming)));
+            $alarm->buildings()->sync($mergedAdditional);
         }
 
         // Create notification for alarm update (only if something meaningful changed, excluding next_test_due)
         if (!empty($changes)) {
             $user = auth()->user();
-            $school = FireSafetySchool::find($alarm->school_id);
+            $school = School::find($alarm->unified_school_id);
             self::createFireSafetyNotification(
                 'alarm_update',
                 'Alarm Updated: ' . $alarm->code,
                 $user->name . ' updated alarm ' . $alarm->code . '. Changes: ' . implode(', ', $changes),
-                $alarm->school_id,
+                $alarm->unified_school_id,
                 'go_test',
-                ['alarm_id' => $alarm->id, 'school_id' => $alarm->school_id, 'updated_by' => $user->name]
+                ['alarm_id' => $alarm->id, 'unified_school_id' => $alarm->unified_school_id, 'updated_by' => $user->name]
             );
         }
 
         ActivityLog::log('fire_safety', 'Updated alarm: ' . $alarm->code, [
-            'school_id' => $alarm->school_id,
+            'unified_school_id' => $alarm->unified_school_id,
             'notes' => $validated['notes'] ?? null,
         ]);
 
@@ -580,13 +587,13 @@ class FireSafetyController extends Controller
             'alarm_due',
             'Alarm Tested: ' . $alarm->code,
             'Alarm ' . $alarm->code . ' has been tested successfully.',
-            $alarm->school_id,
+            $alarm->unified_school_id,
             'go_test',
-            ['alarm_id' => $alarm->id, 'school_id' => $alarm->school_id]
+            ['alarm_id' => $alarm->id, 'unified_school_id' => $alarm->unified_school_id]
         );
 
         ActivityLog::log('fire_safety', 'Tested alarm: ' . $alarm->code, [
-            'school_id' => $alarm->school_id,
+            'unified_school_id' => $alarm->unified_school_id,
         ]);
 
         return response()->json([
@@ -611,13 +618,13 @@ class FireSafetyController extends Controller
 
             $alarm = FireSafetyAlarmSystem::with(['building'])->findOrFail($id);
 
-            if (auth()->user()->role !== 'admin' && (int)$alarm->school_id !== (int)auth()->user()->school_id) {
+            if (auth()->user()->role !== 'admin' && (int)$alarm->unified_school_id !== (int)auth()->user()->unified_school_id) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized access to this alarm.'], 403);
             }
 
             // Create archive entry
             FireSafetyArchive::create([
-                'school_id' => $alarm->school_id,
+                'unified_school_id' => $alarm->unified_school_id,
                 'type' => 'alarm',
                 'item_id' => $alarm->id,
                 'item_code' => $alarm->code,
@@ -635,12 +642,12 @@ class FireSafetyController extends Controller
             // Delete associations if any (e.g., if there's a pivot for multi-building)
             DB::table('fire_safety_alarm_building')->where('alarm_id', $alarm->id)->delete();
 
-            $schoolId = $alarm->school_id;
+            $schoolId = $alarm->unified_school_id;
             $alarmCode = $alarm->code;
             $alarm->delete();
 
             ActivityLog::log('fire_safety', 'Removed alarm: ' . $alarmCode, [
-                'school_id' => $schoolId,
+                'unified_school_id' => $schoolId,
                 'notes' => $request->reason,
             ]);
 
@@ -656,7 +663,7 @@ class FireSafetyController extends Controller
 
     public function getAlarmHistory($schoolId)
     {
-        $archives = FireSafetyArchive::where('school_id', $schoolId)
+        $archives = FireSafetyArchive::where('unified_school_id', $schoolId)
             ->where('type', 'alarm')
             ->orderBy('removed_at', 'desc')
             ->get();
@@ -666,7 +673,7 @@ class FireSafetyController extends Controller
 
     public function extinguishers()
     {
-        $query = FireSafetySchool::with([
+        $query = School::with([
             'buildings',
             'buildings.actualRooms',
             'buildings.fireExtinguishers.centerRoom',
@@ -674,7 +681,7 @@ class FireSafetyController extends Controller
         ]);
 
         if (auth()->user()->role !== 'admin') {
-            $query->where('id', auth()->user()->school_id);
+            $query->where('id', auth()->user()->unified_school_id);
         }
 
         $schools = $query->get();
@@ -688,7 +695,7 @@ class FireSafetyController extends Controller
             }
 
             $school->recent_inspections_data = FireSafetyExtinguisherInspection::whereHas('extinguisher', function($q) use ($school) {
-                    $q->where('school_id', $school->id);
+                    $q->where('unified_school_id', $school->id);
                 })
                 ->with(['extinguisher', 'extinguisher.building', 'extinguisher.centerRoom', 'inspector'])
                 ->latest('inspection_date')
@@ -696,7 +703,7 @@ class FireSafetyController extends Controller
                 ->take(10)
                 ->get();
 
-            $school->recent_room_updates_data = FireSafetyRoom::where('school_id', $school->id)
+            $school->recent_room_updates_data = FireSafetyRoom::where('unified_school_id', $school->id)
                 ->with(['building', 'nearestExtinguisherRoom', 'hostedExtinguisher', 'lastInspector'])
                 ->latest('updated_at')
                 ->take(10)
@@ -748,7 +755,7 @@ class FireSafetyController extends Controller
 
         $room = FireSafetyRoom::findOrFail($id);
 
-        if (auth()->user()->role !== 'admin' && (int)$room->school_id !== (int)auth()->user()->school_id) {
+        if (auth()->user()->role !== 'admin' && (int)$room->unified_school_id !== (int)auth()->user()->unified_school_id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized access to this room.'], 403);
         }
         $validated = $request->validate([
@@ -818,9 +825,9 @@ class FireSafetyController extends Controller
                 'room_approval',
                 'Room Update Pending Approval: ' . $room->room_code,
                 $user->name . ' updated room ' . $room->room_code . ' and it requires administrator approval.' . (!empty($roomChanges) ? ' Changes: ' . implode(', ', $roomChanges) : ''),
-                $room->school_id,
+                $room->unified_school_id,
                 'see_inspection',
-                ['room_id' => $room->id, 'school_id' => $room->school_id, 'status' => 'pending', 'updated_by' => $user->name]
+                ['room_id' => $room->id, 'unified_school_id' => $room->unified_school_id, 'status' => 'pending', 'updated_by' => $user->name]
             );
         } else {
             $validated['approval_status'] = 'approved';
@@ -831,9 +838,9 @@ class FireSafetyController extends Controller
                     'room_update',
                     'Room Updated: ' . $room->room_code,
                     $user->name . ' updated room ' . $room->room_code . '. Changes: ' . implode(', ', $roomChanges),
-                    $room->school_id,
+                    $room->unified_school_id,
                     'see_inspection',
-                    ['room_id' => $room->id, 'school_id' => $room->school_id, 'updated_by' => $user->name]
+                    ['room_id' => $room->id, 'unified_school_id' => $room->unified_school_id, 'updated_by' => $user->name]
                 );
             }
         }
@@ -881,7 +888,7 @@ class FireSafetyController extends Controller
                 $affectedRoomIds = [(int) $id];
             }
             ActivityLog::log('fire_safety', 'Updated room: ' . ($room->room_code ?? $room->room_name ?? 'Room'), [
-                'school_id' => $room->school_id,
+                'unified_school_id' => $room->unified_school_id,
                 'notes' => $validated['remarks'] ?? null,
             ]);
             return response()->json([
@@ -931,7 +938,7 @@ class FireSafetyController extends Controller
         }
 
         ActivityLog::log('fire_safety', 'Updated room: ' . ($room->room_code ?? $room->room_name ?? 'Room'), [
-            'school_id' => $room->school_id,
+            'unified_school_id' => $room->unified_school_id,
             'notes' => $validated['remarks'] ?? null,
         ]);
 
@@ -955,13 +962,13 @@ class FireSafetyController extends Controller
             'room_approval',
             'Room Update Approved',
             'Room ' . $room->room_code . ' has been approved by ' . auth()->user()->name . '.',
-            $room->school_id,
+            $room->unified_school_id,
             'see_inspection',
-            ['room_id' => $room->id, 'school_id' => $room->school_id, 'status' => 'approved']
+            ['room_id' => $room->id, 'unified_school_id' => $room->unified_school_id, 'status' => 'approved']
         );
 
         ActivityLog::log('fire_safety', 'Approved room: ' . ($room->room_code ?? $room->room_name ?? 'Room'), [
-            'school_id' => $room->school_id,
+            'unified_school_id' => $room->unified_school_id,
         ]);
 
         return response()->json(['success' => true]);
@@ -981,7 +988,7 @@ class FireSafetyController extends Controller
         ]);
 
         ActivityLog::log('fire_safety', 'Rejected room: ' . ($room->room_code ?? $room->room_name ?? 'Room'), [
-            'school_id' => $room->school_id,
+            'unified_school_id' => $room->unified_school_id,
             'notes' => $reason,
         ]);
 
@@ -1046,7 +1053,7 @@ public function storeRoom(Request $request)
     }
 
     $validated = $request->validate([
-        'school_id' => 'required|exists:firesafety_school_information,id',
+        'unified_school_id' => 'required|exists:schools,id',
         'building_id' => 'required|exists:firesafety_buildings,id',
         'room_code' => 'nullable|string|max:50',
         'room_name' => 'nullable|string|max:100',
@@ -1145,7 +1152,7 @@ public function storeRoom(Request $request)
         $validated['approval_status'] = 'pending';
 
         // Notify Admins via notification
-        $school = FireSafetySchool::find($validated['school_id']);
+        $school = School::find($validated['unified_school_id']);
         if ($school) {
             self::createFireSafetyNotification(
                 'room_approval',
@@ -1163,7 +1170,7 @@ public function storeRoom(Request $request)
     $room = FireSafetyRoom::create($validated);
 
     ActivityLog::log('fire_safety', 'Created room: ' . ($room->room_name ?? $room->room_code ?? 'Room'), [
-        'school_id' => $room->school_id,
+        'unified_school_id' => $room->unified_school_id,
         'notes' => $validated['remarks'] ?? null,
     ]);
 
@@ -1231,7 +1238,7 @@ public function storeRoom(Request $request)
 
         // floor, room and coverage are now optional to allow creation without assignment
         $validated = $request->validate([
-            'school_id' => 'required|exists:firesafety_school_information,id',
+            'unified_school_id' => 'required|exists:schools,id',
             'building_id' => 'required|exists:firesafety_buildings,id',
             'code' => 'required|string|max:50',
             'type' => 'required|string|max:50', // ABC, CO2, etc.
@@ -1247,7 +1254,7 @@ public function storeRoom(Request $request)
 
         // Ensure building belongs to school
         $building = FireSafetyBuilding::where('id', $validated['building_id'])
-            ->where('school_id', $validated['school_id'])
+            ->where('unified_school_id', $validated['unified_school_id'])
             ->first();
         if (!$building) {
             return response()->json([
@@ -1261,7 +1268,7 @@ public function storeRoom(Request $request)
         if (!empty($validated['room_id'])) {
             $centerRoom = FireSafetyRoom::where('id', $validated['room_id'])
                 ->where('building_id', $validated['building_id'])
-                ->where('school_id', $validated['school_id'])
+                ->where('unified_school_id', $validated['unified_school_id'])
                 ->first();
             if (!$centerRoom) {
                 return response()->json([
@@ -1288,7 +1295,7 @@ public function storeRoom(Request $request)
         if (count($coveredRoomIds) > 0) {
             $coveredRooms = FireSafetyRoom::whereIn('id', $coveredRoomIds)
                 ->where('building_id', $validated['building_id'])
-                ->where('school_id', $validated['school_id'])
+                ->where('unified_school_id', $validated['unified_school_id'])
                 ->get();
         }
         if (isset($coveredRooms) && $coveredRooms->count() !== count($coveredRoomIds)) {
@@ -1401,7 +1408,7 @@ public function storeRoom(Request $request)
         }
 
         // Ensure code is unique within the same school (simple constraint at app level)
-        $codeExists = FireSafetyExtinguisher::where('school_id', $validated['school_id'])
+        $codeExists = FireSafetyExtinguisher::where('unified_school_id', $validated['unified_school_id'])
             ->where('code', $validated['code'])
             ->exists();
         if ($codeExists) {
@@ -1424,7 +1431,7 @@ public function storeRoom(Request $request)
             }
 
             $ext = FireSafetyExtinguisher::create([
-                'school_id' => $validated['school_id'],
+                'unified_school_id' => $validated['unified_school_id'],
                 'building_id' => $validated['building_id'],
                 'room_id' => $validated['room_id'] ?? null,
                 'code' => $validated['code'],
@@ -1442,7 +1449,7 @@ public function storeRoom(Request $request)
             }
 
             ActivityLog::log('fire_safety', 'Created extinguisher: ' . $ext->code, [
-                'school_id' => $ext->school_id,
+                'unified_school_id' => $ext->unified_school_id,
                 'notes' => $validated['remarks'] ?? null,
             ]);
 
@@ -1679,7 +1686,7 @@ public function storeRoom(Request $request)
             $ext = FireSafetyExtinguisher::findOrFail($id);
 
             // Ensure code is unique within the same school
-            $codeExists = FireSafetyExtinguisher::where('school_id', $ext->school_id)
+            $codeExists = FireSafetyExtinguisher::where('unified_school_id', $ext->unified_school_id)
                 ->where('code', $request->code)
                 ->where('id', '!=', $id)
                 ->exists();
@@ -1829,13 +1836,13 @@ public function storeRoom(Request $request)
                 'extinguisher_inspection',
                 'Extinguisher Inspected: ' . $ext->code,
                 'Extinguisher ' . $ext->code . ' was inspected. Status: ' . ucfirst($ext->status) . ', Pressure: ' . $ext->pressure_level . '%',
-                $ext->school_id,
+                $ext->unified_school_id,
                 'update_now',
-                ['extinguisher_id' => $ext->id, 'school_id' => $ext->school_id]
+                ['extinguisher_id' => $ext->id, 'unified_school_id' => $ext->unified_school_id]
             );
 
             ActivityLog::log('fire_safety', 'Updated extinguisher: ' . $ext->code, [
-                'school_id' => $ext->school_id,
+                'unified_school_id' => $ext->unified_school_id,
                 'notes' => $request->notes,
             ]);
 
@@ -1869,7 +1876,7 @@ public function storeRoom(Request $request)
             $ext->save();
 
             ActivityLog::log('fire_safety', 'Unassigned extinguisher: ' . $ext->code, [
-                'school_id' => $ext->school_id,
+                'unified_school_id' => $ext->unified_school_id,
             ]);
 
             DB::commit();
@@ -1896,12 +1903,12 @@ public function storeRoom(Request $request)
             DB::beginTransaction();
 
             $ext = FireSafetyExtinguisher::with(['building', 'room'])->findOrFail($id);
-            $schoolId = $ext->school_id;
+            $schoolId = $ext->unified_school_id;
             $code = $ext->code;
 
             // Create archive entry
             FireSafetyArchive::create([
-                'school_id' => $ext->school_id,
+                'unified_school_id' => $ext->unified_school_id,
                 'type' => 'extinguisher',
                 'item_id' => $ext->id,
                 'item_code' => $ext->code,
@@ -1924,7 +1931,7 @@ public function storeRoom(Request $request)
             $ext->delete();
 
             ActivityLog::log('fire_safety', 'Removed extinguisher: ' . $code, [
-                'school_id' => $schoolId,
+                'unified_school_id' => $schoolId,
                 'notes' => $request->reason,
             ]);
 
@@ -1939,7 +1946,7 @@ public function storeRoom(Request $request)
 
     public function getExtinguisherHistory($schoolId)
     {
-        $archives = FireSafetyArchive::where('school_id', $schoolId)
+        $archives = FireSafetyArchive::where('unified_school_id', $schoolId)
             ->where('type', 'extinguisher')
             ->orderBy('removed_at', 'desc')
             ->get();
@@ -1964,7 +1971,7 @@ public function storeRoom(Request $request)
             $targetBuilding = FireSafetyBuilding::findOrFail($request->building_id);
 
             // Ensure target building is in the same school
-            if ($targetBuilding->school_id !== $ext->school_id) {
+            if ($targetBuilding->unified_school_id !== $ext->unified_school_id) {
                 return response()->json(['success' => false, 'message' => 'Cannot transfer to a building in a different school.'], 422);
             }
 
@@ -1982,7 +1989,7 @@ public function storeRoom(Request $request)
             $ext->save();
 
             ActivityLog::log('fire_safety', 'Transferred extinguisher: ' . $ext->code . ' to ' . $targetBuilding->building_no, [
-                'school_id' => $ext->school_id,
+                'unified_school_id' => $ext->unified_school_id,
             ]);
 
             DB::commit();
@@ -2000,7 +2007,7 @@ public function storeRoom(Request $request)
 
     public function getRoomHistory($schoolId)
     {
-        $archives = FireSafetyArchive::where('school_id', $schoolId)
+        $archives = FireSafetyArchive::where('unified_school_id', $schoolId)
             ->where('type', 'room')
             ->orderBy('removed_at', 'desc')
             ->get();
@@ -2023,13 +2030,13 @@ public function storeRoom(Request $request)
 
             $room = FireSafetyRoom::with(['building'])->findOrFail($id);
             $building = $room->building;
-            $schoolId = $room->school_id;
+            $schoolId = $room->unified_school_id;
             $roomLabel = $room->room_code ?? $room->room_name ?? 'Room';
 
             $message = $this->processRoomRemoval($room, $request->reason);
 
             ActivityLog::log('fire_safety', 'Removed room: ' . $roomLabel, [
-                'school_id' => $schoolId,
+                'unified_school_id' => $schoolId,
                 'notes' => $request->reason,
             ]);
 
@@ -2052,12 +2059,12 @@ public function storeRoom(Request $request)
     public function getRecentExtinguisherInspections($schoolId)
     {
         $user = auth()->user();
-        if ($user->role !== 'admin' && (int)$user->school_id !== (int)$schoolId) {
+        if ($user->role !== 'admin' && (int)$user->unified_school_id !== (int)$schoolId) {
             return response()->json(['error' => 'Unauthorized access to this school.'], 403);
         }
 
         $inspections = FireSafetyExtinguisherInspection::whereHas('extinguisher', function($q) use ($schoolId) {
-                $q->where('school_id', $schoolId);
+                $q->where('unified_school_id', $schoolId);
             })
             ->with(['extinguisher', 'extinguisher.building', 'extinguisher.centerRoom', 'inspector'])
             ->latest('inspection_date')
@@ -2082,11 +2089,11 @@ public function storeRoom(Request $request)
     public function getRecentRoomUpdates($schoolId)
     {
         $user = auth()->user();
-        if ($user->role !== 'admin' && (int)$user->school_id !== (int)$schoolId) {
+        if ($user->role !== 'admin' && (int)$user->unified_school_id !== (int)$schoolId) {
             return response()->json(['error' => 'Unauthorized access'], 403);
         }
 
-        $updates = FireSafetyRoom::where('school_id', $schoolId)
+        $updates = FireSafetyRoom::where('unified_school_id', $schoolId)
             ->with(['building', 'nearestExtinguisherRoom', 'hostedExtinguisher', 'lastInspector'])
             ->latest('updated_at')
             ->take(10)
@@ -2126,19 +2133,19 @@ public function storeRoom(Request $request)
 
     public function buildings()
     {
-        $query = FireSafetySchool::with([
-            'buildings.actualRooms',
-            'buildings.fireExtinguishers.coveredRooms',
-            'buildings.alarmSystems',
-            'buildings.alarmSystemsMany', // Fixed: Preload covering alarms
-            'buildings.evacuationPlan'
+        $query = School::with([
+            'fireSafetyBuildings.actualRooms',
+            'fireSafetyBuildings.fireExtinguishers.coveredRooms',
+            'fireSafetyBuildings.alarmSystems',
+            'fireSafetyBuildings.alarmSystemsMany', // Fixed: Preload covering alarms
+            'fireSafetyBuildings.evacuationPlan'
         ]);
 
         if (auth()->user()->role !== 'admin') {
-            if (auth()->user()->role === 'viewer' && !isset(auth()->user()->school_id)) {
+            if (auth()->user()->role === 'viewer' && !isset(auth()->user()->unified_school_id)) {
                 return redirect()->route('fire-safety.dashboard')->with('error', 'No school assigned.');
             }
-            $query->where('id', auth()->user()->school_id);
+            $query->where('id', auth()->user()->unified_school_id);
         }
 
         $schools = $query->get();
@@ -2153,7 +2160,7 @@ public function storeRoom(Request $request)
 
         $alarmTypes = SystemConfiguration::where('config_type', 'alarm_type')->where('is_active', true)->orderBy('sort_order')->get();
         $alarmStatusesByType = SystemConfiguration::where('config_type', 'alarm_status')->where('is_active', true)->get()->groupBy('parent_id');
-        $safetyFeatures = SystemConfiguration::where('config_type', 'safety_feature')->orderBy('sort_order')->get()->unique('name');
+        $safetyFeatures = SystemConfiguration::where('config_type', 'safety_feature')->where('is_active', true)->orderBy('sort_order')->get()->unique('name');
 
         return view('fire-safety.buildings',[
             'schools' => $schools,
@@ -2191,7 +2198,7 @@ public function storeRoom(Request $request)
 
         // Also accept if the school has any active alarm (matches safety_score accessor logic)
         if (!$hasCoveringAlarm) {
-            $hasCoveringAlarm = $building->school->alarmSystems()
+            $hasCoveringAlarm = $building->school->fireSafetyAlarms()
                 ->whereIn('status', $activeAlarmStatuses)
                 ->exists();
         }
@@ -2223,12 +2230,12 @@ public function storeRoom(Request $request)
             return response()->json(['success' => false, 'message' => 'Viewers cannot add buildings.'], 403);
         }
 
-        if (auth()->user()->role !== 'admin' && (int)$request->school_id !== (int)auth()->user()->school_id) {
+        if (auth()->user()->role !== 'admin' && (int)$request->unified_school_id !== (int)auth()->user()->unified_school_id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized access to this school.'], 403);
         }
 
         $validated = $request->validate([
-            'school_id' => 'required|exists:firesafety_school_information,id',
+            'unified_school_id' => 'required|exists:schools,id',
             'building_no' => 'required|string|max:50',
             'building_name' => 'nullable|string|max:100',
             'floors' => 'required|integer|min:1',
@@ -2248,7 +2255,7 @@ public function storeRoom(Request $request)
         }
 
         // Unique Building Code Check (Per School)
-        $exists = FireSafetyBuilding::where('school_id', $validated['school_id'])
+        $exists = FireSafetyBuilding::where('unified_school_id', $validated['unified_school_id'])
             ->where('building_no', $validated['building_no'])
             ->exists();
         if ($exists) {
@@ -2282,7 +2289,7 @@ public function storeRoom(Request $request)
     $building = FireSafetyBuilding::create($validated);
 
         ActivityLog::log('fire_safety', 'Created building: ' . ($building->building_name ?? $building->building_no), [
-            'school_id' => $building->school_id,
+            'unified_school_id' => $building->unified_school_id,
             'notes' => $validated['description'] ?? null,
         ]);
 
@@ -2301,7 +2308,7 @@ public function storeRoom(Request $request)
 
         $building = FireSafetyBuilding::findOrFail($id);
 
-        if (auth()->user()->role !== 'admin' && (int)$building->school_id !== (int)auth()->user()->school_id) {
+        if (auth()->user()->role !== 'admin' && (int)$building->unified_school_id !== (int)auth()->user()->unified_school_id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized access to this building.'], 403);
         }
 
@@ -2331,7 +2338,7 @@ public function storeRoom(Request $request)
 
         // Check uniqueness if building_no is changing
         if ($validated['building_no'] !== $building->building_no) {
-            $exists = FireSafetyBuilding::where('school_id', $building->school_id)
+            $exists = FireSafetyBuilding::where('unified_school_id', $building->unified_school_id)
                 ->where('building_no', $validated['building_no'])
                 ->where('id', '!=', $id)
                 ->exists();
@@ -2368,7 +2375,7 @@ public function storeRoom(Request $request)
 
                 // Archive Floor
                 FireSafetyArchive::create([
-                    'school_id' => $building->school_id,
+                    'unified_school_id' => $building->unified_school_id,
                     'type' => 'floor',
                     'item_id' => null,
                     'item_code' => "FLR-{$floorNo}",
@@ -2398,7 +2405,7 @@ public function storeRoom(Request $request)
 
                 foreach ($alarmsToRemove as $alarm) {
                     FireSafetyArchive::create([
-                        'school_id' => $alarm->school_id,
+                        'unified_school_id' => $alarm->unified_school_id,
                         'type' => 'alarm',
                         'item_id' => $alarm->id,
                         'item_code' => $alarm->code,
@@ -2476,9 +2483,9 @@ public function storeRoom(Request $request)
                     'building_update',
                     'Building Updated: ' . $building->building_no,
                     $user->name . ' updated building ' . ($building->building_name ?? $building->building_no) . '. Changes: ' . implode(', ', $allChanges),
-                    $building->school_id,
+                    $building->unified_school_id,
                     null,
-                    ['building_id' => $building->id, 'school_id' => $building->school_id, 'updated_by' => $user->name]
+                    ['building_id' => $building->id, 'unified_school_id' => $building->unified_school_id, 'updated_by' => $user->name]
                 );
             }
 
@@ -2487,7 +2494,7 @@ public function storeRoom(Request $request)
                 $request->room_removal_reason,
             ]);
             ActivityLog::log('fire_safety', 'Updated building: ' . ($building->building_name ?? $building->building_no), [
-                'school_id' => $building->school_id,
+                'unified_school_id' => $building->unified_school_id,
                 'notes' => implode('; ', $notes) ?: null,
             ]);
 
@@ -2516,7 +2523,7 @@ public function storeRoom(Request $request)
 
         $building = FireSafetyBuilding::findOrFail($id);
 
-        if (auth()->user()->role !== 'admin' && (int)$building->school_id !== (int)auth()->user()->school_id) {
+        if (auth()->user()->role !== 'admin' && (int)$building->unified_school_id !== (int)auth()->user()->unified_school_id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized access.'], 403);
         }
 
@@ -2528,7 +2535,7 @@ public function storeRoom(Request $request)
         try {
             // Archive Building
             FireSafetyArchive::create([
-                'school_id' => $building->school_id,
+                'unified_school_id' => $building->unified_school_id,
                 'type' => 'building',
                 'item_id' => null, // It's deleted
                 'item_code' => $building->building_no,
@@ -2550,7 +2557,7 @@ public function storeRoom(Request $request)
             $alarms = $building->alarmSystems()->get();
             foreach ($alarms as $alarm) {
                 FireSafetyArchive::create([
-                    'school_id' => $alarm->school_id ?? $building->school_id,
+                    'unified_school_id' => $alarm->unified_school_id ?? $building->unified_school_id,
                     'type' => 'alarm',
                     'item_id' => null, // Deleting
                     'item_code' => $alarm->code,
@@ -2574,12 +2581,12 @@ public function storeRoom(Request $request)
                $this->processRoomRemoval($room, $cascadeReason);
             }
 
-            $schoolId = $building->school_id;
+            $schoolId = $building->unified_school_id;
             $buildingName = $building->building_name ?? $building->building_no;
             $building->delete();
 
             ActivityLog::log('fire_safety', 'Removed building: ' . $buildingName, [
-                'school_id' => $schoolId,
+                'unified_school_id' => $schoolId,
                 'notes' => $validated['reason'],
             ]);
 
@@ -2604,7 +2611,7 @@ public function storeRoom(Request $request)
     {
         // Archive Room
         FireSafetyArchive::create([
-            'school_id' => $room->school_id,
+            'unified_school_id' => $room->unified_school_id,
             'type' => 'room',
             'item_id' => $room->id,
             'item_code' => $room->room_code ?? "RM-{$room->id}",
@@ -2629,7 +2636,7 @@ public function storeRoom(Request $request)
             } else {
                 // Archive Extinguisher before delete
                 FireSafetyArchive::create([
-                    'school_id' => $ext->school_id,
+                    'unified_school_id' => $ext->unified_school_id,
                     'type' => 'extinguisher',
                     'item_id' => $ext->id,
                     'item_code' => $ext->code,
@@ -2665,33 +2672,49 @@ public function storeRoom(Request $request)
     {
         Log::info('getBuilding called with id: ' . $id);
         try {
-            $building = FireSafetyBuilding::with(['school', 'actualRooms'])->findOrFail($id);
-            $building->load(['alarmSystems', 'alarmSystemsMany']);
+            // 1. Eager load ALL necessary relationships
+            $building = FireSafetyBuilding::with([
+                'school', 
+                'actualRooms', 
+                'fireExtinguishers', 
+                'alarmSystems', 
+                'alarmSystemsMany'
+            ])->findOrFail($id);
 
-            // Merge direct alarms and covered alarms
-            $allAlarms = $building->alarmSystems->merge($building->alarmSystemsMany)->unique('id')->values();
-            foreach ($allAlarms as $alarm) {
-                // If floor_id is stored in a different field, map it here
-                // For example, if it's stored in 'floor' or 'floor_no'
-                if (!isset($alarm->floor_id) && isset($alarm->floor)) {
-                    $alarm->floor_id = $alarm->floor;
-                }
-            }
-            $building->setRelation('alarmSystems', $allAlarms);
-            Log::info('Building found: ' . $building->id);
-
-            // Check if user has access to this building's school
-            if (auth()->user()->role !== 'admin' && $building->school_id !== auth()->user()->school_id) {
+            // 2. Access Control Check (with type coercion to ensure match)
+            if (auth()->user()->role !== 'admin' && (int)$building->unified_school_id !== (int)auth()->user()->unified_school_id) {
                 Log::warning('Access denied for user ' . auth()->id() . ' to building ' . $id);
                 return response()->json(['error' => 'Access denied'], 403);
             }
 
-            // Add rooms_list for update modal
-            $roomsList = $building->actualRooms->map(function($room) {
-                // Check if room is a center room for any extinguisher
-                $isCenterRoom = FireSafetyExtinguisher::where('room_id', $room->id)->exists();
+            // 3. Robust Alarm Merging Logic and Field Mapping
+            $allAlarms = $building->alarmSystems->merge($building->alarmSystemsMany)->unique('id')->values();
+            foreach ($allAlarms as $alarm) {
+                // Ensure floor_id is present for frontend
+                if (!isset($alarm->floor_id) && isset($alarm->floor)) {
+                    $alarm->floor_id = $alarm->floor;
+                }
+                if (!isset($alarm->floor_id) && isset($alarm->floor_no)) {
+                    $alarm->floor_id = $alarm->floor_no;
+                }
+            }
 
-                // Check if there are other rooms on the same floor
+            // 4. Transform data for the Frontend (Providing both casing styles)
+            $buildingData = $building->toArray();
+            $buildingData['alarm_systems'] = $allAlarms; 
+            $buildingData['alarmSystems'] = $allAlarms;
+            $buildingData['actual_rooms'] = $building->actualRooms;
+            $buildingData['actualRooms'] = $building->actualRooms;
+            $buildingData['fire_extinguishers'] = $building->fireExtinguishers;
+            $buildingData['fireExtinguishers'] = $building->fireExtinguishers;
+            
+            // 5. Explicit counts for frontend metrics
+            $buildingData['active_extinguishers_count'] = $building->fireExtinguishers->where('status', 'active')->count();
+            $buildingData['required_extinguishers_count'] = $building->required_extinguishers ?: 1;
+
+            // 6. Add rooms_list for update modal (keeping exists logic for specific room info)
+            $roomsList = $building->actualRooms->map(function($room) {
+                $isCenterRoom = FireSafetyExtinguisher::where('room_id', $room->id)->exists();
                 $hasOthersOnFloor = FireSafetyRoom::where('building_id', $room->building_id)
                     ->where('floor_no', $room->floor_no)
                     ->where('id', '!=', $room->id)
@@ -2706,16 +2729,14 @@ public function storeRoom(Request $request)
                     'has_other_rooms_on_floor' => $hasOthersOnFloor
                 ];
             });
-
-            $buildingData = $building->toArray();
             $buildingData['rooms_list'] = $roomsList;
-            $buildingData['required_extinguishers_count'] = $building->required_extinguishers_count;
 
-            Log::info('Returning building data with rooms list');
+            Log::info('Successfully returned building data for building #' . $id);
             return response()->json($buildingData);
+
         } catch (\Exception $e) {
-            Log::error('Error loading building details: ' . $e->getMessage());
-            return response()->json(['error' => 'Building not found or error loading details'], 404);
+            Log::error('Error loading building details: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine());
+            return response()->json(['error' => 'Building details could not be loaded: ' . $e->getMessage()], 500);
         }
     }
 
@@ -2723,12 +2744,12 @@ public function storeRoom(Request $request)
     public function getInspections($schoolId)
     {
         $user = auth()->user();
-        if ($user->role !== 'admin' && (int)$user->school_id !== (int)$schoolId) {
+        if ($user->role !== 'admin' && (int)$user->unified_school_id !== (int)$schoolId) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
         try {
-            $inspections = FireSafetyInspection::where('school_id', $schoolId)
+            $inspections = FireSafetyInspection::where('unified_school_id', $schoolId)
                 ->orderBy('inspection_date', 'desc')
                 ->get();
 
@@ -2743,7 +2764,7 @@ public function storeRoom(Request $request)
     // Get compliance stats for a school
     public function getComplianceStats($schoolId)
     {
-        $buildings = FireSafetyBuilding::where('school_id', $schoolId)->get();
+        $buildings = FireSafetyBuilding::where('unified_school_id', $schoolId)->get();
 
         $compliant = 0;
         $needsAttention = 0;
@@ -2779,11 +2800,11 @@ public function storeRoom(Request $request)
     public function getBuildingsList($schoolId)
     {
         $user = auth()->user();
-        if ($user->role !== 'admin' && (int)$user->school_id !== (int)$schoolId) {
+        if ($user->role !== 'admin' && (int)$user->unified_school_id !== (int)$schoolId) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $buildings = FireSafetyBuilding::where('school_id', $schoolId)
+        $buildings = FireSafetyBuilding::where('unified_school_id', $schoolId)
             ->select('id', 'building_no', 'building_name', 'floors', 'rooms', 'building_type')
             ->get();
 
@@ -2822,12 +2843,12 @@ public function storeRoom(Request $request)
             return response()->json(['success' => false, 'message' => 'Viewers cannot save inspections.'], 403);
         }
 
-        if (auth()->user()->role !== 'admin' && (int)$request->school_id !== (int)auth()->user()->school_id) {
+        if (auth()->user()->role !== 'admin' && (int)$request->unified_school_id !== (int)auth()->user()->unified_school_id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized access to this school.'], 403);
         }
 
         $validated = $request->validate([
-            'school_id' => 'required|exists:firesafety_school_information,id',
+            'unified_school_id' => 'required|exists:schools,id',
             'drill_type' => 'required|string',
             'inspection_date' => 'required|date',
             'inspection_time' => 'required',
@@ -2850,18 +2871,18 @@ public function storeRoom(Request $request)
         $inspection = FireSafetyInspection::create($validated);
 
         // Create notification for inspection
-        $school = FireSafetySchool::find($validated['school_id']);
+        $school = School::find($validated['unified_school_id']);
         self::createFireSafetyNotification(
             'inspection',
             'Inspection Completed: ' . $validated['drill_type'],
             $validated['drill_type'] . ' inspection at ' . ($school->school_name ?? 'Unknown School') . ' on ' . $validated['inspection_date'] . '. Monitored by: ' . $validated['monitored_by'],
-            $validated['school_id'],
+            $validated['unified_school_id'],
             'see_inspection',
-            ['inspection_id' => $inspection->id, 'school_id' => $validated['school_id']]
+            ['inspection_id' => $inspection->id, 'unified_school_id' => $validated['unified_school_id']]
         );
 
         ActivityLog::log('fire_safety', 'Created inspection: ' . $validated['drill_type'], [
-            'school_id' => $validated['school_id'],
+            'unified_school_id' => $validated['unified_school_id'],
             'notes' => $validated['remarks'] ?? null,
         ]);
 
@@ -2881,12 +2902,12 @@ public function storeRoom(Request $request)
 
         $inspection = FireSafetyInspection::findOrFail($id);
 
-        if (auth()->user()->role !== 'admin' && (int)$inspection->school_id !== (int)auth()->user()->school_id) {
+        if (auth()->user()->role !== 'admin' && (int)$inspection->unified_school_id !== (int)auth()->user()->unified_school_id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized access to this inspection.'], 403);
         }
 
         $validated = $request->validate([
-            'school_id' => 'required|exists:firesafety_school_information,id',
+            'unified_school_id' => 'required|exists:schools,id',
             'drill_type' => 'required|string',
             'inspection_date' => 'required|date',
             'inspection_time' => 'required',
@@ -2909,7 +2930,7 @@ public function storeRoom(Request $request)
         $inspection->update($validated);
 
         ActivityLog::log('fire_safety', 'Updated inspection: ' . $validated['drill_type'], [
-            'school_id' => $validated['school_id'],
+            'unified_school_id' => $validated['unified_school_id'],
             'notes' => $validated['remarks'] ?? null,
         ]);
 
@@ -2967,7 +2988,7 @@ public function storeRoom(Request $request)
 
     public function evacuationPlans()
     {
-        $query = FireSafetySchool::with([
+        $query = School::with([
             'buildings' => function($query) {
                 $query->with([
                     'evacuationPlan',
@@ -2985,7 +3006,7 @@ public function storeRoom(Request $request)
         ]);
 
         if (auth()->user()->role !== 'admin') {
-            $query->where('id', auth()->user()->school_id);
+            $query->where('id', auth()->user()->unified_school_id);
         }
 
         $schools = $query->get();
@@ -2999,12 +3020,12 @@ public function storeRoom(Request $request)
             return response()->json(['success' => false, 'message' => 'Viewers cannot add evacuation plans.'], 403);
         }
 
-        if (auth()->user()->role !== 'admin' && (int)$request->school_id !== (int)auth()->user()->school_id) {
+        if (auth()->user()->role !== 'admin' && (int)$request->unified_school_id !== (int)auth()->user()->unified_school_id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized access to this school.'], 403);
         }
 
         $request->validate([
-            'school_id' => 'required|exists:firesafety_school_information,id',
+            'unified_school_id' => 'required|exists:schools,id',
             'building_id' => 'nullable|exists:firesafety_buildings,id',
             'plan_no' => 'required|string|max:50',
             'exits' => 'nullable|integer|min:0',
@@ -3023,13 +3044,13 @@ public function storeRoom(Request $request)
         ]);
 
         // Prevent duplicate plans for the same building
-        $existingPlan = FireSafetyEvacuationPlan::where('school_id', $request->school_id)->where('building_id', $request->building_id)->first();
+        $existingPlan = FireSafetyEvacuationPlan::where('unified_school_id', $request->unified_school_id)->where('building_id', $request->building_id)->first();
         if ($existingPlan) {
             return response()->json(['success' => false, 'message' => 'An evacuation plan already exists for this building. Please edit the existing plan instead.'], 422);
         }
 
         // Ensure plan_no is unique within the school
-        $planNoExists = FireSafetyEvacuationPlan::where('school_id', $request->school_id)
+        $planNoExists = FireSafetyEvacuationPlan::where('unified_school_id', $request->unified_school_id)
             ->where('plan_no', $request->plan_no)
             ->exists();
         if ($planNoExists) {
@@ -3040,7 +3061,7 @@ public function storeRoom(Request $request)
             DB::beginTransaction();
 
             $plan = FireSafetyEvacuationPlan::create([
-                'school_id' => $request->school_id,
+                'unified_school_id' => $request->unified_school_id,
                 'building_id' => $request->building_id,
                 'plan_no' => $request->plan_no,
                 'exits' => $request->exits ?? 0,
@@ -3065,7 +3086,7 @@ public function storeRoom(Request $request)
                 $this->updateBuildingComplianceStatus($building);
             } else {
                 // If it's a school-wide plan, update all buildings without specific plans
-                $buildings = FireSafetyBuilding::where('school_id', $request->school_id)->get();
+                $buildings = FireSafetyBuilding::where('unified_school_id', $request->unified_school_id)->get();
                 foreach ($buildings as $building) {
                     $this->updateBuildingComplianceStatus($building);
                 }
@@ -3082,13 +3103,13 @@ public function storeRoom(Request $request)
                 'evacuation_plan',
                 'Evacuation Plan Created: ' . $request->plan_no,
                 $user->name . ' created a new evacuation plan "' . $request->plan_no . '" - ' . $planLabel,
-                $request->school_id,
+                $request->unified_school_id,
                 null,
                 ['plan_id' => $plan->id, 'plan_type' => $request->building_id ? 'building' : 'school', 'posted_by' => $user->name]
             );
 
             ActivityLog::log('fire_safety', 'Created evacuation plan: ' . $request->plan_no, [
-                'school_id' => (int) $request->school_id,
+                'unified_school_id' => (int) $request->unified_school_id,
                 'notes' => $request->special_instructions ?: null,
             ]);
 
@@ -3111,7 +3132,7 @@ public function storeRoom(Request $request)
         $plan = FireSafetyEvacuationPlan::with(['building', 'school'])->findOrFail($id);
 
         // Load all buildings for the school with their safety components
-        $schoolBuildings = FireSafetyBuilding::where('school_id', $plan->school_id)
+        $schoolBuildings = FireSafetyBuilding::where('unified_school_id', $plan->unified_school_id)
             ->with(['actualRooms', 'fireExtinguishers', 'alarmSystemsMany'])
             ->get();
 
@@ -3133,7 +3154,7 @@ public function storeRoom(Request $request)
 
         $plan = FireSafetyEvacuationPlan::findOrFail($id);
 
-        if (auth()->user()->role !== 'admin' && (int)$plan->school_id !== (int)auth()->user()->school_id) {
+        if (auth()->user()->role !== 'admin' && (int)$plan->unified_school_id !== (int)auth()->user()->unified_school_id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized access to this plan.'], 403);
         }
 
@@ -3156,7 +3177,7 @@ public function storeRoom(Request $request)
 
         // ensure plan_no uniqueness
         if ($request->plan_no !== $plan->plan_no) {
-            $exists = FireSafetyEvacuationPlan::where('school_id', $plan->school_id)
+            $exists = FireSafetyEvacuationPlan::where('unified_school_id', $plan->unified_school_id)
                         ->where('plan_no', $request->plan_no)
                         ->where('id', '<>', $plan->id)
                         ->exists();
@@ -3193,7 +3214,7 @@ public function storeRoom(Request $request)
                     $this->updateBuildingComplianceStatus($building);
                 }
             } else {
-                $buildings = FireSafetyBuilding::where('school_id', $plan->school_id)->get();
+                $buildings = FireSafetyBuilding::where('unified_school_id', $plan->unified_school_id)->get();
                 foreach ($buildings as $building) {
                     $this->updateBuildingComplianceStatus($building);
                 }
@@ -3209,13 +3230,13 @@ public function storeRoom(Request $request)
                 'evacuation_plan',
                 'Evacuation Plan Updated: ' . $plan->plan_no,
                 $user->name . ' updated evacuation plan "' . $plan->plan_no . '" - ' . $planLabel,
-                $plan->school_id,
+                $plan->unified_school_id,
                 null,
                 ['plan_id' => $plan->id, 'plan_type' => $plan->building_id ? 'building' : 'school', 'posted_by' => $user->name]
             );
 
             ActivityLog::log('fire_safety', 'Updated evacuation plan: ' . $plan->plan_no, [
-                'school_id' => $plan->school_id,
+                'unified_school_id' => $plan->unified_school_id,
                 'notes' => $request->special_instructions ?: null,
             ]);
         } catch (\Exception $e) {
@@ -3235,11 +3256,11 @@ public function storeRoom(Request $request)
 
         $plan = FireSafetyEvacuationPlan::findOrFail($id);
 
-        if (auth()->user()->role !== 'admin' && (int)$plan->school_id !== (int)auth()->user()->school_id) {
+        if (auth()->user()->role !== 'admin' && (int)$plan->unified_school_id !== (int)auth()->user()->unified_school_id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized access to this plan.'], 403);
         }
 
-        $schoolId = $plan->school_id;
+        $schoolId = $plan->unified_school_id;
         $planNo = $plan->plan_no;
         $plan->delete();
 
@@ -3251,14 +3272,14 @@ public function storeRoom(Request $request)
             }
         } else {
             // removed school-wide plan; update all buildings
-            $buildings = FireSafetyBuilding::where('school_id', $plan->school_id)->get();
+            $buildings = FireSafetyBuilding::where('unified_school_id', $plan->unified_school_id)->get();
             foreach ($buildings as $building) {
                 $this->updateBuildingComplianceStatus($building);
             }
         }
 
         ActivityLog::log('fire_safety', 'Deleted evacuation plan: ' . $planNo, [
-            'school_id' => $schoolId,
+            'unified_school_id' => $schoolId,
         ]);
 
         return response()->json(['success' => true, 'message' => 'Evacuation plan deleted successfully']);
@@ -3317,7 +3338,7 @@ public function storeRoom(Request $request)
 
     public function getDrillBuildings($schoolId)
     {
-        $buildings = FireSafetyBuilding::where('school_id', $schoolId)->get();
+        $buildings = FireSafetyBuilding::where('unified_school_id', $schoolId)->get();
         return response()->json($buildings);
     }
 
@@ -3327,11 +3348,11 @@ public function storeRoom(Request $request)
             return response()->json(['success' => false, 'message' => 'Viewers cannot schedule drills.'], 403);
         }
 
-        if (auth()->user()->role !== 'admin' && (int)$request->school_id !== (int)auth()->user()->school_id) {
+        if (auth()->user()->role !== 'admin' && (int)$request->unified_school_id !== (int)auth()->user()->unified_school_id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized access to this school.'], 403);
         }
         $request->validate([
-            'school_id' => 'required|exists:firesafety_school_information,id',
+            'unified_school_id' => 'required|exists:schools,id',
             'drill_type' => 'required|string',
             'drill_date' => 'required|date',
             'start_time' => 'nullable',
@@ -3346,7 +3367,7 @@ public function storeRoom(Request $request)
         ]);
 
         $drill = FireSafetyEvacuationDrill::create($request->only([
-            'school_id', 'drill_type', 'drill_date', 'start_time', 'end_time',
+            'unified_school_id', 'drill_type', 'drill_date', 'start_time', 'end_time',
             'participants_count', 'evacuation_time_minutes', 'status',
             'remarks', 'coordinator', 'notes'
         ]));
@@ -3354,7 +3375,7 @@ public function storeRoom(Request $request)
         $drill->buildings()->attach($request->building_ids);
 
         ActivityLog::log('fire_safety', 'Scheduled drill: ' . $drill->drill_type, [
-            'school_id' => $drill->school_id,
+            'unified_school_id' => $drill->unified_school_id,
             'notes' => "Date: {$drill->drill_date}",
         ]);
 
@@ -3375,13 +3396,13 @@ public function storeRoom(Request $request)
 
         $drill = FireSafetyEvacuationDrill::findOrFail($id);
 
-        if (auth()->user()->role !== 'admin' && (int)$drill->school_id !== (int)auth()->user()->school_id) {
+        if (auth()->user()->role !== 'admin' && (int)$drill->unified_school_id !== (int)auth()->user()->unified_school_id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized access to this drill.'], 403);
         }
         $drill->update(['status' => 'cancelled']);
 
         ActivityLog::log('fire_safety', 'Cancelled drill: ' . $drill->drill_type, [
-            'school_id' => $drill->school_id,
+            'unified_school_id' => $drill->unified_school_id,
         ]);
 
         return response()->json(['success' => true, 'message' => 'Drill cancelled successfully']);
@@ -3389,9 +3410,9 @@ public function storeRoom(Request $request)
 
     public function getEvacuationSidebarStats($schoolId)
     {
-        $school = FireSafetySchool::withCount(['buildings', 'evacuationPlans'])->findOrFail($schoolId);
-        $activePlans = FireSafetyEvacuationPlan::where('school_id', $schoolId)->where('status', 'active')->count();
-        $draftPlans = FireSafetyEvacuationPlan::where('school_id', $schoolId)->where('status', 'draft')->count();
+        $school = School::withCount(['buildings', 'evacuationPlans'])->findOrFail($schoolId);
+        $activePlans = FireSafetyEvacuationPlan::where('unified_school_id', $schoolId)->where('status', 'active')->count();
+        $draftPlans = FireSafetyEvacuationPlan::where('unified_school_id', $schoolId)->where('status', 'draft')->count();
 
         return response()->json([
             'total_buildings' => $school->buildings_count,
@@ -3404,23 +3425,23 @@ public function storeRoom(Request $request)
 
     public function getPlanStats($schoolId)
     {
-        $school = FireSafetySchool::withCount(['buildings', 'evacuationPlans'])->findOrFail($schoolId);
+        $school = School::withCount(['buildings', 'evacuationPlans'])->findOrFail($schoolId);
 
-        $activePlans = FireSafetyEvacuationPlan::where('school_id', $schoolId)
+        $activePlans = FireSafetyEvacuationPlan::where('unified_school_id', $schoolId)
             ->where('status', 'active')
             ->count();
 
-        $draftPlans = FireSafetyEvacuationPlan::where('school_id', $schoolId)
+        $draftPlans = FireSafetyEvacuationPlan::where('unified_school_id', $schoolId)
             ->where('status', 'draft')
             ->count();
 
-        $buildingsWithPlansIds = FireSafetyEvacuationPlan::where('school_id', $schoolId)->pluck('building_id');
-        $buildingsWithoutPlans = FireSafetyBuilding::where('school_id', $schoolId)
+        $buildingsWithPlansIds = FireSafetyEvacuationPlan::where('unified_school_id', $schoolId)->pluck('building_id');
+        $buildingsWithoutPlans = FireSafetyBuilding::where('unified_school_id', $schoolId)
             ->whereNotIn('id', $buildingsWithPlansIds)
             ->count();
 
         // Safety score average
-        $buildings = FireSafetyBuilding::where('school_id', $schoolId)->with(['fireExtinguishers', 'alarmSystems'])->get();
+        $buildings = FireSafetyBuilding::where('unified_school_id', $schoolId)->with(['fireExtinguishers', 'alarmSystems'])->get();
         $totalScore = 0;
         foreach ($buildings as $building) {
             $alarmCount = $building->alarmSystems->whereIn('status', ['functional', 'online'])->count();
@@ -3446,7 +3467,7 @@ public function storeRoom(Request $request)
 
     public function getDrillHistory($schoolId)
     {
-        $drills = FireSafetyEvacuationDrill::where('school_id', $schoolId)
+        $drills = FireSafetyEvacuationDrill::where('unified_school_id', $schoolId)
             ->orderBy('drill_date', 'desc')
             ->limit(10)
             ->get();
@@ -3462,7 +3483,7 @@ public function storeRoom(Request $request)
             return redirect()->route('fire-safety.dashboard')->with('error', 'Unauthorized access.');
         }
 
-        $query = FireSafetySchool::with([
+        $query = School::with([
             'buildings.actualRooms',
             'buildings.alarmSystems',
             'buildings.fireExtinguishers.coveredRooms',
@@ -3479,7 +3500,7 @@ public function storeRoom(Request $request)
             $alarmStatusesByType = SystemConfiguration::where('config_type', 'alarm_status')->get()->unique('name')->groupBy('parent_id');
             $extinguisherTypes = SystemConfiguration::where('config_type', 'extinguisher_type')->get()->unique('name');
             $extinguisherStatuses = SystemConfiguration::where('config_type', 'extinguisher_status')->get()->unique('name');
-            $safetyFeatures = SystemConfiguration::where('config_type', 'safety_feature')->orderBy('sort_order')->get()->unique('name');
+            $safetyFeatures = SystemConfiguration::where('config_type', 'safety_feature')->where('is_active', true)->orderBy('sort_order')->get()->unique('name');
             $calculatedPriorities = SystemConfiguration::where('config_type', 'calculated_priority')->orderBy('sort_order')->get()->unique('name');
             $roomTypes = SystemConfiguration::where('config_type', 'room_type')->orderBy('sort_order')->get()->unique('name');
             $inspectionChecklists = SystemConfiguration::where('config_type', 'inspection_checklist')->orderBy('sort_order')->get();
@@ -3491,7 +3512,7 @@ public function storeRoom(Request $request)
                 'calculatedPriorities', 'roomTypes', 'inspectionChecklists', 'inspectionObservers'
             ));
         } else {
-            $school = $query->find($user->school_id);
+            $school = $query->find($user->unified_school_id);
             if ($school) {
                 $school = $this->calculateDetailedSchoolStatus($school);
             }
@@ -3505,8 +3526,8 @@ public function storeRoom(Request $request)
     {
         $user = auth()->user();
 
-        // Use route parameter or user's school_id
-        $finalId = $id ?? $user->school_id;
+        // Use route parameter or user's unified_school_id
+        $finalId = $id ?? $user->unified_school_id;
         $schoolId = (int) $finalId;
 
         if ($schoolId <= 0) {
@@ -3514,7 +3535,7 @@ public function storeRoom(Request $request)
         }
 
         if ($user->role !== 'admin') {
-            if ((int) $user->school_id !== $schoolId) {
+            if ((int) $user->unified_school_id !== $schoolId) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
             }
         }
@@ -3529,11 +3550,11 @@ public function storeRoom(Request $request)
             'email' => 'nullable|email',
         ]);
 
-        $school = FireSafetySchool::findOrFail($schoolId);
+        $school = School::findOrFail($schoolId);
         $school->update($validated);
 
         ActivityLog::log('fire_safety', 'Updated school profile: ' . $school->school_name, [
-            'school_id' => $school->id,
+            'unified_school_id' => $school->id,
             'notes' => $request->input('remarks') ?: null,
         ]);
 
@@ -3543,13 +3564,13 @@ public function storeRoom(Request $request)
     // API endpoints for AJAX calls
     public function getSchoolDetails($id)
     {
-        $school = FireSafetySchool::withCount(['extinguishers', 'alarmSystems', 'buildings', 'evacuationPlans'])
+        $school = School::withCount(['extinguishers', 'alarmSystems', 'buildings', 'evacuationPlans'])
             ->findOrFail($id);
 
         return response()->json([
             'id' => $school->id,
             'school_name' => $school->school_name,
-            'school_id' => $school->school_id,
+            'unified_school_id' => $school->unified_school_id,
             'address' => $school->address,
             'school_head' => $school->school_head,
             'school_drrm_coordinator' => $school->school_drrm_coordinator,
@@ -3563,7 +3584,7 @@ public function storeRoom(Request $request)
 
     public function getSchoolIssues($id)
     {
-        $school = FireSafetySchool::with(['extinguishers', 'alarmSystems'])->findOrFail($id);
+        $school = School::with(['extinguishers', 'alarmSystems'])->findOrFail($id);
         $issues = [];
 
         // Check if school is unconfigured
@@ -3634,11 +3655,11 @@ public function storeRoom(Request $request)
 
         // Restriction: Contributor can only add one school
         if ($user->role === 'contributor') {
-            $existingSchoolCount = FireSafetySchool::where('id', $user->school_id)->count();
-            // If they already have a school assigned, or if they've already created one (in case school_id is not yet set)
+            $existingSchoolCount = School::where('id', $user->unified_school_id)->count();
+            // If they already have a school assigned, or if they've already created one (in case unified_school_id is not yet set)
             // Actually, if it's a contributor, they should only manage their assigned school.
             // If they are trying to create a NEW school, and they are a contributor, we should check if they already have one.
-            if ($user->school_id) {
+            if ($user->unified_school_id) {
                 return response()->json([
                     'success' => false,
                     'message' => 'You are already assigned to a school and cannot create another one.'
@@ -3648,16 +3669,16 @@ public function storeRoom(Request $request)
 
         $validated = $request->validate([
             'school_name' => 'required|string|max:255',
-            'school_id' => 'required|string|max:50|unique:firesafety_school_information,school_id',
+            'unified_school_id' => 'required|string|max:50|unique:firesafety_school_information,unified_school_id',
             'address' => 'required|string|max:500',
             'school_head' => 'required|string|max:255',
             'school_drrm_coordinator' => 'required|string|max:255',
             'status' => 'required|string',
         ]);
 
-        $school = FireSafetySchool::create([
+        $school = School::create([
             'school_name' => $validated['school_name'],
-            'school_id' => $validated['school_id'],
+            'unified_school_id' => $validated['unified_school_id'],
             'address' => $validated['address'],
             'school_head' => $validated['school_head'],
             'school_drrm_coordinator' => $validated['school_drrm_coordinator'],
@@ -3665,12 +3686,12 @@ public function storeRoom(Request $request)
         ]);
 
         ActivityLog::log('fire_safety', 'Created school: ' . $school->school_name, [
-            'school_id' => $school->id,
+            'unified_school_id' => $school->id,
         ]);
 
         // If contributor creates the school, assign them to it automatically
-        if ($user->role === 'contributor' && !$user->school_id) {
-            $user->school_id = $school->id;
+        if ($user->role === 'contributor' && !$user->unified_school_id) {
+            $user->unified_school_id = $school->id;
             $user->save();
         }
 
@@ -3689,7 +3710,7 @@ public function storeRoom(Request $request)
         $user = auth()->user();
 
         // Check if user is admin OR contributor assigned to this school
-        if ($user->role !== 'admin' && ($user->role !== 'contributor' || (int)$user->school_id !== (int)$id)) {
+        if ($user->role !== 'admin' && ($user->role !== 'contributor' || (int)$user->unified_school_id !== (int)$id)) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -3706,12 +3727,12 @@ public function storeRoom(Request $request)
 
         DB::beginTransaction();
         try {
-            $school = FireSafetySchool::withCount(['buildings', 'alarmSystems', 'extinguishers as fire_extinguishers_count', 'evacuationPlans'])
+            $school = School::withCount(['buildings', 'alarmSystems', 'extinguishers as fire_extinguishers_count', 'evacuationPlans'])
                 ->findOrFail($id);
             $schoolName = $school->school_name;
 
             // Capture FULL snapshot of school data before deletion
-            $fullSchoolData = FireSafetySchool::with([
+            $fullSchoolData = School::with([
                 'buildings.actualRooms',
                 'buildings.fireExtinguishers.coveredRooms',
                 'buildings.alarmSystems',
@@ -3729,7 +3750,7 @@ public function storeRoom(Request $request)
 
             $archiveData = [
                 'school_name' => $school->school_name,
-                'school_code' => $school->school_id,
+                'school_code' => $school->unified_school_id,
                 'school_head' => $school->school_head,
                 'drrm_coordinator' => $school->school_drrm_coordinator,
                 'address' => $school->address,
@@ -3742,7 +3763,7 @@ public function storeRoom(Request $request)
 
             // Save to dedicated snapshots table for full data retention
             FireSafetySchoolSnapshot::create([
-                'school_id_code' => $school->school_id,
+                'unified_school_id_code' => $school->unified_school_id,
                 'school_name' => $school->school_name,
                 'full_data' => $fullSchoolData->toArray(),
                 'deleted_by' => $user->name,
@@ -3752,10 +3773,10 @@ public function storeRoom(Request $request)
 
             // Also keep a record in general archives for the history log
             FireSafetyArchive::create([
-                'school_id' => null, // School will be gone
+                'unified_school_id' => null, // School will be gone
                 'type' => 'school_deletion',
                 'item_id' => $school->id,
-                'item_code' => $school->school_id,
+                'item_code' => $school->unified_school_id,
                 'item_data' => $archiveData,
                 'reason' => $reason,
                 'removed_at' => now(),
@@ -3793,7 +3814,7 @@ public function storeRoom(Request $request)
             $school->delete();
 
             ActivityLog::log('fire_safety', 'Deleted school: ' . $schoolName, [
-                'school_id' => (int) $id,
+                'unified_school_id' => (int) $id,
                 'notes' => $reason,
             ]);
 
@@ -3838,12 +3859,12 @@ public function storeRoom(Request $request)
         }
 
         // For contributors, always use their assigned school
-        if (auth()->user()->role === 'contributor' && auth()->user()->school_id) {
-            $request->merge(['school_id' => (string) auth()->user()->school_id]);
+        if (auth()->user()->role === 'contributor' && auth()->user()->unified_school_id) {
+            $request->merge(['unified_school_id' => (string) auth()->user()->unified_school_id]);
         }
 
         $validated = $request->validate([
-            'school_id' => 'required|string',
+            'unified_school_id' => 'required|string',
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'type' => 'required|string|in:danger,warning,info'
@@ -3851,16 +3872,16 @@ public function storeRoom(Request $request)
 
         $user = auth()->user();
         if ($user->role === 'contributor') {
-            if ($validated['school_id'] === 'all') {
+            if ($validated['unified_school_id'] === 'all') {
                 return response()->json(['success' => false, 'message' => 'Contributors cannot send alerts to all schools.'], 403);
             }
-            if ((int)$validated['school_id'] !== (int)$user->school_id) {
+            if ((int)$validated['unified_school_id'] !== (int)$user->unified_school_id) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized access to this school.'], 403);
             }
         }
 
-        if ($validated['school_id'] === 'all') {
-            $schools = FireSafetySchool::all();
+        if ($validated['unified_school_id'] === 'all') {
+            $schools = School::all();
             foreach ($schools as $school) {
                 self::createFireSafetyNotification(
                     'alert',
@@ -3874,7 +3895,7 @@ public function storeRoom(Request $request)
             return response()->json(['success' => true, 'message' => 'Alert applied to all schools!']);
         }
 
-        $school = FireSafetySchool::findOrFail($validated['school_id']);
+        $school = School::findOrFail($validated['unified_school_id']);
 
         self::createFireSafetyNotification(
             'alert',
@@ -3886,7 +3907,7 @@ public function storeRoom(Request $request)
         );
 
         ActivityLog::log('fire_safety', 'Posted alert: ' . $validated['title'], [
-            'school_id' => $school->id,
+            'unified_school_id' => $school->id,
             'notes' => $validated['description'],
         ]);
 
@@ -3900,12 +3921,12 @@ public function storeRoom(Request $request)
         }
 
         // For contributors, always use their assigned school
-        if (auth()->user()->role === 'contributor' && auth()->user()->school_id) {
-            $request->merge(['school_id' => (string) auth()->user()->school_id]);
+        if (auth()->user()->role === 'contributor' && auth()->user()->unified_school_id) {
+            $request->merge(['unified_school_id' => (string) auth()->user()->unified_school_id]);
         }
 
         $validated = $request->validate([
-            'school_id' => 'required|string',
+            'unified_school_id' => 'required|string',
             'title' => 'required|string|max:255',
             'description' => 'required|string',
             'date' => 'required|date',
@@ -3914,16 +3935,16 @@ public function storeRoom(Request $request)
 
         $user = auth()->user();
         if ($user->role === 'contributor') {
-            if ($validated['school_id'] === 'all') {
+            if ($validated['unified_school_id'] === 'all') {
                 return response()->json(['success' => false, 'message' => 'Contributors cannot schedule events for all schools.'], 403);
             }
-            if ((int)$validated['school_id'] !== (int)$user->school_id) {
+            if ((int)$validated['unified_school_id'] !== (int)$user->unified_school_id) {
                 return response()->json(['success' => false, 'message' => 'Unauthorized access to this school.'], 403);
             }
         }
 
-        if ($validated['school_id'] === 'all') {
-            $schools = FireSafetySchool::all();
+        if ($validated['unified_school_id'] === 'all') {
+            $schools = School::all();
             foreach ($schools as $school) {
                 self::createFireSafetyNotification(
                     'event',
@@ -3937,7 +3958,7 @@ public function storeRoom(Request $request)
             return response()->json(['success' => true, 'message' => 'Event scheduled for all schools!']);
         }
 
-        $school = FireSafetySchool::findOrFail($validated['school_id']);
+        $school = School::findOrFail($validated['unified_school_id']);
 
         self::createFireSafetyNotification(
             'event',
@@ -3949,7 +3970,7 @@ public function storeRoom(Request $request)
         );
 
         ActivityLog::log('fire_safety', 'Scheduled event: ' . $validated['title'], [
-            'school_id' => $school->id,
+            'unified_school_id' => $school->id,
             'notes' => $validated['description'] . " (Date: {$validated['date']})",
         ]);
 
@@ -3958,7 +3979,7 @@ public function storeRoom(Request $request)
 
     public function checkAlarmCode($schoolId, $code)
     {
-        $exists = FireSafetyAlarmSystem::where('school_id', $schoolId)
+        $exists = FireSafetyAlarmSystem::where('unified_school_id', $schoolId)
             ->where('code', $code)
             ->exists();
         return response()->json(['exists' => $exists]);
@@ -4341,7 +4362,7 @@ public function storeRoom(Request $request)
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $schools = FireSafetySchool::with([
+        $schools = School::with([
             'buildings.actualRooms',
             'buildings.alarmSystems',
             'buildings.fireExtinguishers.coveredRooms',
@@ -4362,7 +4383,7 @@ public function storeRoom(Request $request)
             if ($school->status === 'warning') $statusText = 'Ongoing Improvement';
 
             fputcsv($handle, [
-                $school->school_id,
+                $school->unified_school_id,
                 $school->school_name,
                 $school->address,
                 $school->school_head,
@@ -4380,7 +4401,7 @@ public function storeRoom(Request $request)
     }
     public function getBuildingHistory($schoolId)
     {
-        $archives = FireSafetyArchive::where('school_id', $schoolId)
+        $archives = FireSafetyArchive::where('unified_school_id', $schoolId)
             ->whereIn('type', ['floor', 'room'])
             ->orderBy('removed_at', 'desc')
             ->get();
@@ -4390,7 +4411,7 @@ public function storeRoom(Request $request)
 
     public function getRemovedBuildingsHistory($schoolId)
     {
-        $archives = FireSafetyArchive::where('school_id', $schoolId)
+        $archives = FireSafetyArchive::where('unified_school_id', $schoolId)
             ->where('type', 'building')
             ->orderBy('removed_at', 'desc')
             ->get();
@@ -4401,7 +4422,7 @@ public function storeRoom(Request $request)
     // MAP: Get Full Data for School Map
     public function getSchoolMapData($schoolId)
     {
-        $school = FireSafetySchool::with([
+        $school = School::with([
             'buildings.actualRooms.roomTypeConfig',
             'buildings.alarmSystems',
             'buildings.alarmSystemsMany',
@@ -4419,7 +4440,7 @@ public function storeRoom(Request $request)
             return response()->json(['success' => false, 'message' => 'Viewers cannot save map layouts.'], 403);
         }
 
-        if (auth()->user()->role !== 'admin' && (int)$schoolId !== (int)auth()->user()->school_id) {
+        if (auth()->user()->role !== 'admin' && (int)$schoolId !== (int)auth()->user()->unified_school_id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized access to this school.'], 403);
         }
 
@@ -4427,12 +4448,12 @@ public function storeRoom(Request $request)
             'layout' => 'required|array'
         ]);
 
-        $school = FireSafetySchool::findOrFail($schoolId);
+        $school = School::findOrFail($schoolId);
         $school->evacuation_map_layout = $request->layout;
         $school->save();
 
         ActivityLog::log('fire_safety', 'Updated evacuation map layout', [
-            'school_id' => $school->id,
+            'unified_school_id' => $school->id,
         ]);
 
         return response()->json(['success' => true, 'message' => 'Map layout saved successfully!']);
@@ -4444,7 +4465,7 @@ public function storeRoom(Request $request)
             return response()->json(['success' => false, 'message' => 'Viewers cannot send notifications.'], 403);
         }
 
-        if (auth()->user()->role !== 'admin' && (int)$schoolId !== (int)auth()->user()->school_id) {
+        if (auth()->user()->role !== 'admin' && (int)$schoolId !== (int)auth()->user()->unified_school_id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized access to this school.'], 403);
         }
 
@@ -4453,7 +4474,7 @@ public function storeRoom(Request $request)
         ]);
 
         $user = auth()->user();
-        $school = FireSafetySchool::findOrFail($schoolId);
+        $school = School::findOrFail($schoolId);
 
         self::createFireSafetyNotification(
             'evacuation_plan',
@@ -4465,7 +4486,7 @@ public function storeRoom(Request $request)
         );
 
         ActivityLog::log('fire_safety', 'Sent map update notification', [
-            'school_id' => $school->id,
+            'unified_school_id' => $school->id,
             'notes' => $request->description,
         ]);
 
@@ -4476,7 +4497,7 @@ public function storeRoom(Request $request)
 
     public function printSchoolSummary()
     {
-        $schools = FireSafetySchool::with([
+        $schools = School::with([
             'buildings.actualRooms',
             'buildings.fireExtinguishers',
             'buildings.alarmSystems'
@@ -4487,7 +4508,7 @@ public function storeRoom(Request $request)
 
     public function printBuildingSummary($schoolId)
     {
-        $school = FireSafetySchool::with([
+        $school = School::with([
             'buildings.actualRooms.roomTypeConfig',
             'buildings.fireExtinguishers',
             'buildings.alarmSystems',
@@ -4499,9 +4520,9 @@ public function storeRoom(Request $request)
 
     public function printAlarmDetails($schoolId)
     {
-        $school = FireSafetySchool::findOrFail($schoolId);
-        $alarms = FireSafetyAlarmSystem::where('school_id', $schoolId)
-            ->with('buildings')
+        $school = School::findOrFail($schoolId);
+        $alarms = FireSafetyAlarmSystem::where('unified_school_id', $schoolId)
+            ->with(['buildings', 'building'])
             ->get();
 
         return view('fire-safety.reports.alarm-details', compact('school', 'alarms'));
@@ -4509,14 +4530,14 @@ public function storeRoom(Request $request)
 
     public function printExtinguisherDetails($schoolId)
     {
-        $school = FireSafetySchool::findOrFail($schoolId);
-        $extinguishers = FireSafetyExtinguisher::where('school_id', $schoolId)
+        $school = School::findOrFail($schoolId);
+        $extinguishers = FireSafetyExtinguisher::where('unified_school_id', $schoolId)
             ->with(['building', 'centerRoom', 'coveredRooms'])
             ->get()
             ->sortBy('code', SORT_NATURAL)
             ->values();
 
-        $rooms = FireSafetyRoom::where('school_id', $schoolId)
+        $rooms = FireSafetyRoom::where('unified_school_id', $schoolId)
             ->with(['building', 'roomTypeConfig', 'extinguishersCoveringThisRoom', 'hostedExtinguisher'])
             ->orderBy('building_id')
             ->orderBy('floor_no')
@@ -4528,21 +4549,21 @@ public function storeRoom(Request $request)
 
     public function printEvacuationPlans(Request $request, $schoolId)
     {
-        $school = FireSafetySchool::findOrFail($schoolId);
+        $school = School::findOrFail($schoolId);
 
         // School-wide plan (building_id is null)
-        $schoolPlan = FireSafetyEvacuationPlan::where('school_id', $schoolId)
+        $schoolPlan = FireSafetyEvacuationPlan::where('unified_school_id', $schoolId)
             ->whereNull('building_id')
             ->first();
 
         // Building-level plans
-        $buildingPlans = FireSafetyEvacuationPlan::where('school_id', $schoolId)
+        $buildingPlans = FireSafetyEvacuationPlan::where('unified_school_id', $schoolId)
             ->whereNotNull('building_id')
             ->with(['building'])
             ->get();
 
         // Legacy: also support filtered queries
-        $query = FireSafetyEvacuationPlan::where('school_id', $schoolId)->with(['building']);
+        $query = FireSafetyEvacuationPlan::where('unified_school_id', $schoolId)->with(['building']);
         if ($request->has('building_id')) {
             $query->where('building_id', $request->building_id);
         }
@@ -4568,8 +4589,8 @@ public function storeRoom(Request $request)
         if ($user->role !== 'admin') {
             // Contributors see: their own notifications + admin-created notifications for their school + global notifications
             $query->where(function($q) use ($user) {
-                $q->where('school_id', $user->school_id)
-                  ->orWhereNull('school_id');
+                $q->where('unified_school_id', $user->unified_school_id)
+                  ->orWhereNull('unified_school_id');
             });
         }
 
@@ -4583,7 +4604,7 @@ public function storeRoom(Request $request)
                 'action_url' => $n->action_url,
                 'action_data' => $n->action_data,
                 'is_read' => $n->is_read,
-                'school_id' => $n->school_id,
+                'unified_school_id' => $n->unified_school_id,
                 'school_name' => $n->school ? $n->school->school_name : null,
                 'created_at' => $n->created_at->toDateTimeString(),
                 'time_ago' => $n->created_at->diffForHumans(),
@@ -4595,8 +4616,8 @@ public function storeRoom(Request $request)
 
         if ($user->role !== 'admin') {
             $unreadCount->where(function($q) use ($user) {
-                $q->where('school_id', $user->school_id)
-                  ->orWhereNull('school_id');
+                $q->where('unified_school_id', $user->unified_school_id)
+                  ->orWhereNull('unified_school_id');
             });
         }
 
@@ -4611,9 +4632,9 @@ public function storeRoom(Request $request)
         $user = auth()->user();
 
         // Get schools for the layout
-        $schoolQuery = FireSafetySchool::query();
+        $schoolQuery = School::query();
         if ($user->role !== 'admin') {
-            $schoolQuery->where('id', $user->school_id);
+            $schoolQuery->where('id', $user->unified_school_id);
         }
         $schools = $schoolQuery->get();
         $activeSchool = $this->getActiveSchool($schools);
@@ -4622,7 +4643,7 @@ public function storeRoom(Request $request)
         $filterSchools = $schools;
 
         // School filter from query parameter
-        $filterSchoolId = $request->query('school_id');
+        $filterSchoolId = $request->query('unified_school_id');
 
         // Get all notifications (now including alerts & events)
         $query = FireSafetyNotification::forCompliance('fire_safety')
@@ -4632,14 +4653,14 @@ public function storeRoom(Request $request)
         if ($user->role !== 'admin') {
             // Contributors see: notifications for their school + global notifications
             $query->where(function($q) use ($user) {
-                $q->where('school_id', $user->school_id)
-                  ->orWhereNull('school_id');
+                $q->where('unified_school_id', $user->unified_school_id)
+                  ->orWhereNull('unified_school_id');
             });
         }
 
         // Apply school filter if selected
         if ($filterSchoolId && $filterSchoolId !== 'all') {
-            $query->where('school_id', $filterSchoolId);
+            $query->where('unified_school_id', $filterSchoolId);
         }
 
         $notifications = $query->paginate(20)->appends($request->query());
@@ -4653,7 +4674,7 @@ public function storeRoom(Request $request)
         $user = auth()->user();
 
         // Authorization check
-        if ($user->role !== 'admin' && $notification->school_id && (int)$user->school_id !== (int)$notification->school_id) {
+        if ($user->role !== 'admin' && $notification->unified_school_id && (int)$user->unified_school_id !== (int)$notification->unified_school_id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -4671,8 +4692,8 @@ public function storeRoom(Request $request)
 
         if ($user->role !== 'admin') {
             $query->where(function($q) use ($user) {
-                $q->where('school_id', $user->school_id)
-                  ->orWhereNull('school_id');
+                $q->where('unified_school_id', $user->unified_school_id)
+                  ->orWhereNull('unified_school_id');
             });
         }
 
@@ -4690,7 +4711,7 @@ public function storeRoom(Request $request)
         $recent = FireSafetyNotification::where('compliance_type', 'fire_safety')
             ->where('type', $type)
             ->where('title', $title)
-            ->where('school_id', $schoolId)
+            ->where('unified_school_id', $schoolId)
             ->where('created_at', '>=', now()->subSeconds(10))
             ->exists();
 
@@ -4701,7 +4722,7 @@ public function storeRoom(Request $request)
         return FireSafetyNotification::create([
             'compliance_type' => 'fire_safety',
             'module' => 'fire_safety',
-            'school_id' => $schoolId,
+            'unified_school_id' => $schoolId,
             'user_id' => auth()->id(),
             'type' => $type,
             'title' => $title,
@@ -4724,7 +4745,7 @@ public function storeRoom(Request $request)
             ->where('status', 'active');
 
         if ($user->role !== 'admin') {
-            $alarmQuery->where('school_id', $user->school_id);
+            $alarmQuery->where('unified_school_id', $user->unified_school_id);
         }
 
         $alarms = $alarmQuery->get();
@@ -4741,13 +4762,13 @@ public function storeRoom(Request $request)
                 FireSafetyNotification::create([
                     'compliance_type' => 'fire_safety',
                     'module' => 'fire_safety',
-                    'school_id' => $alarm->school_id,
+                    'unified_school_id' => $alarm->unified_school_id,
                     'user_id' => null,
                     'type' => 'alarm_due',
                     'title' => 'Alarm Test Due Today: ' . $alarm->code,
                     'message' => 'Alarm ' . $alarm->code . ' is scheduled for testing today.',
                     'action_type' => 'go_test',
-                    'action_data' => ['alarm_id' => $alarm->id, 'school_id' => $alarm->school_id],
+                    'action_data' => ['alarm_id' => $alarm->id, 'unified_school_id' => $alarm->unified_school_id],
                     'is_read' => false,
                 ]);
             }
@@ -4758,14 +4779,14 @@ public function storeRoom(Request $request)
     {
         $validated = $request->validate([
             'item_id' => 'required|string',
-            'school_id' => 'required|exists:firesafety_school_information,id',
+            'unified_school_id' => 'required|exists:schools,id',
             'message' => 'required|string|max:1000'
         ]);
 
-        $school = FireSafetySchool::findOrFail($validated['school_id']);
+        $school = School::findOrFail($validated['unified_school_id']);
 
         $user = auth()->user();
-        if ($user->role !== 'admin' && (int)$user->school_id !== (int)$school->id) {
+        if ($user->role !== 'admin' && (int)$user->unified_school_id !== (int)$school->id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -4783,7 +4804,7 @@ public function storeRoom(Request $request)
         $school->save();
 
         ActivityLog::log('fire_safety', 'Replied to notification', [
-            'school_id' => $school->id,
+            'unified_school_id' => $school->id,
             'notes' => $validated['message'],
         ]);
 
@@ -4791,9 +4812,9 @@ public function storeRoom(Request $request)
     }
     public function uploadMap(Request $request, $id)
     {
-        $school = FireSafetySchool::findOrFail($id);
+        $school = School::findOrFail($id);
 
-        if (auth()->user()->role !== 'admin' && (int)auth()->user()->school_id !== (int)$school->id) {
+        if (auth()->user()->role !== 'admin' && (int)auth()->user()->unified_school_id !== (int)$school->id) {
             return redirect()->back()->with('error', 'Unauthorized access.');
         }
 
@@ -4810,7 +4831,7 @@ public function storeRoom(Request $request)
             $school->save();
 
             \App\Models\ActivityLog::log('fire_safety', 'Uploaded Custom Evacuation Map', [
-                'school_id' => $school->id,
+                'unified_school_id' => $school->id,
             ]);
 
             return redirect()->back()->with('success', 'Evacuation Map uploaded successfully.');

@@ -9,7 +9,7 @@ class FireSafetyInspection extends Model
     protected $table = 'fire_safety_inspections';
 
     protected $fillable = [
-        'school_id',
+        'unified_school_id',
         'drill_type',
         'inspection_date',
         'inspection_time',
@@ -37,6 +37,6 @@ class FireSafetyInspection extends Model
 
     public function school()
     {
-        return $this->belongsTo(FireSafetySchool::class, 'school_id');
+        return $this->belongsTo(School::class, 'unified_school_id');
     }
 }

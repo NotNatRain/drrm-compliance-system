@@ -11,7 +11,7 @@ class FireSafetyExtinguisher extends Model
     protected $table = 'firesafety_fire_extinguishers';
 
     protected $fillable = [
-        'school_id',
+        'unified_school_id',
         'building_id',
         'room_id',
         'code',
@@ -37,7 +37,7 @@ class FireSafetyExtinguisher extends Model
 
     public function school(): BelongsTo
     {
-        return $this->belongsTo(FireSafetySchool::class, 'school_id');
+        return $this->belongsTo(School::class, 'unified_school_id');
     }
 
     public function centerRoom(): BelongsTo

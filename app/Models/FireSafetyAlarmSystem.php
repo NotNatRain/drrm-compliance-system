@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\School;
 
 class FireSafetyAlarmSystem extends Model
 {
     protected $table = 'firesafety_alarm_systems';
 
     protected $fillable = [
-        'school_id',
+        'unified_school_id',
         'building_id',
         'floor_id',
         'code',
@@ -34,6 +35,6 @@ class FireSafetyAlarmSystem extends Model
     }
     public function school()
     {
-        return $this->belongsTo(FireSafetySchool::class, 'school_id');
+        return $this->belongsTo(School::class, 'unified_school_id');
     }
 }
