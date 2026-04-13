@@ -12,13 +12,30 @@
     $formAction = $isEdit
         ? route('comprehensive-school-safety.school.assessments.update', [$school->id, $assessment->id])
         : route('comprehensive-school-safety.school.assessments.store', $school->id);
-    $groupedSections = [
-        'checklist_tools' => [],
-        'pillar_1' => [],
-    ];
+    $groupedSections = [];
+    $divisionLabels = [];
 
     foreach (($assessmentSections ?? []) as $sectionKey => $section) {
-        $division = ($section['division'] ?? 'checklist_tools') === 'pillar_1' ? 'pillar_1' : 'checklist_tools';
+        $division = trim((string) ($section['division'] ?? 'checklist_tools'));
+        if ($division === '') {
+            $division = 'checklist_tools';
+        }
+
+        if (!array_key_exists($division, $groupedSections)) {
+            $groupedSections[$division] = [];
+        }
+
+        if (!array_key_exists($division, $divisionLabels)) {
+            $divisionLabels[$division] = trim((string) ($section['division_label'] ?? ''));
+        }
+
+        if (($divisionLabels[$division] ?? '') === '') {
+            $divisionLabels[$division] = collect(explode('_', $division))
+                ->filter(fn ($part) => $part !== '')
+                ->map(fn ($part) => ucfirst($part))
+                ->implode(' ');
+        }
+
         $groupedSections[$division][$sectionKey] = $section;
     }
 @endphp
@@ -36,12 +53,15 @@
 </div>
 
 <div class="csss-card p-3 mb-4 d-flex flex-wrap gap-2 sticky-top" style="top: 1rem; z-index: 3;">
-    <a href="#checklist-tools" class="btn btn-dark btn-sm px-3">
-        <i class="fas fa-list-check me-1"></i> Checklist Tools
-    </a>
-    <a href="#pillar-1" class="btn btn-outline-dark btn-sm px-3">
-        <i class="fas fa-layer-group me-1"></i> Pillar 1
-    </a>
+    @foreach($divisionLabels as $divisionKey => $divisionLabel)
+        @php
+            $anchorId = 'division-' . preg_replace('/[^a-z0-9]+/i', '-', strtolower((string) $divisionKey));
+            $icon = str_contains(strtolower((string) $divisionLabel), 'pillar') ? 'fas fa-layer-group' : 'fas fa-list-check';
+        @endphp
+        <a href="#{{ $anchorId }}" class="btn {{ $loop->first ? 'btn-dark' : 'btn-outline-dark' }} btn-sm px-3">
+            <i class="{{ $icon }} me-1"></i> {{ $divisionLabel }}
+        </a>
+    @endforeach
 </div>
 
 <form method="POST" action="{{ $formAction }}" class="position-relative">
@@ -78,11 +98,16 @@
         </div>
     </div>
 
-    @if(!empty($groupedSections['checklist_tools']))
-        <div id="checklist-tools" class="mb-3">
-            <h5 class="fw-bold mb-3">Checklist Tools</h5>
+    @foreach($groupedSections as $divisionKey => $sectionsByDivision)
+        @php
+            $divisionAnchorId = 'division-' . preg_replace('/[^a-z0-9]+/i', '-', strtolower((string) $divisionKey));
+            $divisionLabel = $divisionLabels[$divisionKey] ?? 'Assessment Part';
+        @endphp
+        <div id="{{ $divisionAnchorId }}" class="mb-3">
+            <h5 class="fw-bold mb-3">{{ $divisionLabel }}</h5>
         </div>
-        @foreach($groupedSections['checklist_tools'] as $sectionKey => $section)
+
+        @foreach($sectionsByDivision as $sectionKey => $section)
             <div class="csss-card p-4 mb-4">
                 <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
                     <h5 class="fw-bold mb-0">{{ $section['title'] }}</h5>
@@ -91,101 +116,105 @@
 
                 @foreach(($section['items'] ?? []) as $index => $item)
                     @php
-                        $itemText = is_array($item) ? ($item['text'] ?? '') : $item;
+                        $itemText = is_array($item) ? trim((string) ($item['text'] ?? '')) : trim((string) $item);
+                        $itemSubtitle = is_array($item) ? trim((string) ($item['subtitle'] ?? '')) : '';
                         $defaultPoints = is_array($item) ? (float) ($item['default_points'] ?? 0) : 0;
-                        $responseKey = $sectionKey . ':' . md5($itemText);
-                        $saved = $assessmentResponses[$responseKey] ?? null;
-                        $selectedValue = old($sectionKey . '_' . $index, isset($saved['is_compliant']) ? ($saved['is_compliant'] ? 'yes' : 'no') : null);
-                        $remarksValue = old($sectionKey . '_remarks_' . $index, $saved['remarks'] ?? '');
-                        $pointsValue = old($sectionKey . '_points_' . $index, $saved['points'] ?? $defaultPoints);
+                        $subItems = is_array($item) ? (array) ($item['sub_items'] ?? []) : [];
                     @endphp
-                    <div class="assessment-item mb-4">
-                        <div class="d-flex align-items-center gap-3 mb-2">
-                            <strong class="text-primary flex-shrink-0">{{ $index + 1 }}</strong>
-                            <span>{{ $itemText }}</span>
+
+                    @if(!empty($subItems))
+                        <div class="assessment-item mb-4">
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <strong class="text-primary flex-shrink-0">{{ $index + 1 }}</strong>
+                                <span>{{ $itemText }}</span>
+                            </div>
+
+                            @if($itemSubtitle !== '')
+                                <div class="ps-5 mb-2 text-muted small fw-semibold">{{ $itemSubtitle }}</div>
+                            @endif
+
+                            <div class="ps-5 d-flex flex-column gap-3">
+                                @foreach($subItems as $subIndex => $subItem)
+                                    @php
+                                        $subText = is_array($subItem) ? trim((string) ($subItem['text'] ?? '')) : trim((string) $subItem);
+                                        $subDefaultPoints = is_array($subItem) ? (float) ($subItem['default_points'] ?? 0) : 0;
+                                        $criteriaLabel = collect([$itemText, $itemSubtitle !== '' ? $itemSubtitle : null, $subText])->filter(fn ($part) => $part !== null && $part !== '')->implode(' - ');
+                                        $fieldSuffix = $index . '_sub_' . $subIndex;
+                                        $responseKey = $sectionKey . ':' . md5($criteriaLabel);
+                                        $saved = $assessmentResponses[$responseKey] ?? null;
+                                        $selectedValue = old($sectionKey . '_' . $fieldSuffix, isset($saved['is_compliant']) ? ($saved['is_compliant'] ? 'yes' : 'no') : null);
+                                        $remarksValue = old($sectionKey . '_remarks_' . $fieldSuffix, $saved['remarks'] ?? '');
+                                        $pointsValue = old($sectionKey . '_points_' . $fieldSuffix, $saved['points'] ?? $subDefaultPoints);
+                                    @endphp
+                                    <div class="border rounded p-3 bg-light-subtle">
+                                        <div class="d-flex align-items-center gap-2 mb-2">
+                                            <span class="fw-semibold text-secondary">{{ chr(65 + $subIndex) }}.</span>
+                                            <span>{{ $subText }}</span>
+                                        </div>
+                                        <div class="d-flex flex-wrap gap-3 mb-2 align-items-end">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="{{ $sectionKey }}_{{ $fieldSuffix }}" value="yes" id="{{ $sectionKey }}_yes_{{ $fieldSuffix }}" {{ $selectedValue === 'yes' ? 'checked' : '' }} {{ $isView ? 'disabled' : '' }}>
+                                                <label class="form-check-label" for="{{ $sectionKey }}_yes_{{ $fieldSuffix }}">Yes</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="{{ $sectionKey }}_{{ $fieldSuffix }}" value="no" id="{{ $sectionKey }}_no_{{ $fieldSuffix }}" {{ $selectedValue === 'no' ? 'checked' : '' }} {{ $isView ? 'disabled' : '' }}>
+                                                <label class="form-check-label" for="{{ $sectionKey }}_no_{{ $fieldSuffix }}">No</label>
+                                            </div>
+                                            <div>
+                                                <label class="form-label small text-muted mb-1">Points</label>
+                                                <input type="number" min="0" step="0.01" name="{{ $sectionKey }}_points_{{ $fieldSuffix }}" value="{{ $pointsValue }}" class="form-control form-control-sm js-points" data-section="{{ $sectionKey }}" data-division="{{ $divisionKey }}" style="width: 120px;" {{ $isView ? 'disabled' : '' }}>
+                                            </div>
+                                        </div>
+                                        <textarea name="{{ $sectionKey }}_remarks_{{ $fieldSuffix }}" class="form-control form-control-sm" placeholder="Add remarks/observations..." rows="2" {{ $isView ? 'disabled' : '' }}>{{ $remarksValue }}</textarea>
+                                    </div>
+                                @endforeach
+                            </div>
                         </div>
-                        <div class="ps-5 d-flex flex-wrap gap-3 mb-2 align-items-end">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="{{ $sectionKey }}_{{ $index }}" value="yes" id="{{ $sectionKey }}_yes_{{ $index }}" {{ $selectedValue === 'yes' ? 'checked' : '' }} {{ $isView ? 'disabled' : '' }}>
-                                <label class="form-check-label" for="{{ $sectionKey }}_yes_{{ $index }}">Yes</label>
+                    @else
+                        @php
+                            $responseKey = $sectionKey . ':' . md5($itemText);
+                            $saved = $assessmentResponses[$responseKey] ?? null;
+                            $selectedValue = old($sectionKey . '_' . $index, isset($saved['is_compliant']) ? ($saved['is_compliant'] ? 'yes' : 'no') : null);
+                            $remarksValue = old($sectionKey . '_remarks_' . $index, $saved['remarks'] ?? '');
+                            $pointsValue = old($sectionKey . '_points_' . $index, $saved['points'] ?? $defaultPoints);
+                        @endphp
+                        <div class="assessment-item mb-4">
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <strong class="text-primary flex-shrink-0">{{ $index + 1 }}</strong>
+                                <span>{{ $itemText }}</span>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="{{ $sectionKey }}_{{ $index }}" value="no" id="{{ $sectionKey }}_no_{{ $index }}" {{ $selectedValue === 'no' ? 'checked' : '' }} {{ $isView ? 'disabled' : '' }}>
-                                <label class="form-check-label" for="{{ $sectionKey }}_no_{{ $index }}">No</label>
+                            <div class="ps-5 d-flex flex-wrap gap-3 mb-2 align-items-end">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="{{ $sectionKey }}_{{ $index }}" value="yes" id="{{ $sectionKey }}_yes_{{ $index }}" {{ $selectedValue === 'yes' ? 'checked' : '' }} {{ $isView ? 'disabled' : '' }}>
+                                    <label class="form-check-label" for="{{ $sectionKey }}_yes_{{ $index }}">Yes</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="{{ $sectionKey }}_{{ $index }}" value="no" id="{{ $sectionKey }}_no_{{ $index }}" {{ $selectedValue === 'no' ? 'checked' : '' }} {{ $isView ? 'disabled' : '' }}>
+                                    <label class="form-check-label" for="{{ $sectionKey }}_no_{{ $index }}">No</label>
+                                </div>
+                                <div>
+                                    <label class="form-label small text-muted mb-1">Points</label>
+                                    <input type="number" min="0" step="0.01" name="{{ $sectionKey }}_points_{{ $index }}" value="{{ $pointsValue }}" class="form-control form-control-sm js-points" data-section="{{ $sectionKey }}" data-division="{{ $divisionKey }}" style="width: 120px;" {{ $isView ? 'disabled' : '' }}>
+                                </div>
                             </div>
-                            <div>
-                                <label class="form-label small text-muted mb-1">Points</label>
-                                <input type="number" min="0" step="0.01" name="{{ $sectionKey }}_points_{{ $index }}" value="{{ $pointsValue }}" class="form-control form-control-sm js-points" data-section="{{ $sectionKey }}" data-division="checklist_tools" style="width: 120px;" {{ $isView ? 'disabled' : '' }}>
-                            </div>
+                            <textarea name="{{ $sectionKey }}_remarks_{{ $index }}" class="form-control form-control-sm ps-5" placeholder="Add remarks/observations..." rows="2" {{ $isView ? 'disabled' : '' }}>{{ $remarksValue }}</textarea>
                         </div>
-                        <textarea name="{{ $sectionKey }}_remarks_{{ $index }}" class="form-control form-control-sm ps-5" placeholder="Add remarks/observations..." rows="2" {{ $isView ? 'disabled' : '' }}>{{ $remarksValue }}</textarea>
-                    </div>
+                    @endif
                 @endforeach
             </div>
         @endforeach
-    @endif
-
-    @if(!empty($groupedSections['pillar_1']))
-        <div id="pillar-1" class="mb-3">
-            <h5 class="fw-bold mb-3">Pillar 1: Safe Learning Facilities</h5>
-        </div>
-        @foreach($groupedSections['pillar_1'] as $sectionKey => $section)
-            <div class="csss-card p-4 mb-4">
-                <div class="d-flex justify-content-between align-items-center gap-2 mb-3">
-                    <h5 class="fw-bold mb-0">{{ $section['title'] }}</h5>
-                    <span class="badge text-bg-light">Subtotal: <span class="js-section-subtotal" data-section="{{ $sectionKey }}">0</span></span>
-                </div>
-
-                @foreach(($section['items'] ?? []) as $index => $item)
-                    @php
-                        $itemText = is_array($item) ? ($item['text'] ?? '') : $item;
-                        $defaultPoints = is_array($item) ? (float) ($item['default_points'] ?? 0) : 0;
-                        $responseKey = $sectionKey . ':' . md5($itemText);
-                        $saved = $assessmentResponses[$responseKey] ?? null;
-                        $selectedValue = old($sectionKey . '_' . $index, isset($saved['is_compliant']) ? ($saved['is_compliant'] ? 'yes' : 'no') : null);
-                        $remarksValue = old($sectionKey . '_remarks_' . $index, $saved['remarks'] ?? '');
-                        $pointsValue = old($sectionKey . '_points_' . $index, $saved['points'] ?? $defaultPoints);
-                    @endphp
-                    <div class="assessment-item mb-4">
-                        <div class="d-flex align-items-center gap-3 mb-2">
-                            <strong class="text-primary flex-shrink-0">{{ $index + 1 }}</strong>
-                            <span>{{ $itemText }}</span>
-                        </div>
-                        <div class="ps-5 d-flex flex-wrap gap-3 mb-2 align-items-end">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="{{ $sectionKey }}_{{ $index }}" value="yes" id="{{ $sectionKey }}_yes_{{ $index }}" {{ $selectedValue === 'yes' ? 'checked' : '' }} {{ $isView ? 'disabled' : '' }}>
-                                <label class="form-check-label" for="{{ $sectionKey }}_yes_{{ $index }}">Yes</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="{{ $sectionKey }}_{{ $index }}" value="no" id="{{ $sectionKey }}_no_{{ $index }}" {{ $selectedValue === 'no' ? 'checked' : '' }} {{ $isView ? 'disabled' : '' }}>
-                                <label class="form-check-label" for="{{ $sectionKey }}_no_{{ $index }}">No</label>
-                            </div>
-                            <div>
-                                <label class="form-label small text-muted mb-1">Points</label>
-                                <input type="number" min="0" step="0.01" name="{{ $sectionKey }}_points_{{ $index }}" value="{{ $pointsValue }}" class="form-control form-control-sm js-points" data-section="{{ $sectionKey }}" data-division="pillar_1" style="width: 120px;" {{ $isView ? 'disabled' : '' }}>
-                            </div>
-                        </div>
-                        <textarea name="{{ $sectionKey }}_remarks_{{ $index }}" class="form-control form-control-sm ps-5" placeholder="Add remarks/observations..." rows="2" {{ $isView ? 'disabled' : '' }}>{{ $remarksValue }}</textarea>
-                    </div>
-                @endforeach
-            </div>
-        @endforeach
-    @endif
+    @endforeach
 
     <div class="csss-card p-4 mb-4">
         <div class="row g-3">
-            <div class="col-md-4">
-                <div class="border rounded p-3 bg-light">
-                    <small class="text-muted d-block">Checklist Tools Total</small>
-                    <strong class="fs-5" id="checklistToolsTotal">0</strong>
+            @foreach($divisionLabels as $divisionKey => $divisionLabel)
+                <div class="col-md-4">
+                    <div class="border rounded p-3 bg-light">
+                        <small class="text-muted d-block">{{ $divisionLabel }} Total</small>
+                        <strong class="fs-5 js-division-total" data-division-total="{{ $divisionKey }}">0</strong>
+                    </div>
                 </div>
-            </div>
-            <div class="col-md-4">
-                <div class="border rounded p-3 bg-light">
-                    <small class="text-muted d-block">Pillar 1 Total</small>
-                    <strong class="fs-5" id="pillarOneTotal">0</strong>
-                </div>
-            </div>
+            @endforeach
             <div class="col-md-4">
                 <div class="border rounded p-3" style="background: #efe5d6;">
                     <small class="text-muted d-block">Grand Total</small>
@@ -245,18 +274,15 @@
 
     function updateTotals() {
         const sectionTotals = {};
-        const divisionTotals = {
-            checklist_tools: 0,
-            pillar_1: 0,
-        };
+        const divisionTotals = {};
 
         pointInputs.forEach((input) => {
             const value = Math.max(0, parseNumber(input.value));
             const section = input.dataset.section;
-            const division = input.dataset.division === 'pillar_1' ? 'pillar_1' : 'checklist_tools';
+            const division = input.dataset.division || 'checklist_tools';
 
             sectionTotals[section] = (sectionTotals[section] || 0) + value;
-            divisionTotals[division] += value;
+            divisionTotals[division] = (divisionTotals[division] || 0) + value;
         });
 
         document.querySelectorAll('.js-section-subtotal').forEach((el) => {
@@ -264,16 +290,15 @@
             el.textContent = (sectionTotals[key] || 0).toFixed(2);
         });
 
-        const checklistTotal = divisionTotals.checklist_tools || 0;
-        const pillarTotal = divisionTotals.pillar_1 || 0;
-        const grandTotal = checklistTotal + pillarTotal;
+        let grandTotal = 0;
+        document.querySelectorAll('.js-division-total').forEach((node) => {
+            const key = node.dataset.divisionTotal;
+            const total = divisionTotals[key] || 0;
+            node.textContent = total.toFixed(2);
+            grandTotal += total;
+        });
 
-        const checklistNode = document.getElementById('checklistToolsTotal');
-        const pillarNode = document.getElementById('pillarOneTotal');
         const grandNode = document.getElementById('grandTotal');
-
-        if (checklistNode) checklistNode.textContent = checklistTotal.toFixed(2);
-        if (pillarNode) pillarNode.textContent = pillarTotal.toFixed(2);
         if (grandNode) grandNode.textContent = grandTotal.toFixed(2);
     }
 

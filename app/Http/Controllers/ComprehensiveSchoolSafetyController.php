@@ -142,23 +142,149 @@ class ComprehensiveSchoolSafetyController extends Controller
         foreach ($items as $item) {
             if (is_array($item)) {
                 $text = trim((string) ($item['text'] ?? ''));
+                $subtitle = trim((string) ($item['subtitle'] ?? ''));
                 $defaultPoints = (float) ($item['default_points'] ?? 0);
+                $subItems = collect((array) ($item['sub_items'] ?? []))
+                    ->map(function ($subItem) {
+                        if (is_array($subItem)) {
+                            $subText = trim((string) ($subItem['text'] ?? ''));
+                            $subPoints = (float) ($subItem['default_points'] ?? 0);
+                        } else {
+                            $subText = trim((string) $subItem);
+                            $subPoints = 0;
+                        }
+
+                        if ($subText === '') {
+                            return null;
+                        }
+
+                        return [
+                            'text' => $subText,
+                            'default_points' => max(0, $subPoints),
+                        ];
+                    })
+                    ->filter()
+                    ->values()
+                    ->all();
             } else {
                 $text = trim((string) $item);
+                $subtitle = '';
                 $defaultPoints = 0;
+                $subItems = [];
             }
 
             if ($text === '') {
                 continue;
             }
 
-            $normalized[] = [
+            $normalizedItem = [
                 'text' => $text,
                 'default_points' => $defaultPoints,
             ];
+
+            if ($subtitle !== '') {
+                $normalizedItem['subtitle'] = $subtitle;
+            }
+
+            if (!empty($subItems)) {
+                $normalizedItem['sub_items'] = $subItems;
+            }
+
+            $normalized[] = $normalizedItem;
         }
 
         return $normalized;
+    }
+
+    private function normalizeDivisionKey(string $value): string
+    {
+        $normalized = strtolower(trim($value));
+        $normalized = preg_replace('/[^a-z0-9]+/', '_', $normalized) ?? '';
+        $normalized = trim($normalized, '_');
+
+        return $normalized !== '' ? $normalized : 'checklist_tools';
+    }
+
+    private function normalizeDivisionLabel(string $divisionKey, ?string $label = null): string
+    {
+        $candidate = trim((string) ($label ?? ''));
+        if ($candidate !== '') {
+            return $candidate;
+        }
+
+        return collect(explode('_', $divisionKey))
+            ->filter(fn ($part) => $part !== '')
+            ->map(fn ($part) => ucfirst($part))
+            ->implode(' ');
+    }
+
+    private function buildCriteriaLabel(string $itemText, string $subtitle, string $subText): string
+    {
+        $parts = [];
+        if (trim($itemText) !== '') {
+            $parts[] = trim($itemText);
+        }
+        if (trim($subtitle) !== '') {
+            $parts[] = trim($subtitle);
+        }
+        $parts[] = trim($subText);
+
+        return implode(' - ', array_filter($parts));
+    }
+
+    private function expandSectionItemsForSubmission(array $section): array
+    {
+        $expanded = [];
+
+        foreach (($section['items'] ?? []) as $index => $item) {
+            if (is_array($item)) {
+                $itemText = trim((string) ($item['text'] ?? ''));
+                $subtitle = trim((string) ($item['subtitle'] ?? ''));
+                $itemDefaultPoints = (float) ($item['default_points'] ?? 0);
+                $subItems = (array) ($item['sub_items'] ?? []);
+            } else {
+                $itemText = trim((string) $item);
+                $subtitle = '';
+                $itemDefaultPoints = 0;
+                $subItems = [];
+            }
+
+            if ($itemText === '') {
+                continue;
+            }
+
+            if (!empty($subItems)) {
+                foreach ($subItems as $subIndex => $subItem) {
+                    if (is_array($subItem)) {
+                        $subText = trim((string) ($subItem['text'] ?? ''));
+                        $subDefaultPoints = (float) ($subItem['default_points'] ?? 0);
+                    } else {
+                        $subText = trim((string) $subItem);
+                        $subDefaultPoints = 0;
+                    }
+
+                    if ($subText === '') {
+                        continue;
+                    }
+
+                    $expanded[] = [
+                        'field_suffix' => $index . '_sub_' . $subIndex,
+                        'criteria' => $this->buildCriteriaLabel($itemText, $subtitle, $subText),
+                        'default_points' => max(0, $subDefaultPoints),
+                    ];
+                }
+
+                continue;
+            }
+
+            $expanded[] = [
+                'field_suffix' => (string) $index,
+                'criteria' => $itemText,
+                'default_points' => max(0, $itemDefaultPoints),
+            ];
+        }
+
+        return $expanded;
     }
 
     private function normalizeAssessmentSections(array $sections): array
@@ -171,7 +297,8 @@ class ComprehensiveSchoolSafetyController extends Controller
                 : ('section_' . (count($normalized) + 1));
 
             $title = trim((string) ($section['title'] ?? ''));
-            $division = (string) ($section['division'] ?? 'checklist_tools');
+            $division = $this->normalizeDivisionKey((string) ($section['division'] ?? 'checklist_tools'));
+            $divisionLabel = $this->normalizeDivisionLabel($division, (string) ($section['division_label'] ?? ''));
             $items = $this->normalizeSectionItems((array) ($section['items'] ?? []));
 
             if ($title === '' || empty($items)) {
@@ -180,7 +307,8 @@ class ComprehensiveSchoolSafetyController extends Controller
 
             $normalized[$sectionKey] = [
                 'title' => $title,
-                'division' => $division === 'pillar_1' ? 'pillar_1' : 'checklist_tools',
+                'division' => $division,
+                'division_label' => $divisionLabel,
                 'items' => $items,
             ];
         }
@@ -202,6 +330,10 @@ class ComprehensiveSchoolSafetyController extends Controller
 
         $decoded = json_decode((string) ($record->value ?? ''), true);
         if (is_array($decoded) && !empty($decoded)) {
+            if (isset($decoded['sections']) && is_array($decoded['sections'])) {
+                return $this->normalizeAssessmentSections($decoded['sections']);
+            }
+
             return $this->normalizeAssessmentSections($decoded);
         }
 
@@ -210,7 +342,7 @@ class ComprehensiveSchoolSafetyController extends Controller
 
     private function composeStoredCategory(string $division, string $title): string
     {
-        $normalizedDivision = $division === 'pillar_1' ? 'pillar_1' : 'checklist_tools';
+        $normalizedDivision = $this->normalizeDivisionKey($division);
         return $normalizedDivision . self::CATEGORY_DIVIDER . $title;
     }
 
@@ -219,13 +351,15 @@ class ComprehensiveSchoolSafetyController extends Controller
         if (str_contains($stored, self::CATEGORY_DIVIDER)) {
             [$division, $title] = explode(self::CATEGORY_DIVIDER, $stored, 2);
             return [
-                'division' => $division === 'pillar_1' ? 'pillar_1' : 'checklist_tools',
+                'division' => $this->normalizeDivisionKey($division),
+                'division_label' => $this->normalizeDivisionLabel($this->normalizeDivisionKey($division)),
                 'title' => trim($title),
             ];
         }
 
         return [
             'division' => 'checklist_tools',
+            'division_label' => $this->normalizeDivisionLabel('checklist_tools'),
             'title' => trim($stored),
         ];
     }
@@ -303,6 +437,7 @@ class ComprehensiveSchoolSafetyController extends Controller
                 $sections[$sectionKey] = [
                     'title' => $parsed['title'] !== '' ? $parsed['title'] : 'Section',
                     'division' => $parsed['division'],
+                    'division_label' => $parsed['division_label'] ?? $this->normalizeDivisionLabel($parsed['division']),
                     'items' => [],
                 ];
             }
@@ -431,7 +566,7 @@ class ComprehensiveSchoolSafetyController extends Controller
             ]
         );
 
-        ActivityLog::log('comprehensive_safety', 'Registered school for Comprehensive School Safety (from directory): ' . $school->school_name, [
+        ActivityLog::log('comprehensive_school_safety', 'Registered school for Comprehensive School Safety (from directory): ' . $school->school_name, [
             'school_id' => $school->id,
         ]);
 
@@ -568,11 +703,11 @@ class ComprehensiveSchoolSafetyController extends Controller
             ]);
 
             foreach ($assessmentSections as $categoryKey => $section) {
-                foreach ($section['items'] as $index => $item) {
-                    $criteria = (string) $item['text'];
-                    $fieldName = $categoryKey . '_' . $index;
+                foreach ($this->expandSectionItemsForSubmission($section) as $expandedItem) {
+                    $criteria = (string) $expandedItem['criteria'];
+                    $fieldName = $categoryKey . '_' . $expandedItem['field_suffix'];
                     $isCompliant = $request->input($fieldName) === 'yes';
-                    $points = (float) $request->input($categoryKey . '_points_' . $index, $item['default_points'] ?? 0);
+                    $points = (float) $request->input($categoryKey . '_points_' . $expandedItem['field_suffix'], $expandedItem['default_points'] ?? 0);
                     if ($points < 0) {
                         $points = 0;
                     }
@@ -584,7 +719,7 @@ class ComprehensiveSchoolSafetyController extends Controller
                         'criteria' => $criteria,
                         'is_compliant' => $isCompliant,
                         'points' => $points,
-                        'remarks' => $request->input($categoryKey . '_remarks_' . $index),
+                        'remarks' => $request->input($categoryKey . '_remarks_' . $expandedItem['field_suffix']),
                     ]);
                 }
             }
@@ -594,6 +729,11 @@ class ComprehensiveSchoolSafetyController extends Controller
             ]);
 
             $this->saveAssessmentSummary((int) $school->id, (int) $assessment->id, $validated['summary_sheet'] ?? '');
+
+            ActivityLog::log('comprehensive_school_safety', 'Created safety assessment: CSSS-' . str_pad((string) $assessment->id, 4, '0', STR_PAD_LEFT), [
+                'school_id' => $school->id,
+                'notes' => 'Assessed by: ' . ($validated['assessed_by'] ?? 'N/A') . ', Total Score: ' . (string) $totalScore,
+            ]);
         });
 
         return redirect()
@@ -619,11 +759,11 @@ class ComprehensiveSchoolSafetyController extends Controller
             $assessment->items()->delete();
 
             foreach ($assessmentSections as $categoryKey => $section) {
-                foreach ($section['items'] as $index => $item) {
-                    $criteria = (string) $item['text'];
-                    $fieldName = $categoryKey . '_' . $index;
+                foreach ($this->expandSectionItemsForSubmission($section) as $expandedItem) {
+                    $criteria = (string) $expandedItem['criteria'];
+                    $fieldName = $categoryKey . '_' . $expandedItem['field_suffix'];
                     $isCompliant = $request->input($fieldName) === 'yes';
-                    $points = (float) $request->input($categoryKey . '_points_' . $index, $item['default_points'] ?? 0);
+                    $points = (float) $request->input($categoryKey . '_points_' . $expandedItem['field_suffix'], $expandedItem['default_points'] ?? 0);
                     if ($points < 0) {
                         $points = 0;
                     }
@@ -635,7 +775,7 @@ class ComprehensiveSchoolSafetyController extends Controller
                         'criteria' => $criteria,
                         'is_compliant' => $isCompliant,
                         'points' => $points,
-                        'remarks' => $request->input($categoryKey . '_remarks_' . $index),
+                        'remarks' => $request->input($categoryKey . '_remarks_' . $expandedItem['field_suffix']),
                     ]);
                 }
             }
@@ -647,6 +787,11 @@ class ComprehensiveSchoolSafetyController extends Controller
             ]);
 
             $this->saveAssessmentSummary((int) $school->id, (int) $assessment->id, $validated['summary_sheet'] ?? '');
+
+            ActivityLog::log('comprehensive_school_safety', 'Updated safety assessment: CSSS-' . str_pad((string) $assessment->id, 4, '0', STR_PAD_LEFT), [
+                'school_id' => $school->id,
+                'notes' => 'Assessed by: ' . ($validated['assessed_by'] ?? 'N/A') . ', Total Score: ' . (string) $totalScore,
+            ]);
         });
 
         return redirect()
@@ -686,9 +831,14 @@ class ComprehensiveSchoolSafetyController extends Controller
                 'sections' => ['required', 'array', 'min:1'],
                 'sections.*.title' => ['required', 'string'],
                 'sections.*.division' => ['required', 'string'],
+                'sections.*.division_label' => ['nullable', 'string'],
                 'sections.*.items' => ['required', 'array', 'min:1'],
                 'sections.*.items.*.text' => ['nullable', 'string'],
+                'sections.*.items.*.subtitle' => ['nullable', 'string'],
                 'sections.*.items.*.default_points' => ['nullable', 'numeric', 'min:0'],
+                'sections.*.items.*.sub_items' => ['nullable', 'array'],
+                'sections.*.items.*.sub_items.*.text' => ['nullable', 'string'],
+                'sections.*.items.*.sub_items.*.default_points' => ['nullable', 'numeric', 'min:0'],
             ]);
 
             $sections = [];
@@ -697,6 +847,7 @@ class ComprehensiveSchoolSafetyController extends Controller
                     'key' => 'section_' . ($index + 1),
                     'title' => $section['title'] ?? '',
                     'division' => $section['division'] ?? 'checklist_tools',
+                    'division_label' => $section['division_label'] ?? '',
                     'items' => $section['items'] ?? [],
                 ];
             }
@@ -712,25 +863,61 @@ class ComprehensiveSchoolSafetyController extends Controller
         foreach ($sections as $section) {
             $key = (string) ($section['key'] ?? '');
             $title = trim((string) ($section['title'] ?? ''));
-            $division = (string) ($section['division'] ?? 'checklist_tools');
+            $division = $this->normalizeDivisionKey((string) ($section['division'] ?? 'checklist_tools'));
+            $divisionLabel = $this->normalizeDivisionLabel($division, (string) ($section['division_label'] ?? ''));
             $items = collect($section['items'] ?? [])
                 ->map(function ($item) {
                     if (is_array($item)) {
                         $text = trim((string) ($item['text'] ?? ''));
+                        $subtitle = trim((string) ($item['subtitle'] ?? ''));
                         $points = (float) ($item['default_points'] ?? 0);
+                        $subItems = collect((array) ($item['sub_items'] ?? []))
+                            ->map(function ($subItem) {
+                                if (is_array($subItem)) {
+                                    $subText = trim((string) ($subItem['text'] ?? ''));
+                                    $subPoints = (float) ($subItem['default_points'] ?? 0);
+                                } else {
+                                    $subText = trim((string) $subItem);
+                                    $subPoints = 0;
+                                }
+
+                                if ($subText === '') {
+                                    return null;
+                                }
+
+                                return [
+                                    'text' => $subText,
+                                    'default_points' => max(0, $subPoints),
+                                ];
+                            })
+                            ->filter()
+                            ->values()
+                            ->all();
                     } else {
                         $text = trim((string) $item);
+                        $subtitle = '';
                         $points = 0;
+                        $subItems = [];
                     }
 
                     if ($text === '') {
                         return null;
                     }
 
-                    return [
+                    $normalizedItem = [
                         'text' => $text,
                         'default_points' => max(0, $points),
                     ];
+
+                    if ($subtitle !== '') {
+                        $normalizedItem['subtitle'] = $subtitle;
+                    }
+
+                    if (!empty($subItems)) {
+                        $normalizedItem['sub_items'] = $subItems;
+                    }
+
+                    return $normalizedItem;
                 })
                 ->filter()
                 ->values()
@@ -742,7 +929,8 @@ class ComprehensiveSchoolSafetyController extends Controller
 
             $cleaned[$key] = [
                 'title' => $title,
-                'division' => $division === 'pillar_1' ? 'pillar_1' : 'checklist_tools',
+                'division' => $division,
+                'division_label' => $divisionLabel,
                 'items' => $items,
             ];
         }
@@ -763,6 +951,11 @@ class ComprehensiveSchoolSafetyController extends Controller
                 'value' => json_encode($cleaned),
             ]
         );
+
+        ActivityLog::log('comprehensive_school_safety', 'Updated assessment questionnaire template', [
+            'school_id' => $school->id,
+            'notes' => 'Sections updated: ' . (string) count($cleaned),
+        ]);
 
         return redirect()
             ->route('comprehensive-school-safety.school.assessments', $school->id)
@@ -797,7 +990,7 @@ class ComprehensiveSchoolSafetyController extends Controller
             'guardian_contact' => ['nullable', 'string', 'max:255'],
         ]);
 
-        ComprehensiveStudent::create([
+        $student = ComprehensiveStudent::create([
             'school_id' => $school->id,
             'name' => $validated['student_name'],
             'grade_level' => $validated['grade_level'] ?? null,
@@ -805,6 +998,11 @@ class ComprehensiveSchoolSafetyController extends Controller
             'student_lrn' => $validated['student_lrn'] ?? null,
             'guardian_name' => $validated['guardian_name'] ?? null,
             'guardian_contact' => $validated['guardian_contact'] ?? null,
+        ]);
+
+        ActivityLog::log('comprehensive_school_safety', 'Added student: ' . ($student->name ?? $validated['student_name']), [
+            'school_id' => $school->id,
+            'notes' => 'Grade: ' . ($student->grade_level ?? 'N/A') . ', Section: ' . ($student->section ?? 'N/A'),
         ]);
 
         return redirect()
@@ -1016,6 +1214,11 @@ class ComprehensiveSchoolSafetyController extends Controller
         $historyRecord->value = $history->take(30)->values()->toJson();
         $historyRecord->save();
 
+        ActivityLog::log('comprehensive_school_safety', 'Imported student list file: ' . $validated['student_list_file']->getClientOriginalName(), [
+            'school_id' => $school->id,
+            'notes' => 'Added: ' . (string) $created . ', Updated: ' . (string) $updated,
+        ]);
+
         return redirect()
             ->route('comprehensive-school-safety.school.students', $school->id)
             ->with('success', "Student list imported. {$created} added, {$updated} updated.");
@@ -1064,6 +1267,11 @@ class ComprehensiveSchoolSafetyController extends Controller
         }
 
         $student->update($payload);
+
+        ActivityLog::log('comprehensive_school_safety', 'Updated student record: ' . ($student->name ?? ('Student #' . $student->id)), [
+            'school_id' => $school->id,
+            'notes' => 'Grade: ' . ($student->grade_level ?? 'N/A') . ', Section: ' . ($student->section ?? 'N/A'),
+        ]);
 
         return redirect()
             ->route('comprehensive-school-safety.school.students', $school->id)
@@ -1117,41 +1325,29 @@ class ComprehensiveSchoolSafetyController extends Controller
         $school = $this->findSchoolOrAbortForUser((int) $schoolId);
         $fireSafetyBuildings = $school->buildings()->latest()->get();
         $fireSafetyPlan = $school->schoolEvacuationPlan;
+        $facilities = $school->facilities()->latest()->get();
 
-        $riskRegister = $fireSafetyBuildings->map(function ($building) use ($fireSafetyPlan) {
+        $riskRegister = $fireSafetyBuildings->map(function ($building) use ($fireSafetyPlan, $school) {
             $riskLevel = $building->safetyStatus;
 
             return [
+                'building_id' => $building->id,
                 'title' => $building->building_name ?? ('Building ' . $building->building_no),
-                'score' => $building->safety_score,
                 'status' => $building->safetyStatusLabel,
                 'color' => $building->safetyStatusColor,
-                'summary' => trim(($building->compliance_reason ?? 'No compliance notes recorded.') . ' ' . ($building->evacuationPlan ? '' : 'No building evacuation plan linked.')),
+                'floors' => (int) ($building->floors ?? 0),
+                'rooms' => (int) ($building->rooms ?? 0),
+                'extinguishers' => (int) ($building->active_extinguishers_count ?? 0),
+                'alarms' => (int) ($building->functional_alarms_count ?? 0),
                 'exits' => (int) ($building->emergency_exits ?? 0),
-                'extinguishers' => $building->active_extinguishers_count,
-                'alarms' => $building->functional_alarms_count,
+                'description' => trim((string) ($building->description ?? '')),
                 'needs_attention' => $riskLevel !== 'good' || !$building->evacuationPlan,
-                'action' => $building->evacuationPlan ? 'Review and validate existing fire safety records.' : 'Create or attach a building evacuation plan.',
+                'manage_url' => route('fire-safety.buildings', [
+                    'school_id' => $school->id,
+                    'building_id' => $building->id,
+                ]),
             ];
         })->sortByDesc('needs_attention')->values();
-
-        $referenceFacilities = collect([
-            [
-                'label' => 'Evacuation Center',
-                'value' => $school->evacuation_location ?: 'No evacuation center linked yet',
-                'meta' => $school->evacuation_capacity ? 'Capacity: ' . $school->evacuation_capacity : 'Read-only reference from school profile',
-            ],
-            [
-                'label' => 'Primary Assembly Area',
-                'value' => $fireSafetyPlan?->primary_assembly_area ?? 'No assembly area linked yet',
-                'meta' => $fireSafetyPlan ? 'From Fire Safety evacuation plan' : 'No fire safety map/plan attached yet',
-            ],
-            [
-                'label' => 'Secondary Assembly Area',
-                'value' => $fireSafetyPlan?->secondary_assembly_area ?? 'No secondary assembly area linked yet',
-                'meta' => $fireSafetyPlan ? 'From Fire Safety evacuation plan' : 'No fire safety map/plan attached yet',
-            ],
-        ]);
 
         $assessmentSummary = [
             'building_count' => $fireSafetyBuildings->count(),
@@ -1161,26 +1357,13 @@ class ComprehensiveSchoolSafetyController extends Controller
             'poor_count' => $fireSafetyBuildings->where('safetyStatus', 'poor')->count(),
         ];
 
-        $actionItems = $riskRegister
-            ->filter(fn ($item) => $item['needs_attention'])
-            ->map(function ($item) {
-                return [
-                    'title' => $item['title'],
-                    'action' => $item['action'],
-                    'status' => 'Open',
-                    'color' => 'danger',
-                ];
-            })
-            ->values();
-
         return view('comprehensive-school-safety.school-facilities', compact(
             'school',
             'fireSafetyBuildings',
             'fireSafetyPlan',
             'assessmentSummary',
             'riskRegister',
-            'referenceFacilities',
-            'actionItems'
+            'facilities'
         ));
     }
 
@@ -1190,22 +1373,62 @@ class ComprehensiveSchoolSafetyController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'type' => ['required', 'string', 'max:255'],
-            'condition' => ['required', 'string', 'in:good,fair,needs_repair,condemned'],
+            'type' => ['required', 'string', 'in:commercial,industrial,residential,educational,public/institutional,assembly_area'],
+            'condition' => ['required', 'string', 'in:excellent,good,fair,poor,critical'],
             'description' => ['nullable', 'string'],
+            'remarks' => ['nullable', 'string'],
         ]);
 
-        ComprehensiveFacility::create([
+        $facility = ComprehensiveFacility::create([
             'school_id' => $school->id,
             'name' => $validated['name'],
             'type' => $validated['type'],
             'condition' => $validated['condition'],
             'description' => $validated['description'] ?? null,
+            'remarks' => $validated['remarks'] ?? null,
+        ]);
+
+        ActivityLog::log('comprehensive_school_safety', 'Added facility: ' . $facility->name, [
+            'school_id' => $school->id,
+            'notes' => 'Type: ' . ($facility->type ?? 'N/A') . ', Condition: ' . ($facility->condition ?? 'N/A'),
         ]);
 
         return redirect()
             ->route('comprehensive-school-safety.school.facilities', $school->id)
             ->with('success', 'Facility added successfully.');
+    }
+
+    public function updateFacility(Request $request, $schoolId, $facilityId)
+    {
+        $school = $this->findSchoolOrAbortForUser((int) $schoolId);
+        $facility = ComprehensiveFacility::query()
+            ->where('school_id', $school->id)
+            ->findOrFail((int) $facilityId);
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'type' => ['nullable', 'string', 'in:commercial,industrial,residential,educational,public/institutional,assembly_area'],
+            'condition' => ['required', 'string', 'in:excellent,good,fair,poor,critical'],
+            'description' => ['nullable', 'string'],
+            'remarks' => ['nullable', 'string'],
+        ]);
+
+        $facility->update([
+            'name' => $validated['name'],
+            'type' => $validated['type'] ?? $facility->type,
+            'condition' => $validated['condition'],
+            'description' => array_key_exists('description', $validated) ? $validated['description'] : $facility->description,
+            'remarks' => $validated['remarks'] ?? null,
+        ]);
+
+        ActivityLog::log('comprehensive_school_safety', 'Updated facility: ' . $facility->name, [
+            'school_id' => $school->id,
+            'notes' => 'Type: ' . ($facility->type ?? 'N/A') . ', Condition: ' . ($facility->condition ?? 'N/A'),
+        ]);
+
+        return redirect()
+            ->route('comprehensive-school-safety.school.facilities', $school->id)
+            ->with('success', 'Facility updated successfully.');
     }
 
     public function schoolReports($schoolId)

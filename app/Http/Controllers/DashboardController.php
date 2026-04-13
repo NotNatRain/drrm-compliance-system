@@ -42,6 +42,23 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         $isAdmin = $user->role === 'admin';
+
+        $contributorAssignedSchoolId = null;
+        if ($user->role === 'contributor') {
+            $contributorAssignedSchoolId = $user->school_id
+                ?: ($user->typhoon_school_id ?: $user->incident_school_id);
+        }
+        $contributorAssignedSchool = $contributorAssignedSchoolId
+            ? School::find((int) $contributorAssignedSchoolId)
+            : null;
+        $contributorSchoolAccountUsers = collect();
+        if ($contributorAssignedSchool) {
+            $contributorSchoolAccountUsers = User::query()
+                ->where('school_id', $contributorAssignedSchool->id)
+                ->where('position', 'School Account')
+                ->orderBy('name')
+                ->get(['id', 'name', 'email', 'role', 'position']);
+        }
         
         $schools = School::orderBy('school_name')->get();
         if ($user->role === 'contributor' && $user->school_id) {
@@ -54,7 +71,72 @@ class DashboardController extends Controller
         }
         
         $announcements = Announcement::where('is_active', true)->latest()->get();
-        return view('dashboard', compact('schools', 'announcements', 'allSchools', 'isAdmin'));
+        return view('dashboard', compact('schools', 'announcements', 'allSchools', 'isAdmin', 'contributorAssignedSchool', 'contributorSchoolAccountUsers'));
+    }
+
+    public function updateAssignedSchool(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user || $user->role !== 'contributor') {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $assignedSchoolId = $user->school_id ?: ($user->typhoon_school_id ?: $user->incident_school_id);
+        if (!$assignedSchoolId) {
+            return response()->json(['success' => false, 'message' => 'No assigned school found for this account.'], 422);
+        }
+
+        $school = School::findOrFail((int) $assignedSchoolId);
+
+        $rules = [
+            'school_name' => 'required|string|max:255|unique:schools,school_name,' . $school->id,
+            'school_id' => 'nullable|string|max:255',
+            'address' => 'required|string',
+            'school_head' => 'nullable|string|max:255',
+            'drrm_coordinator' => 'nullable|string|max:255',
+            'district' => 'nullable|string|max:255',
+            'division' => 'nullable|string|max:255',
+            'region' => 'nullable|string|max:255',
+            'contact_number' => 'nullable|string|max:255',
+            'contact_number_2' => 'nullable|string|max:255',
+            'number_students' => 'nullable|integer|min:0',
+            'number_personnel' => 'nullable|integer|min:0',
+            'emergency_resources' => 'nullable|string',
+        ];
+
+        if (Schema::hasColumn('schools', 'number_gates')) {
+            $rules['number_gates'] = 'nullable|integer|min:0';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+        }
+
+        $payload = $request->only([
+            'school_name',
+            'school_id',
+            'address',
+            'school_head',
+            'drrm_coordinator',
+            'district',
+            'division',
+            'region',
+            'contact_number',
+            'contact_number_2',
+            'number_students',
+            'number_personnel',
+            'number_gates',
+            'emergency_resources',
+        ]);
+
+        if (!Schema::hasColumn('schools', 'number_gates')) {
+            unset($payload['number_gates']);
+        }
+
+        $school->update($payload);
+
+        return response()->json(['success' => true, 'message' => 'Assigned school information updated successfully.']);
     }
 
     /**
@@ -104,6 +186,41 @@ class DashboardController extends Controller
             'school_head_user' => $schoolHeadUser,
             'school_drrm_user' => $schoolDrrmUser,
             'school_account_users' => $schoolAccountUsers,
+        ]);
+    }
+
+    public function checkSchoolModuleRegistration(Request $request)
+    {
+        $validated = $request->validate([
+            'school_id' => 'nullable|integer|exists:schools,id',
+            'module' => 'required|string|in:fire_safety,typhoon_flood,incident_checklist,comprehensive_school_safety,hazard_mapping',
+        ]);
+
+        $schoolId = isset($validated['school_id']) ? (int) $validated['school_id'] : null;
+        if (!$schoolId) {
+            return response()->json([
+                'registered' => true,
+                'message' => 'No school scope provided for this redirect.',
+            ]);
+        }
+
+        $school = School::with('specifics')->findOrFail($schoolId);
+        $module = $validated['module'];
+
+        $registered = match ($module) {
+            'fire_safety' => $school->specifics->where('module', 'fire_safety')->where('key', 'original_fire_safety_id')->isNotEmpty(),
+            'typhoon_flood' => $school->specifics->where('module', 'typhoon_flood')->where('key', 'original_evacuation_center_id')->isNotEmpty(),
+            'incident_checklist' => $school->specifics->where('module', 'incident')->where('key', 'original_incident_school_id')->isNotEmpty(),
+            'comprehensive_school_safety' => $school->specifics->where('module', 'comprehensive')->where('key', 'original_cmpr_school_id')->isNotEmpty(),
+            'hazard_mapping' => $school->specifics->where('module', 'hazard_mapping')->isNotEmpty(),
+            default => false,
+        };
+
+        return response()->json([
+            'registered' => $registered,
+            'message' => $registered
+                ? 'Module registration found for this school.'
+                : 'This module still has not registered this school yet. Contact administrator to register it.',
         ]);
     }
 
@@ -426,7 +543,7 @@ class DashboardController extends Controller
 
         $user = User::findOrFail($id);
 
-        $allModules = [
+        $allowedModules = [
             'fire_safety',
             'typhoon_flood',
             'incident_checklist',
@@ -434,47 +551,25 @@ class DashboardController extends Controller
             'hazard_mapping',
         ];
 
-        $user->module_access = $request->modules ?? [];
+        $selectedModules = collect((array) $request->input('modules', []))
+            ->filter(fn ($module) => in_array($module, $allowedModules, true))
+            ->values()
+            ->all();
 
-        // Fire Safety school assignment
-        if ($request->school_id === 'encode') {
-            $user->school_id = null;
-            $user->needs_fs_registration = true;
-        } elseif (!empty($request->school_id)) {
-            $user->school_id = $request->school_id;
-            $user->needs_fs_registration = false;
-        }
+        $universalSchoolId = $request->filled('universal_school_id')
+            ? (int) $request->input('universal_school_id')
+            : null;
 
-        // Comprehensive School Safety assignment (mapped to existing Fire Safety assignment)
-        if (!empty($request->school_safety_id)) {
-            $mappedFireSafetySchoolId = $this->resolveFireSafetySchoolIdFromComprehensiveSchoolId((int) $request->school_safety_id);
+        $hasModule = fn (string $module): bool => in_array($module, $selectedModules, true);
 
-            if ($mappedFireSafetySchoolId) {
-                $user->school_id = $mappedFireSafetySchoolId;
-                $user->needs_fs_registration = false;
-            }
-        }
+        // Uncheck means unassign; check means assign using the universal school.
+        $user->school_id = ($hasModule('fire_safety') || $hasModule('comprehensive_school_safety')) ? $universalSchoolId : null;
+        $user->typhoon_school_id = $hasModule('typhoon_flood') ? $universalSchoolId : null;
+        $user->incident_school_id = $hasModule('incident_checklist') ? $universalSchoolId : null;
 
-        // Typhoon school assignment
-        if ($request->typhoon_school_id === 'encode') {
-            $user->typhoon_school_id = null;
-            $user->needs_tf_registration = true;
-        } else {
-            $user->typhoon_school_id = $request->filled('typhoon_school_id') ? (int) $request->typhoon_school_id : null;
-            $user->needs_tf_registration = false;
-        }
-
-        // Incident Checklist school assignment
-        $user->incident_school_id = $request->incident_school_id ?: null;
-
-        $hasSchoolAssignment = !empty($user->school_id)
-            || !empty($user->typhoon_school_id)
-            || !empty($user->incident_school_id);
-
-        // If a user has an assigned school, grant all modules by default.
-        if ($hasSchoolAssignment && $user->role !== 'admin') {
-            $user->module_access = $allModules;
-        }
+        $user->needs_fs_registration = false;
+        $user->needs_tf_registration = false;
+        $user->module_access = $selectedModules;
 
         $user->save();
 
