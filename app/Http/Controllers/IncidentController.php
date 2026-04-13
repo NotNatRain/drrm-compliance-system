@@ -12,6 +12,7 @@ use App\Models\School;
 use App\Models\ActivityLog;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpWord\PhpWord;
 
@@ -102,6 +103,8 @@ class IncidentController extends Controller
         }
 
         // Admin/Viewer Logic
+        $this->syncPhilippinePublicHolidays($year);
+
         // Get calendar data
         $calendarData = $this->getCalendarData($year, $month);
 
@@ -838,21 +841,6 @@ class IncidentController extends Controller
             $complianceValues[] = $group->count();
         }
 
-        // Daily trend (incidents only) within the month
-        $dailyGroups = $incidents
-            ->where('entry_type', 'incident')
-            ->groupBy(function ($item) {
-                return $item->incident_date->format('Y-m-d');
-            })
-            ->sortKeys();
-
-        $trendLabels = [];
-        $trendValues = [];
-        foreach ($dailyGroups as $date => $group) {
-            $trendLabels[] = $date;
-            $trendValues[] = $group->count();
-        }
-
         return [
             'total' => $total,
             'incidents' => $incidentCount,
@@ -866,11 +854,85 @@ class IncidentController extends Controller
                 'labels' => $complianceLabels,
                 'values' => $complianceValues,
             ],
-            'trend' => [
-                'labels' => $trendLabels,
-                'values' => $trendValues,
-            ],
         ];
+    }
+
+    /**
+     * Auto-sync Philippines public holidays as editable compliance logs.
+     */
+    private function syncPhilippinePublicHolidays(int $year): void
+    {
+        if ($year < 2000 || $year > 2100) {
+            return;
+        }
+
+        $cacheKey = "incident_holiday_sync_ph_{$year}";
+        if (cache()->has($cacheKey)) {
+            return;
+        }
+
+        try {
+            $endpoint = "https://date.nager.at/api/v3/PublicHolidays/{$year}/PH";
+            $rawResponse = @file_get_contents($endpoint);
+            if ($rawResponse === false) {
+                return;
+            }
+
+            $holidays = json_decode($rawResponse, true);
+            if (!is_array($holidays) || empty($holidays)) {
+                cache()->put($cacheKey, true, now()->addHours(12));
+                return;
+            }
+
+            $holidayStatus = IncidentStatus::firstOrCreate(
+                ['name' => 'Holiday'],
+                [
+                    'color_class' => 'status-no-suspension',
+                    'short_code' => 'HOL',
+                    'is_compliance' => true,
+                ]
+            );
+
+            foreach ($holidays as $holiday) {
+                $holidayDate = isset($holiday['date']) ? Carbon::parse($holiday['date'])->toDateString() : null;
+                if (!$holidayDate) {
+                    continue;
+                }
+
+                IncidentCalendar::firstOrCreate(
+                    [
+                        'incident_date' => $holidayDate,
+                        'entry_type' => 'compliance',
+                        'school_name' => 'All Schools',
+                        'reported_by' => 'Holiday API',
+                    ],
+                    [
+                        'incident_status_id' => $holidayStatus->id,
+                        'status' => 'accepted',
+                        'remarks' => trim((string) (($holiday['localName'] ?? '') . ' - ' . ($holiday['name'] ?? 'Public Holiday')), ' -'),
+                        'affected_population' => 0,
+                        'affected_families' => 0,
+                        'is_verified' => true,
+                        'verified_at' => now(),
+                        'verified_by' => 'Holiday API',
+                        'additional_data' => [
+                            'source' => 'holiday_api',
+                            'country' => 'PH',
+                            'local_name' => $holiday['localName'] ?? null,
+                            'holiday_name' => $holiday['name'] ?? null,
+                            'types' => $holiday['types'] ?? [],
+                        ],
+                    ]
+                );
+            }
+
+            cache()->put($cacheKey, true, now()->addHours(12));
+        } catch (\Throwable $exception) {
+            Log::warning('Incident holiday auto-sync failed.', [
+                'year' => $year,
+                'error' => $exception->getMessage(),
+            ]);
+        }
     }
 
     /**

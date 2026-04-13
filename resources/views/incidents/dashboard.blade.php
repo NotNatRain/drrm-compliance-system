@@ -792,7 +792,8 @@
                                     $dayHoverItems->push(['type' => 'Incident', 'name' => $inc->incidentType->name ?? 'Incident', 'school' => $inc->school_name ?? '']);
                                 }
                                 foreach ($day['compliance'] as $ce) {
-                                    $dayHoverItems->push(['type' => 'Event', 'name' => $ce->incidentStatus->name ?? 'Event', 'school' => $ce->school_name ?? '']);
+                                    $isHoliday = ($ce->school_name === 'All Schools') || (($ce->additional_data['source'] ?? null) === 'holiday_api') || (($ce->incidentStatus->name ?? '') === 'Holiday');
+                                    $dayHoverItems->push(['type' => $isHoliday ? 'Holiday' : 'Event', 'name' => $isHoliday ? 'Holiday' : ($ce->incidentStatus->name ?? 'Event'), 'school' => $ce->school_name ?? '']);
                                 }
                                 $dayHoverJson = $dayHoverItems->isEmpty() ? '' : $dayHoverItems->take(8)->toJson();
                             @endphp
@@ -805,7 +806,10 @@
                                     <span class="day-num">{{ $day['day'] }}</span>
                                     @if(count($day['compliance']) > 0)
                                         @foreach($day['compliance']->take(1) as $ce)
-                                            <span class="badge {{ $ce->incidentStatus->color_class ?? 'status-no-suspension' }}" title="{{ $ce->incidentStatus->name ?? 'Event' }}">E</span>
+                                            @php
+                                                $isHoliday = ($ce->school_name === 'All Schools') || (($ce->additional_data['source'] ?? null) === 'holiday_api') || (($ce->incidentStatus->name ?? '') === 'Holiday');
+                                            @endphp
+                                            <span class="badge {{ $isHoliday ? 'bg-warning text-dark' : ($ce->incidentStatus->color_class ?? 'status-no-suspension') }}" title="{{ $isHoliday ? 'Holiday' : ($ce->incidentStatus->name ?? 'Event') }}">{{ $isHoliday ? 'H' : 'E' }}</span>
                                         @endforeach
                                     @endif
                                 </div>
@@ -881,11 +885,14 @@
                                                 <small class="text-muted" style="font-size: 0.7rem;">{{ $incident->created_at->format('h:i A') }}</small>
                                             </td>
                                             <td>
-                                                <div class="school-name" style="font-size: 0.85rem;">{{ $incident->school_name }}</div>
+                                                <div class="school-name" style="font-size: 0.85rem;">{{ ($incident->entry_type === 'compliance' && (($incident->school_name === 'All Schools') || (($incident->additional_data['source'] ?? null) === 'holiday_api') || (($incident->incidentStatus->name ?? '') === 'Holiday'))) ? 'All Schools' : $incident->school_name }}</div>
                                                 @if($incident->entry_type === 'incident' && $incident->incidentType)
                                                     <span class="badge {{ $incident->incidentType->color_class }}" style="font-size: 10px; padding: 2px 5px;">{{ $incident->incidentType->name }}</span>
                                                 @elseif($incident->entry_type === 'compliance' && $incident->incidentStatus)
-                                                    <span class="badge {{ $incident->incidentStatus->color_class }}" style="font-size: 10px; padding: 2px 5px;">{{ $incident->incidentStatus->name }}</span>
+                                                    @php
+                                                        $isHoliday = ($incident->school_name === 'All Schools') || (($incident->additional_data['source'] ?? null) === 'holiday_api') || (($incident->incidentStatus->name ?? '') === 'Holiday');
+                                                    @endphp
+                                                    <span class="badge {{ $isHoliday ? 'bg-warning text-dark' : $incident->incidentStatus->color_class }}" style="font-size: 10px; padding: 2px 5px;">{{ $isHoliday ? 'Holiday' : $incident->incidentStatus->name }}</span>
                                                 @endif
                                             </td>
                                             <td>
@@ -951,7 +958,7 @@
                             </div>
                             <div class="row g-3">
                                 <!-- Left Chart: Incident Type Distribution -->
-                                <div class="col-lg-4 border-end">
+                                <div class="col-lg-6 border-end">
                                     <h6 class="text-muted text-uppercase mb-3" style="font-size: 10px; font-weight: 700;">
                                         <i class="fas fa-chart-pie me-1 text-warning"></i> Incident Type Distribution
                                     </h6>
@@ -960,23 +967,13 @@
                                     </div>
                                 </div>
 
-                                <!-- Middle Chart: Compliance Status Distribution -->
-                                <div class="col-lg-4 border-end ps-lg-4">
+                                <!-- Right Chart: Compliance Status Distribution -->
+                                <div class="col-lg-6 ps-lg-4">
                                     <h6 class="text-muted text-uppercase mb-3" style="font-size: 10px; font-weight: 700;">
                                         <i class="fas fa-chart-bar me-1 text-warning"></i> Compliance Status / Events
                                     </h6>
                                     <div style="height: 180px; position: relative;">
                                         <canvas id="complianceDistributionChart"></canvas>
-                                    </div>
-                                </div>
-
-                                <!-- Right Chart: Monthly Trend -->
-                                <div class="col-lg-4 ps-lg-4">
-                                    <h6 class="text-muted text-uppercase mb-3" style="font-size: 10px; font-weight: 700;">
-                                        <i class="fas fa-chart-line me-1 text-warning"></i> Monthly Incident Trend
-                                    </h6>
-                                    <div style="height: 180px; position: relative;">
-                                        <canvas id="incidentTrendChart"></canvas>
                                     </div>
                                 </div>
                             </div>
@@ -1200,10 +1197,6 @@
             labels: @json($stats['compliance_distribution']['labels'] ?? []),
             values: @json($stats['compliance_distribution']['values'] ?? []),
         };
-        const trendChartData = {
-            labels: @json($stats['trend']['labels'] ?? []),
-            values: @json($stats['trend']['values'] ?? []),
-        };
 
         const focusDate = @json($focusDate ?? null);
         const focusReportId = @json($focusReportId ?? null);
@@ -1303,11 +1296,16 @@
             let typeBadge = '';
             const type = incident.incident_type || incident.incidentType;
             const status = incident.incident_status || incident.incidentStatus;
+            const isHoliday = incident.entry_type === 'compliance' && (
+                incident.school_name === 'All Schools' ||
+                incident.additional_data?.source === 'holiday_api' ||
+                status?.name === 'Holiday'
+            );
 
             if (incident.entry_type === 'incident' && type) {
                 typeBadge = `<span class="badge ${type.color_class}">${type.name}</span>`;
             } else if (incident.entry_type === 'compliance' && status) {
-                typeBadge = `<span class="badge ${status.color_class}">${status.name}</span>`;
+                typeBadge = `<span class="badge ${isHoliday ? 'bg-warning text-dark' : status.color_class}">${isHoliday ? 'Holiday' : status.name}</span>`;
             }
 
             let attachmentHtml = '<p class="text-muted small italic">No attachment</p>';
@@ -1325,7 +1323,7 @@
             body.innerHTML = `
                 <div class="mb-4">
                     <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h4 class="fw-bold mb-0 text-dark">${incident.school_name}</h4>
+                        <h4 class="fw-bold mb-0 text-dark">${isHoliday ? 'All Schools' : incident.school_name}</h4>
                         ${typeBadge}
                     </div>
                     <div class="row g-3 mb-4">
@@ -1648,9 +1646,12 @@
                     const options = Array.from(existingSelect.options);
                     const match = options.find(o => o.value === item.school_name);
 
-                    if (item.school_name === 'All Schools') {
+                    const isHolidayRecord = item.school_name === 'All Schools' || item.additional_data?.source === 'holiday_api' || item.incidentStatus?.name === 'Holiday';
+
+                    if (isHolidayRecord) {
                         document.getElementById('incident_source_all').checked = true;
                         document.getElementById('incident_existing_school_container').style.display = 'none';
+                        existingSelect.value = '';
                     } else if (match) {
                         document.getElementById('incident_source_existing').checked = true;
                         existingSelect.value = item.school_name;
@@ -1700,9 +1701,12 @@
                     const options = Array.from(existingSelect.options);
                     const match = options.find(o => o.value === item.school_name);
 
-                    if (item.school_name === 'All Schools') {
+                    const isHolidayRecord = item.school_name === 'All Schools' || item.additional_data?.source === 'holiday_api' || item.incidentStatus?.name === 'Holiday';
+
+                    if (isHolidayRecord) {
                         document.getElementById('compliance_source_all').checked = true;
                         document.getElementById('compliance_existing_school_container').style.display = 'none';
+                        existingSelect.value = '';
                     } else if (match) {
                         document.getElementById('compliance_source_existing').checked = true;
                         existingSelect.value = item.school_name;
@@ -1832,7 +1836,6 @@
             // Charts
             const typeCtx = document.getElementById('incidentTypeChart');
             const complianceCtx = document.getElementById('complianceDistributionChart');
-            const trendCtx = document.getElementById('incidentTrendChart');
 
             if (typeCtx && typeChartData.labels.length) {
                 new Chart(typeCtx, {
@@ -1844,12 +1847,6 @@
                 new Chart(complianceCtx, {
                     type: 'bar', data: { labels: complianceChartData.labels, datasets: [{ label: 'Events', data: complianceChartData.values, backgroundColor: '#1ed760', borderRadius: 6, barThickness: 15 }] },
                     options: { indexAxis: 'y', scales: { x: { beginAtZero: true, ticks: { font: { size: 8 } }, grid: { display: false } }, y: { ticks: { font: { size: 9, weight: '600' } }, grid: { display: false } } }, plugins: { legend: { display: false } }, responsive: true, maintainAspectRatio: false }
-                });
-            }
-            if (trendCtx && trendChartData.labels.length) {
-                new Chart(trendCtx, {
-                    type: 'line', data: { labels: trendChartData.labels.map(l => l.split('-')[2]), datasets: [{ label: 'Incidents', data: trendChartData.values, borderColor: '#F2994A', backgroundColor: 'rgba(242, 153, 74, 0.1)', fill: true, tension: 0.4, pointRadius: 3, borderWidth: 2 }] },
-                    options: { scales: { x: { ticks: { font: { size: 8 } }, grid: { display: false } }, y: { beginAtZero: true, ticks: { font: { size: 8 }, stepSize: 1 }, grid: { color: 'rgba(0,0,0,0.05)' } } }, plugins: { legend: { display: false } }, responsive: true, maintainAspectRatio: false }
                 });
             }
 

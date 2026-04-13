@@ -63,6 +63,43 @@
         font-size: 1.1rem;
     }
 
+    .occupancy-filter-btn {
+        background: rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.35);
+        color: #ffffff;
+        font-size: 0.75rem;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+    }
+
+    .occupancy-filter-btn:hover,
+    .occupancy-filter-btn:focus {
+        background: rgba(255, 255, 255, 0.25);
+        color: #ffffff;
+    }
+
+    .occupancy-filter-menu {
+        min-width: 230px;
+        border: 1px solid #dbe7f5;
+        box-shadow: 0 12px 24px rgba(15, 33, 84, 0.15);
+        padding: 0.75rem;
+    }
+
+    .occupancy-chart-panel {
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    .occupancy-chart-scroll {
+        min-width: 100%;
+        height: 100%;
+        position: relative;
+    }
+
+    .occupancy-summary {
+        margin-top: 0.35rem !important;
+    }
+
     .stat-value {
         font-size: 2.25rem;
         font-weight: 800;
@@ -423,12 +460,44 @@
         {{-- Right Section: Occupancy Overview (35%) --}}
         <div class="col-lg-4">
             <div class="dashboard-card d-flex flex-column">
-                <div class="card-header-custom"><i class="fas fa-chart-pie"></i>Occupancy Overview</div>
-                <div class="p-2 flex-grow-1 d-flex flex-column">
-                    <div class="flex-grow-1" style="min-height: 220px; position: relative;">
-                        <canvas id="occupancyChart"></canvas>
+                <div class="card-header-custom justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-chart-pie"></i>Occupancy Overview
                     </div>
-                    <div class="mt-4">
+                    <div class="dropdown">
+                        <button class="btn btn-sm occupancy-filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-filter"></i> Filter
+                        </button>
+                        <div class="dropdown-menu occupancy-filter-menu">
+                            <div class="mb-2">
+                                <label for="occupancySortOrder" class="form-label mb-1 small text-uppercase text-muted fw-semibold">Sort By</label>
+                                <select id="occupancySortOrder" class="form-select form-select-sm">
+                                    <option value="alphabetical">Alphabetical</option>
+                                    <option value="highest">Highest to Lowest</option>
+                                    <option value="newest">Newest to Lowest</option>
+                                </select>
+                            </div>
+                            <div>
+                                <div class="small text-uppercase text-muted fw-semibold mb-1">Direction</div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="occupancyDirection" id="occupancyDirectionLtr" value="ltr" checked>
+                                    <label class="form-check-label small" for="occupancyDirectionLtr">Left to Right</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="occupancyDirection" id="occupancyDirectionRtl" value="rtl">
+                                    <label class="form-check-label small" for="occupancyDirectionRtl">Right to Left</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-2 flex-grow-1 d-flex flex-column">
+                    <div class="occupancy-chart-panel" style="position: relative; overflow-x: auto;">
+                        <div id="occupancyChartScroll" class="occupancy-chart-scroll">
+                            <canvas id="occupancyChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="occupancy-summary">
                         <div class="d-flex justify-content-between small mb-1">
                             <span class="text-muted">Total System Capacity</span>
                             <span class="fw-bold">85% Utilized</span>
@@ -860,6 +929,9 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label fw-bold">Evacuation Center / School <span class="text-danger">*</span></label>
+                        <div id="lockedCenterHint" class="small text-primary mb-1 d-none">
+                            <i class="fas fa-lock me-1"></i> Locked to selected evacuation center.
+                        </div>
                         <select name="evacuation_center_id" id="modal_evacuation_center_id" class="form-select" required>
                             <option value="">-- Select Evacuation Center --</option>
                             @foreach($evacuationCenters ?? [] as $ec)
@@ -965,9 +1037,12 @@
 
 @php
     $chartData = $evacuationCenters->map(function($ec) {
+        $fullName = $ec->school->school_name ?? $ec->identification ?? 'Center #'.$ec->id;
         return [
-            'name' => \Illuminate\Support\Str::limit($ec->school->school_name ?? $ec->identification ?? 'Center #'.$ec->id, 15),
+            'full_name' => $fullName,
+            'display_name' => \Illuminate\Support\Str::limit($fullName, 12),
             'occupancy' => $ec->current_occupancy,
+            'created_at' => optional($ec->created_at)->toDateTimeString(),
         ];
     })->values();
 @endphp
@@ -977,56 +1052,130 @@
 <script>
     // 1. Setup Chart
     document.addEventListener('DOMContentLoaded', function() {
-        const ctx = document.getElementById('occupancyChart').getContext('2d');
-        
-        // Prepare Data using robust JSON serialization
+        const chartCanvas = document.getElementById('occupancyChart');
+        if (!chartCanvas) {
+            return;
+        }
+
+        const ctx = chartCanvas.getContext('2d');
+        const scrollContainer = document.getElementById('occupancyChartScroll');
+        const sortSelect = document.getElementById('occupancySortOrder');
+        const directionRadios = document.querySelectorAll('input[name="occupancyDirection"]');
+
         const rawData = @json($chartData);
+        let occupancyChart = null;
 
-        const labels = rawData.map(d => d.name);
-        const dataOccupancy = rawData.map(d => d.occupancy);
+        const normalizeDate = (value) => {
+            const timestamp = value ? new Date(value).getTime() : 0;
+            return Number.isNaN(timestamp) ? 0 : timestamp;
+        };
 
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Current Occupancy',
-                    data: dataOccupancy,
-                    backgroundColor: 'rgba(0, 210, 255, 0.5)',
-                    borderColor: 'rgba(0, 210, 255, 1)',
-                    borderWidth: 2,
-                    borderRadius: 5,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    }
+        const getFilteredData = () => {
+            const sortMode = sortSelect ? sortSelect.value : 'alphabetical';
+            const selectedDirection = document.querySelector('input[name="occupancyDirection"]:checked')?.value ?? 'ltr';
+            const dataset = [...rawData];
+
+            if (sortMode === 'highest') {
+                dataset.sort((a, b) => (b.occupancy ?? 0) - (a.occupancy ?? 0));
+            } else if (sortMode === 'newest') {
+                dataset.sort((a, b) => normalizeDate(b.created_at) - normalizeDate(a.created_at));
+            } else {
+                dataset.sort((a, b) => (a.full_name ?? '').localeCompare(b.full_name ?? ''));
+            }
+
+            if (selectedDirection === 'rtl') {
+                dataset.reverse();
+            }
+
+            return dataset;
+        };
+
+        const renderChart = () => {
+            const filteredData = getFilteredData();
+            const labels = filteredData.map((item) => item.display_name ?? item.full_name ?? '');
+            const dataOccupancy = filteredData.map((item) => item.occupancy ?? 0);
+            const minWidth = Math.max((labels.length * 92), 420);
+
+            if (scrollContainer) {
+                scrollContainer.style.minWidth = `${minWidth}px`;
+                scrollContainer.style.height = '100%';
+            }
+            chartCanvas.width = minWidth;
+            chartCanvas.height = 220;
+
+            if (occupancyChart) {
+                occupancyChart.destroy();
+            }
+
+            occupancyChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Current Occupancy',
+                        data: dataOccupancy,
+                        backgroundColor: 'rgba(0, 210, 255, 0.5)',
+                        borderColor: 'rgba(0, 210, 255, 1)',
+                        borderWidth: 2,
+                        borderRadius: 5,
+                        barPercentage: 0.72,
+                        categoryPercentage: 0.7,
+                        maxBarThickness: 28,
+                    }]
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        grace: '10%',
-                        grid: {
-                            color: '#f1f5f9'
-                        },
-                        ticks: {
-                            color: '#64748b'
-                        }
-                    },
-                    x: {
-                        grid: {
+                options: {
+                    responsive: false,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
                             display: false
                         },
-                        ticks: {
-                            color: '#64748b'
+                        tooltip: {
+                            callbacks: {
+                                title: function(context) {
+                                    const dataIndex = context?.[0]?.dataIndex ?? 0;
+                                    return filteredData[dataIndex]?.full_name ?? context?.[0]?.label ?? '';
+                                },
+                                label: function(context) {
+                                    return `Current Occupancy: ${context.parsed.y}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grace: '10%',
+                            grid: {
+                                color: '#f1f5f9'
+                            },
+                            ticks: {
+                                color: '#64748b'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#64748b',
+                                maxRotation: 0,
+                                minRotation: 0,
+                                autoSkip: false
+                            }
                         }
                     }
                 }
-            }
+            });
+        };
+
+        renderChart();
+
+        if (sortSelect) {
+            sortSelect.addEventListener('change', renderChart);
+        }
+        directionRadios.forEach((radio) => {
+            radio.addEventListener('change', renderChart);
         });
     });
 
@@ -1036,13 +1185,50 @@
         familyModalEl.addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget;
             const select = familyModalEl.querySelector('#modal_evacuation_center_id');
+            const lockedHint = familyModalEl.querySelector('#lockedCenterHint');
             if (button && select) {
                 const ecId = button.getAttribute('data-ec-id');
                 if (ecId) {
                     select.value = ecId;
+                    select.dataset.lockedValue = ecId;
+                    select.style.pointerEvents = 'none';
+                    select.style.backgroundColor = '#e9f2ff';
+                    if (lockedHint) {
+                        lockedHint.classList.remove('d-none');
+                    }
+                } else {
+                    delete select.dataset.lockedValue;
+                    select.style.pointerEvents = '';
+                    select.style.backgroundColor = '';
+                    if (lockedHint) {
+                        lockedHint.classList.add('d-none');
+                    }
                 }
             }
         });
+
+        familyModalEl.addEventListener('hidden.bs.modal', function () {
+            const select = familyModalEl.querySelector('#modal_evacuation_center_id');
+            const lockedHint = familyModalEl.querySelector('#lockedCenterHint');
+            if (!select) {
+                return;
+            }
+            delete select.dataset.lockedValue;
+            select.style.pointerEvents = '';
+            select.style.backgroundColor = '';
+            if (lockedHint) {
+                lockedHint.classList.add('d-none');
+            }
+        });
+
+        const select = familyModalEl.querySelector('#modal_evacuation_center_id');
+        if (select) {
+            select.addEventListener('change', function () {
+                if (this.dataset.lockedValue) {
+                    this.value = this.dataset.lockedValue;
+                }
+            });
+        }
     }
 
     // Dynamic family members
