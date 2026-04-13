@@ -6,7 +6,9 @@ use App\Models\ActivityLog;
 use App\Models\ComprehensiveAssessment;
 use App\Models\ComprehensiveAssessmentItem;
 use App\Models\ComprehensiveFacility;
+use App\Models\ComprehensiveStorage;
 use App\Models\ComprehensiveStudent;
+use App\Models\ComprehensiveSummaryFinding;
 use App\Models\School;
 use App\Models\SchoolSpecificsInformation;
 use Illuminate\Http\Request;
@@ -1326,6 +1328,11 @@ class ComprehensiveSchoolSafetyController extends Controller
         $fireSafetyBuildings = $school->buildings()->latest()->get();
         $fireSafetyPlan = $school->schoolEvacuationPlan;
         $facilities = $school->facilities()->latest()->get();
+        $summaryFindings = ComprehensiveSummaryFinding::query()
+            ->where('school_id', $school->id)
+            ->latest('observation_date')
+            ->latest()
+            ->get();
 
         $riskRegister = $fireSafetyBuildings->map(function ($building) use ($fireSafetyPlan, $school) {
             $riskLevel = $building->safetyStatus;
@@ -1357,14 +1364,120 @@ class ComprehensiveSchoolSafetyController extends Controller
             'poor_count' => $fireSafetyBuildings->where('safetyStatus', 'poor')->count(),
         ];
 
+        $defaultConcernCategories = [
+            'General Safety',
+            'Electrical',
+            'Storage/Space',
+            'Structural',
+            'Pathways',
+            'Accessibilit',
+            'Accessibility',
+            'Sanitation/Utility',
+            'External Grounds',
+            'Others Please Specify',
+        ];
+
+        $concernCategoryOptions = collect($defaultConcernCategories)
+            ->merge($summaryFindings->pluck('concern_category'))
+            ->filter(fn ($v) => trim((string) $v) !== '')
+            ->map(fn ($v) => trim((string) $v))
+            ->unique()
+            ->values();
+
+        $concernTypeOptions = $summaryFindings->pluck('concern_type')
+            ->filter(fn ($v) => trim((string) $v) !== '')
+            ->map(fn ($v) => trim((string) $v))
+            ->unique()
+            ->values();
+
+        $findingsByBuilding = $summaryFindings->groupBy('building_id');
+
         return view('comprehensive-school-safety.school-facilities', compact(
             'school',
             'fireSafetyBuildings',
             'fireSafetyPlan',
             'assessmentSummary',
             'riskRegister',
-            'facilities'
+            'facilities',
+            'summaryFindings',
+            'findingsByBuilding',
+            'concernCategoryOptions',
+            'concernTypeOptions'
         ));
+    }
+
+    public function storeSummaryFinding(Request $request, $schoolId)
+    {
+        $school = $this->findSchoolOrAbortForUser((int) $schoolId);
+
+        $validated = $request->validate([
+            'building_id' => ['required', 'integer', 'exists:firesafety_buildings,id'],
+            'concern_category' => ['required', 'string', 'max:255'],
+            'other_concern_category' => ['nullable', 'string', 'max:255'],
+            'concern_type' => ['required', 'string', 'max:255'],
+            'other_concern_type' => ['nullable', 'string', 'max:255'],
+            'description' => ['required', 'string'],
+            'priority' => ['required', 'string', 'in:high,medium,low'],
+            'observation_date' => ['required', 'date'],
+            'remarks' => ['nullable', 'string'],
+        ]);
+
+        $building = $school->buildings()->where('id', (int) $validated['building_id'])->first();
+        if (!$building) {
+            return redirect()
+                ->route('comprehensive-school-safety.school.facilities', $school->id)
+                ->with('error', 'Invalid building selected for this school.');
+        }
+
+        $category = trim((string) $validated['concern_category']);
+        if (($category === '__other__' || strcasecmp($category, 'Others Please Specify') === 0) && !empty($validated['other_concern_category'])) {
+            $category = trim((string) $validated['other_concern_category']);
+        }
+
+        $concernType = trim((string) $validated['concern_type']);
+        if ($concernType === '__other__' && !empty($validated['other_concern_type'])) {
+            $concernType = trim((string) $validated['other_concern_type']);
+        }
+
+        $finding = ComprehensiveSummaryFinding::create([
+            'school_id' => $school->id,
+            'building_id' => $building->id,
+            'concern_category' => $category,
+            'concern_type' => $concernType,
+            'description' => $validated['description'],
+            'priority' => strtolower((string) $validated['priority']),
+            'observation_date' => $validated['observation_date'],
+            'remarks' => $validated['remarks'] ?? null,
+        ]);
+
+        ActivityLog::log('comprehensive_school_safety', 'Added summary finding for ' . ($building->building_name ?? ('Building ' . $building->building_no)), [
+            'school_id' => $school->id,
+            'notes' => 'Category: ' . $finding->concern_category . ', Type: ' . $finding->concern_type . ', Priority: ' . strtoupper((string) $finding->priority),
+        ]);
+
+        return redirect()
+            ->route('comprehensive-school-safety.school.facilities', $school->id)
+            ->with('success', 'Summary finding saved successfully.');
+    }
+
+    public function destroySummaryFinding($schoolId, $findingId)
+    {
+        $school = $this->findSchoolOrAbortForUser((int) $schoolId);
+        $finding = ComprehensiveSummaryFinding::query()
+            ->where('school_id', $school->id)
+            ->findOrFail((int) $findingId);
+
+        $notes = 'Category: ' . ($finding->concern_category ?? 'N/A') . ', Type: ' . ($finding->concern_type ?? 'N/A');
+        $finding->delete();
+
+        ActivityLog::log('comprehensive_school_safety', 'Deleted summary finding', [
+            'school_id' => $school->id,
+            'notes' => $notes,
+        ]);
+
+        return redirect()
+            ->route('comprehensive-school-safety.school.facilities', $school->id)
+            ->with('success', 'Summary finding deleted.');
     }
 
     public function storeFacility(Request $request, $schoolId)
@@ -1434,14 +1547,216 @@ class ComprehensiveSchoolSafetyController extends Controller
     public function schoolReports($schoolId)
     {
         $school = $this->findSchoolOrAbortForUser((int) $schoolId);
+        $assessments = $school->assessments()->latest()->get(['id', 'date_visited', 'assessed_by', 'total_score', 'status']);
 
         $reportStats = [
             'assessments_completed' => $school->assessments()->where('status', 'completed')->count(),
             'total_assessments' => $school->assessments()->count(),
             'total_students' => $school->students()->count(),
             'total_facilities' => $school->facilities()->count(),
+            'total_storage_items' => $school->storageItems()->count(),
         ];
 
-        return view('comprehensive-school-safety.school-reports', compact('school', 'reportStats'));
+        return view('comprehensive-school-safety.school-reports', compact('school', 'reportStats', 'assessments'));
+    }
+
+    public function printAssessmentReport(Request $request, $schoolId)
+    {
+        $school = $this->findSchoolOrAbortForUser((int) $schoolId);
+
+        $assessmentId = (int) $request->query('assessment_id');
+        $assessment = $school->assessments()
+            ->with('items')
+            ->where('id', $assessmentId)
+            ->first();
+
+        if (!$assessment) {
+            return redirect()
+                ->route('comprehensive-school-safety.school.reports', $school->id)
+                ->with('error', 'Please select a valid assessment to print.');
+        }
+
+        $criteriaRows = $assessment->items
+            ->sortBy('id')
+            ->map(function ($item) {
+                $parsed = $this->parseStoredCategory((string) $item->category);
+                return [
+                    'category' => $parsed['title'] ?? 'Section',
+                    'criteria' => $item->criteria,
+                    'is_compliant' => $item->is_compliant,
+                    'points' => $item->points,
+                    'remarks' => $item->remarks,
+                ];
+            })
+            ->values();
+
+        ActivityLog::log('comprehensive_school_safety', 'Printed assessment report: CSSS-' . str_pad((string) $assessment->id, 4, '0', STR_PAD_LEFT), [
+            'school_id' => $school->id,
+        ]);
+
+        return view('comprehensive-school-safety.reports.assessment-report', compact('school', 'assessment', 'criteriaRows'));
+    }
+
+    public function printSafetyIndexReport($schoolId)
+    {
+        $school = $this->findSchoolOrAbortForUser((int) $schoolId);
+
+        $buildings = $school->buildings()->latest()->get();
+        $summaryFindings = ComprehensiveSummaryFinding::query()
+            ->where('school_id', $school->id)
+            ->latest('observation_date')
+            ->latest()
+            ->get();
+
+        $indexStats = [
+            'building_count' => $buildings->count(),
+            'average_score' => $buildings->count() > 0 ? round($buildings->avg('safety_score'), 1) : 0,
+            'good_count' => $buildings->where('safetyStatus', 'good')->count(),
+            'fair_count' => $buildings->where('safetyStatus', 'fair')->count(),
+            'poor_count' => $buildings->where('safetyStatus', 'poor')->count(),
+            'high_findings' => $summaryFindings->where('priority', 'high')->count(),
+            'medium_findings' => $summaryFindings->where('priority', 'medium')->count(),
+            'low_findings' => $summaryFindings->where('priority', 'low')->count(),
+        ];
+
+        ActivityLog::log('comprehensive_school_safety', 'Printed safety index report', [
+            'school_id' => $school->id,
+        ]);
+
+        return view('comprehensive-school-safety.reports.safety-index-report', compact('school', 'buildings', 'summaryFindings', 'indexStats'));
+    }
+
+    public function printTimelineReport($schoolId)
+    {
+        $school = $this->findSchoolOrAbortForUser((int) $schoolId);
+
+        $assessmentEvents = $school->assessments()
+            ->latest('date_visited')
+            ->get()
+            ->map(function ($assessment) {
+                return [
+                    'event_date' => $assessment->date_visited,
+                    'event_type' => 'Assessment',
+                    'title' => 'Assessment CSSS-' . str_pad((string) $assessment->id, 4, '0', STR_PAD_LEFT),
+                    'details' => 'Assessed by: ' . ($assessment->assessed_by ?? 'N/A') . ' | Score: ' . ($assessment->total_score ?? 0),
+                ];
+            });
+
+        $findingEvents = ComprehensiveSummaryFinding::query()
+            ->where('school_id', $school->id)
+            ->latest('observation_date')
+            ->get()
+            ->map(function ($finding) {
+                return [
+                    'event_date' => $finding->observation_date,
+                    'event_type' => 'Summary Finding',
+                    'title' => ($finding->concern_category ?? 'Concern') . ' - ' . ($finding->concern_type ?? 'Type'),
+                    'details' => 'Priority: ' . strtoupper((string) $finding->priority) . ' | ' . (string) $finding->description,
+                ];
+            });
+
+        $timelineEvents = $assessmentEvents
+            ->concat($findingEvents)
+            ->sortByDesc(function ($event) {
+                return strtotime((string) $event['event_date']);
+            })
+            ->values();
+
+        ActivityLog::log('comprehensive_school_safety', 'Printed timeline report', [
+            'school_id' => $school->id,
+        ]);
+
+        return view('comprehensive-school-safety.reports.timeline-report', compact('school', 'timelineEvents'));
+    }
+
+    public function schoolStorage($schoolId)
+    {
+        $school = $this->findSchoolOrAbortForUser((int) $schoolId);
+        $storageItems = $school->storageItems()->latest()->get();
+
+        return view('comprehensive-school-safety.school-storage', compact('school', 'storageItems'));
+    }
+
+    public function storeStorageItem(Request $request, $schoolId)
+    {
+        $school = $this->findSchoolOrAbortForUser((int) $schoolId);
+
+        $validated = $request->validate([
+            'item_name' => ['required', 'string', 'max:255'],
+            'item_type' => ['nullable', 'string', 'max:255'],
+            'is_available' => ['nullable', 'boolean'],
+            'is_functional' => ['nullable', 'boolean'],
+            'remarks' => ['nullable', 'string'],
+        ]);
+
+        $item = ComprehensiveStorage::create([
+            'school_id' => $school->id,
+            'item_name' => $validated['item_name'],
+            'item_type' => $validated['item_type'] ?? null,
+            'is_available' => (bool) ($request->boolean('is_available')),
+            'is_functional' => (bool) ($request->boolean('is_functional')),
+            'remarks' => $validated['remarks'] ?? null,
+        ]);
+
+        ActivityLog::log('comprehensive_school_safety', 'Added storage item: ' . $item->item_name, [
+            'school_id' => $school->id,
+            'notes' => 'Type: ' . ($item->item_type ?? 'N/A') . ', Available: ' . ($item->is_available ? 'Yes' : 'No') . ', Functional: ' . ($item->is_functional ? 'Yes' : 'No'),
+        ]);
+
+        return redirect()
+            ->route('comprehensive-school-safety.school.storage', $school->id)
+            ->with('success', 'Storage item added successfully.');
+    }
+
+    public function updateStorageItem(Request $request, $schoolId, $storageId)
+    {
+        $school = $this->findSchoolOrAbortForUser((int) $schoolId);
+        $item = ComprehensiveStorage::query()
+            ->where('school_id', $school->id)
+            ->findOrFail((int) $storageId);
+
+        $validated = $request->validate([
+            'item_name' => ['required', 'string', 'max:255'],
+            'item_type' => ['nullable', 'string', 'max:255'],
+            'is_available' => ['nullable', 'boolean'],
+            'is_functional' => ['nullable', 'boolean'],
+            'remarks' => ['nullable', 'string'],
+        ]);
+
+        $item->update([
+            'item_name' => $validated['item_name'],
+            'item_type' => $validated['item_type'] ?? null,
+            'is_available' => (bool) $request->boolean('is_available'),
+            'is_functional' => (bool) $request->boolean('is_functional'),
+            'remarks' => $validated['remarks'] ?? null,
+        ]);
+
+        ActivityLog::log('comprehensive_school_safety', 'Updated storage item: ' . $item->item_name, [
+            'school_id' => $school->id,
+            'notes' => 'Type: ' . ($item->item_type ?? 'N/A') . ', Available: ' . ($item->is_available ? 'Yes' : 'No') . ', Functional: ' . ($item->is_functional ? 'Yes' : 'No'),
+        ]);
+
+        return redirect()
+            ->route('comprehensive-school-safety.school.storage', $school->id)
+            ->with('success', 'Storage item updated.');
+    }
+
+    public function destroyStorageItem($schoolId, $storageId)
+    {
+        $school = $this->findSchoolOrAbortForUser((int) $schoolId);
+        $item = ComprehensiveStorage::query()
+            ->where('school_id', $school->id)
+            ->findOrFail((int) $storageId);
+
+        $name = $item->item_name;
+        $item->delete();
+
+        ActivityLog::log('comprehensive_school_safety', 'Deleted storage item: ' . $name, [
+            'school_id' => $school->id,
+        ]);
+
+        return redirect()
+            ->route('comprehensive-school-safety.school.storage', $school->id)
+            ->with('success', 'Storage item removed.');
     }
 }

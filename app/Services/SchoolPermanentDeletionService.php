@@ -140,19 +140,19 @@ class SchoolPermanentDeletionService
         }
 
         if (Schema::hasTable('cmpr_schl_sfty_students')) {
-            $studentIds = DB::table('cmpr_schl_sfty_students')
-                ->where('school_id', $schoolId)
-                ->pluck('id');
-            if ($studentIds->isNotEmpty() && Schema::hasTable('cmpr_schl_sfty_student_pathways')) {
-                DB::table('cmpr_schl_sfty_student_pathways')
-                    ->whereIn('student_id', $studentIds)
-                    ->delete();
-            }
             DB::table('cmpr_schl_sfty_students')->where('school_id', $schoolId)->delete();
         }
 
         if (Schema::hasTable('cmpr_schl_sfty_facilities')) {
             DB::table('cmpr_schl_sfty_facilities')->where('school_id', $schoolId)->delete();
+        }
+
+        if (Schema::hasTable('cmpr_schl_sfty_sumFindings')) {
+            DB::table('cmpr_schl_sfty_sumFindings')->where('school_id', $schoolId)->delete();
+        }
+
+        if (Schema::hasTable('cmpr_schl_sfty_storage')) {
+            DB::table('cmpr_schl_sfty_storage')->where('school_id', $schoolId)->delete();
         }
     }
 }

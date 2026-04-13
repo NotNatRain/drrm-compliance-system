@@ -264,6 +264,16 @@ class School extends Model
         return $this->hasMany(ComprehensiveStudent::class, 'school_id');
     }
 
+    public function summaryFindings()
+    {
+        return $this->hasMany(ComprehensiveSummaryFinding::class, 'school_id');
+    }
+
+    public function storageItems()
+    {
+        return $this->hasMany(ComprehensiveStorage::class, 'school_id');
+    }
+
     /* ── Presentation aliases for legacy views / APIs ───────────────────── */
 
     public function getNameAttribute(): string

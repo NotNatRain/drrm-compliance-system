@@ -228,6 +228,7 @@
             'assessments' => 'comprehensive-school-safety.school.assessments',
             'facilities' => 'comprehensive-school-safety.school.facilities',
             'reports' => 'comprehensive-school-safety.school.reports',
+            'storage' => 'comprehensive-school-safety.school.storage',
             'students' => 'comprehensive-school-safety.school.students',
         ];
 
@@ -295,6 +296,11 @@
         <a class="csss-menu-link {{ $activeMenu === 'reports' ? 'active' : '' }}"
            href="{{ $selectedSchool ? route('comprehensive-school-safety.school.reports', $selectedSchool->id) : route('comprehensive-school-safety.dashboard') }}">
             <i class="fas fa-chart-pie"></i> Analytics &amp; Reports
+        </a>
+
+        <a class="csss-menu-link {{ $activeMenu === 'storage' ? 'active' : '' }}"
+           href="{{ $selectedSchool ? route('comprehensive-school-safety.school.storage', $selectedSchool->id) : route('comprehensive-school-safety.dashboard') }}">
+            <i class="fas fa-boxes-stacked"></i> Storage
         </a>
 
         <a class="csss-menu-link {{ $activeMenu === 'students' ? 'active' : '' }}"

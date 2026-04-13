@@ -84,8 +84,17 @@
                                 </div>
                             @endif
 
-                            <div class="d-flex justify-content-end">
-                                <a href="{{ $item['manage_url'] }}" class="btn btn-sm btn-outline-primary js-module-link" data-module="fire_safety" data-school-id="{{ $school->id }}">
+                            <div class="d-flex justify-content-end align-items-center gap-1" style="flex-wrap: nowrap;">
+                                <button
+                                    type="button"
+                                    class="btn btn-outline-secondary open-summary-findings-modal text-nowrap csss-card-action-btn"
+                                    data-building-id="{{ $item['building_id'] }}"
+                                    data-building-title="{{ $item['title'] }}"
+                                >
+                                    <i class="fas fa-clipboard-list me-1"></i> Summary of Findings
+                                </button>
+
+                                <a href="{{ $item['manage_url'] }}" class="btn btn-outline-primary js-module-link text-nowrap csss-card-action-btn" data-module="fire_safety" data-school-id="{{ $school->id }}">
                                     <i class="fas fa-fire-extinguisher me-1"></i> Manage at Fire Safety
                                 </a>
                             </div>
@@ -211,16 +220,98 @@
 <div class="modal fade" id="moduleRegistrationWarningModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-warning text-dark">
+            <div class="modal-header text-white" style="background: linear-gradient(135deg, #0D7377 0%, #14a3a8 100%); border-bottom: none;">
                 <h5 class="modal-title"><i class="fas fa-triangle-exclamation me-2"></i>Module Registration Required</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <p class="mb-0" id="moduleRegistrationWarningMessage">This module still has not registered this school yet. Contact administrator to register it.</p>
             </div>
-            <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            <div class="modal-footer" style="background: #e6f8f8;">
+                <button type="button" class="btn text-white" data-bs-dismiss="modal" style="background: #0D7377; border: none;">Close</button>
             </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="summaryFindingsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header" style="background: linear-gradient(135deg, #5c4033 0%, #8b6f47 100%); color: #fff;">
+                <h5 class="modal-title">
+                    <i class="fas fa-clipboard-list me-2"></i>
+                    Summary of Findings - <span id="summaryFindingsBuildingTitle">Building</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ route('comprehensive-school-safety.school.summary-findings.store', $school->id) }}">
+                @csrf
+                <input type="hidden" name="building_id" id="summaryFindingsBuildingId">
+
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Concerns *</label>
+                            <select class="form-select" name="concern_category" id="concernCategoryInput" required>
+                                <option value="">-- Select Concern Category --</option>
+                                @foreach($concernCategoryOptions as $categoryOption)
+                                    <option value="{{ $categoryOption }}">{{ $categoryOption }}</option>
+                                @endforeach
+                                <option value="__other__">Others please specify...</option>
+                            </select>
+                            <input type="text" class="form-control form-control-sm mt-2 d-none" name="other_concern_category" id="otherConcernCategoryInput" placeholder="Type other concern category">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Concern Type *</label>
+                            <select class="form-select" name="concern_type" id="concernTypeInput" required>
+                                <option value="">-- Select Concern Type --</option>
+                                @foreach($concernTypeOptions as $typeOption)
+                                    <option value="{{ $typeOption }}">{{ $typeOption }}</option>
+                                @endforeach
+                                <option value="__other__">Others please specify...</option>
+                            </select>
+                            <input type="text" class="form-control form-control-sm mt-2 d-none" name="other_concern_type" id="otherConcernTypeInput" placeholder="Type other concern type">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Priority *</label>
+                            <select class="form-select" name="priority" required>
+                                <option value="high">High</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="low">Low</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Observation Date *</label>
+                            <input type="date" class="form-control" name="observation_date" value="{{ now()->toDateString() }}" required>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Description *</label>
+                            <textarea class="form-control" name="description" rows="3" placeholder="Describe the finding in detail" required></textarea>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-bold">Remarks</label>
+                            <textarea class="form-control" name="remarks" rows="2" placeholder="Additional info / remarks"></textarea>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <h6 class="fw-bold mb-2">Existing Findings for this Building</h6>
+                    <div id="existingFindingsContainer" class="border rounded p-3 bg-light">
+                        <p class="text-muted small mb-0">No findings yet for this building.</p>
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Save Finding</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -351,6 +442,29 @@
         background: #f3e5da !important;
         color: #5C4033 !important;
     }
+
+    .csss-card-action-btn {
+        font-size: 0.68rem;
+        padding: 0.2rem 0.42rem;
+        line-height: 1.1;
+        border-radius: 0.35rem;
+    }
+
+    .csss-card-action-btn i {
+        margin-right: 0.2rem !important;
+    }
+
+    #summaryFindingsModal .modal-body {
+        max-height: calc(100vh - 240px);
+        overflow-y: auto;
+    }
+
+    #summaryFindingsModal .modal-footer {
+        position: sticky;
+        bottom: 0;
+        z-index: 2;
+        border-top: 1px solid #dee2e6;
+    }
 </style>
 
 @if(auth()->user()->role !== 'viewer')
@@ -439,6 +553,139 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (warningModal) {
                     warningModal.show();
                 }
+            }
+        });
+    });
+});
+</script>
+
+@php
+    $findingsByBuildingPayload = ($findingsByBuilding ?? collect())->map(function ($rows) use ($school) {
+        return $rows->map(function ($f) use ($school) {
+            return [
+                'id' => $f->id,
+                'concern_category' => $f->concern_category,
+                'concern_type' => $f->concern_type,
+                'priority' => strtoupper((string) $f->priority),
+                'observation_date' => optional($f->observation_date)->format('M d, Y') ?? $f->observation_date,
+                'description' => $f->description,
+                'remarks' => $f->remarks,
+                'delete_url' => route('comprehensive-school-safety.school.summary-findings.destroy', [$school->id, $f->id]),
+            ];
+        })->values();
+    });
+@endphp
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modalElement = document.getElementById('summaryFindingsModal');
+    const modalInstance = modalElement ? bootstrap.Modal.getOrCreateInstance(modalElement) : null;
+    const titleTarget = document.getElementById('summaryFindingsBuildingTitle');
+    const buildingIdField = document.getElementById('summaryFindingsBuildingId');
+    const findingsContainer = document.getElementById('existingFindingsContainer');
+    const concernCategoryInput = document.getElementById('concernCategoryInput');
+    const concernTypeInput = document.getElementById('concernTypeInput');
+    const otherConcernCategoryInput = document.getElementById('otherConcernCategoryInput');
+    const otherConcernTypeInput = document.getElementById('otherConcernTypeInput');
+
+    function toggleOtherField(selectElement, inputElement) {
+        if (!selectElement || !inputElement) {
+            return;
+        }
+
+        const show = selectElement.value === '__other__';
+        inputElement.classList.toggle('d-none', !show);
+        inputElement.required = show;
+
+        if (!show) {
+            inputElement.value = '';
+        }
+    }
+
+    const findingsByBuilding = @json($findingsByBuildingPayload);
+
+    if (concernCategoryInput) {
+        concernCategoryInput.addEventListener('change', function () {
+            toggleOtherField(concernCategoryInput, otherConcernCategoryInput);
+        });
+    }
+
+    if (concernTypeInput) {
+        concernTypeInput.addEventListener('change', function () {
+            toggleOtherField(concernTypeInput, otherConcernTypeInput);
+        });
+    }
+
+    function findingPriorityBadge(priority) {
+        const p = String(priority || '').toUpperCase();
+        if (p === 'HIGH') return 'danger';
+        if (p === 'LOW') return 'success';
+        return 'warning text-dark';
+    }
+
+    function renderExistingFindings(buildingId) {
+        if (!findingsContainer) {
+            return;
+        }
+
+        const rows = findingsByBuilding[String(buildingId)] || [];
+        if (!rows.length) {
+            findingsContainer.innerHTML = '<p class="text-muted small mb-0">No findings yet for this building.</p>';
+            return;
+        }
+
+        findingsContainer.innerHTML = rows.map((row) => {
+            const badge = findingPriorityBadge(row.priority);
+            const remarks = row.remarks ? `<div class="small mt-1"><strong>Remarks:</strong> ${row.remarks}</div>` : '';
+            return `
+                <div class="border rounded bg-white p-3 mb-2">
+                    <div class="d-flex justify-content-between align-items-start gap-2">
+                        <div>
+                            <div class="fw-bold">${row.concern_category} - ${row.concern_type}</div>
+                            <div class="small text-muted">Observed: ${row.observation_date}</div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-${badge}">${row.priority}</span>
+                            <form method="POST" action="${row.delete_url}" onsubmit="return confirm('Delete this finding?')">
+                                <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                <input type="hidden" name="_method" value="DELETE">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="small mt-2">${row.description}</div>
+                    ${remarks}
+                </div>
+            `;
+        }).join('');
+    }
+
+    document.querySelectorAll('.open-summary-findings-modal').forEach((button) => {
+        button.addEventListener('click', function () {
+            const buildingId = this.dataset.buildingId;
+            const buildingTitle = this.dataset.buildingTitle || 'Building';
+
+            if (titleTarget) {
+                titleTarget.textContent = buildingTitle;
+            }
+
+            if (buildingIdField) {
+                buildingIdField.value = buildingId;
+            }
+
+            if (concernCategoryInput) {
+                concernCategoryInput.value = '';
+            }
+            if (concernTypeInput) {
+                concernTypeInput.value = '';
+            }
+            toggleOtherField(concernCategoryInput, otherConcernCategoryInput);
+            toggleOtherField(concernTypeInput, otherConcernTypeInput);
+
+            renderExistingFindings(buildingId);
+
+            if (modalInstance) {
+                modalInstance.show();
             }
         });
     });

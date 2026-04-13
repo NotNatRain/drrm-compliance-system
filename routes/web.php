@@ -297,7 +297,16 @@ Route::prefix('comprehensive-school-safety')
         Route::get('/schools/{schoolId}/facilities', [ComprehensiveSchoolSafetyController::class, 'schoolFacilities'])->name('school.facilities');
         Route::post('/schools/{schoolId}/facilities', [ComprehensiveSchoolSafetyController::class, 'storeFacility'])->name('school.facilities.store');
         Route::put('/schools/{schoolId}/facilities/{facilityId}', [ComprehensiveSchoolSafetyController::class, 'updateFacility'])->name('school.facilities.update');
+        Route::post('/schools/{schoolId}/summary-findings', [ComprehensiveSchoolSafetyController::class, 'storeSummaryFinding'])->name('school.summary-findings.store');
+        Route::delete('/schools/{schoolId}/summary-findings/{findingId}', [ComprehensiveSchoolSafetyController::class, 'destroySummaryFinding'])->name('school.summary-findings.destroy');
         Route::get('/schools/{schoolId}/reports', [ComprehensiveSchoolSafetyController::class, 'schoolReports'])->name('school.reports');
+        Route::get('/schools/{schoolId}/reports/assessment-print', [ComprehensiveSchoolSafetyController::class, 'printAssessmentReport'])->name('school.reports.assessment-print');
+        Route::get('/schools/{schoolId}/reports/safety-index-print', [ComprehensiveSchoolSafetyController::class, 'printSafetyIndexReport'])->name('school.reports.safety-index-print');
+        Route::get('/schools/{schoolId}/reports/timeline-print', [ComprehensiveSchoolSafetyController::class, 'printTimelineReport'])->name('school.reports.timeline-print');
+        Route::get('/schools/{schoolId}/storage', [ComprehensiveSchoolSafetyController::class, 'schoolStorage'])->name('school.storage');
+        Route::post('/schools/{schoolId}/storage', [ComprehensiveSchoolSafetyController::class, 'storeStorageItem'])->name('school.storage.store');
+        Route::put('/schools/{schoolId}/storage/{storageId}', [ComprehensiveSchoolSafetyController::class, 'updateStorageItem'])->name('school.storage.update');
+        Route::delete('/schools/{schoolId}/storage/{storageId}', [ComprehensiveSchoolSafetyController::class, 'destroyStorageItem'])->name('school.storage.destroy');
     });
 
 // Hazard Mapping (placeholder – replace with real controller when module is ready)
