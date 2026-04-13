@@ -72,6 +72,34 @@ class TyphoonController extends Controller
         return $ec;
     }
 
+    private function typhoonNotificationsQueryForUser($user, bool $unreadOnly = false)
+    {
+        $query = FireSafetyNotification::forCompliance('typhoon_flood');
+
+        if ($unreadOnly) {
+            $query->unread();
+        }
+
+        if ($user->role === 'admin') {
+            return $query;
+        }
+
+        return $query->where(function ($q) use ($user) {
+            $q->where(function ($personalQuery) use ($user) {
+                $personalQuery->where('module', 'incident_bridge')
+                    ->where('user_id', $user->id);
+            })->orWhere(function ($sharedQuery) use ($user) {
+                $sharedQuery->where('module', '!=', 'incident_bridge')
+                    ->where(function ($visibilityQuery) use ($user) {
+                        $visibilityQuery->whereNull('school_id')
+                            ->orWhere('school_id', $user->typhoon_school_id)
+                            ->orWhere('school_id', $user->school_id)
+                            ->orWhere('user_id', $user->id);
+                    });
+            });
+        });
+    }
+
     public function dashboard()
     {
         $user = auth()->user();
@@ -601,17 +629,8 @@ class TyphoonController extends Controller
     public function notifications()
     {
         $user = auth()->user();
-        $query = FireSafetyNotification::forCompliance('typhoon_flood')
+        $query = $this->typhoonNotificationsQueryForUser($user)
             ->latest();
-
-        if ($user->role !== 'admin') {
-            $query->where(function ($q) use ($user) {
-                $q->whereNull('school_id')
-                    ->orWhere('school_id', $user->typhoon_school_id)
-                    ->orWhere('school_id', $user->school_id)
-                    ->orWhere('user_id', $user->id);
-            });
-        }
 
         $notifications = $query->paginate(15);
 
@@ -627,7 +646,9 @@ class TyphoonController extends Controller
 
         $evacuationCenters = $evacuationCentersQuery->get()->map(fn ($ec) => $this->attachCurrentOccupancy($ec));
 
-        return view('typhoon.notifications', compact('notifications', 'evacuationCenters'));
+        $unreadCount = $this->typhoonNotificationsQueryForUser($user, true)->count();
+
+        return view('typhoon.notifications', compact('notifications', 'evacuationCenters', 'unreadCount'));
     }
 
     public function markNotificationRead($id)
@@ -641,15 +662,7 @@ class TyphoonController extends Controller
     public function markAllNotificationsRead()
     {
         $user = auth()->user();
-        $query = FireSafetyNotification::forCompliance('typhoon_flood')->unread();
-
-        if ($user->role !== 'admin') {
-            $query->where(function ($q) use ($user) {
-                $q->whereNull('school_id')
-                    ->orWhere('school_id', $user->school_id)
-                    ->orWhere('school_id', $user->typhoon_school_id);
-            });
-        }
+        $query = $this->typhoonNotificationsQueryForUser($user, true);
 
         $query->update(['is_read' => true]);
 

@@ -192,21 +192,26 @@
                                                             @endif
                                                         </td>
                                                         <td>
-                                                            @if($school->status === 'passed')
-                                                                <button class="btn btn-sm btn-outline-success view-passed-btn"
-                                                                        data-school-json="{{ json_encode($school) }}"
-                                                                        data-bs-toggle="modal"
-                                                                        data-bs-target="#passedDetailsModal">
-                                                                    <i class="fas fa-certificate me-1"></i> Success
-                                                                </button>
-                                                            @else
-                                                                <button class="btn btn-sm btn-outline-primary details-btn"
-                                                                        data-school-json="{{ json_encode($school) }}"
-                                                                        data-bs-toggle="modal"
-                                                                        data-bs-target="#issuesModal">
-                                                                    <i class="fas fa-tasks me-1"></i> Details
-                                                                </button>
-                                                            @endif
+                                                            <div class="d-flex flex-column gap-1">
+                                                                <a href="{{ route('fire-safety.report.full-school', $school->id) }}" target="_blank" class="btn btn-sm btn-outline-dark">
+                                                                    <i class="fas fa-print me-1"></i> Print
+                                                                </a>
+                                                                @if($school->status === 'passed')
+                                                                    <button class="btn btn-sm btn-outline-success view-passed-btn"
+                                                                            data-school-json="{{ json_encode($school) }}"
+                                                                            data-bs-toggle="modal"
+                                                                            data-bs-target="#passedDetailsModal">
+                                                                        <i class="fas fa-certificate me-1"></i> Success
+                                                                    </button>
+                                                                @else
+                                                                    <button class="btn btn-sm btn-outline-primary details-btn"
+                                                                            data-school-json="{{ json_encode($school) }}"
+                                                                            data-bs-toggle="modal"
+                                                                            data-bs-target="#issuesModal">
+                                                                        <i class="fas fa-tasks me-1"></i> Details
+                                                                    </button>
+                                                                @endif
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 @empty

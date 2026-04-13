@@ -234,9 +234,6 @@
                 </a>
                 <a href="{{ route('typhoon.notifications') }}" class="notif-btn-custom active" title="Notifications">
                     <i class="fas fa-bell"></i>
-                    @php
-                        $unreadCount = \App\Models\FireSafetyNotification::forCompliance('typhoon_flood')->unread()->count();
-                    @endphp
                     @if($unreadCount > 0)
                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light" style="font-size: 0.6rem; padding: 0.35em 0.65em;">
                             {{ $unreadCount > 99 ? '99+' : $unreadCount }}
@@ -333,9 +330,23 @@
                                             </div>
                                             
                                             <div class="d-flex gap-2">
-                                                @if($notif->action_url)
-                                                    <a href="{{ $notif->action_url }}" class="btn btn-sm btn-info text-white rounded-pill px-4 fw-bold shadow-sm">
-                                                        ACCESS INTELLIGENCE
+                                                @php
+                                                    $resolvedActionUrl = $notif->action_url;
+                                                    $targetModule = null;
+                                                    $targetSchoolId = $notif->school_id ?? ($notif->action_data['school_id'] ?? null);
+                                                    if (($notif->module ?? '') === 'incident_bridge') {
+                                                        $incidentId = $notif->action_data['incident_id'] ?? null;
+                                                        $incidentDate = $notif->action_data['incident_date'] ?? optional($notif->created_at)->format('Y-m-d');
+                                                        $targetModule = 'incident_checklist';
+                                                        $resolvedActionUrl = route('incidents.dashboard', [
+                                                            'focus_date' => $incidentDate,
+                                                            'focus_report_id' => $incidentId,
+                                                        ]);
+                                                    }
+                                                @endphp
+                                                @if($resolvedActionUrl)
+                                                    <a href="{{ $resolvedActionUrl }}" class="btn btn-sm btn-info text-white rounded-pill px-4 fw-bold shadow-sm js-module-link" @if($targetModule && $targetSchoolId) data-module="{{ $targetModule }}" data-school-id="{{ $targetSchoolId }}" @endif>
+                                                        View
                                                     </a>
                                                 @endif
                                                 
@@ -374,8 +385,86 @@
 
 @include('typhoon.partials.choose-school-modal')
 
+<div class="modal fade" id="moduleRegistrationWarningModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="fas fa-triangle-exclamation me-2"></i>Module Registration Required</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0" id="moduleRegistrationWarningMessage">This module still has not registered this school yet. Contact administrator to register it.</p>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script>
+    async function verifyModuleRegistration(moduleName, schoolId) {
+        const endpoint = `{{ route('module-registration.status') }}?module=${encodeURIComponent(moduleName)}&school_id=${encodeURIComponent(schoolId)}`;
+        const response = await fetch(endpoint, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Unable to validate module registration right now.');
+        }
+
+        return response.json();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const warningModalEl = document.getElementById('moduleRegistrationWarningModal');
+        const warningMessageEl = document.getElementById('moduleRegistrationWarningMessage');
+        const warningModal = warningModalEl ? bootstrap.Modal.getOrCreateInstance(warningModalEl) : null;
+
+        document.querySelectorAll('.js-module-link').forEach((link) => {
+            link.addEventListener('click', async function (event) {
+                const moduleName = this.dataset.module;
+                const schoolId = this.dataset.schoolId;
+                const href = this.getAttribute('href');
+
+                if (!moduleName || !schoolId || !href) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                try {
+                    const result = await verifyModuleRegistration(moduleName, schoolId);
+                    if (result && result.registered) {
+                        window.location.href = href;
+                        return;
+                    }
+
+                    if (warningMessageEl) {
+                        warningMessageEl.textContent = (result && result.message)
+                            ? result.message
+                            : 'This module still has not registered this school yet. Contact administrator to register it.';
+                    }
+
+                    if (warningModal) {
+                        warningModal.show();
+                    }
+                } catch (error) {
+                    if (warningMessageEl) {
+                        warningMessageEl.textContent = error.message || 'Unable to validate module registration right now.';
+                    }
+                    if (warningModal) {
+                        warningModal.show();
+                    }
+                }
+            });
+        });
+    });
+
     function markAsRead(id) {
         fetch(`/typhoon/notifications/${id}/mark-read`, {
             method: 'POST',

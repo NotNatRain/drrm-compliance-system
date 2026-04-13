@@ -7,6 +7,7 @@ use App\Models\IncidentCalendar;
 use App\Models\IncidentType;
 use App\Models\IncidentStatus;
 use App\Models\IncidentChecklist;
+use App\Models\FireSafetyNotification;
 use App\Models\School;
 use App\Models\ActivityLog;
 use Carbon\Carbon;
@@ -29,8 +30,20 @@ class IncidentController extends Controller
      */
     public function dashboard(Request $request)
     {
+        $focusDate = $request->input('focus_date');
+        $focusReportId = $request->input('focus_report_id');
         $year = (int) $request->input('year', date('Y'));
         $month = (int) $request->input('month', date('n'));
+        if ($focusDate) {
+            try {
+                $focusDateCarbon = Carbon::parse($focusDate);
+                $year = (int) $focusDateCarbon->format('Y');
+                $month = (int) $focusDateCarbon->format('n');
+            } catch (\Exception $e) {
+                // Ignore malformed focus date and keep current month/year defaults.
+            }
+        }
+
         $autoOpenIncidentModal = $request->boolean('open_log');
         $autoOpenIncidentTab = $request->input('log_tab') === 'compliance' ? 'compliance' : 'incident';
         $requestedIncidentSchoolName = null;
@@ -46,6 +59,15 @@ class IncidentController extends Controller
             $assignedIncidentSchoolName = $user->incidentSchool?->school_name;
 
             $weekOffset = (int) $request->input('week_offset', 0);
+            if ($focusDate) {
+                try {
+                    $focusDateCarbon = Carbon::parse($focusDate);
+                    $weekOffset = Carbon::now()->startOfWeek(Carbon::MONDAY)
+                        ->diffInWeeks($focusDateCarbon->copy()->startOfWeek(Carbon::MONDAY), false);
+                } catch (\Exception $e) {
+                    // Keep provided/default week offset when focus date is invalid.
+                }
+            }
             $weekStart = Carbon::now()->startOfWeek(Carbon::MONDAY)->addWeeks($weekOffset)->startOfDay();
             $weekEnd = (clone $weekStart)->endOfWeek(Carbon::SUNDAY)->endOfDay();
 
@@ -73,7 +95,9 @@ class IncidentController extends Controller
                 'weekEnd',
                 'autoOpenIncidentModal',
                 'autoOpenIncidentTab',
-                'requestedIncidentSchoolName'
+                'requestedIncidentSchoolName',
+                'focusDate',
+                'focusReportId'
             ));
         }
 
@@ -112,7 +136,6 @@ class IncidentController extends Controller
         // 2. If it's a new day (no items yet), bring over yesterday's non-deleted custom items
         //    and create missing default items
         if (IncidentChecklist::where('user_id', $request->user()->id)->whereDate('checklist_date', $checklistDate)->count() == 0) {
-
             $yesterdayDate = Carbon::yesterday()->toDateString();
 
             // Get yesterday's non-deleted items (both default and custom)
@@ -213,7 +236,9 @@ class IncidentController extends Controller
             'historyData',
             'autoOpenIncidentModal',
             'autoOpenIncidentTab',
-            'requestedIncidentSchoolName'
+            'requestedIncidentSchoolName',
+            'focusDate',
+            'focusReportId'
         ));
     }
 
@@ -611,6 +636,8 @@ class IncidentController extends Controller
             'notes' => $incident->remarks,
         ]);
 
+        $this->createTyphoonFloodNotificationFromIncident($incident);
+
         // Update or create school record (only if it's a real school name)
         if ($validated['school_name'] !== 'All Schools') {
             $this->updateSchoolRecord($validated['school_name']);
@@ -859,6 +886,60 @@ class IncidentController extends Controller
         $school->increment('incident_count');
         $school->last_incident_date = now();
         $school->save();
+    }
+
+    private function createTyphoonFloodNotificationFromIncident(IncidentCalendar $incident): void
+    {
+        if ($incident->entry_type !== 'incident') {
+            return;
+        }
+
+        $incidentTypeName = strtolower(trim((string) ($incident->incidentType?->name ?? '')));
+        $relevantTypes = [
+            'tropical cyclones',
+            'tropical cyclone',
+            'heavy rainfall',
+            'flooding',
+            'landslide',
+        ];
+
+        if (!in_array($incidentTypeName, $relevantTypes, true)) {
+            return;
+        }
+
+        $school = School::where('school_name', $incident->school_name)->first();
+
+        FireSafetyNotification::create([
+            'compliance_type' => 'typhoon_flood',
+            'module' => 'incident_bridge',
+            'school_id' => null,
+            'user_id' => $incident->contributor_id,
+            'type' => 'alert',
+            'title' => 'Incident Logged: ' . ($incident->incidentType?->name ?? 'Typhoon/Flood Incident'),
+            'message' => sprintf(
+                '%s logged %s for %s on %s.',
+                $incident->contributor?->name ?? 'A user',
+                $incident->incidentType?->name ?? 'an incident',
+                $incident->school_name,
+                optional($incident->incident_date)->format('F d, Y')
+            ),
+            'action_type' => 'view_incident',
+            'action_url' => route('incidents.dashboard', [
+                'focus_date' => optional($incident->incident_date)->format('Y-m-d'),
+                'focus_report_id' => $incident->id,
+            ]),
+            'action_data' => [
+                'source_module' => 'incident_checklist',
+                'source_entry_type' => $incident->entry_type,
+                'incident_id' => $incident->id,
+                'incident_date' => optional($incident->incident_date)->format('Y-m-d'),
+                'incident_type' => $incident->incidentType?->name,
+                'school_name' => $incident->school_name,
+                'school_id' => $school?->id,
+                'logged_by' => $incident->contributor?->name,
+            ],
+            'is_read' => false,
+        ]);
     }
 
     /**

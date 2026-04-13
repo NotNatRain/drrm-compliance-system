@@ -158,9 +158,11 @@
                                     <i class="fas fa-edit"></i> Edit
                                 </button>
                                 @if($isAdminView)
-                                    <button class="btn btn-sm btn-outline-success me-1" onclick="assignAccess({{ $user->id }})" title="Assign Access">
-                                        <i class="fas fa-tasks"></i>
-                                    </button>
+                                    @if($user->role !== 'admin')
+                                        <button class="btn btn-sm btn-outline-success me-1" onclick="assignAccess({{ $user->id }})" title="Assign Access">
+                                            <i class="fas fa-tasks"></i>
+                                        </button>
+                                    @endif
                                     @if($user->id !== auth()->id())
                                     <button class="btn btn-sm {{ $user->is_active ? 'btn-outline-warning' : 'btn-outline-info' }}" 
                                             onclick="toggleUserStatus({{ $user->id }}, {{ $user->is_active ? 'true' : 'false' }})" 
@@ -315,6 +317,21 @@
                 <input type="hidden" name="user_id" id="assignUserId">
                 <div class="modal-body">
                     <p class="mb-3">Select WHICH compliance systems <strong id="assignUserName"></strong> can see and assign a school if applicable.</p>
+
+                    <div class="border rounded p-3 mb-3 bg-light">
+                        <label class="small fw-bold mb-2 d-block">Select School (Universal Assignment)</label>
+                        <select name="universal_school_id" id="universalSchoolSelect" class="form-select form-select-sm">
+                            <option value="">-- Select School --</option>
+                            @if($schools->isEmpty())
+                                <option value="" disabled>-- No existing schools --</option>
+                            @else
+                                @foreach($schools as $school)
+                                    <option value="{{ $school->id }}">{{ $school->school_name }}</option>
+                                @endforeach
+                            @endif
+                        </select>
+                        <small class="text-muted d-block mt-1">This sets one school assignment across contributor/viewer access.</small>
+                    </div>
                     
                     <div class="list-group">
                         <!-- Fire Safety -->
@@ -325,20 +342,6 @@
                                     <label class="form-check-label fw-bold" for="checkFS">Fire Safety Compliance</label>
                                 </div>
                                 <span class="badge bg-success text-white">Completed</span>
-                            </div>
-                            <div id="schoolFS" class="ms-4 mt-2 d-none">
-                                <label class="small fw-bold">Assign School:</label>
-                                <select name="school_id" class="form-select form-select-sm school-select">
-                                    <option value="encode">Encode their own school first</option>
-                                    @if($schools->isEmpty())
-                                        <option value="" disabled>-- No existing schools --</option>
-                                    @else
-                                        <option value="">-- Select Existing School --</option>
-                                        @foreach($schools as $school)
-                                            <option value="{{ $school->id }}">{{ $school->school_name }}</option>
-                                        @endforeach
-                                    @endif
-                                </select>
                             </div>
                         </div>
 
@@ -351,21 +354,6 @@
                                 </div>
                                 <span class="badge bg-primary text-white">Pending Validation</span>
                             </div>
-                            <!-- Note: Request says use respective tables, but they don't exist yet. Using FireSafety schools for now as placeholder as per instructions -->
-                            <div id="schoolTF" class="ms-4 mt-2 d-none">
-                                <label class="small fw-bold">Assign School (Typhoon):</label>
-                                <select name="typhoon_school_id" class="form-select form-select-sm school-select">
-                                    <option value="encode">Encode their own school first</option>
-                                    @if($typhoonSchools->isEmpty())
-                                        <option value="" disabled>-- No existing evacuation centers --</option>
-                                    @else
-                                        <option value="">-- Select Existing Evacuation Center --</option>
-                                        @foreach($typhoonSchools as $tSchool)
-                                            <option value="{{ $tSchool->id }}">{{ $tSchool->school_name ?? ($tSchool->identification ?: 'School #' . $tSchool->id) }}</option>
-                                        @endforeach
-                                    @endif
-                                </select>
-                            </div>
                         </div>
 
                         <!-- Incident Checklist -->
@@ -377,15 +365,6 @@
                                 </div>
                                 <span class="badge bg-success text-white">Completed</span>
                             </div>
-                            <div id="schoolIC" class="ms-4 mt-2 d-none">
-                                <label class="small fw-bold">Assign School (Incident):</label>
-                                <select name="incident_school_id" class="form-select form-select-sm school-select">
-                                    <option value="">-- Select Incident School --</option>
-                                    @foreach($incidentSchools as $incidentSchool)
-                                        <option value="{{ $incidentSchool->id }}">{{ $incidentSchool->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
                         </div>
 
                         <!-- School Safety -->
@@ -396,15 +375,6 @@
                                     <label class="form-check-label fw-bold" for="checkSS">Comprehensive School Safety</label>
                                 </div>
                                 <span class="badge bg-info text-dark">In Development</span>
-                            </div>
-                            <div id="schoolSS" class="ms-4 mt-2 d-none">
-                                <label class="small fw-bold">Assign School:</label>
-                                <select name="school_safety_id" class="form-select form-select-sm school-select">
-                                    <option value="">-- Select Comprehensive School --</option>
-                                    @foreach($comprehensiveSchools as $comprehensiveSchool)
-                                        <option value="{{ $comprehensiveSchool->id }}">{{ $comprehensiveSchool->name }}</option>
-                                    @endforeach
-                                </select>
                             </div>
                         </div>
 
@@ -430,12 +400,62 @@
 </div>
 @endif
 
+@if($isAdminView)
+<div class="modal fade" id="csssSecurityRestrictionModal" tabindex="-1" aria-labelledby="csssSecurityRestrictionLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header csss-security-header text-white">
+                <h5 class="modal-title" id="csssSecurityRestrictionLabel">Security Restriction</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="fw-bold mb-2">Are you sure you want to assign a contributor to take an assessment?</p>
+                <p class="mb-0">Only administrators should perform assessments. Assigning contributors may bypass required compliance protocols.</p>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" id="csssCancelAssignBtn" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn csss-security-btn text-white" id="csssAssignAnywayBtn">Assign Anyway</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 @endsection
+
+@push('styles')
+<style>
+    .csss-security-header {
+        background: linear-gradient(135deg, #8b5a2b 0%, #5e3b1f 100%);
+    }
+
+    .csss-security-btn {
+        background: #8b5a2b;
+        border-color: #8b5a2b;
+    }
+
+    .csss-security-btn:hover {
+        background: #744921;
+        border-color: #744921;
+    }
+</style>
+@endpush
 
 @push('scripts')
 <script>
+let csssRestrictionConfirmed = false;
+let csssRestrictionModalInstance = null;
+
 document.addEventListener('DOMContentLoaded', function() {
     const isAdminView = {{ $isAdminView ? 'true' : 'false' }};
+    const assignModalEl = document.getElementById('assignModal');
+    const universalSchoolSelect = document.getElementById('universalSchoolSelect');
+    const csssCheckbox = document.getElementById('checkSS');
+    const csssAssignAnywayBtn = document.getElementById('csssAssignAnywayBtn');
+    const csssCancelAssignBtn = document.getElementById('csssCancelAssignBtn');
+    csssRestrictionModalInstance = document.getElementById('csssSecurityRestrictionModal')
+        ? bootstrap.Modal.getOrCreateInstance(document.getElementById('csssSecurityRestrictionModal'))
+        : null;
 
     function syncAddPositionByRole() {
         const roleSelect = document.querySelector('#addUserForm select[name="role"]');
@@ -497,16 +517,41 @@ document.addEventListener('DOMContentLoaded', function() {
     // Module checkbox monitoring
     document.querySelectorAll('.module-check').forEach(check => {
         check.addEventListener('change', function() {
-            const schoolDiv = document.getElementById('school' + this.id.replace('check', ''));
-            if (schoolDiv) {
-                if (this.checked) {
-                    schoolDiv.classList.remove('d-none');
-                } else {
-                    schoolDiv.classList.add('d-none');
+            if (this.id === 'checkSS' && this.checked) {
+                csssRestrictionConfirmed = false;
+                if (csssRestrictionModalInstance) {
+                    csssRestrictionModalInstance.show();
                 }
             }
         });
     });
+
+    if (csssAssignAnywayBtn) {
+        csssAssignAnywayBtn.addEventListener('click', function () {
+            csssRestrictionConfirmed = true;
+            if (csssCheckbox) {
+                csssCheckbox.checked = true;
+            }
+            if (csssRestrictionModalInstance) {
+                csssRestrictionModalInstance.hide();
+            }
+        });
+    }
+
+    if (csssCancelAssignBtn) {
+        csssCancelAssignBtn.addEventListener('click', function () {
+            csssRestrictionConfirmed = false;
+            if (csssCheckbox) {
+                csssCheckbox.checked = false;
+            }
+        });
+    }
+
+    if (assignModalEl) {
+        assignModalEl.addEventListener('hidden.bs.modal', function () {
+            csssRestrictionConfirmed = false;
+        });
+    }
 
     // Form Submissions
     if (isAdminView) {
@@ -568,17 +613,22 @@ document.addEventListener('DOMContentLoaded', function() {
         if (assignForm) {
             assignForm.addEventListener('submit', function(e) {
                 e.preventDefault();
+                if (csssCheckbox && csssCheckbox.checked && !csssRestrictionConfirmed) {
+                    if (csssRestrictionModalInstance) {
+                        csssRestrictionModalInstance.show();
+                    }
+                    return;
+                }
+
                 const formData = new FormData(this);
                 const userId = document.getElementById('assignUserId').value;
                 const modules = [];
                 this.querySelectorAll('input[name="modules[]"]:checked').forEach(c => modules.push(c.value));
+                const universalSchoolId = formData.get('universal_school_id') || '';
                 
                 const data = {
                     modules: modules,
-                    school_id: formData.get('school_id'),
-                    school_safety_id: formData.get('school_safety_id'),
-                    typhoon_school_id: formData.get('typhoon_school_id'),
-                    incident_school_id: formData.get('incident_school_id')
+                    universal_school_id: universalSchoolId || null
                 };
 
                 fetch("{{ route('users.index') }}/" + userId + "/assign", {
@@ -687,9 +737,13 @@ function assignAccess(userId) {
             const userIdInput = document.getElementById('assignUserId');
             const userNameSpan = document.getElementById('assignUserName');
             const assignForm = document.getElementById('assignForm');
+            const universalSchoolSelect = document.getElementById('universalSchoolSelect');
+            const csssCheckbox = document.getElementById('checkSS');
 
             if (userIdInput) userIdInput.value = user.id;
             if (userNameSpan) userNameSpan.textContent = user.name;
+            if (csssCheckbox) csssCheckbox.checked = false;
+            csssRestrictionConfirmed = false;
             
             const isAdmin = user.role === 'admin';
             const saveBtn = modalEl.querySelector('button[type="submit"]');
@@ -703,84 +757,15 @@ function assignAccess(userId) {
                     c.checked = false;
                     c.disabled = false;
                 }
-                
-                const schoolDivId = 'school' + c.id.replace('check', '');
-                const schoolDiv = document.getElementById(schoolDivId);
-                if (schoolDiv) {
-                    if (isAdmin || c.checked) {
-                        schoolDiv.classList.remove('d-none');
-                    } else {
-                        schoolDiv.classList.add('d-none');
-                    }
-                }
             });
 
-            // FS School selection
-            const schoolSelect = assignForm.querySelector('select[name="school_id"]');
-            if (schoolSelect) {
-                if (isAdmin) {
-                    schoolSelect.value = "";
-                    schoolSelect.disabled = true;
-                } else {
-                    schoolSelect.disabled = false;
-                    if (user.needs_fs_registration) {
-                        schoolSelect.value = "encode";
-                    } else {
-                        schoolSelect.value = user.school_id || "";
-                    }
-                }
-            }
-
-            // Typhoon School selection
-            const typhoonSelect = assignForm.querySelector('select[name="typhoon_school_id"]');
-            if (typhoonSelect) {
-                if (isAdmin) {
-                    typhoonSelect.value = "";
-                    typhoonSelect.disabled = true;
-                } else {
-                    typhoonSelect.disabled = false;
-                    if (user.needs_tf_registration) {
-                        typhoonSelect.value = "encode";
-                    } else {
-                        typhoonSelect.value = user.typhoon_school_id || "";
-                    }
-                }
-            }
-
-            // Incident School selection
-            const incidentSelect = assignForm.querySelector('select[name="incident_school_id"]');
-            if (incidentSelect) {
-                if (isAdmin) {
-                    incidentSelect.value = "";
-                    incidentSelect.disabled = true;
-                } else {
-                    incidentSelect.disabled = false;
-                    incidentSelect.value = user.incident_school_id || "";
-                }
-            }
-
-            // Comprehensive School Safety selection
-            const csssSelect = assignForm.querySelector('select[name="school_safety_id"]');
-            if (csssSelect) {
-                if (isAdmin) {
-                    csssSelect.value = "";
-                    csssSelect.disabled = true;
-                } else {
-                    csssSelect.disabled = false;
-                    csssSelect.value = user.school_safety_id || "";
-                }
-            }
-
-            // Set checks and show relevant school divs (for non-admins)
+            // Set checks for non-admin users.
             if (!isAdmin) {
                 const access = user.module_access || [];
                 access.forEach(mod => {
                     const check = modalEl.querySelector(`.module-check[value="${mod}"]`);
                     if (check) {
                         check.checked = true;
-                        const schoolDivId = 'school' + check.id.replace('check', '');
-                        const schoolDiv = document.getElementById(schoolDivId);
-                        if (schoolDiv) schoolDiv.classList.remove('d-none');
                     }
                 });
             }
@@ -790,6 +775,11 @@ function assignAccess(userId) {
                 if (saveBtn) saveBtn.classList.add('d-none');
             } else {
                 if (saveBtn) saveBtn.classList.remove('d-none');
+            }
+
+            if (universalSchoolSelect) {
+                const fallbackSchoolId = user.school_id || user.typhoon_school_id || user.incident_school_id || user.school_safety_id || "";
+                universalSchoolSelect.value = fallbackSchoolId;
             }
 
             const modal = bootstrap.Modal.getOrCreateInstance(modalEl);

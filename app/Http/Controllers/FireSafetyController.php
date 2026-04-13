@@ -16,6 +16,7 @@ use App\Models\FireSafetyRoom;
 use App\Models\FireSafetyEvacuationDrill;
 use App\Models\FireSafetyArchive;
 use App\Models\FireSafetyNotification;
+use App\Models\ComprehensiveFacility;
 use App\Models\ActivityLog;
 use Carbon\Carbon;
 use App\Models\User;
@@ -64,16 +65,17 @@ class FireSafetyController extends Controller
         if (auth()->user()->role !== 'admin') {
             $userSchoolId = auth()->user()->school_id;
             $alertQuery->where(function($q) use ($userSchoolId) {
-                $q->where('unified_school_id', $userSchoolId)->orWhereNull('unified_school_id');
+                $q->where('school_id', $userSchoolId)->orWhereNull('school_id');
             });
             $eventQuery->where(function($q) use ($userSchoolId) {
-                $q->where('unified_school_id', $userSchoolId)->orWhereNull('unified_school_id');
+                $q->where('school_id', $userSchoolId)->orWhereNull('school_id');
             });
         }
 
         $allAlerts = $alertQuery->get()->map(function($n) use ($schools) {
-            $school = $schools->firstWhere('id', $n->unified_school_id);
             $actionData = $n->action_data ?? [];
+            $notificationSchoolId = $n->school_id ?? ($actionData['unified_school_id'] ?? $actionData['school_id'] ?? null);
+            $school = $schools->firstWhere('id', $notificationSchoolId);
             return [
                 'id' => $n->id,
                 'title' => preg_replace('/^Alert:\s*/', '', $n->title),
@@ -86,8 +88,9 @@ class FireSafetyController extends Controller
         })->toArray();
 
         $allEvents = $eventQuery->get()->map(function($n) use ($schools) {
-            $school = $schools->firstWhere('id', $n->unified_school_id);
             $actionData = $n->action_data ?? [];
+            $notificationSchoolId = $n->school_id ?? ($actionData['unified_school_id'] ?? $actionData['school_id'] ?? null);
+            $school = $schools->firstWhere('id', $notificationSchoolId);
             return [
                 'id' => $n->id,
                 'title' => preg_replace('/^Event:\s*/', '', $n->title),
@@ -2044,6 +2047,16 @@ public function storeRoom(Request $request)
             // Remove coverage associations
             DB::table('fire_safety_extinguisher_room_coverage')->where('extinguisher_id', $ext->id)->delete();
 
+            // Record this lifecycle action in Recent Extinguisher Inspections.
+            FireSafetyExtinguisherInspection::create([
+                'extinguisher_id' => $ext->id,
+                'user_id' => Auth::id(),
+                'inspection_date' => now(),
+                'status' => 'decommissioned',
+                'pressure_level' => $ext->pressure_level,
+                'notes' => 'Removed/Decommissioned: ' . $request->reason,
+            ]);
+
             // Delete the extinguisher
             $ext->delete();
 
@@ -2086,6 +2099,7 @@ public function storeRoom(Request $request)
 
             $ext = FireSafetyExtinguisher::with(['building'])->findOrFail($id);
             $targetBuilding = FireSafetyBuilding::findOrFail($request->building_id);
+            $sourceBuildingLabel = $ext->building?->building_no ?? ($ext->building?->building_name ?? 'Unknown');
 
             // Ensure target building is in the same school
             if ($targetBuilding->unified_school_id !== $ext->unified_school_id) {
@@ -2104,6 +2118,16 @@ public function storeRoom(Request $request)
             $ext->building_id = $targetBuilding->id;
             $ext->room_id = null;
             $ext->save();
+
+            // Record transfer action in Recent Extinguisher Inspections.
+            FireSafetyExtinguisherInspection::create([
+                'extinguisher_id' => $ext->id,
+                'user_id' => Auth::id(),
+                'inspection_date' => now(),
+                'status' => $ext->status,
+                'pressure_level' => $ext->pressure_level,
+                'notes' => 'Transferred from ' . $sourceBuildingLabel . ' to ' . ($targetBuilding->building_no ?? $targetBuilding->building_name ?? 'Unknown'),
+            ]);
 
             ActivityLog::log('fire_safety', 'Transferred extinguisher: ' . $ext->code . ' to ' . $targetBuilding->building_no, [
                 'unified_school_id' => $ext->unified_school_id,
@@ -3241,6 +3265,12 @@ public function storeRoom(Request $request)
                 'map_data' => $request->map_data,
             ]);
 
+            $this->syncAssemblyAreaFacilities(
+                (int) $request->unified_school_id,
+                $request->primary_assembly_area,
+                $request->secondary_assembly_area
+            );
+
             // Update building status if this is a building-specific plan
             if ($request->building_id) {
                 $building = FireSafetyBuilding::findOrFail($request->building_id);
@@ -3367,6 +3397,12 @@ public function storeRoom(Request $request)
         DB::beginTransaction();
         try {
             $plan->update($data);
+
+            $this->syncAssemblyAreaFacilities(
+                (int) $plan->unified_school_id,
+                $request->primary_assembly_area,
+                $request->secondary_assembly_area
+            );
 
             // update related building compliance
             if ($plan->building_id) {
@@ -4661,7 +4697,8 @@ public function storeRoom(Request $request)
             'buildings.alarmSystems',
             'buildings.alarmSystemsMany',
             'buildings.fireExtinguishers',
-            'buildings.evacuationPlan'
+            'buildings.evacuationPlan',
+            'facilities'
         ])->findOrFail($schoolId);
 
         return response()->json($school);
@@ -4691,6 +4728,122 @@ public function storeRoom(Request $request)
         ]);
 
         return response()->json(['success' => true, 'message' => 'Map layout saved successfully!']);
+    }
+
+    public function storeSharedFacility(Request $request)
+    {
+        if (auth()->user()->role === 'viewer') {
+            return response()->json(['success' => false, 'message' => 'Viewers cannot add facilities.'], 403);
+        }
+
+        $validated = $request->validate([
+            'school_id' => 'required|integer|exists:schools,id',
+            'type' => 'required|string|in:commercial,industrial,residential,educational,public/institutional,assembly_area',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'condition' => 'required|string|in:excellent,good,fair,poor,critical',
+            'remarks' => 'nullable|string',
+        ]);
+
+        if (auth()->user()->role !== 'admin' && (int) $validated['school_id'] !== (int) auth()->user()->school_id) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized access to this school.'], 403);
+        }
+
+        $facility = ComprehensiveFacility::create([
+            'school_id' => (int) $validated['school_id'],
+            'type' => $validated['type'],
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'condition' => $validated['condition'],
+            'remarks' => $validated['remarks'] ?? null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Facility saved successfully.',
+            'facility' => $facility,
+        ]);
+    }
+
+    public function updateSharedFacility(Request $request, $facilityId)
+    {
+        if (auth()->user()->role === 'viewer') {
+            return response()->json(['success' => false, 'message' => 'Viewers cannot update facilities.'], 403);
+        }
+
+        $facility = ComprehensiveFacility::findOrFail((int) $facilityId);
+        if (auth()->user()->role !== 'admin' && (int) $facility->school_id !== (int) auth()->user()->school_id) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized access to this facility.'], 403);
+        }
+
+        $validated = $request->validate([
+            'type' => 'nullable|string|in:commercial,industrial,residential,educational,public/institutional,assembly_area',
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'condition' => 'required|string|in:excellent,good,fair,poor,critical',
+            'remarks' => 'nullable|string',
+        ]);
+
+        $facility->update([
+            'type' => $validated['type'] ?? $facility->type,
+            'name' => $validated['name'],
+            'description' => array_key_exists('description', $validated) ? $validated['description'] : $facility->description,
+            'condition' => $validated['condition'],
+            'remarks' => $validated['remarks'] ?? null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Facility updated successfully.',
+            'facility' => $facility,
+        ]);
+    }
+
+    public function deleteSharedFacility($facilityId)
+    {
+        if (auth()->user()->role === 'viewer') {
+            return response()->json(['success' => false, 'message' => 'Viewers cannot delete facilities.'], 403);
+        }
+
+        $facility = ComprehensiveFacility::findOrFail((int) $facilityId);
+        if (auth()->user()->role !== 'admin' && (int) $facility->school_id !== (int) auth()->user()->school_id) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized access to this facility.'], 403);
+        }
+
+        $facility->delete();
+        return response()->json(['success' => true, 'message' => 'Facility deleted successfully.']);
+    }
+
+    private function syncAssemblyAreaFacilities(int $schoolId, ?string $primaryArea, ?string $secondaryArea): void
+    {
+        $upsertAssembly = function (string $marker, ?string $name) use ($schoolId): void {
+            $trimmedName = trim((string) $name);
+            $description = $marker . ' (from Fire Safety Evacuation Plan)';
+
+            if ($trimmedName === '') {
+                ComprehensiveFacility::query()
+                    ->where('school_id', $schoolId)
+                    ->where('type', 'assembly_area')
+                    ->where('description', $description)
+                    ->delete();
+                return;
+            }
+
+            $facility = ComprehensiveFacility::query()->firstOrNew([
+                'school_id' => $schoolId,
+                'type' => 'assembly_area',
+                'description' => $description,
+            ]);
+
+            $facility->name = $trimmedName;
+            if (!$facility->exists) {
+                $facility->condition = 'good';
+            }
+            $facility->save();
+        };
+
+        $upsertAssembly('Primary Assembly Area', $primaryArea);
+        $upsertAssembly('Secondary Assembly Area', $secondaryArea);
     }
 
     public function notifyMapUpdate(Request $request, $schoolId)
@@ -4808,6 +4961,72 @@ public function storeRoom(Request $request)
 
         return view('fire-safety.reports.evacuation-plans', compact('school', 'plans', 'schoolPlan', 'buildingPlans'));
     }
+
+    public function printFullSchoolReport($schoolId)
+    {
+        $school = School::with([
+            'buildings.actualRooms.roomTypeConfig',
+            'buildings.alarmSystems',
+            'buildings.alarmSystemsMany',
+            'buildings.fireExtinguishers.coveredRooms',
+            'buildings.evacuationPlan',
+            'schoolEvacuationPlan',
+        ])->findOrFail($schoolId);
+
+        $user = auth()->user();
+        if ($user->role !== 'admin' && (int) $user->school_id !== (int) $school->id) {
+            abort(403, 'Unauthorized access to this school report.');
+        }
+
+        $alarms = FireSafetyAlarmSystem::query()
+            ->where('unified_school_id', $school->id)
+            ->with(['buildings', 'building'])
+            ->orderBy('code')
+            ->get();
+
+        $extinguishers = FireSafetyExtinguisher::query()
+            ->where('unified_school_id', $school->id)
+            ->with(['building', 'centerRoom', 'coveredRooms'])
+            ->orderBy('code')
+            ->get();
+
+        $rooms = FireSafetyRoom::query()
+            ->where('unified_school_id', $school->id)
+            ->with(['building', 'roomTypeConfig'])
+            ->orderBy('building_id')
+            ->orderBy('floor_no')
+            ->orderBy('room_name')
+            ->get();
+
+        $buildingPlans = FireSafetyEvacuationPlan::query()
+            ->where('unified_school_id', $school->id)
+            ->whereNotNull('building_id')
+            ->with('building')
+            ->orderBy('building_id')
+            ->get();
+
+        $schoolPlan = FireSafetyEvacuationPlan::query()
+            ->where('unified_school_id', $school->id)
+            ->whereNull('building_id')
+            ->first();
+
+        $mapLayout = $school->evacuation_map_layout;
+
+        ActivityLog::log('fire_safety', 'Printed full school report: ' . $school->school_name, [
+            'unified_school_id' => $school->id,
+        ]);
+
+        return view('fire-safety.reports.full-school-report', compact(
+            'school',
+            'alarms',
+            'extinguishers',
+            'rooms',
+            'buildingPlans',
+            'schoolPlan',
+            'mapLayout'
+        ));
+    }
+
     public function getNotifications()
     {
         $user = auth()->user();

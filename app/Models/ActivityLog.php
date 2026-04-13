@@ -23,7 +23,7 @@ class ActivityLog extends Model
     /**
      * Log an activity. Call from controllers after create/update/delete.
      *
-     * @param string $module  fire_safety, typhoon_flood, incident_checklist, comprehensive_safety, hazard_mapping
+    * @param string $module  fire_safety, typhoon_flood, incident_checklist, comprehensive_school_safety, hazard_mapping
      * @param string $activity  Human-readable action (e.g. "Created building", "Updated alarm")
      * @param array $options  school_id (int), school_name (string), notes (string)
      */
@@ -82,6 +82,7 @@ class ActivityLog extends Model
             'fire_safety' => 'Fire Safety',
             'typhoon_flood' => 'Typhoon & Flood',
             'incident_checklist' => 'Incident Checklist',
+            'comprehensive_school_safety' => 'Comprehensive School Safety',
             'comprehensive_safety' => 'Comprehensive School Safety',
             'hazard_mapping' => 'Hazard Mapping',
             default => ucfirst(str_replace('_', ' ', $this->module)),

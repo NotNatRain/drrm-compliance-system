@@ -924,7 +924,18 @@
                     <form id="addFacilityForm">
                         <input type="hidden" name="school_id" id="addFacilitySchoolId">
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Facility Kind *</label>
+                            <label class="form-label fw-bold">Type *</label>
+                            <select class="form-select" name="type" required>
+                                <option value="">-- Select Type --</option>
+                                <option value="commercial">Commercial</option>
+                                <option value="industrial">Industrial</option>
+                                <option value="residential">Residential</option>
+                                <option value="educational">Educational</option>
+                                <option value="public/institutional">Public/Institutional</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Name *</label>
                             <input type="text" class="form-control" name="name" placeholder="e.g., Covered Court, Parking" required>
                         </div>
                         <div class="mb-3">
@@ -932,18 +943,18 @@
                             <textarea class="form-control" name="description" rows="2" placeholder="Small description..."></textarea>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Color / Legend *</label>
-                            <div class="d-flex flex-wrap gap-2">
-                                <label class="color-option"><input type="radio" name="color" value="#28a745" checked><span style="background:#28a745;"></span></label>
-                                <label class="color-option"><input type="radio" name="color" value="#007bff"><span style="background:#007bff;"></span></label>
-                                <label class="color-option"><input type="radio" name="color" value="#6f42c1"><span style="background:#6f42c1;"></span></label>
-                                <label class="color-option"><input type="radio" name="color" value="#e83e8c"><span style="background:#e83e8c;"></span></label>
-                                <label class="color-option"><input type="radio" name="color" value="#fd7e14"><span style="background:#fd7e14;"></span></label>
-                                <label class="color-option"><input type="radio" name="color" value="#20c997"><span style="background:#20c997;"></span></label>
-                                <label class="color-option"><input type="radio" name="color" value="#6c757d"><span style="background:#6c757d;"></span></label>
-                                <style>.color-option input{display:none;} .color-option span{display:block;width:30px;height:30px;border-radius:4px;cursor:pointer;border:2px solid transparent;} .color-option input:checked+span{border-color:black;transform:scale(1.1);}</style>
-                            </div>
-                            <div class="invalid-feedback" id="addFacilityColorError"></div>
+                            <label class="form-label fw-bold">Condition *</label>
+                            <select class="form-select" name="condition" required>
+                                <option value="excellent">Excellent</option>
+                                <option value="good" selected>Good</option>
+                                <option value="fair">Fair</option>
+                                <option value="poor">Poor</option>
+                                <option value="critical">Critical</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Remarks</label>
+                            <textarea class="form-control" name="remarks" rows="2" placeholder="Optional remarks"></textarea>
                         </div>
                     </form>
                 </div>
@@ -965,25 +976,39 @@
                 <div class="modal-body">
                     <form id="editFacilityForm">
                         <input type="hidden" id="editFacilityId">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Facility Kind *</label>
-                            <input type="text" class="form-control" name="name" id="editFacilityName" required>
+                        <input type="hidden" id="editFacilityDbId">
+                        <input type="hidden" id="editFacilityType">
+                        <div class="mb-3" id="editFacilityTypeWrap">
+                            <label class="form-label fw-bold">Type *</label>
+                            <select class="form-select" id="editFacilityTypeSelect" name="type">
+                                <option value="commercial">Commercial</option>
+                                <option value="industrial">Industrial</option>
+                                <option value="residential">Residential</option>
+                                <option value="educational">Educational</option>
+                                <option value="public/institutional">Public/Institutional</option>
+                            </select>
                         </div>
                         <div class="mb-3">
+                            <label class="form-label fw-bold">Name *</label>
+                            <input type="text" class="form-control" name="name" id="editFacilityName" required>
+                        </div>
+                        <div class="mb-3" id="editFacilityDescWrap">
                             <label class="form-label fw-bold">Description</label>
                             <textarea class="form-control" name="description" id="editFacilityDesc" rows="2"></textarea>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Color / Legend *</label>
-                            <div class="d-flex flex-wrap gap-2" id="editFacilityColorOptions">
-                                <label class="color-option"><input type="radio" name="color" value="#28a745"><span style="background:#28a745;"></span></label>
-                                <label class="color-option"><input type="radio" name="color" value="#007bff"><span style="background:#007bff;"></span></label>
-                                <label class="color-option"><input type="radio" name="color" value="#6f42c1"><span style="background:#6f42c1;"></span></label>
-                                <label class="color-option"><input type="radio" name="color" value="#e83e8c"><span style="background:#e83e8c;"></span></label>
-                                <label class="color-option"><input type="radio" name="color" value="#fd7e14"><span style="background:#fd7e14;"></span></label>
-                                <label class="color-option"><input type="radio" name="color" value="#20c997"><span style="background:#20c997;"></span></label>
-                                <label class="color-option"><input type="radio" name="color" value="#6c757d"><span style="background:#6c757d;"></span></label>
-                            </div>
+                            <label class="form-label fw-bold">Condition *</label>
+                            <select class="form-select" id="editFacilityCondition" name="condition" required>
+                                <option value="excellent">Excellent</option>
+                                <option value="good">Good</option>
+                                <option value="fair">Fair</option>
+                                <option value="poor">Poor</option>
+                                <option value="critical">Critical</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Remarks</label>
+                            <textarea class="form-control" name="remarks" id="editFacilityRemarks" rows="2"></textarea>
                         </div>
                     </form>
                 </div>
@@ -1505,6 +1530,48 @@
             return `${n}th`;
         }
 
+        function facilityColorByType(type) {
+            const t = String(type || '').toLowerCase();
+            if (t === 'assembly_area') return '#5C4033'; // royal brown
+            if (t === 'commercial') return '#0d6efd';
+            if (t === 'industrial') return '#fd7e14';
+            if (t === 'residential') return '#20c997';
+            if (t === 'educational') return '#6f42c1';
+            if (t === 'public/institutional') return '#198754';
+            return '#6c757d';
+        }
+
+        function appendRoomExitMarkers(roomDiv, hasSecondaryExit) {
+            const markerPositions = hasSecondaryExit ? [30, 70] : [50];
+            markerPositions.forEach((pct, idx) => {
+                const doorGap = document.createElement('div');
+                doorGap.style.position = 'absolute';
+                doorGap.style.right = '-1px';
+                doorGap.style.top = `${pct}%`;
+                doorGap.style.transform = 'translateY(-50%)';
+                doorGap.style.width = '8px';
+                doorGap.style.height = '18px';
+                doorGap.style.background = '#ffffff';
+                doorGap.style.borderTop = '1px solid #198754';
+                doorGap.style.borderBottom = '1px solid #198754';
+                roomDiv.appendChild(doorGap);
+
+                const exitSign = document.createElement('div');
+                exitSign.style.position = 'absolute';
+                exitSign.style.right = '2px';
+                exitSign.style.top = `${pct}%`;
+                exitSign.style.transform = 'translateY(-50%)';
+                exitSign.style.fontSize = '9px';
+                exitSign.style.fontWeight = '700';
+                exitSign.style.color = '#198754';
+                exitSign.style.background = 'rgba(255,255,255,0.9)';
+                exitSign.style.padding = '0 2px';
+                exitSign.style.borderRadius = '2px';
+                exitSign.textContent = idx === 0 ? 'EXIT' : 'ALT EXIT';
+                roomDiv.appendChild(exitSign);
+            });
+        }
+
         async function initEvacuationMap(schoolId) {
             const canvasContainer = document.getElementById(`school-map-canvas-${schoolId}`);
             if (!canvasContainer) return;
@@ -1522,13 +1589,38 @@
                 const school = await response.json();
                 mapDataArr[schoolId] = school;
 
-                // Sync facilities from layout to mapDataArr
+                // Sync facilities from shared facilities table + saved layout coordinates
                 const savedLayout = school.evacuation_map_layout || {};
-                school.facilities = [];
+                const dbFacilities = Array.isArray(school.facilities) ? school.facilities : [];
+                school.facilities = dbFacilities.map((facility) => {
+                    const layoutKey = `facility_${facility.id}`;
+                    const layoutItem = savedLayout[layoutKey] || {};
+                    const isSecondaryAssembly = String(facility.description || '').toLowerCase().includes('secondary assembly area');
+                    return {
+                        id: layoutKey,
+                        db_id: facility.id,
+                        type: facility.type,
+                        name: facility.name,
+                        description: facility.description || '',
+                        condition: facility.condition || 'good',
+                        remarks: facility.remarks || '',
+                        color: facilityColorByType(facility.type),
+                        x: Number(layoutItem.x || (facility.type === 'assembly_area' ? (isSecondaryAssembly ? 760 : 420) : 300)),
+                        y: Number(layoutItem.y || (facility.type === 'assembly_area' ? 300 : 300)),
+                        width: Number(layoutItem.width || 200),
+                        height: Number(layoutItem.height || 100),
+                    };
+                });
+
+                // Keep legacy ad-hoc facility markers for backward compatibility.
                 Object.keys(savedLayout).forEach(id => {
-                    if (id && String(id).startsWith('facility_')) {
+                    if (id && String(id).startsWith('facility_') && !school.facilities.find(f => f.id === id)) {
                         school.facilities.push({
                             id: id,
+                            db_id: null,
+                            type: 'public/institutional',
+                            condition: 'good',
+                            remarks: '',
                             ...savedLayout[id]
                         });
                     } else if (id && String(id).startsWith('specific_')) {
@@ -1772,6 +1864,10 @@
                             roomLabel.textContent = room.room_name || `R${room.id}`;
                             roomDiv.appendChild(roomLabel);
 
+                            const hasSecondaryExit = room.has_secondary_exit === true
+                                || String(room.has_secondary_exit || '') === '1';
+                            appendRoomExitMarkers(roomDiv, hasSecondaryExit);
+
                             // Fire extinguisher icon (center)
                             const extinguishers = building.fire_extinguishers
                                 ? building.fire_extinguishers.filter(e => Number(e.room_id) === Number(room.id))
@@ -1992,9 +2088,13 @@
             facilityDiv.className = 'map-element facility-element';
             facilityDiv.id = facility.id;
             facilityDiv.dataset.id = facility.id;
+            facilityDiv.dataset.dbId = facility.db_id || '';
             facilityDiv.dataset.type = 'facility';
             facilityDiv.dataset.schoolId = schoolId;
             facilityDiv.dataset.name = facility.name;
+            facilityDiv.dataset.facilityType = facility.type || 'public/institutional';
+            facilityDiv.dataset.condition = facility.condition || 'good';
+            facilityDiv.dataset.remarks = facility.remarks || '';
             facilityDiv.dataset.description = facility.description || '';
             facilityDiv.dataset.color = facility.color;
             facilityDiv.dataset.baseWidth = String(facilityWidth);
@@ -2010,7 +2110,15 @@
 
             facilityDiv.onclick = (e) => {
                 if (isMapEditable[schoolId]) return;
-                openEditFacilityModal(facility, schoolId);
+                openEditFacilityModal({
+                    id: facilityDiv.dataset.id,
+                    db_id: facilityDiv.dataset.dbId || null,
+                    type: facilityDiv.dataset.facilityType || 'public/institutional',
+                    name: facilityDiv.dataset.name || '',
+                    description: facilityDiv.dataset.description || '',
+                    condition: facilityDiv.dataset.condition || 'good',
+                    remarks: facilityDiv.dataset.remarks || '',
+                }, schoolId);
             };
 
             canvas.appendChild(facilityDiv);
@@ -2577,23 +2685,30 @@
 
         function createNewFacility() {
             try {
-                // 1. Get the form and verify it exists
                 const form = document.getElementById('addFacilityForm');
                 if (!form) {
-                    alert('Debug: addFacilityForm not found');
+                    Swal.fire('Error', 'Add Facility form was not found.', 'error');
                     return;
                 }
 
-                // 2. Extract values safely
+                const typeInput = form.querySelector('[name="type"]');
                 const nameInput = form.querySelector('[name="name"]');
                 const descInput = form.querySelector('[name="description"]');
-                const colorInput = form.querySelector('[name="color"]:checked');
+                const condInput = form.querySelector('[name="condition"]');
+                const remarksInput = form.querySelector('[name="remarks"]');
                 const schoolIdInput = document.getElementById('addFacilitySchoolId');
 
+                const type = typeInput ? typeInput.value : '';
                 const name = nameInput ? nameInput.value.trim() : "";
                 const description = descInput ? descInput.value.trim() : "";
-                const color = colorInput ? colorInput.value : "#28a745";
+                const condition = condInput ? condInput.value : 'good';
+                const remarks = remarksInput ? remarksInput.value.trim() : '';
                 const sId = schoolIdInput ? schoolIdInput.value : currentSchoolId;
+
+                if (!type) {
+                    Swal.fire('Required', 'Please select a facility type.', 'warning');
+                    return;
+                }
 
                 if (!name) {
                     Swal.fire('Required', 'Please enter a facility name.', 'warning');
@@ -2606,67 +2721,94 @@
                     return;
                 }
 
-                // 3. Create facility object
-                const facilityId = 'facility_' + Date.now();
-                const facility = {
-                    id: facilityId,
-                    name: name,
-                    description: description,
-                    color: color,
-                    x: 800, // Central-ish on the 2400 width
-                    y: 600
-                };
+                fetch('/fire-safety/facilities', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        school_id: Number(sId),
+                        type,
+                        name,
+                        description,
+                        condition,
+                        remarks,
+                    })
+                })
+                .then(async (response) => {
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok || !data.success) {
+                        throw new Error(data.message || 'Failed to create facility.');
+                    }
 
-                // 4. Update data structure
-                if (typeof mapDataArr === 'undefined') window.mapDataArr = {};
-                if (!mapDataArr[sId]) mapDataArr[sId] = { buildings: [], facilities: [] };
-                if (!mapDataArr[sId].facilities) mapDataArr[sId].facilities = [];
-                mapDataArr[sId].facilities.push(facility);
+                    const created = data.facility;
+                    const facility = {
+                        id: `facility_${created.id}`,
+                        db_id: created.id,
+                        type: created.type,
+                        name: created.name,
+                        description: created.description || '',
+                        condition: created.condition || 'good',
+                        remarks: created.remarks || '',
+                        color: facilityColorByType(created.type),
+                        x: 800,
+                        y: 600,
+                    };
 
-                // 5. Render it
-                renderFacility(facility, sId, {});
+                    if (typeof mapDataArr === 'undefined') window.mapDataArr = {};
+                    if (!mapDataArr[sId]) mapDataArr[sId] = { buildings: [], facilities: [] };
+                    if (!mapDataArr[sId].facilities) mapDataArr[sId].facilities = [];
+                    mapDataArr[sId].facilities.push(facility);
 
-                // 6. UI Updates
-                const modalEl = document.getElementById('addFacilityModal');
-                if (window.bootstrap && bootstrap.Modal) {
+                    renderFacility(facility, sId, {});
+
+                    const modalEl = document.getElementById('addFacilityModal');
                     const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
                     if (modal && typeof modal.hide === 'function') modal.hide();
-                } else {
-                    // Fallback hide
-                    $(modalEl).modal('hide');
-                }
 
-                // Enable save button
-                const saveBtn = document.getElementById(`save-placement-btn-${sId}`);
-                if (saveBtn) {
-                    saveBtn.disabled = false;
-                    saveBtn.classList.remove('btn-secondary');
-                    saveBtn.classList.add('btn-primary');
-                }
+                    const saveBtn = document.getElementById(`save-placement-btn-${sId}`);
+                    if (saveBtn) {
+                        saveBtn.disabled = false;
+                        saveBtn.classList.remove('btn-secondary');
+                        saveBtn.classList.add('btn-primary');
+                    }
 
-                // Unlock map for positioning
-                if (!isMapEditable[sId]) toggleMapEdit(sId);
+                    if (!isMapEditable[sId]) toggleMapEdit(sId);
 
-                form.reset();
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Facility Saved to Map',
-                    text: 'Now drag the rectangle to its correct location and click "Save Layout".',
-                    confirmButtonText: 'OK'
+                    form.reset();
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Facility Saved to Map',
+                        text: 'Now drag the rectangle to its correct location and click "Save Layout".',
+                        confirmButtonText: 'OK'
+                    });
+                })
+                .catch((error) => {
+                    console.error('Facility create error:', error);
+                    Swal.fire('Error', error.message || 'Failed to create facility.', 'error');
                 });
             } catch (err) {
                 console.error('Internal Error in createNewFacility:', err);
-                alert('An error occurred. Check browser console or contact support: ' + err.message);
+                Swal.fire('Error', err.message || 'Unexpected error while creating facility.', 'error');
             }
         }
 
         function openEditFacilityModal(facility, schoolId) {
+            currentSchoolId = schoolId;
             document.getElementById('editFacilityId').value = facility.id;
+            document.getElementById('editFacilityDbId').value = facility.db_id || '';
+            document.getElementById('editFacilityType').value = facility.type || 'public/institutional';
             document.getElementById('editFacilityName').value = facility.name;
             document.getElementById('editFacilityDesc').value = facility.description || '';
+            document.getElementById('editFacilityCondition').value = facility.condition || 'good';
+            document.getElementById('editFacilityRemarks').value = facility.remarks || '';
+            document.getElementById('editFacilityTypeSelect').value = facility.type || 'public/institutional';
 
-            const colorOption = document.querySelector(`#editFacilityColorOptions input[value="${facility.color}"]`);
-            if (colorOption) colorOption.checked = true;
+            const isAssemblyArea = String(facility.type || '').toLowerCase() === 'assembly_area';
+            document.getElementById('editFacilityTypeWrap').style.display = isAssemblyArea ? 'none' : '';
+            document.getElementById('editFacilityDescWrap').style.display = isAssemblyArea ? 'none' : '';
 
             const modal = new bootstrap.Modal(document.getElementById('editFacilityModal'));
             modal.show();
@@ -2679,17 +2821,59 @@
 
             const name = document.getElementById('editFacilityName').value;
             const desc = document.getElementById('editFacilityDesc').value;
-            const color = document.querySelector('#editFacilityColorOptions input:checked').value;
+            const dbId = document.getElementById('editFacilityDbId').value;
+            const type = document.getElementById('editFacilityType').value || document.getElementById('editFacilityTypeSelect').value;
+            const condition = document.getElementById('editFacilityCondition').value || 'good';
+            const remarks = document.getElementById('editFacilityRemarks').value || '';
 
-            el.dataset.name = name;
-            el.dataset.description = desc;
-            el.dataset.color = color;
-            el.style.backgroundColor = color;
-            el.textContent = name;
+            if (!name.trim()) {
+                Swal.fire('Required', 'Facility name is required.', 'warning');
+                return;
+            }
 
-            bootstrap.Modal.getInstance(document.getElementById('editFacilityModal')).hide();
-            const saveBtn = document.getElementById(`save-placement-btn-${currentSchoolId}`);
-            if (saveBtn) saveBtn.disabled = false;
+            if (!dbId) {
+                Swal.fire('Not Supported', 'This is a legacy map marker and cannot be edited from shared facilities.', 'info');
+                return;
+            }
+
+            fetch(`/fire-safety/facilities/${dbId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    type,
+                    name,
+                    description: desc,
+                    condition,
+                    remarks,
+                })
+            })
+            .then(async (response) => {
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Failed to update facility.');
+                }
+
+                el.dataset.name = name;
+                el.dataset.description = desc;
+                el.dataset.facilityType = type;
+                el.dataset.condition = condition;
+                el.dataset.remarks = remarks;
+                el.dataset.color = facilityColorByType(type);
+                el.style.backgroundColor = facilityColorByType(type);
+                el.textContent = name;
+
+                bootstrap.Modal.getInstance(document.getElementById('editFacilityModal')).hide();
+                const saveBtn = document.getElementById(`save-placement-btn-${currentSchoolId}`);
+                if (saveBtn) saveBtn.disabled = false;
+            })
+            .catch((error) => {
+                console.error('Facility update error:', error);
+                Swal.fire('Error', error.message || 'Failed to update facility.', 'error');
+            });
         }
         function toggleMapView(mode, id) {
             const generatedView = document.getElementById('generated-map-view-' + id);
@@ -2728,12 +2912,39 @@
 
         function deleteFacility() {
             const id = document.getElementById('editFacilityId').value;
+            const dbId = document.getElementById('editFacilityDbId').value;
             const el = document.getElementById(id);
-            if (el) el.remove();
 
-            bootstrap.Modal.getInstance(document.getElementById('editFacilityModal')).hide();
-            const saveBtn = document.getElementById(`save-placement-btn-${currentSchoolId}`);
-            if (saveBtn) saveBtn.disabled = false;
+            if (!dbId) {
+                if (el) el.remove();
+                bootstrap.Modal.getInstance(document.getElementById('editFacilityModal')).hide();
+                const saveBtn = document.getElementById(`save-placement-btn-${currentSchoolId}`);
+                if (saveBtn) saveBtn.disabled = false;
+                return;
+            }
+
+            fetch(`/fire-safety/facilities/${dbId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
+                }
+            })
+            .then(async (response) => {
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Failed to delete facility.');
+                }
+
+                if (el) el.remove();
+                bootstrap.Modal.getInstance(document.getElementById('editFacilityModal')).hide();
+                const saveBtn = document.getElementById(`save-placement-btn-${currentSchoolId}`);
+                if (saveBtn) saveBtn.disabled = false;
+            })
+            .catch((error) => {
+                console.error('Facility delete error:', error);
+                Swal.fire('Error', error.message || 'Failed to delete facility.', 'error');
+            });
         }
         // Apply card states on load
         document.addEventListener('DOMContentLoaded', function() {

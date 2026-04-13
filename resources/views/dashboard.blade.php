@@ -259,6 +259,8 @@
         $user = auth()->user();
         $modules = $user?->module_access ?? [];
         $isAdmin = $user && $user->role === 'admin';
+        $isContributor = $user && $user->role === 'contributor';
+        $canShowSchoolTab = $isAdmin || $isContributor;
     @endphp
     @if($announcements->count() == 0)
         <div class="d-flex justify-content-between align-items-center mb-4">
@@ -314,7 +316,7 @@
         </div>
     @endif
 
-    @if($isAdmin)
+    @if($canShowSchoolTab)
         <!-- Dashboard Tabs Wrapper (Centered and covering full row) -->
         <div class="dashboard-tabs-wrapper mb-5 px-lg-5">
             <div class="custom-tabs-container shadow-sm border">
@@ -322,7 +324,7 @@
                     <i class="fas fa-th-large me-2"></i> Compliance
                 </div>
                 <div id="schoolsTabBtn" class="nav-tab-item" onclick="switchDashboardTab('schools')">
-                    <i class="fas fa-university me-2"></i> Schools
+                    <i class="fas fa-university me-2"></i> {{ $isAdmin ? 'Schools' : 'School' }}
                 </div>
             </div>
         </div>
@@ -492,11 +494,139 @@
         </div>
     </div>
 
-    @if($isAdmin)
+    @if($canShowSchoolTab)
         <!-- Schools Content Division -->
         <div id="schoolsTabContent" class="d-none">
-            @include('schools-tab')
+            @if($isAdmin)
+                @include('schools-tab')
+            @else
+                <div class="schools-tab-container mt-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4 px-lg-5">
+                        <h2 class="fw-bold mb-0"><i class="fas fa-school me-2"></i> My Assigned School</h2>
+                    </div>
+
+                    <div class="px-lg-5">
+                        @if(isset($contributorAssignedSchool) && $contributorAssignedSchool)
+                            <div class="card border-0 shadow-lg rounded-4">
+                                <div class="card-header bg-dark text-white rounded-top-4">
+                                    <h5 class="mb-0 fw-bold">{{ $contributorAssignedSchool->school_name ?? 'Assigned School' }}</h5>
+                                </div>
+                                <div class="card-body p-4">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="fw-bold mb-0">Core Information</h5>
+                                        <div class="d-flex gap-2">
+                                            <button type="button" class="btn btn-dark btn-sm" id="contributorUnlockSchoolBtn">
+                                                <i class="fas fa-pen me-1"></i> Update Details
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="contributorCancelSchoolBtn">Cancel</button>
+                                        </div>
+                                    </div>
+
+                                    <form id="contributorSchoolForm">
+                                        @csrf
+                                        @method('PUT')
+                                        <div class="row g-3">
+                                            <div class="col-md-9">
+                                                <label class="form-label fw-bold small">School Name</label>
+                                                <input type="text" class="form-control contributor-school-input" name="school_name" value="{{ $contributorAssignedSchool->school_name }}" required disabled>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label class="form-label fw-bold small">School ID</label>
+                                                <input type="text" class="form-control contributor-school-input" name="school_id" value="{{ $contributorAssignedSchool->school_id ?: ($contributorAssignedSchool->school_id_number ?: '') }}" disabled>
+                                            </div>
+
+                                            <div class="col-12">
+                                                <label class="form-label fw-bold small">Address</label>
+                                                <textarea class="form-control contributor-school-input" name="address" rows="2" required disabled>{{ $contributorAssignedSchool->address }}</textarea>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-bold small">District</label>
+                                                <input type="text" class="form-control contributor-school-input" name="district" value="{{ $contributorAssignedSchool->district }}" disabled>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-bold small">Division</label>
+                                                <input type="text" class="form-control contributor-school-input" name="division" value="{{ $contributorAssignedSchool->division }}" disabled>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-bold small">Region</label>
+                                                <input type="text" class="form-control contributor-school-input" name="region" value="{{ $contributorAssignedSchool->region }}" disabled>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-bold small">School Head</label>
+                                                <input type="text" class="form-control contributor-school-input" name="school_head" value="{{ $contributorAssignedSchool->school_head }}" disabled>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-bold small">DRRM Coordinator</label>
+                                                <input type="text" class="form-control contributor-school-input" name="drrm_coordinator" value="{{ $contributorAssignedSchool->drrm_coordinator }}" disabled>
+                                            </div>
+
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-bold small">Head Contact</label>
+                                                <input type="text" class="form-control contributor-school-input" name="contact_number" value="{{ $contributorAssignedSchool->contact_number }}" disabled>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <label class="form-label fw-bold small">Coordinator Contact</label>
+                                                <input type="text" class="form-control contributor-school-input" name="contact_number_2" value="{{ $contributorAssignedSchool->contact_number_2 }}" disabled>
+                                            </div>
+
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-bold small">No. of Students</label>
+                                                <input type="number" class="form-control contributor-school-input" name="number_students" min="0" value="{{ $contributorAssignedSchool->number_students ?? 0 }}" disabled>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-bold small">No. of Personnel</label>
+                                                <input type="number" class="form-control contributor-school-input" name="number_personnel" min="0" value="{{ $contributorAssignedSchool->number_personnel ?? 0 }}" disabled>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-bold small">No. of Gates</label>
+                                                <input type="number" class="form-control contributor-school-input" name="number_gates" min="0" value="{{ $contributorAssignedSchool->number_gates ?? 0 }}" disabled>
+                                            </div>
+
+                                            <div class="col-12">
+                                                <label class="form-label fw-bold small">Emergency Resources</label>
+                                                <textarea class="form-control contributor-school-input" name="emergency_resources" rows="2" disabled>{{ $contributorAssignedSchool->emergency_resources }}</textarea>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-flex justify-content-end mt-3">
+                                            <button type="submit" class="btn btn-success btn-sm d-none" id="contributorSaveSchoolBtn">
+                                                <i class="fas fa-save me-1"></i> Save Changes
+                                            </button>
+                                        </div>
+                                    </form>
+
+                                    <div class="mt-4 pt-3 border-top">
+                                        <h6 class="fw-bold mb-2">School Account Users</h6>
+                                        <div class="small text-muted" id="contributorSchoolAccountUsersList">
+                                            @if(isset($contributorSchoolAccountUsers) && $contributorSchoolAccountUsers->count() > 0)
+                                                @foreach($contributorSchoolAccountUsers as $acctUser)
+                                                    <div class="mb-1">{{ $acctUser->name }} ({{ $acctUser->email }})</div>
+                                                @endforeach
+                                            @else
+                                                No assigned school account users.
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @else
+                            <div class="card border-0 shadow rounded-4">
+                                <div class="card-body p-4 text-center">
+                                    <i class="fas fa-school text-muted fa-2x mb-3"></i>
+                                    <h5 class="fw-bold">No School Assignment Yet</h5>
+                                    <p class="text-muted mb-0">Your account has no assigned school. Please contact your administrator.</p>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            @endif
         </div>
+    @endif
+
+    @if($isAdmin)
 
         <!-- View School Details Modal -->
         <div class="modal fade" id="viewSchoolModal" tabindex="-1" aria-hidden="true">
@@ -1334,9 +1464,87 @@
     // Persist active tab on reload
     document.addEventListener('DOMContentLoaded', function() {
         const savedTab = localStorage.getItem('activeDashboardTab');
-        if (savedTab === 'schools' && @json($isAdmin)) {
+        if (savedTab === 'schools' && @json($canShowSchoolTab)) {
             switchDashboardTab('schools');
         }
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('contributorSchoolForm');
+        if (!form) return;
+
+        const unlockBtn = document.getElementById('contributorUnlockSchoolBtn');
+        const cancelBtn = document.getElementById('contributorCancelSchoolBtn');
+        const saveBtn = document.getElementById('contributorSaveSchoolBtn');
+        const inputs = Array.from(form.querySelectorAll('.contributor-school-input'));
+        const initialData = {};
+
+        inputs.forEach((input) => {
+            initialData[input.name] = input.value;
+        });
+
+        const setEditable = (editable) => {
+            inputs.forEach((input) => {
+                input.disabled = !editable;
+            });
+
+            if (unlockBtn) unlockBtn.classList.toggle('d-none', editable);
+            if (cancelBtn) cancelBtn.classList.toggle('d-none', !editable);
+            if (saveBtn) saveBtn.classList.toggle('d-none', !editable);
+        };
+
+        if (unlockBtn) {
+            unlockBtn.addEventListener('click', function () {
+                setEditable(true);
+            });
+        }
+
+        if (cancelBtn) {
+            cancelBtn.addEventListener('click', function () {
+                inputs.forEach((input) => {
+                    input.value = initialData[input.name] ?? '';
+                });
+                setEditable(false);
+            });
+        }
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const payload = Object.fromEntries(new FormData(form).entries());
+            const submitButton = document.getElementById('contributorSaveSchoolBtn');
+            if (submitButton) submitButton.disabled = true;
+
+            fetch("{{ route('schools.assigned.update') }}", {
+                method: 'PUT',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(payload)
+            })
+            .then(async (response) => {
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Failed to update school information.');
+                }
+
+                inputs.forEach((input) => {
+                    initialData[input.name] = input.value;
+                });
+
+                setEditable(false);
+                Swal.fire('Updated', data.message || 'School information updated.', 'success');
+            })
+            .catch((error) => {
+                Swal.fire('Error', error.message || 'Failed to update school information.', 'error');
+            })
+            .finally(() => {
+                if (submitButton) submitButton.disabled = false;
+            });
+        });
     });
 
     /* Unified Schools Functionality (Phase 2) */

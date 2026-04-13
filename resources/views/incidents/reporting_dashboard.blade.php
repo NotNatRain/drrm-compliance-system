@@ -78,6 +78,26 @@
         border-bottom: none;
     }
 
+    .report-card.focus-date {
+        border-color: #f2c94c;
+        box-shadow: 0 0 0 3px rgba(242, 201, 76, 0.35), 0 10px 30px rgba(242, 153, 74, 0.2);
+    }
+
+    .entry-item.focus-report {
+        background: #fff8dc;
+        border-radius: 12px;
+        padding: 14px;
+        border: 1px solid #f2c94c;
+        box-shadow: inset 0 0 0 2px rgba(242, 201, 76, 0.3);
+        animation: reportFocusPulse 1.6s ease-in-out 3;
+    }
+
+    @keyframes reportFocusPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.01); }
+        100% { transform: scale(1); }
+    }
+
     .badge-incident { background-color: #ff0844; color: #fff; }
     .badge-compliance { background-color: #1ed760; color: #fff; }
 
@@ -214,14 +234,14 @@
             @endphp
 
             @forelse($groupedReports as $date => $reports)
-                <div class="report-card">
+                <div class="report-card" data-report-date="{{ $date }}">
                     <div class="report-date">
                         {{ \Carbon\Carbon::parse($date)->format('F j, Y') }}
                         <span class="ms-2 small text-muted">({{ \Carbon\Carbon::parse($date)->format('l') }})</span>
                     </div>
 
                     @foreach($reports as $report)
-                        <div class="entry-item">
+                        <div class="entry-item" data-report-id="{{ $report->id }}">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
                                     <div class="d-flex align-items-center mb-2">
@@ -336,6 +356,8 @@
 <script>
     const csrfToken = '{{ csrf_token() }}';
     const incidentsStoreUrl = '{{ route("incidents.store") }}';
+    const focusDate = @json($focusDate ?? null);
+    const focusReportId = @json($focusReportId ?? null);
 
     document.addEventListener('DOMContentLoaded', function() {
         // School source toggles
@@ -372,6 +394,24 @@
                 }
             });
         });
+
+        if (focusDate) {
+            const dateCard = document.querySelector(`.report-card[data-report-date="${focusDate}"]`);
+            if (dateCard) {
+                dateCard.classList.add('focus-date');
+            }
+        }
+
+        const reportEl = focusReportId ? document.querySelector(`.entry-item[data-report-id="${focusReportId}"]`) : null;
+        if (reportEl) {
+            reportEl.classList.add('focus-report');
+            reportEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else if (focusDate) {
+            const dateCard = document.querySelector(`.report-card[data-report-date="${focusDate}"]`);
+            if (dateCard) {
+                dateCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
 
         // Form submissions
         document.getElementById('incidentForm').addEventListener('submit', function(e) {

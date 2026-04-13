@@ -290,6 +290,17 @@
             border: 2px solid var(--incident-yellow) !important;
         }
 
+        .date-highlight-focus {
+            box-shadow: 0 0 0 3px rgba(242, 201, 76, 0.55), 0 0 20px rgba(242, 153, 74, 0.45);
+            animation: focusPulse 1.6s ease-in-out 3;
+        }
+
+        @keyframes focusPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+
         .calendar-day.has-events {
             background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
         }
@@ -1194,6 +1205,9 @@
             values: @json($stats['trend']['values'] ?? []),
         };
 
+        const focusDate = @json($focusDate ?? null);
+        const focusReportId = @json($focusReportId ?? null);
+
         const allIncidents = @json($incidents);
         let incidentDetailModal = null;
         let currentViewingIncidentId = null;
@@ -1941,6 +1955,14 @@
             @if(auth()->user()->role === 'admin')
                 if (typeof refreshPendingCount === 'function') refreshPendingCount();
             @endif
+
+            if (focusDate) {
+                const targetDay = document.querySelector(`.calendar-day[data-date="${focusDate}"]`);
+                if (targetDay) {
+                    targetDay.classList.add('date-highlight', 'date-highlight-focus');
+                    targetDay.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+                }
+            }
         });
 
         // Quick Compliance Checklist JS

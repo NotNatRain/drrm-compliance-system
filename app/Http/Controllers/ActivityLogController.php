@@ -42,7 +42,11 @@ class ActivityLogController extends Controller
             $query->where('role', $request->role);
         }
         if ($request->filled('module')) {
-            $query->where('module', $request->module);
+            if ($request->module === 'comprehensive_school_safety') {
+                $query->whereIn('module', ['comprehensive_school_safety', 'comprehensive_safety']);
+            } else {
+                $query->where('module', $request->module);
+            }
         }
         if ($request->filled('school')) {
             $query->where(function ($q) use ($request) {
@@ -61,7 +65,7 @@ class ActivityLogController extends Controller
             'fire_safety' => 'Fire Safety',
             'typhoon_flood' => 'Typhoon & Flood',
             'incident_checklist' => 'Incident Checklist',
-            'comprehensive_safety' => 'Comprehensive School Safety',
+            'comprehensive_school_safety' => 'Comprehensive School Safety',
             'hazard_mapping' => 'Hazard Mapping',
         ];
 

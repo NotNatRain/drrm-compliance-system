@@ -161,6 +161,23 @@
             align-items: center;
         }
 
+        .sidebar .nav {
+            width: 80%;
+            margin: 0 auto;
+        }
+
+        .sidebar .nav-item {
+            margin-bottom: 8px;
+        }
+
+        .sidebar .nav-link {
+            border-radius: 10px;
+            min-height: 52px;
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 14px 16px;
+        }
+
         .nav-link:hover, .nav-link.active {
             background-color: var(--fire-dark-red);
             color: white;
@@ -438,10 +455,16 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body bg-light">
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="search" class="form-control" id="selectSchoolSearchInput" placeholder="Search school name or ID..." autocomplete="off">
+                        </div>
+                    </div>
                     <div class="row g-3">
                         @if(isset($schools))
                             @foreach($schools as $school)
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-6 mb-3 school-select-item" data-school-search="{{ strtolower($school->school_name . ' ' . $school->school_id) }}">
                                 <div class="card school-select-card h-100 {{ (isset($activeSchool) && $activeSchool->id == $school->id) ? 'active' : '' }}"
                                      onclick="switchSchool({{ $school->id }})">
                                     <div class="card-body d-flex align-items-center">
@@ -736,6 +759,27 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             moveModalsToBody();
+
+            const schoolSearchInput = document.getElementById('selectSchoolSearchInput');
+            const schoolSearchItems = Array.from(document.querySelectorAll('.school-select-item'));
+            if (schoolSearchInput && schoolSearchItems.length > 0) {
+                schoolSearchInput.addEventListener('input', function() {
+                    const keyword = (this.value || '').toLowerCase().trim();
+                    schoolSearchItems.forEach((item) => {
+                        const haystack = (item.dataset.schoolSearch || '').toLowerCase();
+                        item.style.display = !keyword || haystack.includes(keyword) ? '' : 'none';
+                    });
+                });
+
+                const selectSchoolModal = document.getElementById('selectSchoolModal');
+                if (selectSchoolModal) {
+                    selectSchoolModal.addEventListener('shown.bs.modal', function() {
+                        schoolSearchInput.value = '';
+                        schoolSearchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        schoolSearchInput.focus();
+                    });
+                }
+            }
 
             // Sidebar Toggle Logic
             const sidebarToggle = document.getElementById('sidebarToggle');

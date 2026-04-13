@@ -29,6 +29,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/users', [DashboardController::class, 'getUsers'])->name('users.index');
     Route::get('/users/{id}', [DashboardController::class, 'getUser'])->name('users.show');
     Route::put('/users/{id}', [DashboardController::class, 'updateUser'])->name('users.update');
+    Route::get('/module-registration-status', [DashboardController::class, 'checkSchoolModuleRegistration'])->name('module-registration.status');
+    Route::put('/schools/my-assigned/update', [DashboardController::class, 'updateAssignedSchool'])->name('schools.assigned.update');
 });
 
 // Activity Log (admin and viewer only; contributors cannot see)
@@ -76,6 +78,9 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     Route::get('/school/{schoolId}/map-data', [FireSafetyController::class, 'getSchoolMapData']);
     Route::post('/school/{schoolId}/map-save', [FireSafetyController::class, 'saveMapLayout']);
     Route::post('/school/{schoolId}/map-notify', [FireSafetyController::class, 'notifyMapUpdate'])->name('fire-safety.map.notify');
+    Route::post('/facilities', [FireSafetyController::class, 'storeSharedFacility'])->name('fire-safety.facilities.store');
+    Route::put('/facilities/{facilityId}', [FireSafetyController::class, 'updateSharedFacility'])->name('fire-safety.facilities.update');
+    Route::delete('/facilities/{facilityId}', [FireSafetyController::class, 'deleteSharedFacility'])->name('fire-safety.facilities.delete');
 
     // Drill routes
     Route::get('/drill-history/{schoolId}', [FireSafetyController::class, 'getDrillHistory']);
@@ -128,6 +133,7 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     Route::get('/reports/alarm-details/{schoolId}', [FireSafetyController::class, 'printAlarmDetails'])->name('fire-safety.report.alarm-details');
     Route::get('/reports/extinguisher-details/{schoolId}', [FireSafetyController::class, 'printExtinguisherDetails'])->name('fire-safety.report.extinguisher-details');
     Route::get('/reports/evacuation-plans/{schoolId}', [FireSafetyController::class, 'printEvacuationPlans'])->name('fire-safety.report.evacuation-plans');
+    Route::get('/reports/full-school/{schoolId}', [FireSafetyController::class, 'printFullSchoolReport'])->name('fire-safety.report.full-school');
 
     // School management (Customization page)
     Route::post('/school', [FireSafetyController::class, 'storeSchool'])
@@ -290,6 +296,7 @@ Route::prefix('comprehensive-school-safety')
         Route::get('/schools/{schoolId}/students/export', [ComprehensiveSchoolSafetyController::class, 'exportStudents'])->name('school.students.export');
         Route::get('/schools/{schoolId}/facilities', [ComprehensiveSchoolSafetyController::class, 'schoolFacilities'])->name('school.facilities');
         Route::post('/schools/{schoolId}/facilities', [ComprehensiveSchoolSafetyController::class, 'storeFacility'])->name('school.facilities.store');
+        Route::put('/schools/{schoolId}/facilities/{facilityId}', [ComprehensiveSchoolSafetyController::class, 'updateFacility'])->name('school.facilities.update');
         Route::get('/schools/{schoolId}/reports', [ComprehensiveSchoolSafetyController::class, 'schoolReports'])->name('school.reports');
     });
 
