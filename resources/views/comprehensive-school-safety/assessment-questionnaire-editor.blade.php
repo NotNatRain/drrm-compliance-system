@@ -121,6 +121,7 @@
             <small id="editorModalHint" class="text-muted"></small>
         </div>
         <div class="d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-sm btn-outline-danger d-none" id="editorModalSecondary"></button>
             <button type="button" class="btn btn-sm btn-outline-secondary" id="editorModalCancel">Cancel</button>
             <button type="button" class="btn btn-sm btn-danger" id="editorModalConfirm">Confirm</button>
         </div>
@@ -160,19 +161,35 @@
         gap: 0.5rem;
     }
 
+    .part-chip .part-edit-btn {
+        border: none;
+        background: transparent;
+        color: #6f4632;
+        padding: 0;
+        line-height: 1;
+    }
+
+    .part-chip .part-edit-btn:hover {
+        color: #b35f2c;
+    }
+
     .csss-modal-overlay {
         position: fixed;
         inset: 0;
         background: rgba(53, 37, 30, 0.45);
-        display: none;
+        display: flex;
         align-items: center;
         justify-content: center;
         z-index: 2200;
         padding: 1rem;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 260ms ease;
     }
 
     .csss-modal-overlay.is-open {
-        display: flex;
+        opacity: 1;
+        visibility: visible;
     }
 
     .csss-modal-card {
@@ -183,13 +200,13 @@
         box-shadow: 0 18px 34px rgba(70, 52, 40, 0.2);
         padding: 0;
         overflow: hidden;
-        transform: translateY(14px) scale(0.98);
+        transform: translateY(16px);
         opacity: 0;
-        transition: transform 220ms ease, opacity 220ms ease;
+        transition: transform 280ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 280ms cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
     .csss-modal-overlay.is-open .csss-modal-card {
-        transform: translateY(0) scale(1);
+        transform: translateY(0);
         opacity: 1;
     }
 
@@ -251,6 +268,7 @@
     const modalHint = document.getElementById('editorModalHint');
     const modalCancel = document.getElementById('editorModalCancel');
     const modalConfirm = document.getElementById('editorModalConfirm');
+    const modalSecondary = document.getElementById('editorModalSecondary');
 
     const state = {
         parts: [],
@@ -258,6 +276,7 @@
     };
 
     let modalOnConfirm = null;
+    let modalOnSecondary = null;
 
     function slugify(value) {
         return String(value || '')
@@ -295,7 +314,15 @@
         modalInput.value = withInput ? (config.defaultValue || '') : '';
         modalHint.textContent = config.hint || '';
 
+        const hasSecondary = Boolean(config.secondaryText);
+        modalSecondary.classList.toggle('d-none', !hasSecondary);
+        if (hasSecondary) {
+            modalSecondary.textContent = config.secondaryText;
+            modalSecondary.className = `btn btn-sm ${config.secondaryClass || 'btn-outline-danger'}`;
+        }
+
         modalOnConfirm = config.onConfirm || null;
+        modalOnSecondary = config.onSecondary || null;
         modal.classList.add('is-open');
         modal.setAttribute('aria-hidden', 'false');
 
@@ -308,6 +335,7 @@
         modal.classList.remove('is-open');
         modal.setAttribute('aria-hidden', 'true');
         modalOnConfirm = null;
+        modalOnSecondary = null;
     }
 
     modalCancel.addEventListener('click', closeModal);
@@ -319,6 +347,17 @@
     modalConfirm.addEventListener('click', () => {
         if (typeof modalOnConfirm === 'function') {
             const continueOpen = modalOnConfirm(modalInput.value);
+            if (continueOpen === false) {
+                return;
+            }
+        }
+
+        closeModal();
+    });
+
+    modalSecondary.addEventListener('click', () => {
+        if (typeof modalOnSecondary === 'function') {
+            const continueOpen = modalOnSecondary(modalInput.value);
             if (continueOpen === false) {
                 return;
             }
@@ -357,8 +396,97 @@
             chip.className = 'part-chip';
             chip.innerHTML = `
                 <strong>${esc(part.label)}</strong>
+                <button type="button" class="part-edit-btn" data-part-index="${index}" title="Edit assessment part">
+                    <i class="fas fa-pen"></i>
+                </button>
             `;
             partsContainer.appendChild(chip);
+        });
+    }
+
+    function removePart(index) {
+        if (state.parts.length <= 1) {
+            openModal({
+                title: 'Cannot Delete Part',
+                message: 'At least one assessment part is required.',
+                confirmText: 'OK',
+                confirmClass: 'btn-primary',
+            });
+            return;
+        }
+
+        const part = state.parts[index];
+        if (!part) {
+            return;
+        }
+
+        confirmAction(
+            'Delete Assessment Part',
+            `Delete "${part.label}" and all sections under it?`,
+            () => {
+                state.parts.splice(index, 1);
+                state.sections = state.sections.filter((section) => section.division !== part.key);
+
+                if (!state.sections.length) {
+                    addSection();
+                } else {
+                    renderParts();
+                    renderSections();
+                }
+            }
+        );
+    }
+
+    function editPart(index) {
+        const part = state.parts[index];
+        if (!part) {
+            return;
+        }
+
+        openModal({
+            title: 'Edit Assessment Part',
+            message: 'Update the assessment part name.',
+            withInput: true,
+            defaultValue: part.label,
+            hint: 'Example: Checklist Tools, Pillar 1, Pillar 2',
+            confirmText: 'Save',
+            confirmClass: 'btn-primary',
+            secondaryText: 'Delete',
+            secondaryClass: 'btn-outline-danger',
+            onConfirm: (inputValue) => {
+                const label = String(inputValue || '').trim();
+                if (!label) {
+                    return false;
+                }
+
+                const oldKey = part.key;
+                let newKey = slugify(label);
+                if (newKey !== oldKey) {
+                    let counter = 2;
+                    while (state.parts.some((entry, idx) => idx !== index && entry.key === newKey)) {
+                        newKey = `${slugify(label)}_${counter}`;
+                        counter += 1;
+                    }
+                }
+
+                part.key = newKey;
+                part.label = label;
+
+                state.sections.forEach((section) => {
+                    if (section.division === oldKey) {
+                        section.division = newKey;
+                        section.division_label = label;
+                    }
+                });
+
+                renderParts();
+                renderSections();
+                return true;
+            },
+            onSecondary: () => {
+                removePart(index);
+                return false;
+            },
         });
     }
 
@@ -535,6 +663,20 @@
 
     addPartBtn.addEventListener('click', addPart);
     addSectionBtn.addEventListener('click', addSection);
+
+    partsContainer.addEventListener('click', (event) => {
+        const btn = event.target.closest('.part-edit-btn');
+        if (!btn) {
+            return;
+        }
+
+        const index = Number(btn.dataset.partIndex);
+        if (Number.isNaN(index)) {
+            return;
+        }
+
+        editPart(index);
+    });
 
     sectionsContainer.addEventListener('click', (event) => {
         const button = event.target.closest('button');

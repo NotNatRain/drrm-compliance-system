@@ -417,7 +417,7 @@
                             </div>
                             <h3 class="card-title fw-bold" style="color: #5C4033;">Comprehensive School Safety</h3>
                             <p class="card-text text-muted">
-                                Evaluation compliance system that assesses tools, school disaster risk management, DRR in education, and safe learning facilities.
+                                Evaluation compliance system assessing tools, disaster risk management, DRR in education, and safe learning facilities.
                             </p>
                         </div>
                         <div class="card-footer bg-transparent text-center border-0">
@@ -840,11 +840,23 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-bold small text-uppercase">School Head</label>
-                                    <input type="text" name="school_head" class="form-control p-3" placeholder="Full Name">
+                                    <input type="text" name="school_head" id="addSchoolHeadInput" class="form-control p-3 d-none" placeholder="Enter School Head Name">
+                                    <select name="school_head_user_id" id="addSchoolHeadSelect" class="form-select p-3 school-user-select">
+                                        <option value="">-- Select unassigned user --</option>
+                                        @foreach($unassignedSchoolUserCandidates as $schoolUser)
+                                            <option value="{{ $schoolUser->id }}">{{ $schoolUser->name }} ({{ $schoolUser->email }})</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                                 <div class="col-md-6 mb-3">
                                     <label class="form-label fw-bold small text-uppercase">DRRM Coordinator</label>
-                                    <input type="text" name="drrm_coordinator" class="form-control p-3" placeholder="Full Name">
+                                    <input type="text" name="drrm_coordinator" id="addDrrmCoordinatorInput" class="form-control p-3 d-none" placeholder="Enter DRRM Coordinator Name">
+                                    <select name="drrm_coordinator_user_id" id="addDrrmCoordinatorSelect" class="form-select p-3 school-user-select">
+                                        <option value="">-- Select unassigned user --</option>
+                                        @foreach($unassignedSchoolUserCandidates as $schoolUser)
+                                            <option value="{{ $schoolUser->id }}">{{ $schoolUser->name }} ({{ $schoolUser->email }})</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                             </div>
                             <div class="row">
@@ -912,7 +924,20 @@
                                 </div>
                                 <div class="col-md-6 mb-2">
                                     <label class="form-label fw-bold small">School Head</label>
-                                    <input type="text" name="school_head" class="form-control">
+                                    <select name="school_head_user_id" class="form-select school-user-select">
+                                        <option value="">-- Select existing user --</option>
+                                        @foreach($schoolUserCandidates as $schoolUser)
+                                            <option value="{{ $schoolUser->id }}">
+                                                {{ $schoolUser->name }} ({{ $schoolUser->email }})
+                                                @if($schoolUser->school)
+                                                    - {{ $schoolUser->school->school_name }}
+                                                    @if($schoolUser->position)
+                                                        / {{ $schoolUser->position }}
+                                                    @endif
+                                                @endif
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </div>
                                 <div class="col-md-6 mb-2">
                                     <label class="form-label fw-bold small">Head Contact No.</label>
@@ -920,7 +945,20 @@
                                 </div>
                                 <div class="col-md-6 mb-2">
                                     <label class="form-label fw-bold small">DRRM Coordinator</label>
-                                    <input type="text" name="drrm_coordinator" class="form-control">
+                                    <select name="drrm_coordinator_user_id" class="form-select school-user-select">
+                                        <option value="">-- Select existing user --</option>
+                                        @foreach($schoolUserCandidates as $schoolUser)
+                                            <option value="{{ $schoolUser->id }}">
+                                                {{ $schoolUser->name }} ({{ $schoolUser->email }})
+                                                @if($schoolUser->school)
+                                                    - {{ $schoolUser->school->school_name }}
+                                                    @if($schoolUser->position)
+                                                        / {{ $schoolUser->position }}
+                                                    @endif
+                                                @endif
+                                            </option>
+                                        @endforeach
+                                    </select>
                                 </div>
                                 <div class="col-md-6 mb-2">
                                     <label class="form-label fw-bold small">Coord. Contact No.</label>
@@ -1553,6 +1591,54 @@
         addModal.show();
     }
 
+    (function initAddSchoolAssignmentMode() {
+        const addSchoolModalEl = document.getElementById('addSchoolModal');
+        if (!addSchoolModalEl) return;
+
+        const schoolHeadInput = document.getElementById('addSchoolHeadInput');
+        const drrmInput = document.getElementById('addDrrmCoordinatorInput');
+        const schoolHeadSelect = document.getElementById('addSchoolHeadSelect');
+        const drrmSelect = document.getElementById('addDrrmCoordinatorSelect');
+
+        const setManualMode = (manualMode) => {
+            if (!schoolHeadInput || !drrmInput || !schoolHeadSelect || !drrmSelect) return;
+
+            schoolHeadInput.classList.toggle('d-none', !manualMode);
+            drrmInput.classList.toggle('d-none', !manualMode);
+            schoolHeadInput.disabled = !manualMode;
+            drrmInput.disabled = !manualMode;
+
+            schoolHeadSelect.classList.toggle('d-none', manualMode);
+            drrmSelect.classList.toggle('d-none', manualMode);
+            schoolHeadSelect.disabled = manualMode;
+            drrmSelect.disabled = manualMode;
+
+            if (manualMode) {
+                schoolHeadSelect.value = '';
+                drrmSelect.value = '';
+            } else {
+                schoolHeadInput.value = '';
+                drrmInput.value = '';
+            }
+        };
+
+        addSchoolModalEl.addEventListener('show.bs.modal', async function () {
+            const addSchoolForm = document.getElementById('addSchoolForm');
+            if (addSchoolForm) addSchoolForm.reset();
+
+            const question = await Swal.fire({
+                title: 'Input names first?',
+                text: 'Do you want to type School Head and DRRM Coordinator names first, then assign contributor accounts later?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, input names first',
+                cancelButtonText: 'No, use unassigned account dropdown'
+            });
+
+            setManualMode(question.isConfirmed);
+        });
+    })();
+
     // Handle Add School Submission
     document.getElementById('addSchoolForm')?.addEventListener('submit', function(e) {
         e.preventDefault();
@@ -1602,15 +1688,21 @@
 
             const s = data.school;
             const m = data.modules;
-            currentSchoolDetail = s;
+            currentSchoolDetail = {
+                ...s,
+                school_head_user: data.school_head_user || null,
+                school_drrm_user: data.school_drrm_user || null,
+                school_head_user_id: data.school_head_user_id || null,
+                drrm_coordinator_user_id: data.drrm_coordinator_user_id || null,
+            };
 
             // Populate Basic Info
             document.getElementById('schoolDetailName').innerText = s.school_name;
             document.getElementById('detail_id').innerText = s.school_id || s.school_id_number || 'N/A';
             document.getElementById('detail_name').innerText = s.school_name;
             document.getElementById('detail_address').innerText = s.address;
-            document.getElementById('detail_head').innerText = s.school_head || 'Not set';
-            document.getElementById('detail_coordinator').innerText = s.drrm_coordinator || 'Not set';
+            document.getElementById('detail_head').innerText = data.school_head_user?.name || s.school_head || 'Not set';
+            document.getElementById('detail_coordinator').innerText = data.school_drrm_user?.name || s.drrm_coordinator || 'Not set';
 
             // Additional Info
             document.getElementById('detail_head_contact').innerText = s.contact_number || 'N/A';
@@ -1726,8 +1818,10 @@
         form.querySelector('[name="school_name"]').value = school.school_name;
         form.querySelector('[name="school_id"]').value = school.school_id || '';
         form.querySelector('[name="address"]').value = school.address;
-        form.querySelector('[name="school_head"]').value = school.school_head || '';
-        form.querySelector('[name="drrm_coordinator"]').value = school.drrm_coordinator || '';
+        const headSelect = form.querySelector('[name="school_head_user_id"]');
+        const drrmSelect = form.querySelector('[name="drrm_coordinator_user_id"]');
+        if (headSelect) headSelect.value = school.school_head_user_id || '';
+        if (drrmSelect) drrmSelect.value = school.drrm_coordinator_user_id || '';
         form.querySelector('[name="district"]').value = school.district || '';
         form.querySelector('[name="division"]').value = school.division || '';
         form.querySelector('[name="region"]').value = school.region || '';

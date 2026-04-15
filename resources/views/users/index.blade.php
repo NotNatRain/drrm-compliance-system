@@ -104,19 +104,16 @@
                                 @else
                                     @php
                                         $modules = $user->module_access ?? [];
-                                        $allAvailableModules = [
+                                        $coreComplianceModules = [
                                             'fire_safety',
                                             'typhoon_flood',
                                             'incident_checklist',
                                             'comprehensive_school_safety',
-                                            'hazard_mapping',
                                         ];
-                                        $hasAssignedSchool = !empty($user->school_id) || !empty($user->typhoon_school_id) || !empty($user->incident_school_id);
-                                        $hasAllModules = $user->role === 'contributor'
-                                            && empty(array_diff($allAvailableModules, $modules));
+                                        $hasAllModules = empty(array_diff($coreComplianceModules, $modules));
                                     @endphp
 
-                                    @if($hasAssignedSchool || $hasAllModules)
+                                    @if($hasAllModules)
                                         <span class="text-muted small">All Modules</span>
                                     @else
                                         @foreach($modules as $mod)
@@ -319,7 +316,7 @@
                     <p class="mb-3">Select WHICH compliance systems <strong id="assignUserName"></strong> can see and assign a school if applicable.</p>
 
                     <div class="border rounded p-3 mb-3 bg-light">
-                        <label class="small fw-bold mb-2 d-block">Select School (Universal Assignment)</label>
+                        <label class="small fw-bold mb-2 d-block">Select School</label>
                         <select name="universal_school_id" id="universalSchoolSelect" class="form-select form-select-sm">
                             <option value="">-- Select School --</option>
                             @if($schools->isEmpty())
@@ -611,7 +608,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (isAdminView) {
         const assignForm = document.getElementById('assignForm');
         if (assignForm) {
-            assignForm.addEventListener('submit', function(e) {
+            assignForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 if (csssCheckbox && csssCheckbox.checked && !csssRestrictionConfirmed) {
                     if (csssRestrictionModalInstance) {
@@ -625,6 +622,42 @@ document.addEventListener('DOMContentLoaded', function() {
                 const modules = [];
                 this.querySelectorAll('input[name="modules[]"]:checked').forEach(c => modules.push(c.value));
                 const universalSchoolId = formData.get('universal_school_id') || '';
+
+                if (modules.length > 0 && !universalSchoolId) {
+                    await Swal.fire({
+                        title: 'School required',
+                        text: 'This user needs to have a school first before module access can be assigned.',
+                        icon: 'warning',
+                        confirmButtonText: 'OK'
+                    });
+                    return;
+                }
+
+                const initialModules = JSON.parse(assignForm.dataset.initialModules || '[]');
+                const removedModules = initialModules.filter(module => !modules.includes(module));
+
+                if (removedModules.length) {
+                    const moduleLabels = {
+                        fire_safety: 'Fire Safety Compliance',
+                        typhoon_flood: 'Typhoon/Flooding Monitoring',
+                        incident_checklist: 'Incident Checklist',
+                        comprehensive_school_safety: 'Comprehensive School Safety',
+                        hazard_mapping: 'Hazard Mapping',
+                    };
+                    const removedLabelList = removedModules.map(module => moduleLabels[module] || module).join(', ');
+                    const confirmResult = await Swal.fire({
+                        title: 'Confirm unassignment',
+                        text: `This will remove access to: ${removedLabelList}. Do you want to continue?`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, save changes',
+                        cancelButtonText: 'Cancel'
+                    });
+
+                    if (!confirmResult.isConfirmed) {
+                        return;
+                    }
+                }
                 
                 const data = {
                     modules: modules,
@@ -768,6 +801,11 @@ function assignAccess(userId) {
                         check.checked = true;
                     }
                 });
+                if (assignForm) {
+                    assignForm.dataset.initialModules = JSON.stringify(access);
+                }
+            } else if (assignForm) {
+                assignForm.dataset.initialModules = JSON.stringify(['fire_safety', 'typhoon_flood', 'incident_checklist', 'comprehensive_school_safety', 'hazard_mapping']);
             }
 
             // If admin, hide save button or show "Admin has full access" message

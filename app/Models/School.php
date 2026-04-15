@@ -274,6 +274,13 @@ class School extends Model
         return $this->hasMany(ComprehensiveStorage::class, 'school_id');
     }
 
+    /* ── Hazard Mapping (hzd_map_*) ─────────────────────────────────────── */
+
+    public function hazardMappings()
+    {
+        return $this->hasMany(HazardMapping::class, 'school_id');
+    }
+
     /* ── Presentation aliases for legacy views / APIs ───────────────────── */
 
     public function getNameAttribute(): string

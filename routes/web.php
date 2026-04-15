@@ -7,6 +7,7 @@ use App\Http\Controllers\FireSafetyController;
 use App\Http\Controllers\TyphoonController;
 use App\Http\Controllers\IncidentController;
 use App\Http\Controllers\ComprehensiveSchoolSafetyController;
+use App\Http\Controllers\HazardMappingController;
 Route::get('/', function () {
     return view('welcome');
 });
@@ -309,10 +310,14 @@ Route::prefix('comprehensive-school-safety')
         Route::delete('/schools/{schoolId}/storage/{storageId}', [ComprehensiveSchoolSafetyController::class, 'destroyStorageItem'])->name('school.storage.destroy');
     });
 
-// Hazard Mapping (placeholder – replace with real controller when module is ready)
-Route::middleware(['auth'])->group(function () {
-    Route::get('/hazard-mapping/dashboard', function () {
-        return redirect()->route('dashboard')->with('info', 'Hazard Mapping module is under development.');
-    })->name('hazard-mapping.dashboard');
-});
+// Hazard Mapping Routes
+Route::prefix('hazard-mapping')
+    ->name('hazard-mapping.')
+    ->middleware(['auth', 'module.access:hazard_mapping'])
+    ->group(function () {
+        Route::get('/dashboard', [HazardMappingController::class, 'dashboard'])->name('dashboard');
+        Route::get('/schools/{schoolId}/floor/{floorId}/edit', [HazardMappingController::class, 'editFloor'])->name('school.floor.edit');
+        Route::put('/schools/{schoolId}/floor/{floorId}', [HazardMappingController::class, 'updateFloor'])->name('school.floor.update');
+        Route::post('/schools/{schoolId}/floor/add', [HazardMappingController::class, 'addFloor'])->name('school.floor.add');
+    });
 
