@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Full Fire Safety Print Report</title>
+    <title>Full Fire Safety Report - {{ $school->school_name ?? 'School' }}</title>
     <style>
         @page {
             size: landscape;
@@ -288,6 +288,49 @@
             margin-top: 8px;
         }
 
+        .map-legend-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            color: #555;
+            font-size: 11px;
+            margin-top: 8px;
+        }
+
+        .map-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .map-source-label {
+            margin-top: 8px;
+            text-align: center;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #444;
+        }
+
+        .attached-map-frame {
+            width: 100%;
+            height: 800px;
+            border: 2px solid #333;
+            border-radius: 4px;
+            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .attached-map-frame img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
         @media print {
             .no-print {
                 display: none;
@@ -555,7 +598,7 @@
                             {{ $primaryLabel }}@if($otherLabels->isNotEmpty()) ({{ $otherLabels->implode(', ') }})@endif
                         </td>
                         <td>{{ $alarm->alarm_type }}</td>
-                        <td class="center-text"><strong>{{ strtoupper($alarm->status) }}</strong></td>
+                        <td class="center-text"><strong>{{ strtoupper(str_ireplace('broken', 'defective', $alarm->status)) }}</strong></td>
                         <td>{{ $alarm->last_test ? \Carbon\Carbon::parse($alarm->last_test)->format('M d, Y') : 'N/A' }}</td>
                         <td>{{ $alarm->next_test_due ? \Carbon\Carbon::parse($alarm->next_test_due)->format('M d, Y') : 'N/A' }}</td>
                         <td>{{ $alarm->notes }}</td>
@@ -860,21 +903,6 @@
 
     {{-- SECTION 5: EVACUATION MAP --}}
     <div class="page" style="page-break-after: auto;">
-        <div class="map-header">
-            <div class="map-header-left">
-                <div class="map-logos">
-                    <img src="{{ asset('images/Layer-0-1.png') }}" alt="Logo 1">
-                    <img src="{{ asset('images/What-Is-the-Difference-Between-DepEd-Seal-and-DepEd-Logo.png') }}" alt="Logo 2">
-                    <img src="{{ asset('images/drrmis-logo-2.png') }}" alt="Logo 3">
-                    <div style="font-size: 11px; font-weight: bold; text-transform: uppercase; margin-left: 3px;">DepEd DRRM</div>
-                </div>
-            </div>
-            <div class="map-header-center">
-                <h3 style="margin: 0; font-size: 13px; font-weight: bold; text-transform: uppercase; line-height: 1.2;">Visual Evacuation Map</h3>
-            </div>
-            <div class="map-header-right"></div>
-        </div>
-
         <div class="info-grid" style="background: #fafafa;">
             <div class="info-row">
                 <div><strong>Name of School:</strong> {{ $school->school_name }}</div>
@@ -901,14 +929,15 @@
                         $subType = strtolower((string)($item['subType'] ?? ''));
                         $label = $item['name'] ?? $item['label'] ?? strtoupper($item['type'] ?? 'ITEM');
                         $rotation = isset($item['rotation']) ? (float) $item['rotation'] : 0;
-                        $isSpecific = $type === 'specific' || str_contains($subType, 'door') || str_contains($subType, 'stairs') || str_contains($subType, 'arrow') || str_contains($subType, 'chair') || str_contains($subType, 'table') || str_contains($subType, 'medical');
+                        $isSpecific = $type === 'specific' || str_contains($subType, 'door') || str_contains($subType, 'stairs') || str_contains($subType, 'arrow') || str_contains($subType, 'bell') || str_contains($subType, 'table') || str_contains($subType, 'medical') || str_contains($subType, 'gate');
                         $icon = '•';
                         if (str_contains($subType, 'door')) $icon = '🚪';
                         elseif (str_contains($subType, 'stairs')) $icon = '🪜';
                         elseif (str_contains($subType, 'arrow')) $icon = '➡';
-                        elseif (str_contains($subType, 'chair')) $icon = '🪑';
+                        elseif (str_contains($subType, 'bell')) $icon = '🔔';
                         elseif (str_contains($subType, 'table')) $icon = '🗒';
                         elseif (str_contains($subType, 'medical')) $icon = '⛑';
+                        elseif (str_contains($subType, 'gate')) $icon = '🚧';
                         $bg = $item['color'] ?? '#ffffff';
                     @endphp
 
@@ -924,34 +953,26 @@
 
             <div class="map-legend">
                 <strong>Map Legend:</strong>
-                <div class="map-legend-row">
-                    <span>White boxed shapes: building layout elements</span>
-                    <span>Colored shapes: facilities</span>
-                    <span>Icon circles: map specifics (door/stairs/arrow/chair/table/medical)</span>
+                <div class="map-legend-grid">
+                    <div class="map-legend-item"><span style="width: 30px; height: 30px; background: white; border: 2px solid black; display:inline-block;"></span><strong>Building Structure</strong></div>
+                    <div class="map-legend-item"><span style="width: 24px; height: 1px; background: black; display:inline-block;"></span><strong>Floor Divider</strong></div>
+                    <div class="map-legend-item"><span style="width: 15px; height: 15px; background: #f0f0f0; border: 1px solid #333; display:inline-block;"></span><strong>Room</strong></div>
+                    <div class="map-legend-item"><span style="font-size: 16px;">🧯</span><strong>Fire Extinguisher</strong></div>
+                    <div class="map-legend-item"><span style="font-size: 16px;">🔔</span><strong>Alarm System</strong></div>
+                    <div class="map-legend-item"><span style="font-size: 14px;">⚪</span><strong>Smoke Detector</strong></div>
+                    <div class="map-legend-item"><span style="background: green; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px;">Plan OK</span><strong>Evacuation Plan</strong></div>
+                    <div class="map-legend-item"><span style="width: 20px; height: 10px; background: #28a745; border: 1px solid rgba(0,0,0,0.2); display:inline-block;"></span><strong>Campus Facility</strong></div>
                 </div>
             </div>
+            <div class="map-source-label">Generated by the system</div>
+        @elseif(!empty($school->attached_evacuation_map))
+            <div class="attached-map-frame">
+                <img src="{{ asset('storage/' . ltrim($school->attached_evacuation_map, '/')) }}" alt="Attached evacuation map">
+            </div>
+            <div class="map-source-label">Attached Image</div>
         @else
             <div class="no-data-box">No generated evacuation map layout found for this school.</div>
         @endif
-
-        <div class="purpose">
-            <p><strong>Overall Purpose:</strong> This visual section consolidates the school's evacuation map for rapid orientation, route familiarization, and emergency movement guidance.</p>
-        </div>
-
-        <div class="signatures">
-            <div class="sig-col">
-                <p>Prepared by:</p>
-                <br><br>
-                <p>_______________________</p>
-                <p>School DRRM Coordinator</p>
-            </div>
-            <div class="sig-col">
-                <p>Noted by:</p>
-                <br><br>
-                <p>_______________________</p>
-                <p>School Head / Principal</p>
-            </div>
-        </div>
     </div>
 </body>
 </html>

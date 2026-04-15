@@ -58,7 +58,7 @@
 
     <div id="schoolsGrid" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-5 px-lg-5">
         @foreach($allSchools as $school)
-            <div class="col school-item-col" data-school-name="{{ strtolower($school->school_name) }}" data-created-at="{{ optional($school->created_at)->timestamp ?? 0 }}">
+            <div class="col school-item-col" data-school-id="{{ $school->id }}" data-school-name="{{ strtolower($school->school_name) }}" data-created-at="{{ optional($school->created_at)->timestamp ?? 0 }}">
                 <div class="card school-card h-100 border-0 shadow-lg rounded-4 overflow-hidden"
                      onclick="viewSchoolDetails({{ $school->id }})"
                      style="cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-top: 5px solid #212529 !important;">
@@ -138,6 +138,18 @@
     .school-card:hover {
         transform: translateY(-10px);
         box-shadow: 0 20px 40px rgba(0,0,0,0.15) !important;
+    }
+
+    .school-card-focus-highlight {
+        border-top-color: #0d6efd !important;
+        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25), 0 20px 40px rgba(0,0,0,0.18) !important;
+        animation: school-focus-pulse 1.3s ease-in-out 2;
+    }
+
+    @keyframes school-focus-pulse {
+        0% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+        100% { transform: translateY(0); }
     }
 
     .school-card .card-body {

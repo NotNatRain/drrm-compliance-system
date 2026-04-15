@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 
 class FireSafetyController extends Controller
 {
@@ -806,14 +807,7 @@ class FireSafetyController extends Controller
                 $building->setRelation('fireExtinguishers', $sortedExts);
             }
 
-            $school->recent_inspections_data = FireSafetyExtinguisherInspection::whereHas('extinguisher', function($q) use ($school) {
-                    $q->where('unified_school_id', $school->id);
-                })
-                ->with(['extinguisher', 'extinguisher.building', 'extinguisher.centerRoom', 'inspector'])
-                ->latest('inspection_date')
-                ->latest('id')
-                ->take(10)
-                ->get();
+            $school->recent_inspections_data = $this->buildRecentExtinguisherActivity($school->id, 10);
 
             $school->recent_room_updates_data = FireSafetyRoom::where('unified_school_id', $school->id)
                 ->with(['building', 'nearestExtinguisherRoom', 'hostedExtinguisher', 'lastInspector'])
@@ -837,6 +831,55 @@ class FireSafetyController extends Controller
             'calculatedPriorities' => $calculatedPriorities,
             'roomTypes' => $roomTypes,
         ]);
+    }
+
+    private function buildRecentExtinguisherActivity(int $schoolId, int $limit = 10)
+    {
+        $inspectionRows = FireSafetyExtinguisherInspection::whereHas('extinguisher', function ($q) use ($schoolId) {
+                $q->where('unified_school_id', $schoolId);
+            })
+            ->with(['extinguisher', 'extinguisher.building', 'extinguisher.centerRoom', 'inspector'])
+            ->latest('inspection_date')
+            ->latest('id')
+            ->take($limit)
+            ->get()
+            ->map(function ($insp) {
+                return [
+                    'ts' => (string) $insp->created_at,
+                    'date' => Carbon::parse($insp->created_at)->format('Y-m-d h:i A'),
+                    'code' => $insp->extinguisher->code ?? 'N/A',
+                    'location' => ($insp->extinguisher->building->building_no ?? '?') . ' - ' . ($insp->extinguisher->centerRoom->room_name ?? 'Unassigned'),
+                    'inspector' => $insp->inspector->name ?? 'Unknown',
+                    'status' => $insp->status,
+                    'pressure_level' => $insp->pressure_level,
+                    'notes' => $insp->notes,
+                ];
+            });
+
+        $archiveRows = FireSafetyArchive::where('unified_school_id', $schoolId)
+            ->where('type', 'extinguisher')
+            ->latest('removed_at')
+            ->take($limit)
+            ->get()
+            ->map(function ($archive) {
+                $itemData = is_array($archive->item_data) ? $archive->item_data : [];
+                return [
+                    'ts' => (string) ($archive->removed_at ?? $archive->created_at),
+                    'date' => Carbon::parse($archive->removed_at ?? $archive->created_at)->format('Y-m-d h:i A'),
+                    'code' => $archive->item_code ?? 'N/A',
+                    'location' => ($itemData['building_name'] ?? '?') . ' - ' . ($itemData['room_name'] ?? 'Unassigned'),
+                    'inspector' => 'System Archive',
+                    'status' => 'decommissioned',
+                    'pressure_level' => $itemData['pressure_level'] ?? '-',
+                    'notes' => 'Removed/Decommissioned: ' . ($archive->reason ?? 'No reason provided'),
+                ];
+            });
+
+        return $inspectionRows
+            ->concat($archiveRows)
+            ->sortByDesc('ts')
+            ->take($limit)
+            ->values();
     }
 
     // Get rooms for a building (AJAX)
@@ -875,6 +918,7 @@ class FireSafetyController extends Controller
             'room_name' => 'nullable|string',
             'room_type_config_id' => 'nullable|exists:system_configurations,id',
             'nearest_extinguisher_room_id' => 'nullable|exists:fire_safety_rooms,id',
+            'engineer_last_inspection_date' => 'nullable|date',
             'smoke_detector_required' => 'boolean',
             'has_smoke_detector' => 'boolean',
             'has_secondary_exit' => 'boolean',
@@ -1175,6 +1219,7 @@ public function storeRoom(Request $request)
         'room_name' => 'nullable|string|max:100',
         'room_type_config_id' => 'required|exists:system_configurations,id',
         'floor_no' => 'required|integer|min:1|max:50',
+        'engineer_last_inspection_date' => 'nullable|date',
         'smoke_detector_required' => 'boolean',
         'has_smoke_detector' => 'boolean',
         'has_secondary_exit' => 'boolean',
@@ -1331,6 +1376,7 @@ public function storeRoom(Request $request)
             'room_type' => $room->room_type,
             'room_type_config_id' => $room->room_type_config_id,
             'floor_no' => $room->floor_no,
+            'engineer_last_inspection_date' => $room->engineer_last_inspection_date,
             'remarks' => $room->remarks,
             'has_smoke_detector' => $room->has_smoke_detector,
             'has_secondary_exit' => $room->has_secondary_exit,
@@ -1794,6 +1840,7 @@ public function storeRoom(Request $request)
             'code' => 'required|string|max:255',
             'status' => 'required|in:active,expired,maintenance,missing,purchase,decommissioned',
             'pressure_level' => 'required|integer|min:0|max:100',
+            'evaluation_result' => 'nullable|in:Passed,Failed',
             'notes' => 'required|string',
             'room_id' => 'nullable|integer|exists:fire_safety_rooms,id',
             'covered_room_ids' => 'nullable|array',
@@ -1847,7 +1894,7 @@ public function storeRoom(Request $request)
             $ext->pressure_level = $request->pressure_level;
             $ext->date_checked = now();
             $ext->room_id = $request->room_id ?: null;
-            $ext->evaluation_result = ($request->status === 'active') ? 'Passed' : 'Failed';
+            $ext->evaluation_result = $request->input('evaluation_result') ?: (($request->status === 'active') ? 'Passed' : 'Failed');
             $ext->save();
 
             // Update covered rooms if provided
@@ -2065,6 +2112,19 @@ public function storeRoom(Request $request)
                 'notes' => $request->reason,
             ]);
 
+            self::createFireSafetyNotification(
+                'extinguisher_decommissioned',
+                'Extinguisher Decommissioned: ' . $code,
+                'Extinguisher ' . $code . ' was decommissioned and removed from active inventory. Reason: ' . $request->reason,
+                $schoolId,
+                'update_now',
+                [
+                    'extinguisher_code' => $code,
+                    'unified_school_id' => $schoolId,
+                    'status' => 'decommissioned'
+                ]
+            );
+
             DB::commit();
             return response()->json(['success' => true]);
 
@@ -2132,6 +2192,21 @@ public function storeRoom(Request $request)
             ActivityLog::log('fire_safety', 'Transferred extinguisher: ' . $ext->code . ' to ' . $targetBuilding->building_no, [
                 'unified_school_id' => $ext->unified_school_id,
             ]);
+
+            self::createFireSafetyNotification(
+                'extinguisher_transferred',
+                'Extinguisher Transferred: ' . $ext->code,
+                'Extinguisher ' . $ext->code . ' was transferred from ' . $sourceBuildingLabel . ' to ' . ($targetBuilding->building_no ?? $targetBuilding->building_name ?? 'Unknown Building') . '.',
+                $ext->unified_school_id,
+                'update_now',
+                [
+                    'extinguisher_id' => $ext->id,
+                    'extinguisher_code' => $ext->code,
+                    'unified_school_id' => $ext->unified_school_id,
+                    'source_building' => $sourceBuildingLabel,
+                    'target_building' => ($targetBuilding->building_no ?? $targetBuilding->building_name ?? 'Unknown Building')
+                ]
+            );
 
             DB::commit();
 
@@ -2204,27 +2279,7 @@ public function storeRoom(Request $request)
             return response()->json(['error' => 'Unauthorized access to this school.'], 403);
         }
 
-        $inspections = FireSafetyExtinguisherInspection::whereHas('extinguisher', function($q) use ($schoolId) {
-                $q->where('unified_school_id', $schoolId);
-            })
-            ->with(['extinguisher', 'extinguisher.building', 'extinguisher.centerRoom', 'inspector'])
-            ->latest('inspection_date')
-            ->latest('id')
-            ->take(10)
-            ->get()
-            ->map(function($insp) {
-                return [
-                    'date' => \Carbon\Carbon::parse($insp->created_at)->format('Y-m-d h:i A'),
-                    'code' => $insp->extinguisher->code,
-                    'location' => ($insp->extinguisher->building->building_no ?? '?') . ' - ' . ($insp->extinguisher->centerRoom->room_name ?? '?'),
-                    'inspector' => $insp->inspector->name ?? 'Unknown',
-                    'status' => $insp->status,
-                    'pressure_level' => $insp->pressure_level,
-                    'notes' => $insp->notes
-                ];
-            });
-
-        return response()->json($inspections);
+        return response()->json($this->buildRecentExtinguisherActivity((int) $schoolId, 10));
     }
 
     public function getRecentRoomUpdates($schoolId)
@@ -2887,7 +2942,7 @@ public function storeRoom(Request $request)
             $buildingData['actualRooms'] = $building->actualRooms;
             $buildingData['fire_extinguishers'] = $building->fireExtinguishers;
             $buildingData['fireExtinguishers'] = $building->fireExtinguishers;
-            
+
             // 5. Explicit counts for frontend metrics
             $buildingData['active_extinguishers_count'] = $building->fireExtinguishers->where('status', 'active')->count();
             $buildingData['required_extinguishers_count'] = $building->required_extinguishers ?: 1;
@@ -4730,6 +4785,42 @@ public function storeRoom(Request $request)
         return response()->json(['success' => true, 'message' => 'Map layout saved successfully!']);
     }
 
+    public function decrementSchoolGates(Request $request, $schoolId)
+    {
+        if (auth()->user()->role === 'viewer') {
+            return response()->json(['success' => false, 'message' => 'Viewers cannot delete gates.'], 403);
+        }
+
+        if (auth()->user()->role !== 'admin' && (int) $schoolId !== (int) auth()->user()->school_id) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized access to this school.'], 403);
+        }
+
+        if (!Schema::hasColumn('schools', 'number_gates')) {
+            return response()->json(['success' => false, 'message' => 'Gate count column is not available on this environment.'], 422);
+        }
+
+        $validated = $request->validate([
+            'count' => 'nullable|integer|min:1|max:10',
+        ]);
+
+        $decrementBy = (int) ($validated['count'] ?? 1);
+        $school = School::findOrFail((int) $schoolId);
+        $current = (int) ($school->number_gates ?? 0);
+        $school->number_gates = max(0, $current - $decrementBy);
+        $school->save();
+
+        ActivityLog::log('fire_safety', 'Reduced school gate count from evacuation map', [
+            'unified_school_id' => $school->id,
+            'notes' => 'Updated number_gates to ' . $school->number_gates,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Gate count updated successfully.',
+            'number_gates' => (int) $school->number_gates,
+        ]);
+    }
+
     public function storeSharedFacility(Request $request)
     {
         if (auth()->user()->role === 'viewer') {
@@ -4738,7 +4829,7 @@ public function storeRoom(Request $request)
 
         $validated = $request->validate([
             'school_id' => 'required|integer|exists:schools,id',
-            'type' => 'required|string|in:commercial,industrial,residential,educational,public/institutional,assembly_area',
+            'type' => 'nullable|string|in:commercial,industrial,residential,educational,public/institutional,assembly_area',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'condition' => 'required|string|in:excellent,good,fair,poor,critical',
@@ -4751,7 +4842,7 @@ public function storeRoom(Request $request)
 
         $facility = ComprehensiveFacility::create([
             'school_id' => (int) $validated['school_id'],
-            'type' => $validated['type'],
+            'type' => $validated['type'] ?? 'public/institutional',
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
             'condition' => $validated['condition'],
@@ -4785,7 +4876,7 @@ public function storeRoom(Request $request)
         ]);
 
         $facility->update([
-            'type' => $validated['type'] ?? $facility->type,
+            'type' => $validated['type'] ?? ($facility->type ?? 'public/institutional'),
             'name' => $validated['name'],
             'description' => array_key_exists('description', $validated) ? $validated['description'] : $facility->description,
             'condition' => $validated['condition'],
@@ -4917,7 +5008,7 @@ public function storeRoom(Request $request)
 
     public function printExtinguisherDetails($schoolId)
     {
-        $school = School::findOrFail($schoolId);
+        $school = School::with('buildings')->findOrFail($schoolId);
         $extinguishers = FireSafetyExtinguisher::where('unified_school_id', $schoolId)
             ->with(['building', 'centerRoom', 'coveredRooms'])
             ->get()
@@ -4931,7 +5022,22 @@ public function storeRoom(Request $request)
             ->orderBy('room_name')
             ->get();
 
-        return view('fire-safety.reports.extinguisher-details', compact('school', 'extinguishers', 'rooms'));
+        $neededExtinguishers = (int) $school->buildings->sum(function ($building) {
+            return (int) $building->requiredExtinguishersCount;
+        });
+        $existingExtinguishers = (int) $extinguishers->count();
+        $passedExtinguishers = (int) $extinguishers->filter(function ($ext) {
+            return strtolower((string) $ext->evaluation_result) === 'passed';
+        })->count();
+
+        return view('fire-safety.reports.extinguisher-details', compact(
+            'school',
+            'extinguishers',
+            'rooms',
+            'neededExtinguishers',
+            'existingExtinguishers',
+            'passedExtinguishers'
+        ));
     }
 
     public function printEvacuationPlans(Request $request, $schoolId)

@@ -22,6 +22,7 @@ class FireSafetyRoom extends Model
         'coverage_limit',
         'floor_no',
         'nearest_extinguisher_room_id',
+        'engineer_last_inspection_date',
         'remarks',
         'has_smoke_detector',
         'smoke_detector_required',
@@ -33,7 +34,8 @@ class FireSafetyRoom extends Model
     ];
 
     protected $casts = [
-        'floor_no' => 'integer'
+        'floor_no' => 'integer',
+        'engineer_last_inspection_date' => 'date'
     ];
 
     public function school(): BelongsTo

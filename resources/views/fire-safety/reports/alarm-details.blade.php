@@ -143,7 +143,7 @@
                         {{ $primaryLabel }}@if($otherLabels->isNotEmpty()) ({{ $otherLabels->implode(', ') }})@endif
                     </td>
                     <td>{{ $alarm->alarm_type }}</td>
-                    <td class="status-cell">{{ strtoupper($alarm->status) }}</td>
+                    <td class="status-cell">{{ strtoupper(str_ireplace('broken', 'defective', $alarm->status)) }}</td>
                     <td>{{ $alarm->last_test ? \Carbon\Carbon::parse($alarm->last_test)->format('M d, Y') : 'N/A' }}</td>
                     <td>{{ $alarm->next_test_due ? \Carbon\Carbon::parse($alarm->next_test_due)->format('M d, Y') : 'N/A' }}</td>
                     <td>{{ $alarm->notes }}</td>

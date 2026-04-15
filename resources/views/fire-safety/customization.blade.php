@@ -174,7 +174,7 @@
                                                 <th>Status</th>
                                                 <th>Buildings</th>
                                                 <th>Last Inspection</th>
-                                                <th>Actions</th>
+                                                <th>Manage</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -197,17 +197,17 @@
                                                 <td>{{ $school->buildings_count ?? 0 }}</td>
                                                 <td>{{ $school->last_inspection_date ? \Carbon\Carbon::parse($school->last_inspection_date)->format('M d, Y') : 'Never' }}</td>
                                                 <td>
-                                                    <button class="btn btn-sm btn-outline-primary edit-school-btn"
-                                                            data-school-id="{{ $school->id }}"
-                                                            data-bs-toggle="modal"
-                                                            data-bs-target="#editSchoolModal">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <button class="btn btn-sm btn-outline-danger delete-school-btn"
-                                                            data-school-id="{{ $school->id }}"
-                                                            data-school-name="{{ $school->school_name }}">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
+                                                    @php
+                                                        $manageUrl = route('dashboard', [
+                                                            'tab' => 'schools',
+                                                            'school_id' => $school->id,
+                                                            'highlight' => '1',
+                                                            'scroll' => '1',
+                                                        ]);
+                                                    @endphp
+                                                    <a href="{{ $manageUrl }}" class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-arrow-right me-1"></i> Manage
+                                                    </a>
                                                 </td>
                                             </tr>
                                             @endforeach
@@ -1522,59 +1522,124 @@
         </div>
     </div>
     @else
-        <!-- Contributor View: Only School Management Tab for their assigned school -->
-        <div class="row">
-            <div class="col-lg-8 mx-auto">
-                <div class="card dashboard-card mb-4">
-                    <div class="card-header py-3">
-                        <h6 class="m-0 fw-bold text-primary">
+        <!-- Contributor View: Read-only school information + statistics -->
+        @php $mySchool = $schools->first(); @endphp
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="card dashboard-card h-100 mb-4">
+                    <div class="card-header py-3 bg-primary text-white">
+                        <h6 class="m-0 fw-bold">
                             <i class="fas fa-school me-2"></i> My School Information
                         </h6>
                     </div>
                     <div class="card-body">
-                        @if($schools->isEmpty())
+                        @if(!$mySchool)
                             <div class="text-center py-5">
                                 <i class="fas fa-school fa-3x text-muted mb-3"></i>
                                 <p>You have not created or been assigned to a school yet.</p>
                                 <a href="{{ route('fire-safety.dashboard') }}" class="btn btn-primary">Go to Dashboard to Setup</a>
                             </div>
                         @else
-                            @php $mySchool = $schools->first(); @endphp
-                            <div class="table-responsive">
-                                <table class="table align-middle compact-mobile-table">
-                                    <thead>
-                                        <tr>
-                                            <th>School Name</th>
-                                            <th>Status</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>
-                                                <strong>{{ $mySchool->school_name }}</strong>
-                                                <div class="text-muted small">{{ $mySchool->address }}</div>
-                                            </td>
-                                            <td>
-                                                @if($mySchool->status === 'passed')
-                                                    <span class="badge bg-success">PASSED</span>
-                                                @elseif($mySchool->status === 'unconfigured')
-                                                    <span class="badge bg-secondary">UNCONFIGURED</span>
-                                                @else
-                                                    <span class="badge bg-warning text-dark">ONGOING IMPROVEMENT</span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                <button class="btn btn-primary btn-sm edit-school-btn"
-                                                        data-school-id="{{ $mySchool->id }}"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#editSchoolModal">
-                                                    <i class="fas fa-edit me-1"></i> Update Info
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <div class="p-3 bg-light rounded border">
+                                        <div class="text-muted small text-uppercase fw-bold">School Name</div>
+                                        <div class="fw-semibold">{{ $mySchool->school_name }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="p-3 bg-light rounded border h-100">
+                                        <div class="text-muted small text-uppercase fw-bold">School ID</div>
+                                        <div class="fw-semibold">{{ $mySchool->school_id }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="p-3 bg-light rounded border h-100">
+                                        <div class="text-muted small text-uppercase fw-bold">Status</div>
+                                        <div class="fw-semibold">
+                                            @if($mySchool->status === 'passed')
+                                                <span class="badge bg-success">PASSED</span>
+                                            @elseif($mySchool->status === 'unconfigured')
+                                                <span class="badge bg-secondary">UNCONFIGURED</span>
+                                            @else
+                                                <span class="badge bg-warning text-dark">ONGOING IMPROVEMENT</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="p-3 bg-light rounded border">
+                                        <div class="text-muted small text-uppercase fw-bold">Address</div>
+                                        <div class="fw-semibold">{{ $mySchool->address ?: 'Not set' }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="p-3 bg-light rounded border h-100">
+                                        <div class="text-muted small text-uppercase fw-bold">School Head</div>
+                                        <div class="fw-semibold">{{ $mySchool->school_head ?: 'Not recorded' }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="p-3 bg-light rounded border h-100">
+                                        <div class="text-muted small text-uppercase fw-bold">DRRM Coordinator</div>
+                                        <div class="fw-semibold">{{ $mySchool->school_drrm_coordinator ?: 'Not recorded' }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card dashboard-card h-100 mb-4">
+                    <div class="card-header py-3 bg-success text-white">
+                        <h6 class="m-0 fw-bold">
+                            <i class="fas fa-chart-line me-2"></i> School Statistics
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        @if(!$mySchool)
+                            <div class="text-center py-5 text-muted">
+                                No school statistics available.
+                            </div>
+                        @else
+                            <div class="text-center mb-4">
+                                <div class="display-4">{{ $mySchool->status ? strtoupper($mySchool->status) : 'UNKNOWN' }}</div>
+                                <div class="text-muted">Current Status</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <h6>Building Summary</h6>
+                                <div class="row text-center">
+                                    <div class="col-6">
+                                        <div class="h5 mb-0">{{ $mySchool->buildings_count ?? 0 }}</div>
+                                        <small class="text-muted">Buildings</small>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="h5 mb-0">{{ $mySchool->rooms_count ?? 0 }}</div>
+                                        <small class="text-muted">Rooms</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <h6>Safety Equipment</h6>
+                                <div class="row text-center">
+                                    <div class="col-6">
+                                        <div class="h5 mb-0">{{ $mySchool->alarm_systems_count ?? 0 }}</div>
+                                        <small class="text-muted">Alarm Systems</small>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="h5 mb-0">{{ $mySchool->fire_extinguishers_count ?? 0 }}</div>
+                                        <small class="text-muted">Extinguishers</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                Contact system administrator for any issues or additional configuration needs.
                             </div>
                         @endif
                     </div>

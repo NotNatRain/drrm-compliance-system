@@ -1486,7 +1486,7 @@ class ComprehensiveSchoolSafetyController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'type' => ['required', 'string', 'in:commercial,industrial,residential,educational,public/institutional,assembly_area'],
+            'type' => ['nullable', 'string', 'in:commercial,industrial,residential,educational,public/institutional,assembly_area'],
             'condition' => ['required', 'string', 'in:excellent,good,fair,poor,critical'],
             'description' => ['nullable', 'string'],
             'remarks' => ['nullable', 'string'],
@@ -1495,7 +1495,7 @@ class ComprehensiveSchoolSafetyController extends Controller
         $facility = ComprehensiveFacility::create([
             'school_id' => $school->id,
             'name' => $validated['name'],
-            'type' => $validated['type'],
+            'type' => $validated['type'] ?? 'public/institutional',
             'condition' => $validated['condition'],
             'description' => $validated['description'] ?? null,
             'remarks' => $validated['remarks'] ?? null,
@@ -1528,7 +1528,7 @@ class ComprehensiveSchoolSafetyController extends Controller
 
         $facility->update([
             'name' => $validated['name'],
-            'type' => $validated['type'] ?? $facility->type,
+            'type' => $validated['type'] ?? ($facility->type ?? 'public/institutional'),
             'condition' => $validated['condition'],
             'description' => array_key_exists('description', $validated) ? $validated['description'] : $facility->description,
             'remarks' => $validated['remarks'] ?? null,

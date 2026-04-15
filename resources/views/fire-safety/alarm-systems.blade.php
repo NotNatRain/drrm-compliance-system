@@ -101,8 +101,13 @@
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-bold">Location Details *</label>
-                                <input type="text" class="form-control" name="location" id="updateAlarmSpecificLocation" placeholder="e.g. Main Lobby, Hallway" required>
+                                <label class="form-label fw-bold">Alarm Location *</label>
+                                <select class="form-control" name="location" id="updateAlarmSpecificLocation" required>
+                                    <option value="">Select Location</option>
+                                    <option value="Center">Center</option>
+                                    <option value="Right">Right</option>
+                                    <option value="Left">Left</option>
+                                </select>
                             </div>
                         </div>
 
@@ -227,8 +232,13 @@
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-bold">Location Details *</label>
-                                <input type="text" class="form-control" name="location" id="alarmSpecificLocation" placeholder="e.g. Main Lobby, Hallway" required>
+                                <label class="form-label fw-bold">Alarm Location *</label>
+                                <select class="form-control" name="location" id="alarmSpecificLocation" required>
+                                    <option value="">Select Location</option>
+                                    <option value="Center" selected>Center</option>
+                                    <option value="Right">Right</option>
+                                    <option value="Left">Left</option>
+                                </select>
                             </div>
                         </div>
 
@@ -515,7 +525,7 @@
                                                     <td>
                                                         @php
                                                             $statusClass = 'status-' . str_replace([' ', '_'], '-', strtolower($alarm->status));
-                                                            $displayStatus = ucwords(str_replace('_', ' ', $alarm->status));
+                                                            $displayStatus = str_ireplace('Broken', 'Defective', ucwords(str_replace('_', ' ', $alarm->status)));
                                                         @endphp
                                                         <span class="alarm-status {{ $statusClass }}">
                                                             <i class="fas fa-circle"></i> {{ $displayStatus }}
@@ -681,7 +691,7 @@
                             floorsContainer.style.display = 'none';
                             floorSelect.required = false;
                             floorSelect.value = "";
-                            document.getElementById('alarmSpecificLocation').value = "Multiple Buildings - Shared System";
+                            document.getElementById('alarmSpecificLocation').value = 'Center';
                         } else {
                             buildingSelect.removeAttribute('multiple');
                             buildingSelect.removeAttribute('size');
@@ -695,6 +705,29 @@
                             handleBuildingChange();
                         }
                     });
+                }
+
+                function setAlarmLocationSelect(selectElement, value) {
+                    if (!selectElement) return;
+
+                    const normalized = String(value || '').trim();
+                    const knownValues = ['Center', 'Right', 'Left'];
+                    let selectedValue = 'Center';
+
+                    if (knownValues.some(item => item.toLowerCase() === normalized.toLowerCase())) {
+                        selectedValue = knownValues.find(item => item.toLowerCase() === normalized.toLowerCase()) || 'Center';
+                    } else if (normalized) {
+                        const legacyOption = Array.from(selectElement.options).find(option => option.value === normalized);
+                        if (!legacyOption) {
+                            const option = document.createElement('option');
+                            option.value = normalized;
+                            option.textContent = `${normalized} (Legacy)`;
+                            selectElement.appendChild(option);
+                        }
+                        selectedValue = normalized;
+                    }
+
+                    selectElement.value = selectedValue;
                 }
 
                 // Handle Building Selection Change
@@ -720,7 +753,7 @@
                             floorsCont.style.display = 'none';
                             floorSel.required = false;
                             floorSel.value = "";
-                            locInput.value = "Multiple Buildings - Shared System";
+                                     locInput.value = 'Center';
                          } else {
                             updateBuildingSelect.removeAttribute('multiple');
                             updateBuildingSelect.removeAttribute('size');
@@ -731,9 +764,8 @@
                             }
                             help.style.display = 'none';
                             handleUpdateBuildingChange();
-                            // Clear location if it was the generic one
-                            if (locInput.value === "Multiple Buildings - Shared System") {
-                                locInput.value = "";
+                            if (!locInput.value) {
+                                locInput.value = 'Center';
                             }
                          }
                     });
@@ -834,6 +866,7 @@
 
                     // Reset form
                     document.getElementById('addAlarmForm').reset();
+                    document.getElementById('alarmSpecificLocation').value = 'Center';
                     if(coversMultipleCheckbox) {
                         coversMultipleCheckbox.checked = false;
                         coversMultipleCheckbox.dispatchEvent(new Event('change'));
@@ -956,7 +989,7 @@
                     help.style.display = 'block';
                     floorsCont.style.display = 'none';
                     floorSel.required = false;
-                    locInput.value = "Multiple Buildings - Shared System";
+                    locInput.value = 'Center';
 
                     // Select buildings
                     const assignedIds = alarm.buildings.map(b => b.id);
@@ -994,27 +1027,23 @@
                             floorSel.appendChild(opt);
                         }
 
-                        // Parse Location
-                        let location = alarm.location || '';
-                        let specificLoc = location;
-                        let matchedFloor = '';
-
-                        // Try to match start of string with floor options
-                        // Location format usually: "1st Floor - Lobby"
-                        for (let opt of floorSel.options) {
-                            if (opt.value && location.startsWith(opt.value + " - ")) {
-                                matchedFloor = opt.value;
-                                specificLoc = location.substring(opt.value.length + 3); // Remove "Floor - "
-                                break;
-                            } else if (opt.value && location === opt.value) {
-                                matchedFloor = opt.value;
-                                specificLoc = "";
-                                break;
+                        // Preserve existing data, but map valid values onto the new placement dropdown.
+                        const knownLocations = ['Center', 'Right', 'Left'];
+                        const existingLocation = String(alarm.location || '').trim();
+                        if (knownLocations.some(item => item.toLowerCase() === existingLocation.toLowerCase())) {
+                            locInput.value = knownLocations.find(item => item.toLowerCase() === existingLocation.toLowerCase()) || 'Center';
+                        } else if (existingLocation) {
+                            const legacyOption = Array.from(locInput.options).find(option => option.value === existingLocation);
+                            if (!legacyOption) {
+                                const option = document.createElement('option');
+                                option.value = existingLocation;
+                                option.textContent = `${existingLocation} (Legacy)`;
+                                locInput.appendChild(option);
                             }
+                            locInput.value = existingLocation;
+                        } else {
+                            locInput.value = 'Center';
                         }
-
-                        floorSel.value = matchedFloor;
-                        locInput.value = specificLoc;
                     } else {
                         // No building selected ??
                          floorsCont.style.display = 'none';
@@ -1185,8 +1214,7 @@
                     Swal.fire('Missing Information', 'Please select at least one building.', 'warning');
                     return;
                 }
-                // For multi-building, set location as "Multiple Buildings"
-                document.getElementById('alarmSpecificLocation').value = "Multiple Buildings - Shared System";
+                document.getElementById('alarmSpecificLocation').value = 'Center';
             } else {
                 // Single building validation
                 if (!buildingSelect.value) {
@@ -1229,13 +1257,6 @@
             }
 
             console.log('CSRF Token found:', csrfToken ? 'Yes' : 'No');
-
-            // Combine Location for single building
-            if (!isMultiple) {
-                const floor = document.getElementById('addFloorSelect').value;
-                const specific = document.getElementById('alarmSpecificLocation').value.trim();
-                document.getElementById('alarmSpecificLocation').value = `${floor} - ${specific}`;
-            }
 
             const formData = new FormData(form);
 
@@ -1307,7 +1328,7 @@
                      Swal.fire('Missing Information', 'Please select at least one building.', 'warning');
                      return;
                 }
-                document.getElementById('updateAlarmSpecificLocation').value = "Multiple Buildings - Shared System";
+                document.getElementById('updateAlarmSpecificLocation').value = 'Center';
             } else {
                 // Single Building Valdation
                 if (!bSelect.value) {
@@ -1328,12 +1349,6 @@
                      return;
                 }
 
-                // Combine value for submission
-                // We modify the input value just before FormData creation
-                // Note: We might want to revert this if submission fails, but for now it's fine as page reloads on success
-                // Actually, let's keep the specific value clean in the input and append to FormData manually if needed,
-                // BUT FormData reads from the input value.
-                // To avoid visual glitch if we cancel/fail, we can just handle the string in FormData.
             }
 
             if (!form.checkValidity()) {
@@ -1376,18 +1391,7 @@
             // Auto-update Last Test to Today
             formData.append('last_test', today);
 
-            // Handle Location Override in FormData for Single Building
-            if (!isMultiple) {
-                const floor = document.getElementById('updateFloorSelect').value;
-                const specific = document.getElementById('updateAlarmSpecificLocation').value.trim();
-                let combinedLocation = specific;
-                if (floor && floor !== 'All Floors') {
-                    combinedLocation = `${floor} - ${specific}`;
-                }
-                formData.set('location', combinedLocation);
-            } else {
-                 formData.set('location', "Multiple Buildings - Shared System");
-            }
+            formData.set('location', document.getElementById('updateAlarmSpecificLocation').value || 'Center');
 
             // Show loading
             Swal.fire({

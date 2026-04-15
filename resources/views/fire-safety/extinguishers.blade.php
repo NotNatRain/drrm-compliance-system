@@ -489,7 +489,10 @@
                                         @endif
                                     </div>
                                     <div class="card-footer bg-white border-top-0 pt-0 pb-4">
-                                        <div class="d-flex justify-content-end mt-3">
+                                        <div class="d-flex justify-content-between align-items-center mt-3">
+                                            <a href="{{ route('fire-safety.buildings') }}" class="btn btn-outline-secondary shadow-sm px-4">
+                                                <i class="fas fa-arrow-left me-2"></i> Back to Buildings
+                                            </a>
                                             <a href="{{ route('fire-safety.evacuation-plans') }}" class="btn btn-outline-info shadow-sm px-4">
                                                 <i class="fas fa-map-marked-alt me-2"></i> See Plans & Map
                                             </a>
@@ -533,22 +536,22 @@
                                                         @forelse($school->recent_inspections_data ?? [] as $item)
                                                             @php
                                                                 $badgeClass = 'secondary';
-                                                                $statusLabel = $item->status;
-                                                                if ($item->status === 'active') { $badgeClass = 'success'; $statusLabel = 'OK'; }
-                                                                elseif ($item->status === 'maintenance') { $badgeClass = 'warning'; $statusLabel = 'For Preventive Maintenance'; }
-                                                                elseif ($item->status === 'expired') { $badgeClass = 'danger'; $statusLabel = 'Used'; }
-                                                                elseif ($item->status === 'missing') { $badgeClass = 'danger'; $statusLabel = 'Missing'; }
-                                                                elseif ($item->status === 'purchase') { $badgeClass = 'dark'; $statusLabel = 'For Purchase'; }
-                                                                elseif ($item->status === 'decommissioned') { $badgeClass = 'danger'; $statusLabel = 'Decommissioned'; }
+                                                                $statusLabel = $item['status'] ?? '';
+                                                                if (($item['status'] ?? '') === 'active') { $badgeClass = 'success'; $statusLabel = 'OK'; }
+                                                                elseif (($item['status'] ?? '') === 'maintenance' || ($item['status'] ?? '') === 'for preventive maintenance') { $badgeClass = 'warning'; $statusLabel = 'For Preventive Maintenance'; }
+                                                                elseif (($item['status'] ?? '') === 'expired') { $badgeClass = 'danger'; $statusLabel = 'Used'; }
+                                                                elseif (($item['status'] ?? '') === 'missing') { $badgeClass = 'danger'; $statusLabel = 'Missing'; }
+                                                                elseif (($item['status'] ?? '') === 'purchase') { $badgeClass = 'dark'; $statusLabel = 'For Purchase'; }
+                                                                elseif (($item['status'] ?? '') === 'decommissioned') { $badgeClass = 'danger'; $statusLabel = 'Decommissioned'; }
                                                             @endphp
                                                             <tr>
-                                                                <td>{{ \Carbon\Carbon::parse($item->created_at)->format('Y-m-d h:i A') }}</td>
-                                                                <td class="fw-bold">{{ $item->extinguisher->code }}</td>
-                                                                <td>{{ ($item->extinguisher->building->building_no ?? '?') }} - {{ ($item->extinguisher->centerRoom->room_name ?? '?') }}</td>
-                                                                <td>{{ $item->inspector->name ?? 'Unknown' }}</td>
+                                                                <td>{{ $item['date'] ?? '-' }}</td>
+                                                                <td class="fw-bold">{{ $item['code'] ?? 'N/A' }}</td>
+                                                                <td>{{ $item['location'] ?? 'N/A' }}</td>
+                                                                <td>{{ $item['inspector'] ?? 'Unknown' }}</td>
                                                                 <td><span class="badge bg-{{ $badgeClass }}">{{ $statusLabel }}</span></td>
-                                                                <td>{{ $item->pressure_level }}%</td>
-                                                                <td>{{ $item->notes ?? '-' }}</td>
+                                                                <td>{{ ($item['pressure_level'] ?? '-') === '-' ? '-' : (($item['pressure_level'] ?? '-') . '%') }}</td>
+                                                                <td>{{ $item['notes'] ?? '-' }}</td>
                                                             </tr>
                                                         @empty
                                                             <tr><td colspan="7" class="text-center text-muted">No recent inspections found.</td></tr>
@@ -684,6 +687,14 @@
                             </div>
                         </div>
 
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Evaluation Result</label>
+                            <select class="form-control" name="evaluation_result" id="updateExtEvaluationResult">
+                                <option value="Passed">Passed</option>
+                                <option value="Failed">Failed</option>
+                            </select>
+                        </div>
+
                         <div class="mb-3" id="updateExtNotesContainer">
                             <label class="form-label fw-bold">Notes / Remarks *</label>
                             <textarea class="form-control" name="notes" id="updateExtNotes" rows="3" placeholder="Reason for update..." required></textarea>
@@ -802,6 +813,13 @@
                                 <select class="form-select" name="nearest_extinguisher_room_id" id="updateRoomNearest">
                                     <option value="">None / Self-Covered</option>
                                 </select>
+                            </div>
+                        </div>
+
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Engineer's Last Inspection Date</label>
+                                <input type="date" class="form-control" name="engineer_last_inspection_date" id="updateRoomEngineerInspectionDate">
                             </div>
                         </div>
 
@@ -980,6 +998,13 @@
                             </div>
                         </div>
 
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Engineer's Last Inspection Date</label>
+                                <input type="date" class="form-control" name="engineer_last_inspection_date" id="addRoomEngineerInspectionDate">
+                            </div>
+                        </div>
+
                         <!-- 3rd row: Yes, a smoke detector required in this room & Has Secondary Exit? -->
                         <div class="row mb-4">
                             <div class="col-md-6" id="addRoomSmokeDetectorRow">
@@ -1041,12 +1066,17 @@
                                 <textarea class="form-control" name="secondary_exit_remarks" id="addSecondaryExitRemarks" rows="3" placeholder="Enter exit-related details..." style="resize: none;"></textarea>
                             </div>
                         </div>
+
+                        <div id="roomExtraEntriesContainer" class="mt-4"></div>
                     </form>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer d-flex justify-content-center gap-2">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     @if(auth()->user()->role !== 'viewer')
-                    <button type="button" class="btn btn-primary" onclick="saveRoom()">
+                    <button type="button" class="btn btn-outline-primary" id="addMoreRoomBtn" onclick="saveRoomAndAddMore()">
+                        <i class="fas fa-plus me-2"></i>Add More
+                    </button>
+                    <button type="button" class="btn btn-primary" id="saveRoomBtn" onclick="saveRoom()">
                         <i class="fas fa-save me-2"></i>Save Room
                     </button>
                     @endif
@@ -1162,12 +1192,17 @@
                         <div class="alert alert-info mb-0 py-2 small">
                             <i class="fas fa-info-circle me-2"></i><strong>Note:</strong> Coverage limit is determined by the center room's priority set in customization.
                         </div>
+
+                        <div id="extExtraEntriesContainer" class="mt-4"></div>
                     </form>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer d-flex justify-content-center gap-2">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     @if(auth()->user()->role !== 'viewer')
-                    <button type="button" class="btn btn-primary" onclick="saveExtinguisher()">
+                    <button type="button" class="btn btn-outline-primary" id="addMoreExtBtn" onclick="addMoreExtinguisherEntry()">
+                        <i class="fas fa-plus me-2"></i>Add More
+                    </button>
+                    <button type="button" class="btn btn-primary" id="saveExtBtn" onclick="saveExtinguisher()">
                         <i class="fas fa-save me-2"></i>Save Extinguisher
                     </button>
                     @endif
@@ -1323,7 +1358,7 @@
                     if (pressureInput.value < 70) pressureInput.value = 70;
                     if (pressureInput.value > 100) pressureInput.value = 100;
                     break;
-                case 'maintenance': // For Preventive Maintenance
+                case 'for preventive maintenance': // For Preventive Maintenance
                     pressureInput.min = 20;
                     pressureInput.max = 69;
                     if (pressureInput.value < 20) pressureInput.value = 20;
@@ -1487,11 +1522,381 @@
         }
 
         // Handle Building Selection in Add Room
-        document.getElementById('roomBuildingSelect').addEventListener('change', function() {
-            updateRoomFloors(this.value);
+        document.getElementById('roomBuildingSelect').addEventListener('change', async function() {
+            await updateRoomFloors(this.value);
+            await updateAddMoreRoomButton();
         });
 
         const PAGE_ACTIVE_SCHOOL_ID = @json((string)($activeSchool->id ?? ''));
+
+        function shouldShowSmokeDetectorQuestion(roomTypeName) {
+            const type = (roomTypeName || '').toLowerCase();
+            return type.includes('administration') || type.includes('laboratory') || type.includes('canteen') || type.includes('cafeteria');
+        }
+
+        function getSelectedRoomBuildingId() {
+            return document.getElementById('roomBuildingSelect')?.value || '';
+        }
+
+        let roomExtraEntryCounter = 0;
+        let extExtraEntryCounter = 0;
+
+        function getTodayDateString() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        function getRoomTypeOptionsHtml() {
+            const source = document.getElementById('room_type_select');
+            return source ? source.innerHTML : '<option value="">Select room type</option>';
+        }
+
+        function getBuildingOptionsHtml(selectId) {
+            const source = document.getElementById(selectId);
+            return source ? source.innerHTML : '<option value="">Select Building</option>';
+        }
+
+        function getPendingRoomEntriesCountForBuilding(buildingId) {
+            if (!buildingId) return 0;
+
+            let pending = 0;
+            const mainBuildingId = document.getElementById('roomBuildingSelect')?.value;
+            if (String(mainBuildingId) === String(buildingId)) pending += 1;
+
+            document.querySelectorAll('#roomExtraEntriesContainer .room-extra-entry').forEach(card => {
+                const val = card.querySelector('.room-extra-building')?.value;
+                if (String(val) === String(buildingId)) pending += 1;
+            });
+
+            return pending;
+        }
+
+        function shouldShowRoomAddMoreForBuilding(capacity, buildingId) {
+            if (!capacity || !buildingId) return false;
+            const pending = getPendingRoomEntriesCountForBuilding(buildingId);
+            return (capacity.currentRoomsCount + pending) < capacity.totalTargetRooms;
+        }
+
+        function renderRoomExtraEntry(prefill = {}) {
+            roomExtraEntryCounter += 1;
+            const id = roomExtraEntryCounter;
+            const container = document.getElementById('roomExtraEntriesContainer');
+            if (!container) return;
+
+            const card = document.createElement('div');
+            card.className = 'card border-primary shadow-sm mt-3 room-extra-entry';
+            card.dataset.entryId = String(id);
+            card.innerHTML = `
+                <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                    <strong class="text-primary"><i class="fas fa-door-open me-2"></i>Additional Room Entry #${id}</strong>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRoomExtraEntry(${id})">
+                        <i class="fas fa-times me-1"></i>Remove
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small text-muted text-uppercase">Building *</label>
+                            <select class="form-select room-extra-building" required>
+                                ${getBuildingOptionsHtml('roomBuildingSelect')}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small text-muted text-uppercase">Floor No. *</label>
+                            <select class="form-select room-extra-floor" required>
+                                <option value="">Select Floor</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small text-muted text-uppercase">Room Code</label>
+                            <input type="text" class="form-control room-extra-code" placeholder="e.g., Rm-101">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold small text-muted text-uppercase">Room Name</label>
+                            <input type="text" class="form-control room-extra-name" placeholder="e.g., Science Lab">
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-muted text-uppercase">Room Type *</label>
+                            <select class="form-select room-extra-type" required>
+                                ${getRoomTypeOptionsHtml()}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-muted text-uppercase">Engineer's Last Inspection Date</label>
+                            <input type="date" class="form-control room-extra-engineer-date">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="card bg-light border-0">
+                                <div class="card-body py-2 px-3">
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input room-extra-smoke-required" type="checkbox" value="1">
+                                        <label class="form-check-label fw-bold text-dark mb-0">Yes, a smoke detector required in this room</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card bg-light border-0">
+                                <div class="card-body py-2 px-3">
+                                    <div class="form-check form-switch mb-0">
+                                        <input class="form-check-input room-extra-secondary-exit" type="checkbox" value="1">
+                                        <label class="form-check-label fw-bold text-dark mb-0">Has Secondary Exit?</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3 d-none room-extra-smoke-installed-row">
+                        <div class="col-12">
+                            <div class="card border-primary" style="background-color: rgba(13, 110, 253, 0.05);">
+                                <div class="card-body py-2 px-3 d-flex align-items-center justify-content-between">
+                                    <span class="fw-bold text-primary"><i class="fas fa-info-circle me-2"></i>Does this have a smoke detector installed?</span>
+                                    <div class="d-flex gap-4">
+                                        <div class="form-check mb-0">
+                                            <input class="form-check-input room-extra-has-smoke-yes" type="checkbox" value="1">
+                                            <label class="form-check-label fw-bold">Yes</label>
+                                        </div>
+                                        <div class="form-check mb-0">
+                                            <input class="form-check-input room-extra-has-smoke-no" type="checkbox" value="0">
+                                            <label class="form-check-label fw-bold">No</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-muted text-uppercase">General Remarks</label>
+                            <textarea class="form-control room-extra-remarks" rows="2" placeholder="Enter general room remarks..."></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-muted text-uppercase room-extra-secondary-label">Remarks for No Secondary Exit</label>
+                            <textarea class="form-control room-extra-secondary-remarks" rows="2" placeholder="Enter exit-related details..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(card);
+
+            const buildingSelect = card.querySelector('.room-extra-building');
+            const floorSelect = card.querySelector('.room-extra-floor');
+            const typeSelect = card.querySelector('.room-extra-type');
+            const smokeRequired = card.querySelector('.room-extra-smoke-required');
+            const smokeInstalledRow = card.querySelector('.room-extra-smoke-installed-row');
+            const smokeYes = card.querySelector('.room-extra-has-smoke-yes');
+            const smokeNo = card.querySelector('.room-extra-has-smoke-no');
+            const secondaryExit = card.querySelector('.room-extra-secondary-exit');
+            const secondaryLabel = card.querySelector('.room-extra-secondary-label');
+
+            const fillFloors = () => {
+                floorSelect.innerHTML = '<option value="">Select Floor</option>';
+                const selectedOpt = buildingSelect.options[buildingSelect.selectedIndex];
+                const floors = parseInt(selectedOpt?.dataset?.floors || '0', 10);
+                for (let i = 1; i <= floors; i++) {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.textContent = `Floor ${i}`;
+                    floorSelect.appendChild(opt);
+                }
+            };
+
+            const handleTypeSmoke = () => {
+                const t = typeSelect.selectedOptions[0]?.textContent || '';
+                const show = shouldShowSmokeDetectorQuestion(t);
+                const smokeRequiredCard = smokeRequired.closest('.col-md-6')?.querySelector('.card')?.closest('.col-md-6') || smokeRequired.closest('.col-md-6');
+                if (smokeRequiredCard) {
+                    smokeRequiredCard.classList.toggle('d-none', !show);
+                }
+                if (!show) {
+                    smokeRequired.checked = false;
+                    smokeInstalledRow.classList.add('d-none');
+                    smokeYes.checked = false;
+                    smokeNo.checked = false;
+                }
+            };
+
+            buildingSelect.addEventListener('change', async () => {
+                fillFloors();
+                await updateAddMoreRoomButton();
+            });
+
+            typeSelect.addEventListener('change', handleTypeSmoke);
+
+            smokeRequired.addEventListener('change', () => {
+                if (smokeRequired.checked) {
+                    smokeInstalledRow.classList.remove('d-none');
+                    if (!smokeYes.checked && !smokeNo.checked) smokeNo.checked = true;
+                } else {
+                    smokeInstalledRow.classList.add('d-none');
+                    smokeYes.checked = false;
+                    smokeNo.checked = false;
+                }
+            });
+
+            smokeYes.addEventListener('change', () => {
+                if (smokeYes.checked) smokeNo.checked = false;
+            });
+            smokeNo.addEventListener('change', () => {
+                if (smokeNo.checked) smokeYes.checked = false;
+            });
+
+            secondaryExit.addEventListener('change', () => {
+                secondaryLabel.textContent = secondaryExit.checked ? 'Secondary Exit Details(Optional)' : 'Remarks for No Secondary Exit';
+            });
+
+            if (prefill.building_id) {
+                buildingSelect.value = String(prefill.building_id);
+                fillFloors();
+            }
+            if (prefill.floor_no) {
+                floorSelect.value = String(prefill.floor_no);
+            }
+            handleTypeSmoke();
+        }
+
+        function removeRoomExtraEntry(entryId) {
+            const card = document.querySelector(`#roomExtraEntriesContainer .room-extra-entry[data-entry-id="${entryId}"]`);
+            if (card) card.remove();
+            updateAddMoreRoomButton();
+        }
+
+        async function addMoreRoomEntry() {
+            const baseBuilding = document.getElementById('roomBuildingSelect')?.value;
+            const baseFloor = document.getElementById('roomFloorSelect')?.value;
+            if (!baseBuilding || !baseFloor) {
+                Swal.fire('Missing Information', 'Select Building and Floor first before adding another room entry.', 'warning');
+                return;
+            }
+
+            const capacity = await getBuildingRoomCapacity(baseBuilding);
+            if (capacity && !shouldShowRoomAddMoreForBuilding(capacity, baseBuilding)) {
+                Swal.fire('Limit Reached', `Room limit (${capacity.totalTargetRooms}) for this building has been reached in this session.`, 'warning');
+                await updateAddMoreRoomButton();
+                return;
+            }
+
+            renderRoomExtraEntry({
+                building_id: baseBuilding,
+                floor_no: baseFloor
+            });
+
+            await updateAddMoreRoomButton();
+        }
+
+        function getBuildingTargetRooms(buildingId) {
+            const roomBuildingSelect = document.getElementById('roomBuildingSelect');
+            const selectedOption = roomBuildingSelect?.options?.[roomBuildingSelect.selectedIndex];
+            const fromSelect = parseInt(selectedOption?.dataset?.rooms_limit || '0', 10);
+            if (Number.isFinite(fromSelect) && fromSelect > 0) {
+                return fromSelect;
+            }
+
+            for (const s of schools) {
+                const found = (s.buildings || []).find(b => String(b.id) === String(buildingId));
+                if (found) {
+                    const n = parseInt(found.rooms || 0, 10);
+                    return Number.isFinite(n) ? n : 0;
+                }
+            }
+            return 0;
+        }
+
+        async function getBuildingRoomCapacity(buildingId) {
+            if (!buildingId) return null;
+
+            const totalTargetRooms = getBuildingTargetRooms(buildingId);
+            if (!Number.isFinite(totalTargetRooms) || totalTargetRooms <= 0) {
+                return null;
+            }
+
+            try {
+                const resp = await fetch(`/fire-safety/rooms/${buildingId}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                const existingRooms = await resp.json();
+                const currentRoomsCount = Array.isArray(existingRooms) ? existingRooms.length : 0;
+                return {
+                    currentRoomsCount,
+                    totalTargetRooms,
+                    remainingSlots: Math.max(0, totalTargetRooms - currentRoomsCount)
+                };
+            } catch (e) {
+                console.error('Failed to fetch room capacity:', e);
+                return null;
+            }
+        }
+
+        async function updateAddMoreRoomButton() {
+            const addMoreBtn = document.getElementById('addMoreRoomBtn');
+            if (!addMoreBtn) return;
+
+            const buildingId = getSelectedRoomBuildingId();
+            if (!buildingId) {
+                addMoreBtn.classList.remove('d-none');
+                addMoreBtn.disabled = false;
+                return;
+            }
+
+            const capacity = await getBuildingRoomCapacity(buildingId);
+            if (!capacity) {
+                addMoreBtn.classList.remove('d-none');
+                addMoreBtn.disabled = false;
+                return;
+            }
+
+            if (!shouldShowRoomAddMoreForBuilding(capacity, buildingId)) {
+                addMoreBtn.classList.add('d-none');
+                addMoreBtn.disabled = true;
+            } else {
+                addMoreBtn.classList.remove('d-none');
+                addMoreBtn.disabled = false;
+            }
+        }
+
+        function resetAddRoomFieldsForNextEntry() {
+            const form = document.getElementById('addRoomForm');
+            if (!form) return;
+
+            const resetField = (selector, value = '') => {
+                const field = form.querySelector(selector);
+                if (field) field.value = value;
+            };
+
+            resetField('input[name="room_code"]');
+            resetField('input[name="room_name"]');
+            resetField('#room_type_select');
+            resetField('input[name="engineer_last_inspection_date"]');
+            resetField('#calculated_priority');
+
+            const smokeRequired = document.getElementById('addRoomSmokeDetectorRequired');
+            const secondaryExit = document.getElementById('addRoomSecondaryExit');
+            const smokeInstalledHidden = document.getElementById('addRoomSmokeDetector');
+            const smokeInstalledYes = document.getElementById('addRoomSmokeDetectorYes');
+            const smokeInstalledNo = document.getElementById('addRoomSmokeDetectorNo');
+            const smokeInstalledRow = document.getElementById('addSmokeDetectorInstalledRow');
+
+            if (smokeRequired) smokeRequired.checked = false;
+            if (secondaryExit) secondaryExit.checked = false;
+            if (smokeInstalledHidden) smokeInstalledHidden.value = '0';
+            if (smokeInstalledYes) smokeInstalledYes.checked = false;
+            if (smokeInstalledNo) smokeInstalledNo.checked = false;
+            if (smokeInstalledRow) smokeInstalledRow.classList.add('d-none');
+
+            const remarks = document.getElementById('addRoomRemarks');
+            const secondaryRemarks = document.getElementById('addSecondaryExitRemarks');
+            const secondaryLabel = document.getElementById('addSecondaryExitRemarksLabel');
+            if (remarks) remarks.value = '';
+            if (secondaryRemarks) secondaryRemarks.value = '';
+            if (secondaryLabel) secondaryLabel.textContent = 'Remarks for No Secondary Exit';
+
+            const roomCodeField = form.querySelector('input[name="room_code"]');
+            if (roomCodeField) roomCodeField.focus();
+        }
 
         // Hook modal open events to set unified_school_id and populate buildings
         document.getElementById('addRoomModal').addEventListener('show.bs.modal', function (event) {
@@ -1506,6 +1911,20 @@
             }
 
             checkViewerAccess('addRoomForm');
+
+            const saveBtn = document.getElementById('saveRoomBtn');
+            const addMoreBtn = document.getElementById('addMoreRoomBtn');
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Room';
+            }
+            if (addMoreBtn) {
+                addMoreBtn.disabled = false;
+                addMoreBtn.innerHTML = '<i class="fas fa-plus me-2"></i>Add More';
+            }
+            const extraContainer = document.getElementById('roomExtraEntriesContainer');
+            if (extraContainer) extraContainer.innerHTML = '';
+            updateAddMoreRoomButton();
         });
 
         document.getElementById('addExtModal').addEventListener('show.bs.modal', function (event) {
@@ -1524,10 +1943,103 @@
 
             setTodayIfEmpty(document.querySelector('#addExtForm input[name="date_checked"]'));
 
+            const extContainer = document.getElementById('extExtraEntriesContainer');
+            if (extContainer) extContainer.innerHTML = '';
+
             checkViewerAccess('addExtForm');
         });
 
-        async function saveRoom() {
+        function collectMainRoomEntry(form) {
+            const fd = new FormData(form);
+            return {
+                unified_school_id: fd.get('unified_school_id') || '',
+                building_id: fd.get('building_id') || '',
+                floor_no: fd.get('floor_no') || '',
+                room_code: fd.get('room_code') || '',
+                room_name: fd.get('room_name') || '',
+                room_type_config_id: fd.get('room_type_config_id') || '',
+                engineer_last_inspection_date: fd.get('engineer_last_inspection_date') || '',
+                smoke_detector_required: fd.get('smoke_detector_required') ? '1' : '0',
+                has_smoke_detector: fd.get('has_smoke_detector') ? String(fd.get('has_smoke_detector')) : '0',
+                has_secondary_exit: fd.get('has_secondary_exit') ? '1' : '0',
+                secondary_exit_remarks: fd.get('secondary_exit_remarks') || '',
+                remarks: fd.get('remarks') || ''
+            };
+        }
+
+        function collectExtraRoomEntries() {
+            const entries = [];
+            document.querySelectorAll('#roomExtraEntriesContainer .room-extra-entry').forEach(card => {
+                const smokeYes = card.querySelector('.room-extra-has-smoke-yes');
+                const smokeNo = card.querySelector('.room-extra-has-smoke-no');
+                let hasSmoke = '0';
+                if (smokeYes?.checked) hasSmoke = '1';
+                if (smokeNo?.checked) hasSmoke = '0';
+
+                entries.push({
+                    unified_school_id: document.getElementById('roomSchoolId')?.value || '',
+                    building_id: card.querySelector('.room-extra-building')?.value || '',
+                    floor_no: card.querySelector('.room-extra-floor')?.value || '',
+                    room_code: card.querySelector('.room-extra-code')?.value || '',
+                    room_name: card.querySelector('.room-extra-name')?.value || '',
+                    room_type_config_id: card.querySelector('.room-extra-type')?.value || '',
+                    engineer_last_inspection_date: card.querySelector('.room-extra-engineer-date')?.value || '',
+                    smoke_detector_required: card.querySelector('.room-extra-smoke-required')?.checked ? '1' : '0',
+                    has_smoke_detector: hasSmoke,
+                    has_secondary_exit: card.querySelector('.room-extra-secondary-exit')?.checked ? '1' : '0',
+                    secondary_exit_remarks: card.querySelector('.room-extra-secondary-remarks')?.value || '',
+                    remarks: card.querySelector('.room-extra-remarks')?.value || ''
+                });
+            });
+            return entries;
+        }
+
+        function validateRoomEntry(entry, index) {
+            if (!entry.unified_school_id || !entry.building_id || !entry.floor_no || !entry.room_type_config_id) {
+                return `Entry #${index}: Please fill Building, Floor No., and Room Type.`;
+            }
+            return null;
+        }
+
+        async function validateRoomBatchCapacity(entries) {
+            const countsByBuilding = {};
+            entries.forEach(e => {
+                const k = String(e.building_id || '');
+                if (!k) return;
+                countsByBuilding[k] = (countsByBuilding[k] || 0) + 1;
+            });
+
+            for (const [buildingId, pendingCount] of Object.entries(countsByBuilding)) {
+                const cap = await getBuildingRoomCapacity(buildingId);
+                if (!cap) continue;
+                if ((cap.currentRoomsCount + pendingCount) > cap.totalTargetRooms) {
+                    return `Building room limit (${cap.totalTargetRooms}) will be exceeded. Existing: ${cap.currentRoomsCount}, Pending: ${pendingCount}.`;
+                }
+            }
+            return null;
+        }
+
+        async function postRoomEntry(entry) {
+            const formData = new FormData();
+            Object.entries(entry).forEach(([k, v]) => formData.append(k, v ?? ''));
+
+            const resp = await fetch(`{{ route('fire-safety.room.store') }}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken(),
+                    'Accept': 'application/json',
+                },
+                body: formData
+            });
+
+            const data = await resp.json();
+            if (!resp.ok || !data.success) {
+                throw new Error(data.message || 'Failed to add room');
+            }
+            return data;
+        }
+
+        async function submitRoom(keepOpen = false) {
             const form = document.getElementById('addRoomForm');
             if (!form) return;
 
@@ -1550,51 +2062,237 @@
                 return;
             }
 
-            const formData = new FormData(form);
             // Restore disabled state
             disabledFields.forEach(el => el.disabled = true);
 
+            const entries = [collectMainRoomEntry(form), ...collectExtraRoomEntries()];
+
+            for (let i = 0; i < entries.length; i++) {
+                const error = validateRoomEntry(entries[i], i + 1);
+                if (error) {
+                    Swal.fire('Missing Information', error, 'warning');
+                    return;
+                }
+            }
+
+            const capError = await validateRoomBatchCapacity(entries);
+            if (capError) {
+                Swal.fire('Limit Reached', capError, 'warning');
+                await updateAddMoreRoomButton();
+                return;
+            }
+
             try {
                 // Show loading state
-                const saveBtn = document.querySelector('button[onclick="saveRoom()"]');
+                const saveBtn = document.getElementById('saveRoomBtn');
+                const addMoreBtn = document.getElementById('addMoreRoomBtn');
                 if (saveBtn) {
                     saveBtn.disabled = true;
                     saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
                 }
+                if (addMoreBtn) {
+                    addMoreBtn.disabled = true;
+                    if (keepOpen) {
+                        addMoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+                    }
+                }
 
-                const resp = await fetch(`{{ route('fire-safety.room.store') }}`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': csrfToken(),
-                        'Accept': 'application/json',
-                    },
-                    body: formData
-                });
-
-                const data = await resp.json();
+                for (const entry of entries) {
+                    await postRoomEntry(entry);
+                }
 
                 if (saveBtn) {
                     saveBtn.disabled = false;
                     saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Room';
                 }
-
-                if (!resp.ok || !data.success) {
-                    Swal.fire('Error', data.message || 'Failed to add room', 'error');
-                    return;
+                if (addMoreBtn) {
+                    addMoreBtn.disabled = false;
+                    addMoreBtn.innerHTML = '<i class="fas fa-plus me-2"></i>Add More';
                 }
 
-                Swal.fire('Success', 'Room added successfully!', 'success').then(() => {
+                await updateAddMoreRoomButton();
+
+                Swal.fire('Success', `${entries.length} room entr${entries.length > 1 ? 'ies' : 'y'} added successfully!`, 'success').then(() => {
                     location.reload();
                 });
             } catch (e) {
                 console.error(e);
-                Swal.fire('Error', 'Failed to add room. Please try again.', 'error');
-                const saveBtn = document.querySelector('button[onclick="saveRoom()"]');
+                Swal.fire('Error', e.message || 'Failed to add room. Please try again.', 'error');
+                const saveBtn = document.getElementById('saveRoomBtn');
+                const addMoreBtn = document.getElementById('addMoreRoomBtn');
                 if (saveBtn) {
                     saveBtn.disabled = false;
                     saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Room';
                 }
+                if (addMoreBtn) {
+                    addMoreBtn.disabled = false;
+                    addMoreBtn.innerHTML = '<i class="fas fa-plus me-2"></i>Add More';
+                }
             }
+        }
+
+        async function saveRoom() {
+            await submitRoom(false);
+        }
+
+        async function saveRoomAndAddMore() {
+            await addMoreRoomEntry();
+        }
+
+        function renderExtExtraEntry(prefill = {}) {
+            extExtraEntryCounter += 1;
+            const id = extExtraEntryCounter;
+            const container = document.getElementById('extExtraEntriesContainer');
+            if (!container) return;
+
+            const card = document.createElement('div');
+            card.className = 'card border-info shadow-sm mt-3 ext-extra-entry';
+            card.dataset.entryId = String(id);
+            card.innerHTML = `
+                <div class="card-header bg-light d-flex justify-content-between align-items-center py-2">
+                    <strong class="text-info"><i class="fas fa-fire-extinguisher me-2"></i>Additional Extinguisher Entry #${id}</strong>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeExtExtraEntry(${id})">
+                        <i class="fas fa-times me-1"></i>Remove
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Code *</label>
+                            <input type="text" class="form-control ext-extra-code" placeholder="e.g., FRXT-002" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Type *</label>
+                            <select class="form-control ext-extra-type" required>
+                                <option value="ABC">ABC (Dry Chemical)</option>
+                                <option value="CO2">CO2</option>
+                                <option value="Water">Water</option>
+                                <option value="Foam">Foam</option>
+                                <option value="Other">Other, Please Specify...</option>
+                            </select>
+                            <input type="text" class="form-control ext-extra-other-type mt-2 d-none" placeholder="Specify type...">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Status *</label>
+                            <select class="form-control ext-extra-status" required>
+                                <option value="active">Active</option>
+                                <option value="maintenance">For Preventive Maintenance</option>
+                                <option value="expired">Used</option>
+                                <option value="missing">Missing</option>
+                                <option value="purchase">For Purchase</option>
+                                <option value="decommissioned">Decommissioned</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Pressure *</label>
+                            <input type="number" class="form-control ext-extra-pressure" min="0" max="100" value="100" required>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Building *</label>
+                            <select class="form-control ext-extra-building" required>
+                                ${getBuildingOptionsHtml('extBuildingSelect')}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Center Room</label>
+                            <select class="form-control ext-extra-center-room">
+                                <option value="">Select Center Room</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Date Checked</label>
+                            <input type="date" class="form-control ext-extra-date" value="${getTodayDateString()}">
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Evaluation Result</label>
+                            <select class="form-control ext-extra-eval">
+                                <option value="Passed">Passed</option>
+                                <option value="Failed">Failed</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold">Remarks</label>
+                            <input type="text" class="form-control ext-extra-remarks" placeholder="Optional remarks...">
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(card);
+
+            const typeSelect = card.querySelector('.ext-extra-type');
+            const otherTypeInput = card.querySelector('.ext-extra-other-type');
+            const statusSelect = card.querySelector('.ext-extra-status');
+            const pressureInput = card.querySelector('.ext-extra-pressure');
+            const buildingSelect = card.querySelector('.ext-extra-building');
+            const centerRoomSelect = card.querySelector('.ext-extra-center-room');
+
+            const applyStatusPressure = () => {
+                const status = statusSelect.value;
+                if (status === 'active') {
+                    pressureInput.min = 70;
+                    pressureInput.max = 100;
+                    if (Number(pressureInput.value) < 70) pressureInput.value = 70;
+                } else if (status === 'maintenance') {
+                    pressureInput.min = 0;
+                    pressureInput.max = 69;
+                    if (Number(pressureInput.value) > 69) pressureInput.value = 69;
+                } else if (status === 'expired') {
+                    pressureInput.min = 0;
+                    pressureInput.max = 19;
+                    if (Number(pressureInput.value) > 19) pressureInput.value = 19;
+                } else {
+                    pressureInput.min = 0;
+                    pressureInput.max = 100;
+                }
+            };
+
+            const loadCenterRooms = async () => {
+                centerRoomSelect.innerHTML = '<option value="">Select Center Room</option>';
+                const bId = buildingSelect.value;
+                if (!bId) return;
+                try {
+                    const resp = await fetch(`/fire-safety/building/${bId}/rooms-with-coverage`, {
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    const data = await resp.json();
+                    (data.rooms || []).forEach(r => {
+                        const opt = document.createElement('option');
+                        opt.value = r.id;
+                        opt.textContent = `${r.room_code || ('Room ' + r.id)} - Floor ${r.floor_no}`;
+                        centerRoomSelect.appendChild(opt);
+                    });
+                } catch (e) {
+                    console.error('Failed to load center rooms for extra entry', e);
+                }
+            };
+
+            typeSelect.addEventListener('change', () => {
+                otherTypeInput.classList.toggle('d-none', typeSelect.value !== 'Other');
+            });
+            statusSelect.addEventListener('change', applyStatusPressure);
+            buildingSelect.addEventListener('change', loadCenterRooms);
+
+            if (prefill.building_id) {
+                buildingSelect.value = String(prefill.building_id);
+                loadCenterRooms();
+            }
+
+            applyStatusPressure();
+        }
+
+        function removeExtExtraEntry(entryId) {
+            const card = document.querySelector(`#extExtraEntriesContainer .ext-extra-entry[data-entry-id="${entryId}"]`);
+            if (card) card.remove();
+        }
+
+        function addMoreExtinguisherEntry() {
+            const currentBuilding = document.getElementById('extBuildingSelect')?.value || '';
+            renderExtExtraEntry({ building_id: currentBuilding });
         }
 
         // inspectRoom function replaced by openUpdateRoomModal below
@@ -1618,7 +2316,7 @@
                 const smokeInstalledRow = document.getElementById('addSmokeDetectorInstalledRow');
 
                 if (smokeRow && smokeReqCb) {
-                    if (roomTypeName.includes('administration')) {
+                        if (shouldShowSmokeDetectorQuestion(roomTypeName)) {
                         smokeRow.classList.remove('d-none');
                     } else {
                         smokeRow.classList.add('d-none');
@@ -2033,42 +2731,101 @@
                 return;
             }
 
+            const schoolId = formData.get('unified_school_id') || '';
+
+            const entries = [];
+            entries.push({
+                unified_school_id: schoolId,
+                code: formData.get('code') || '',
+                type: formData.get('type') || '',
+                status: formData.get('status') || 'active',
+                pressure_level: formData.get('pressure_level') || '100',
+                building_id: formData.get('building_id') || '',
+                room_id: formData.get('room_id') || '',
+                date_checked: formData.get('date_checked') || getTodayDateString(),
+                evaluation_result: formData.get('evaluation_result') || 'Passed',
+                remarks: formData.get('remarks') || '',
+                covered_room_ids: Array.from(document.getElementById('coveredRoomsSelect').selectedOptions).map(o => o.value)
+            });
+
+            document.querySelectorAll('#extExtraEntriesContainer .ext-extra-entry').forEach(card => {
+                const typeValue = card.querySelector('.ext-extra-type')?.value || 'ABC';
+                const otherTypeValue = card.querySelector('.ext-extra-other-type')?.value || '';
+                const centerRoom = card.querySelector('.ext-extra-center-room')?.value || '';
+                const resolvedType = typeValue === 'Other' ? otherTypeValue.trim() : typeValue;
+
+                entries.push({
+                    unified_school_id: schoolId,
+                    code: card.querySelector('.ext-extra-code')?.value || '',
+                    type: resolvedType,
+                    status: card.querySelector('.ext-extra-status')?.value || 'active',
+                    pressure_level: card.querySelector('.ext-extra-pressure')?.value || '100',
+                    building_id: card.querySelector('.ext-extra-building')?.value || '',
+                    room_id: centerRoom,
+                    date_checked: card.querySelector('.ext-extra-date')?.value || getTodayDateString(),
+                    evaluation_result: card.querySelector('.ext-extra-eval')?.value || 'Passed',
+                    remarks: card.querySelector('.ext-extra-remarks')?.value || '',
+                    covered_room_ids: centerRoom ? [centerRoom] : []
+                });
+            });
+
+            for (let i = 0; i < entries.length; i++) {
+                const e = entries[i];
+                if (!e.unified_school_id || !e.code || !e.type || !e.status || !e.pressure_level || !e.building_id) {
+                    Swal.fire('Missing Information', `Extinguisher entry #${i + 1}: Please complete required fields.`, 'warning');
+                    return;
+                }
+            }
+
             try {
                 // Show loading state
-                const saveBtn = document.querySelector('button[onclick="saveExtinguisher()"]');
+                const saveBtn = document.getElementById('saveExtBtn');
                 if (saveBtn) {
                     saveBtn.disabled = true;
                     saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
                 }
 
-                const resp = await fetch(`{{ route('fire-safety.extinguisher.store') }}`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': csrfToken(),
-                        'Accept': 'application/json',
-                    },
-                    body: formData
-                });
+                for (const entry of entries) {
+                    const fd = new FormData();
+                    fd.set('unified_school_id', entry.unified_school_id);
+                    fd.set('code', entry.code);
+                    fd.set('type', entry.type);
+                    fd.set('status', entry.status);
+                    fd.set('pressure_level', entry.pressure_level);
+                    fd.set('building_id', entry.building_id);
+                    if (entry.room_id) fd.set('room_id', entry.room_id);
+                    fd.set('date_checked', entry.date_checked);
+                    fd.set('evaluation_result', entry.evaluation_result);
+                    if (entry.remarks) fd.set('remarks', entry.remarks);
+                    (entry.covered_room_ids || []).forEach(id => fd.append('covered_room_ids[]', id));
 
-                const data = await resp.json();
+                    const resp = await fetch(`{{ route('fire-safety.extinguisher.store') }}`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken(),
+                            'Accept': 'application/json',
+                        },
+                        body: fd
+                    });
+
+                    const data = await resp.json();
+                    if (!resp.ok || !data.success) {
+                        throw new Error(data.message || 'Failed to add extinguisher');
+                    }
+                }
 
                 if (saveBtn) {
                     saveBtn.disabled = false;
                     saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Extinguisher';
                 }
 
-                if (!resp.ok || !data.success) {
-                    Swal.fire('Error', data.message || 'Failed to add extinguisher', 'error');
-                    return;
-                }
-
-                Swal.fire('Success', 'Extinguisher added successfully!', 'success').then(() => {
+                Swal.fire('Success', `${entries.length} extinguisher entr${entries.length > 1 ? 'ies' : 'y'} added successfully!`, 'success').then(() => {
                     location.reload();
                 });
             } catch (e) {
                 console.error(e);
-                Swal.fire('Error', 'Failed to add extinguisher. Please try again.', 'error');
-                const saveBtn = document.querySelector('button[onclick="saveExtinguisher()"]');
+                Swal.fire('Error', e.message || 'Failed to add extinguisher. Please try again.', 'error');
+                const saveBtn = document.getElementById('saveExtBtn');
                 if (saveBtn) {
                     saveBtn.disabled = false;
                     saveBtn.innerHTML = '<i class="fas fa-save me-2"></i>Save Extinguisher';
@@ -2099,6 +2856,10 @@
         document.getElementById('updateExtStatus').value = status;
         document.getElementById('updateExtPressure').value = pressure;
         document.getElementById('updateExtNotes').value = '';
+        const updateExtEval = document.getElementById('updateExtEvaluationResult');
+        if (updateExtEval) {
+            updateExtEval.value = (status === 'active') ? 'Passed' : 'Failed';
+        }
 
         // Reset removal logic
         if (document.getElementById('removeExtBtn')) document.getElementById('removeExtBtn').style.display = 'none';
@@ -2130,6 +2891,10 @@
             const resp = await fetch(`/fire-safety/extinguisher/${id}`);
             if (!resp.ok) throw new Error('Failed to fetch extinguisher');
             const ext = await resp.json();
+
+            if (updateExtEval) {
+                updateExtEval.value = ext.evaluation_result || ((ext.status === 'active') ? 'Passed' : 'Failed');
+            }
 
             console.log('Extinguisher data:', ext); // Debug log
 
@@ -2343,7 +3108,7 @@
                 pressureInput.min = 70;
                 pressureInput.max = 100;
                 if (pressureInput.value < 70) pressureInput.value = 70;
-            } else if (status === 'maintenance') {
+            } else if (status === 'for preventive maintenance') {
                 pressureInput.min = 0;
                 pressureInput.max = 69;
                 if (pressureInput.value >= 70) pressureInput.value = 69;
@@ -2762,7 +3527,7 @@
                     let badgeClass = 'secondary';
                     let statusLabel = item.status;
                     if (item.status === 'active') { badgeClass = 'success'; statusLabel = 'OK'; }
-                    else if (item.status === 'maintenance') { badgeClass = 'warning'; statusLabel = 'For Preventive Maintenance'; }
+                    else if (item.status === 'for preventive maintenance') { badgeClass = 'warning'; statusLabel = 'For Preventive Maintenance'; }
                     else if (item.status === 'expired') { badgeClass = 'danger'; statusLabel = 'Used'; }
                     else if (item.status === 'missing') { badgeClass = 'danger'; statusLabel = 'Missing'; }
                     else if (item.status === 'purchase') { badgeClass = 'dark'; statusLabel = 'For Purchase'; }
@@ -2775,7 +3540,7 @@
                             <td>${item.location}</td>
                             <td>${item.inspector}</td>
                             <td><span class="badge bg-${badgeClass}">${statusLabel}</span></td>
-                            <td>${item.pressure_level}%</td>
+                            <td>${item.pressure_level === '-' ? '-' : `${item.pressure_level}%`}</td>
                             <td>${item.notes || '-'}</td>
                         </tr>
                     `;
@@ -2975,7 +3740,7 @@
                 const smokeInstalledRow = document.getElementById('smokeDetectorInstalledRow');
 
                 if (smokeRow && smokeReqCb) {
-                    if (typeText.includes('administration')) {
+                    if (shouldShowSmokeDetectorQuestion(typeText)) {
                         smokeRow.classList.remove('d-none');
                     } else {
                         smokeRow.classList.add('d-none');
@@ -3007,6 +3772,7 @@
                 document.getElementById('updateRoomName').value = data.room_name || '';
                 document.getElementById('updateRoomFloor').value = data.floor_no + " Floor";
                 document.getElementById('updateRoomRemarks').value = data.remarks || '';
+                document.getElementById('updateRoomEngineerInspectionDate').value = data.engineer_last_inspection_date || '';
 
                 // Populate room type
                 const updateTypeSelect = document.getElementById('updateRoomTypeSelect');
@@ -3084,7 +3850,7 @@
                 const smokeNo = document.getElementById('updateRoomSmokeDetectorNo');
 
                 const typeName = (data.room_type || '').toLowerCase();
-                if (typeName.includes('administration')) {
+                if (shouldShowSmokeDetectorQuestion(typeName)) {
                     smokeDetectorRow.classList.remove('d-none');
                     const isRequired = !!data.smoke_detector_required;
                     smokeReqCb.checked = isRequired;
@@ -3321,6 +4087,15 @@
                 bSelect.value = "";
                 document.getElementById('roomSchoolId').value = "";
             }
+            const addMoreBtn = document.getElementById('addMoreRoomBtn');
+            if (addMoreBtn) {
+                addMoreBtn.classList.remove('d-none');
+                addMoreBtn.classList.remove('d-none');
+                addMoreBtn.disabled = false;
+                addMoreBtn.innerHTML = '<i class="fas fa-plus me-2"></i>Add More';
+            }
+            const extraContainer = document.getElementById('roomExtraEntriesContainer');
+            if (extraContainer) extraContainer.innerHTML = '';
         });
 
         document.getElementById('addExtModal').addEventListener('hidden.bs.modal', function () {
@@ -3331,6 +4106,8 @@
                 bSelect.value = "";
                 document.getElementById('extSchoolId').value = "";
             }
+            const extContainer = document.getElementById('extExtraEntriesContainer');
+            if (extContainer) extContainer.innerHTML = '';
         });
 
         async function openAddRoomForBuilding(schoolId, buildingId, buildingName) {
@@ -3352,6 +4129,7 @@
 
             // Load floors for this building
             await updateRoomFloors(buildingId);
+            await updateAddMoreRoomButton();
 
             const modalEl = document.getElementById('addRoomModal');
             const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
@@ -3382,7 +4160,7 @@
         // Auto-open building based on query parameter
         function handleBuildingAutoOpen() {
             const urlParams = new URLSearchParams(window.location.search);
-            const buildingId = urlParams.get('building_id');
+            const buildingId = urlParams.get('building_id') || urlParams.get('building');
             const schoolId = "{{ $activeSchool->id ?? '' }}";
 
             if (buildingId && schoolId) {

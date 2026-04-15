@@ -432,8 +432,8 @@
             <!-- Hazard Mapping -->
             <div class="col-md-4 mb-4">
                 @php $canAccessHazard = $isAdmin || in_array('hazard_mapping', $modules); @endphp
-                <a href="{{ route('hazard-mapping.dashboard') }}" class="text-decoration-none module-card-link"
-                   data-module="hazard_mapping" data-can-access="{{ $canAccessHazard ? '1' : '0' }}" data-theme-color="#0D7377">
+                <a href="#" class="text-decoration-none module-card-link"
+                   data-module="hazard_mapping" data-can-access="{{ $canAccessHazard ? '1' : '0' }}" data-theme-color="#0D7377" data-under-development="1">
                     <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #0D7377;">
                         <div class="card-body text-center p-5">
                             <div class="mb-4">
@@ -509,17 +509,24 @@
                         @if(isset($contributorAssignedSchool) && $contributorAssignedSchool)
                             <div class="card border-0 shadow-lg rounded-4">
                                 <div class="card-header bg-dark text-white rounded-top-4">
-                                    <h5 class="mb-0 fw-bold">{{ $contributorAssignedSchool->school_name ?? 'Assigned School' }}</h5>
+                                            <div class="d-flex justify-content-between align-items-center gap-3">
+                                                <h5 class="mb-0 fw-bold">{{ $contributorAssignedSchool->school_name ?? 'Assigned School' }}</h5>
+                                                <a href="{{ route('fire-safety.report.full-school', $contributorAssignedSchool->id) }}" target="_blank" class="btn btn-sm btn-outline-light">
+                                                    <i class="fas fa-print me-1"></i> Print Full Report
+                                                </a>
+                                            </div>
                                 </div>
                                 <div class="card-body p-4">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <h5 class="fw-bold mb-0">Core Information</h5>
-                                        <div class="d-flex gap-2">
-                                            <button type="button" class="btn btn-dark btn-sm" id="contributorUnlockSchoolBtn">
-                                                <i class="fas fa-pen me-1"></i> Update Details
-                                            </button>
-                                            <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="contributorCancelSchoolBtn">Cancel</button>
-                                        </div>
+                                        @if(Auth::user()->role !== 'viewer')
+                                            <div class="d-flex gap-2">
+                                                <button type="button" class="btn btn-dark btn-sm" id="contributorUnlockSchoolBtn">
+                                                    <i class="fas fa-pen me-1"></i> Update Details
+                                                </button>
+                                                <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="contributorCancelSchoolBtn">Cancel</button>
+                                            </div>
+                                        @endif
                                     </div>
 
                                     <form id="contributorSchoolForm">
@@ -757,9 +764,11 @@
                         </div>
                     </div>
                     <div class="modal-footer bg-light border-0 p-4 rounded-bottom-4">
+                        @if(Auth::user()->role !== 'viewer')
                         <button type="button" class="btn btn-dark px-4" id="editSchoolBtn">
                             <i class="fas fa-edit me-2"></i> Update Details
                         </button>
+                        @endif
                         {{--
                         <button type="button" class="btn btn-outline-danger px-4" id="deleteSchoolBtn" style="display:none;">
                             <i class="fas fa-trash me-2"></i> Delete
@@ -1129,6 +1138,30 @@
     </div>
 </div>
 
+<!-- Hazard Mapping Coming Soon Modal -->
+<div class="modal fade" id="hazardModuleComingSoonModal" tabindex="-1" aria-labelledby="hazardModuleComingSoonLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header text-white" style="background-color: #0D7377;">
+                <h5 class="modal-title" id="hazardModuleComingSoonLabel">
+                    <i class="fas fa-tools me-2"></i>Hazard Mapping: Coming Soon
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-0">
+                    The Hazard Mapping system is currently under development and will be available in the upcoming days.
+                </p>
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn text-white" data-bs-dismiss="modal" style="background-color: #0D7377; border-color: #0D7377;">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- No Access Modal -->
 <div class="modal fade" id="noModuleAccessModal" tabindex="-1" aria-labelledby="noModuleAccessModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -1359,6 +1392,8 @@
         const links = document.querySelectorAll('a.module-card-link[data-module]');
         const modalEl = document.getElementById('noModuleAccessModal');
         const modal = modalEl ? bootstrap.Modal.getOrCreateInstance(modalEl) : null;
+        const hazardComingSoonModalEl = document.getElementById('hazardModuleComingSoonModal');
+        const hazardComingSoonModal = hazardComingSoonModalEl ? bootstrap.Modal.getOrCreateInstance(hazardComingSoonModalEl) : null;
         const headerEl = document.getElementById('noModuleAccessModalHeader');
         const closeBtn = document.getElementById('noModuleAccessCloseBtn');
 
@@ -1370,6 +1405,12 @@
 
         links.forEach(a => {
             a.addEventListener('click', function (e) {
+                if (this.getAttribute('data-under-development') === '1') {
+                    e.preventDefault();
+                    if (hazardComingSoonModal) hazardComingSoonModal.show();
+                    return;
+                }
+
                 const canAccess = this.getAttribute('data-can-access') === '1';
                 if (canAccess) return;
                 e.preventDefault();
@@ -1499,11 +1540,46 @@
         }
     }
 
+    function focusSchoolCardInSchoolsTab(schoolId, shouldScroll, shouldHighlight) {
+        const selector = `.school-item-col[data-school-id="${schoolId}"] .school-card`;
+        const schoolCard = document.querySelector(selector);
+        if (!schoolCard) return false;
+
+        if (shouldScroll) {
+            schoolCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        if (shouldHighlight) {
+            schoolCard.classList.add('school-card-focus-highlight');
+            setTimeout(() => schoolCard.classList.remove('school-card-focus-highlight'), 4800);
+        }
+
+        return true;
+    }
+
     // Persist active tab on reload
     document.addEventListener('DOMContentLoaded', function() {
         const savedTab = localStorage.getItem('activeDashboardTab');
         if (savedTab === 'schools' && @json($canShowSchoolTab)) {
             switchDashboardTab('schools');
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        const requestedTab = params.get('tab');
+        const targetSchoolId = params.get('school_id');
+        const shouldHighlight = params.get('highlight') === '1';
+        const shouldScroll = params.get('scroll') === '1';
+
+        if (requestedTab === 'schools' && @json($canShowSchoolTab)) {
+            switchDashboardTab('schools');
+        }
+
+        if (requestedTab === 'schools' && targetSchoolId) {
+            [0, 160, 420, 860].forEach((delay) => {
+                setTimeout(() => {
+                    focusSchoolCardInSchoolsTab(targetSchoolId, shouldScroll, shouldHighlight);
+                }, delay);
+            });
         }
     });
 
@@ -1724,7 +1800,10 @@
             configureModuleButton('btn_hazard', m.hazard_mapping, `#`);
 
             // Setup Edit Button
-            document.getElementById('editSchoolBtn').onclick = () => openEditModal(s);
+            const editBtn = document.getElementById('editSchoolBtn');
+            if (editBtn) {
+                editBtn.onclick = () => openEditModal(s);
+            }
             const delBtn = document.getElementById('deleteSchoolBtn');
             if (delBtn) {
                 delBtn.style.display = @json($isAdmin) ? '' : 'none';

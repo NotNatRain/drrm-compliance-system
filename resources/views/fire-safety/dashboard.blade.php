@@ -311,7 +311,7 @@
                                                                 $highlightBldgAlt = !$bldgAlarmDone && $extRoomDone;
                                                                 $highlightPlan = $bldgAlarmDone && $extRoomDone && !$planDone;
                                                             @endphp
-                                                            {{-- Buildings & Alarm System card --}}
+                                                            {{-- Buildings & Alarms card --}}
                                                             <div class="col-md-4">
                                                                 <div class="card h-100 text-center p-3 border-2
                                                                     {{ $bldgAlarmDone ? 'border-success bg-success-subtle' : (($highlightBldg || $highlightBldgAlt) ? 'border-primary bg-primary-subtle' : 'border-secondary bg-light') }}">
@@ -319,7 +319,7 @@
                                                                         <i class="fas fa-building fa-2x {{ $bldgAlarmDone ? 'text-success' : (($highlightBldg || $highlightBldgAlt) ? 'text-primary' : 'text-secondary') }}"></i>
                                                                         <i class="fas fa-bell fa-2x {{ $bldgAlarmDone ? 'text-success' : (($highlightBldg || $highlightBldgAlt) ? 'text-primary' : 'text-secondary') }}"></i>
                                                                     </div>
-                                                                    <h6 class="small fw-bold">Buildings & Alarm System</h6>
+                                                                    <h6 class="small fw-bold">Buildings & Alarms</h6>
                                                                     <div class="mb-2">
                                                                         @if($bldgAlarmDone)
                                                                             <span class="badge bg-success"><i class="fas fa-check-circle"></i> Done</span>
@@ -334,7 +334,7 @@
                                                                     </a>
                                                                 </div>
                                                             </div>
-                                                            {{-- Fire Extinguisher & Rooms card --}}
+                                                            {{-- Extinguisher & Rooms card --}}
                                                             <div class="col-md-4">
                                                                 <div class="card h-100 text-center p-3 border-2
                                                                     {{ $extRoomDone ? 'border-success bg-success-subtle' : ($highlightExtRoom ? 'border-primary bg-primary-subtle' : 'border-secondary bg-light') }}">
@@ -342,7 +342,7 @@
                                                                         <i class="fas fa-fire-extinguisher fa-2x {{ $extRoomDone ? 'text-success' : ($highlightExtRoom ? 'text-primary' : 'text-secondary') }}"></i>
                                                                         <i class="fas fa-door-open fa-2x {{ $extRoomDone ? 'text-success' : ($highlightExtRoom ? 'text-primary' : 'text-secondary') }}"></i>
                                                                     </div>
-                                                                    <h6 class="small fw-bold">Fire Extinguisher & Rooms</h6>
+                                                                    <h6 class="small fw-bold">Extinguisher & Rooms</h6>
                                                                     <div class="mb-2">
                                                                         @if($extRoomDone)
                                                                             <span class="badge bg-success"><i class="fas fa-check-circle"></i> Done</span>
@@ -394,14 +394,14 @@
                                                                         $mi = $school->module_issues;
                                                                         $combinedModules = [
                                                                             [
-                                                                                'label' => 'Buildings & Alarm System',
+                                                                                'label' => 'Buildings & Alarms',
                                                                                 'icons' => ['fa-building', 'fa-bell'],
                                                                                 'data' => $mi['buildings_alarms'],
                                                                                 'route' => 'fire-safety.buildings',
                                                                                 'schoolId' => $school->id,
                                                                             ],
                                                                             [
-                                                                                'label' => 'Fire Extinguisher & Rooms',
+                                                                                'label' => 'Extinguisher & Rooms',
                                                                                 'icons' => ['fa-fire-extinguisher', 'fa-door-open'],
                                                                                 'data' => $mi['ext_rooms'],
                                                                                 'route' => 'fire-safety.extinguishers',
@@ -653,7 +653,7 @@
                                             <i class="fas fa-building fa-2x"></i>
                                             <i class="fas fa-bell fa-2x"></i>
                                         </div>
-                                        <h6>Buildings & Alarm System</h6>
+                                        <h6>Buildings & Alarms</h6>
                                         <div class="mt-2 status-indicator"></div>
                                         <a href="{{ route('fire-safety.buildings') }}" class="btn btn-sm mt-2">{{ auth()->user()->role === 'viewer' ? 'View' : 'Configure' }}</a>
                                     </div>
@@ -664,7 +664,7 @@
                                             <i class="fas fa-fire-extinguisher fa-2x"></i>
                                             <i class="fas fa-door-open fa-2x"></i>
                                         </div>
-                                        <h6>Fire Extinguisher & Rooms</h6>
+                                        <h6>Extinguisher & Rooms</h6>
                                         <div class="mt-2 status-indicator"></div>
                                         <a href="{{ route('fire-safety.extinguishers') }}" class="btn btn-sm mt-2">{{ auth()->user()->role === 'viewer' ? 'View' : 'Configure' }}</a>
                                     </div>
@@ -1048,13 +1048,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const moduleMap = [
             {
-                label: 'Buildings & Alarm System',
+                label: 'Buildings & Alarms',
                 icons: ['fa-building', 'fa-bell'],
                 dataKey: 'buildings_alarms',
                 route: 'buildings'
             },
             {
-                label: 'Fire Extinguisher & Rooms',
+                label: 'Extinguisher & Rooms',
                 icons: ['fa-fire-extinguisher', 'fa-door-open'],
                 dataKey: 'ext_rooms',
                 route: 'extinguishers'

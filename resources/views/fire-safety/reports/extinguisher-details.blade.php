@@ -141,6 +141,17 @@
             </thead>
             <tbody>
                 @foreach($extinguishers as $ext)
+                    @php
+                        $statusLabel = match(strtolower((string) $ext->status)) {
+                            'active' => 'OK',
+                            'maintenance' => 'For Preventive Maintenance',
+                            'expired' => 'Used',
+                            'missing' => 'Missing',
+                            'purchase', 'for_purchase' => 'For Purchase',
+                            'decommissioned' => 'Decommissioned',
+                            default => strtoupper((string) $ext->status),
+                        };
+                    @endphp
                     <tr>
                         <td><strong>{{ $ext->code }}</strong></td>
                         <td>
@@ -152,12 +163,46 @@
                                 <small class="text-muted d-block">({{ $otherRooms->map(fn($r) => 'Room ' . ($r->room_code ?: $r->room_name))->implode(' & ') }} taking cover)</small>
                             @endif
                         </td>
-                        <td class="status-cell">{{ strtoupper($ext->status) }}</td>
+                        <td class="status-cell">{{ $statusLabel }}</td>
                         <td>{{ $ext->date_checked ? \Carbon\Carbon::parse($ext->date_checked)->format('M d, Y') : 'N/A' }}</td>
                         <td>{{ $ext->type }}</td>
                         <td>{{ $ext->remarks }} {{ $ext->notes }}</td>
                     </tr>
                 @endforeach
+
+                @php
+                    $needed = (int) ($neededExtinguishers ?? 0);
+                    $existing = (int) ($existingExtinguishers ?? 0);
+                    $passed = (int) ($passedExtinguishers ?? 0);
+                    $summaryRemarks = ($needed > 0 && $existing >= $needed && $passed >= $needed)
+                        ? 'Passed'
+                        : 'Needs Attention';
+                @endphp
+                <tr style="background-color: #f7f7f7;">
+                    <td><strong>Summary</strong></td>
+                    <td>
+                        <strong>Existing / Needed:</strong> {{ $existing }} / {{ $needed }}<br>
+                        <strong>Passed / Needed:</strong> {{ $passed }} / {{ $needed }}
+                    </td>
+                    <td class="status-cell">{{ $summaryRemarks }}</td>
+                    <td colspan="3">—</td>
+                </tr>
+
+                @php
+                    $activeCount = $extinguishers->where('status', 'active')->count();
+                    $maintenanceCount = $extinguishers->where('status', 'maintenance')->count();
+                    $usedCount = $extinguishers->where('status', 'expired')->count();
+                    $missingCount = $extinguishers->where('status', 'missing')->count();
+                @endphp
+                <tr style="background-color: #f0f4f7;">
+                    <td><strong>Status Totals</strong></td>
+                    <td><strong>Active:</strong> {{ $activeCount }}</td>
+                    <td><strong>For Preventive Maintenance:</strong> {{ $maintenanceCount }}</td>
+                    <td><strong>Used:</strong> {{ $usedCount }}</td>
+                    <td><strong>Missing:</strong> {{ $missingCount }}</td>
+                    <td>—</td>
+                </tr>
+
                 @if($extinguishers->isEmpty())
                     <tr>
                         <td colspan="6" style="text-align: center; padding: 20px;">No fire extinguishers recorded for this school.</td>

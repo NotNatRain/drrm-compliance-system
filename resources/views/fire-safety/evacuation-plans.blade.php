@@ -477,8 +477,8 @@
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-4">
-                                                                    <div class="specific-item p-2 border rounded" style="cursor: pointer;" onclick="addSpecificToMap('chair', {{ $school->id }})">
-                                                                        <i class="fas fa-chair fa-lg mb-1"></i><br><small>Chair</small>
+                                                                    <div class="specific-item p-2 border rounded" style="cursor: pointer;" onclick="addSpecificToMap('bell', {{ $school->id }})">
+                                                                        <i class="fas fa-bell fa-lg mb-1"></i><br><small>Bell</small>
                                                                     </div>
                                                                 </div>
                                                                 <div class="col-4">
@@ -515,7 +515,7 @@
                                              @endif
                                          </div>
                                     </div>
-                                    
+
                                     <!-- GENERATED VIEW -->
                                     <div id="generated-map-view-{{ $school->id }}">
 
@@ -553,7 +553,7 @@
 
                                     <!-- ATTACHED VIEW -->
                                     <div id="attached-map-view-{{ $school->id }}" style="display: none;">
-                                        
+
                                         @if($school->attached_evacuation_map)
                                             <div class="border rounded p-3 text-center bg-light">
                                                 <img src="{{ asset('storage/' . $school->attached_evacuation_map) }}" class="img-fluid" alt="Attached Evacuation Map" style="max-height: 800px; width: auto;">
@@ -924,17 +924,6 @@
                     <form id="addFacilityForm">
                         <input type="hidden" name="school_id" id="addFacilitySchoolId">
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Type *</label>
-                            <select class="form-select" name="type" required>
-                                <option value="">-- Select Type --</option>
-                                <option value="commercial">Commercial</option>
-                                <option value="industrial">Industrial</option>
-                                <option value="residential">Residential</option>
-                                <option value="educational">Educational</option>
-                                <option value="public/institutional">Public/Institutional</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
                             <label class="form-label fw-bold">Name *</label>
                             <input type="text" class="form-control" name="name" placeholder="e.g., Covered Court, Parking" required>
                         </div>
@@ -977,17 +966,6 @@
                     <form id="editFacilityForm">
                         <input type="hidden" id="editFacilityId">
                         <input type="hidden" id="editFacilityDbId">
-                        <input type="hidden" id="editFacilityType">
-                        <div class="mb-3" id="editFacilityTypeWrap">
-                            <label class="form-label fw-bold">Type *</label>
-                            <select class="form-select" id="editFacilityTypeSelect" name="type">
-                                <option value="commercial">Commercial</option>
-                                <option value="industrial">Industrial</option>
-                                <option value="residential">Residential</option>
-                                <option value="educational">Educational</option>
-                                <option value="public/institutional">Public/Institutional</option>
-                            </select>
-                        </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Name *</label>
                             <input type="text" class="form-control" name="name" id="editFacilityName" required>
@@ -1530,6 +1508,44 @@
             return `${n}th`;
         }
 
+        function normalizeMapPlacement(value) {
+            const normalized = String(value || '').trim().toLowerCase();
+            if (normalized.includes('left')) return 'left';
+            if (normalized.includes('right')) return 'right';
+            return 'center';
+        }
+
+        function appendPlacementBell(container, alarm, placement, offsetIndex = 0) {
+            if (!container) return;
+
+            const bell = document.createElement('span');
+            bell.style.position = 'absolute';
+            bell.style.top = `${2 + (offsetIndex * 10)}px`;
+            bell.style.fontSize = '12px';
+            bell.style.lineHeight = '1';
+            bell.style.color = '#111';
+            bell.style.background = 'rgba(255,255,255,0.92)';
+            bell.style.border = '1px solid rgba(0,0,0,0.18)';
+            bell.style.borderRadius = '999px';
+            bell.style.padding = '0 3px';
+            bell.style.pointerEvents = 'none';
+            bell.title = `Alarm: ${alarm.code || ''}${alarm.location ? ` (${alarm.location})` : ''}`;
+            bell.textContent = '🔔';
+
+            if (placement === 'left') {
+                bell.style.left = '10%';
+                bell.style.transform = 'translateX(-50%)';
+            } else if (placement === 'right') {
+                bell.style.left = '90%';
+                bell.style.transform = 'translateX(-50%)';
+            } else {
+                bell.style.left = '50%';
+                bell.style.transform = 'translateX(-50%)';
+            }
+
+            container.appendChild(bell);
+        }
+
         function facilityColorByType(type) {
             const t = String(type || '').toLowerCase();
             if (t === 'assembly_area') return '#5C4033'; // royal brown
@@ -1542,33 +1558,41 @@
         }
 
         function appendRoomExitMarkers(roomDiv, hasSecondaryExit) {
-            const markerPositions = hasSecondaryExit ? [30, 70] : [50];
-            markerPositions.forEach((pct, idx) => {
-                const doorGap = document.createElement('div');
-                doorGap.style.position = 'absolute';
-                doorGap.style.right = '-1px';
-                doorGap.style.top = `${pct}%`;
-                doorGap.style.transform = 'translateY(-50%)';
-                doorGap.style.width = '8px';
-                doorGap.style.height = '18px';
-                doorGap.style.background = '#ffffff';
-                doorGap.style.borderTop = '1px solid #198754';
-                doorGap.style.borderBottom = '1px solid #198754';
-                roomDiv.appendChild(doorGap);
+            const exitSides = hasSecondaryExit ? ['left', 'right'] : ['right'];
+
+            exitSides.forEach(side => {
+                const exitWrap = document.createElement('div');
+                exitWrap.style.position = 'absolute';
+                exitWrap.style.bottom = '1px';
+                exitWrap.style[side] = '5px';
+                exitWrap.style.width = '24px';
+                exitWrap.style.height = '20px';
+                exitWrap.style.display = 'flex';
+                exitWrap.style.flexDirection = 'column';
+                exitWrap.style.alignItems = 'center';
+                exitWrap.style.justifyContent = 'flex-end';
+                exitWrap.style.pointerEvents = 'none';
+
+                const exitLine = document.createElement('div');
+                exitLine.style.width = '2px';
+                exitLine.style.height = '7px';
+                exitLine.style.background = '#198754';
+                exitLine.style.marginBottom = '1px';
 
                 const exitSign = document.createElement('div');
-                exitSign.style.position = 'absolute';
-                exitSign.style.right = '2px';
-                exitSign.style.top = `${pct}%`;
-                exitSign.style.transform = 'translateY(-50%)';
                 exitSign.style.fontSize = '9px';
                 exitSign.style.fontWeight = '700';
                 exitSign.style.color = '#198754';
-                exitSign.style.background = 'rgba(255,255,255,0.9)';
+                exitSign.style.background = 'rgba(255,255,255,0.95)';
                 exitSign.style.padding = '0 2px';
+                exitSign.style.border = '1px solid #198754';
                 exitSign.style.borderRadius = '2px';
-                exitSign.textContent = idx === 0 ? 'EXIT' : 'ALT EXIT';
-                roomDiv.appendChild(exitSign);
+                exitSign.style.lineHeight = '1';
+                exitSign.textContent = 'E';
+
+                exitWrap.appendChild(exitLine);
+                exitWrap.appendChild(exitSign);
+                roomDiv.appendChild(exitWrap);
             });
         }
 
@@ -1632,6 +1656,23 @@
                     }
                 });
 
+                // Dynamic gate markers based on the school gate count from the main dashboard.
+                const gateCount = Math.max(0, Number(school.number_gates || 0));
+                school.gates = [];
+                for (let i = 1; i <= gateCount; i++) {
+                    const gateId = `gate_${i}`;
+                    const gateLayout = savedLayout[gateId] || {};
+                    school.gates.push({
+                        id: gateId,
+                        subType: 'gate',
+                        x: Number(gateLayout.x || (120 + (i - 1) * 90)),
+                        y: Number(gateLayout.y || 1240),
+                        width: Number(gateLayout.width || 72),
+                        height: Number(gateLayout.height || 72),
+                        rotation: Number(gateLayout.rotation || 0),
+                    });
+                }
+
                 renderSchoolMap(school, schoolId);
                 canvasContainer.dataset.loaded = 'true';
             } catch (error) {
@@ -1683,9 +1724,9 @@
 
                 const maxRoomsOnFloor = Math.max(1, ...Object.values(roomsByFloor).map(rooms => rooms.length || 1));
                 const roomGap = 12;
-                const floorGap = 40;
+                const floorGap = 54;
                 const headerHeight = 35;
-                const minRoomSize = 52;
+                const minRoomSize = 64;
 
                 let buildingWidth = Math.max(300, maxRoomsOnFloor * minRoomSize + roomGap * (maxRoomsOnFloor + 1));
                 const maxRoomWidth = (buildingWidth - roomGap * (maxRoomsOnFloor + 1)) / maxRoomsOnFloor;
@@ -1749,7 +1790,7 @@
                     headerColor = '#6f42c1'; // purple
                 } else {
                     // Default to gray for "Other" or unknown types as per legend
-                    headerColor = '#6c757d'; 
+                    headerColor = '#6c757d';
                 }
 
                 const headerDiv = document.createElement('div');
@@ -1762,6 +1803,7 @@
                 headerDiv.style.display = 'flex';
                 headerDiv.style.justifyContent = 'space-between';
                 headerDiv.style.alignItems = 'center';
+                headerDiv.style.position = 'relative';
 
                 const hasPlan = building.evacuation_plan || building.evacuationPlan || school.evacuation_plan || school.evacuationPlan;
 
@@ -1778,17 +1820,10 @@
                     return !v || v === 'all' || v.includes('all');
                 });
 
-                // Build header with building alarm bells
-                let bellHtml = '';
-                buildingAlarms.forEach(a => {
-                    bellHtml += `<span title="Alarm (All Floors): ${a.code || ''}" style="font-size:14px;">🔔</span>`;
-                });
-
                 headerDiv.innerHTML = `
                     <span>${building.building_no}</span>
                     <span style="font-size: 10px;">${building.building_name || ''}</span>
                     <span style="display:flex; align-items:center; gap:6px;">
-                        ${bellHtml}
                         <span style="background: ${hasPlan ? 'green' : 'red'}; padding: 2px 6px; border-radius: 3px; font-size: 9px; color: white;">
                             ${hasPlan ? 'Plan OK' : 'No Plan'}
                         </span>
@@ -1799,6 +1834,22 @@
                         </button>
                     </span>
                 `;
+
+                const headerAlarmLayer = document.createElement('div');
+                headerAlarmLayer.style.position = 'absolute';
+                headerAlarmLayer.style.left = '0';
+                headerAlarmLayer.style.top = '2px';
+                headerAlarmLayer.style.width = '100%';
+                headerAlarmLayer.style.height = '14px';
+                headerAlarmLayer.style.pointerEvents = 'none';
+                headerAlarmLayer.style.zIndex = '2';
+                headerDiv.appendChild(headerAlarmLayer);
+
+                const headerPlacementCounts = { left: 0, center: 0, right: 0 };
+                buildingAlarms.forEach(a => {
+                    const placement = normalizeMapPlacement(a.location);
+                    appendPlacementBell(headerAlarmLayer, a, placement, headerPlacementCounts[placement]++);
+                });
                 buildingContainerDiv.appendChild(headerDiv);
 
                 // --- Build interior using HTML divs for rooms ---
@@ -1810,7 +1861,8 @@
                 interiorDiv.style.border = '2px solid black';
                 interiorDiv.style.boxSizing = 'border-box';
 
-                const computedFloorHeight = Math.max(50, (buildingHeight - headerHeight - floorGap * (floors + 1)) / floors);
+                const computedFloorHeight = Math.max(72, (buildingHeight - headerHeight - floorGap * (floors + 1)) / floors);
+                const hasSecondaryBuildingExit = floors >= 2 || allRooms.some(room => room.has_secondary_exit === true || String(room.has_secondary_exit || '') === '1');
 
                 // Render floors top-down (highest floor at top)
                 for (let floorIdx = 0; floorIdx < floors; floorIdx++) {
@@ -1850,7 +1902,7 @@
 
                             // Room number (top center)
                             const roomLabel = document.createElement('div');
-                            roomLabel.style.fontSize = '14px';
+                            roomLabel.style.fontSize = '11px';
                             roomLabel.style.fontWeight = 'bold';
                             roomLabel.style.color = '#333';
                             roomLabel.style.textAlign = 'center';
@@ -1885,6 +1937,12 @@
                         interiorDiv.appendChild(roomDiv);
                     }
 
+                    const stairTop = floorY + Math.max(6, Math.round((computedFloorHeight - 34) / 2));
+                    appendStairwayMarker(interiorDiv, 'right', stairTop, buildingWidth);
+                    if (hasSecondaryBuildingExit) {
+                        appendStairwayMarker(interiorDiv, 'left', stairTop, buildingWidth);
+                    }
+
                     // Floor divider line (below this floor's rooms, except for the last/bottom floor)
                     if (floorIdx < floors - 1) {
                         const dividerY = floorY + computedFloorHeight;
@@ -1904,14 +1962,10 @@
                         // Floor alarms on the divider
                         const floorBelowNo = floorNo; // bell belongs to the floor above the divider
                         const floorAlarms = alarms.filter(a => a.floor_id && String(a.floor_id).toLowerCase() !== 'all' && Number(a.floor_id) === floorBelowNo);
+                        const floorPlacementCounts = { left: 0, center: 0, right: 0 };
                         floorAlarms.forEach(a => {
-                            const bellSpan = document.createElement('span');
-                            bellSpan.style.fontSize = '12px';
-                            bellSpan.style.position = 'relative';
-                            bellSpan.style.top = '-6px';
-                            bellSpan.title = `Floor ${floorBelowNo} Alarm: ${a.code || ''}`;
-                            bellSpan.textContent = '🔔';
-                            divider.appendChild(bellSpan);
+                            const placement = normalizeMapPlacement(a.location);
+                            appendPlacementBell(divider, a, placement, floorPlacementCounts[placement]++);
                         });
 
                         interiorDiv.appendChild(divider);
@@ -1929,12 +1983,13 @@
                             bottomDivider.style.display = 'flex';
                             bottomDivider.style.alignItems = 'center';
                             bottomDivider.style.justifyContent = 'center';
+                            bottomDivider.style.position = 'absolute';
+                            bottomDivider.style.height = '18px';
+                            bottomDivider.style.pointerEvents = 'none';
+                            const bottomPlacementCounts = { left: 0, center: 0, right: 0 };
                             bottomFloorAlarms.forEach(a => {
-                                const bellSpan = document.createElement('span');
-                                bellSpan.style.fontSize = '12px';
-                                bellSpan.title = `Floor ${floorNo} Alarm: ${a.code || ''}`;
-                                bellSpan.textContent = '🔔';
-                                bottomDivider.appendChild(bellSpan);
+                                const placement = normalizeMapPlacement(a.location);
+                                appendPlacementBell(bottomDivider, a, placement, bottomPlacementCounts[placement]++);
                             });
                             interiorDiv.appendChild(bottomDivider);
                         }
@@ -1980,12 +2035,62 @@
                 renderSpecific(spec, schoolId);
             });
 
+            // Render dynamic gate markers.
+            const gates = school.gates || [];
+            gates.forEach(gate => {
+                renderSpecific(gate, schoolId, true);
+            });
+
             applyMapFit(schoolId);
         }
 
-        function renderSpecific(spec, schoolId) {
+        async function deleteGateMarker(specDiv, schoolId) {
+            const confirmDelete = await Swal.fire({
+                title: 'Delete gate marker?',
+                text: 'Are you sure you want to delete this gate? This will also reduce the school gate count by one.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete gate',
+            });
+
+            if (!confirmDelete.isConfirmed) return;
+
+            try {
+                const response = await fetch(`/fire-safety/school/${schoolId}/decrement-gates`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ count: 1 })
+                });
+
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Failed to delete gate marker.');
+                }
+
+                specDiv.remove();
+                if (mapDataArr[schoolId]) {
+                    mapDataArr[schoolId].number_gates = Number(data.number_gates ?? 0);
+                }
+
+                Swal.fire('Gate deleted', 'The gate marker was removed and the gate count was reduced.', 'success');
+            } catch (error) {
+                console.error(error);
+                Swal.fire('Error', error.message || 'Failed to delete gate marker.', 'error');
+            }
+        }
+
+        function renderSpecific(spec, schoolId, isGateMarker = false) {
             const canvas = document.getElementById(`school-map-canvas-${schoolId}`);
             if (!canvas) return;
+
+            const isGate = isGateMarker || String(spec.subType || '').toLowerCase() === 'gate';
+            const baseWidth = spec.width || (isGate ? 72 : 40);
+            const baseHeight = spec.height || (isGate ? 72 : 40);
 
             const specDiv = document.createElement('div');
             specDiv.className = 'map-element specific-element';
@@ -1994,9 +2099,10 @@
             specDiv.dataset.type = 'specific';
             specDiv.dataset.subType = spec.subType;
             specDiv.dataset.schoolId = schoolId;
+            specDiv.dataset.isGate = isGate ? '1' : '0';
             specDiv.dataset.rotation = spec.rotation || 0;
-            specDiv.dataset.baseWidth = spec.width || 40;
-            specDiv.dataset.baseHeight = spec.height || 40;
+            specDiv.dataset.baseWidth = baseWidth;
+            specDiv.dataset.baseHeight = baseHeight;
 
             specDiv.style.position = 'absolute';
             specDiv.style.width = `${specDiv.dataset.baseWidth}px`;
@@ -2010,7 +2116,7 @@
             specDiv.style.border = '1px solid #333';
             specDiv.style.borderRadius = '4px';
             specDiv.style.zIndex = '100';
-            specDiv.style.fontSize = '20px';
+            specDiv.style.fontSize = isGate ? '30px' : '20px';
 
             if (spec.rotation) {
                 specDiv.style.transform = `rotate(${spec.rotation}deg)`;
@@ -2021,24 +2127,36 @@
                 stairs: 'fa-stairs',
                 table: 'fa-table-list',
                 chair: 'fa-chair',
+                bell: 'fa-bell',
                 window: 'fa-window-maximize',
                 toilet: 'fa-toilet',
                 medical: 'fa-kit-medical',
-                arrow: 'fa-arrow-right'
+                arrow: 'fa-arrow-right',
+                gate: 'fa-door-open'
             };
 
             const iconClass = iconMap[spec.subType] || 'fa-question';
-            const iconColor = spec.subType === 'medical' ? 'color:red;' : '';
-            specDiv.innerHTML = `<i class="fas ${iconClass}" style="${iconColor}"></i>`;
+            const iconColor = spec.subType === 'medical' ? 'color:red;' : (isGate ? 'color:#198754;' : '');
+            if (spec.subType === 'stairs') {
+                specDiv.style.fontSize = '12px';
+                specDiv.innerHTML = `<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; line-height:1; width:100%; height:100%;"><i class="fas ${iconClass}" style="${iconColor}"></i><span style="font-size:8px; font-weight:700; margin-top:2px;">STAIR</span></div>`;
+            } else {
+                specDiv.innerHTML = `<i class="fas ${iconClass}" style="${iconColor}"></i>`;
+            }
 
             // Delete button on specifics
             const delBtn = document.createElement('div');
             delBtn.className = 'delete-specific no-print';
             delBtn.innerHTML = '×';
             delBtn.style.cssText = 'position:absolute; top:-10px; right:-10px; width:18px; height:18px; background:red; color:white; border-radius:50%; font-size:12px; line-height:16px; text-align:center; cursor:pointer; display:' + (isMapEditable[schoolId] ? 'block' : 'none') + ';';
-            delBtn.onclick = (e) => {
+            delBtn.onclick = async (e) => {
                 e.stopPropagation();
-                if (isMapEditable[schoolId]) specDiv.remove();
+                if (!isMapEditable[schoolId]) return;
+                if (specDiv.dataset.isGate === '1') {
+                    await deleteGateMarker(specDiv, schoolId);
+                    return;
+                }
+                specDiv.remove();
             };
             specDiv.appendChild(delBtn);
 
@@ -2149,7 +2267,7 @@
                 const top = parseFloat(el.style.top);
                 const isFacility = el.classList.contains('facility-element');
                 const isSpecific = el.classList.contains('specific-element');
-                
+
                 let bw, bh;
                 if (isFacility) {
                     bw = parseFloat(el.dataset.baseWidth || el.style.width || 200);
@@ -2161,7 +2279,7 @@
                     bw = parseFloat(el.dataset.baseWidth || 300);
                     bh = parseFloat(el.dataset.baseHeight || 150);
                 }
-                
+
                 const rotation = parseInt(el.dataset.rotation || 0);
 
                 const isRotated = (rotation % 180 !== 0);
@@ -2238,8 +2356,13 @@
             if (!canvas) return;
 
             const isFacility = element.classList.contains('facility-element');
-            const bw = isFacility ? parseFloat(element.dataset.baseWidth || element.style.width || 200) : parseFloat(element.dataset.baseWidth || 300);
-            const bh = isFacility ? parseFloat(element.dataset.baseHeight || element.style.height || 100) : parseFloat(element.dataset.baseHeight || 150);
+            const isSpecific = element.classList.contains('specific-element');
+            const bw = isSpecific
+                ? parseFloat(element.dataset.baseWidth || element.style.width || 40)
+                : (isFacility ? parseFloat(element.dataset.baseWidth || element.style.width || 200) : parseFloat(element.dataset.baseWidth || 300));
+            const bh = isSpecific
+                ? parseFloat(element.dataset.baseHeight || element.style.height || 40)
+                : (isFacility ? parseFloat(element.dataset.baseHeight || element.style.height || 100) : parseFloat(element.dataset.baseHeight || 150));
             const rotation = parseInt(element.dataset.rotation || 0);
             const isRotated = (rotation % 180 !== 0);
             const w = isRotated ? bh : bw;
@@ -2376,7 +2499,7 @@
 
         function openRoomExtinguishers(buildingId, roomId, schoolId) {
             // navigate to extinguisher list filtered by building and room
-            window.location.href = `/fire-safety/extinguishers?tab=tab-extinguishers&building=${buildingId}&room=${roomId}`;
+            window.location.href = `/fire-safety/extinguishers?tab=tab-extinguishers&building_id=${buildingId}&room=${roomId}`;
         }
 
         function toggleMapEdit(schoolId) {
@@ -2691,24 +2814,18 @@
                     return;
                 }
 
-                const typeInput = form.querySelector('[name="type"]');
                 const nameInput = form.querySelector('[name="name"]');
                 const descInput = form.querySelector('[name="description"]');
                 const condInput = form.querySelector('[name="condition"]');
                 const remarksInput = form.querySelector('[name="remarks"]');
                 const schoolIdInput = document.getElementById('addFacilitySchoolId');
 
-                const type = typeInput ? typeInput.value : '';
+                const type = 'public/institutional';
                 const name = nameInput ? nameInput.value.trim() : "";
                 const description = descInput ? descInput.value.trim() : "";
                 const condition = condInput ? condInput.value : 'good';
                 const remarks = remarksInput ? remarksInput.value.trim() : '';
                 const sId = schoolIdInput ? schoolIdInput.value : currentSchoolId;
-
-                if (!type) {
-                    Swal.fire('Required', 'Please select a facility type.', 'warning');
-                    return;
-                }
 
                 if (!name) {
                     Swal.fire('Required', 'Please enter a facility name.', 'warning');
@@ -2799,15 +2916,12 @@
             currentSchoolId = schoolId;
             document.getElementById('editFacilityId').value = facility.id;
             document.getElementById('editFacilityDbId').value = facility.db_id || '';
-            document.getElementById('editFacilityType').value = facility.type || 'public/institutional';
             document.getElementById('editFacilityName').value = facility.name;
             document.getElementById('editFacilityDesc').value = facility.description || '';
             document.getElementById('editFacilityCondition').value = facility.condition || 'good';
             document.getElementById('editFacilityRemarks').value = facility.remarks || '';
-            document.getElementById('editFacilityTypeSelect').value = facility.type || 'public/institutional';
 
             const isAssemblyArea = String(facility.type || '').toLowerCase() === 'assembly_area';
-            document.getElementById('editFacilityTypeWrap').style.display = isAssemblyArea ? 'none' : '';
             document.getElementById('editFacilityDescWrap').style.display = isAssemblyArea ? 'none' : '';
 
             const modal = new bootstrap.Modal(document.getElementById('editFacilityModal'));
@@ -2822,7 +2936,7 @@
             const name = document.getElementById('editFacilityName').value;
             const desc = document.getElementById('editFacilityDesc').value;
             const dbId = document.getElementById('editFacilityDbId').value;
-            const type = document.getElementById('editFacilityType').value || document.getElementById('editFacilityTypeSelect').value;
+            const type = el.dataset.facilityType || 'public/institutional';
             const condition = document.getElementById('editFacilityCondition').value || 'good';
             const remarks = document.getElementById('editFacilityRemarks').value || '';
 
@@ -2844,7 +2958,6 @@
                     'Accept': 'application/json'
                 },
                 body: JSON.stringify({
-                    type,
                     name,
                     description: desc,
                     condition,
@@ -2879,7 +2992,7 @@
             const generatedView = document.getElementById('generated-map-view-' + id);
             const attachedView = document.getElementById('attached-map-view-' + id);
             const generatedActions = document.getElementById('generated-actions-' + id);
-            
+
             if (mode === 'generated') {
                 generatedView.style.display = 'block';
                 attachedView.style.display = 'none';

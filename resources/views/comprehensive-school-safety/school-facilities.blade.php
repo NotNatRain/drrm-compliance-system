@@ -141,9 +141,6 @@
                         <div class="d-flex justify-content-between align-items-start gap-2">
                             <div>
                                 <h6 class="fw-bold mb-1">{{ $facility->name }}</h6>
-                                <div class="small text-muted mb-2">
-                                    Type: {{ $isAssembly ? 'Assembly Area' : ucwords(str_replace(['_', '/'], [' ', ' / '], $facility->type ?? '')) }}
-                                </div>
                                 @if(!empty($facility->description))
                                     <div class="small mb-2">{{ $facility->description }}</div>
                                 @endif
@@ -328,17 +325,6 @@
                     @csrf
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label class="form-label fw-bold">Type *</label>
-                            <select class="form-select" name="type" required>
-                                <option value="">-- Select Type --</option>
-                                <option value="commercial">Commercial</option>
-                                <option value="industrial">Industrial</option>
-                                <option value="residential">Residential</option>
-                                <option value="educational">Educational</option>
-                                <option value="public/institutional">Public/Institutional</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
                             <label class="form-label fw-bold">Name *</label>
                             <input type="text" class="form-control" name="name" required>
                         </div>
@@ -381,16 +367,6 @@
                     @csrf
                     @method('PUT')
                     <div class="modal-body">
-                        <div class="mb-3" id="editTypeGroup">
-                            <label class="form-label fw-bold">Type *</label>
-                            <select class="form-select" name="type" id="editType">
-                                <option value="commercial">Commercial</option>
-                                <option value="industrial">Industrial</option>
-                                <option value="residential">Residential</option>
-                                <option value="educational">Educational</option>
-                                <option value="public/institutional">Public/Institutional</option>
-                            </select>
-                        </div>
                         <div class="mb-3">
                             <label class="form-label fw-bold">Name *</label>
                             <input type="text" class="form-control" name="name" id="editName" required>
@@ -481,14 +457,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             editForm.action = "{{ route('comprehensive-school-safety.school.facilities.update', [$school->id, '__ID__']) }}".replace('__ID__', id);
             document.getElementById('editName').value = this.dataset.name || '';
-            document.getElementById('editType').value = type || 'public/institutional';
             document.getElementById('editDescription').value = this.dataset.description || '';
             document.getElementById('editCondition').value = this.dataset.condition || 'good';
             document.getElementById('editRemarks').value = this.dataset.remarks || '';
 
-            document.getElementById('editTypeGroup').style.display = isAssembly ? 'none' : '';
             document.getElementById('editDescriptionGroup').style.display = isAssembly ? 'none' : '';
-            document.getElementById('editType').disabled = isAssembly;
             document.getElementById('editDescription').disabled = isAssembly;
         });
     });

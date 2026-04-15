@@ -162,8 +162,8 @@
         }
 
         .sidebar .nav {
-            width: 80%;
-            margin: 0 auto;
+            width: 100%;
+            margin: 0;
         }
 
         .sidebar .nav-item {
@@ -176,6 +176,12 @@
             font-size: 1rem;
             font-weight: 600;
             padding: 14px 16px;
+            white-space: nowrap;
+        }
+
+        .sidebar > .p-3 {
+            padding-left: 0.35rem !important;
+            padding-right: 0.35rem !important;
         }
 
         .nav-link:hover, .nav-link.active {
@@ -366,13 +372,13 @@
                             <i class="fas fa-building"></i>
                             <i class="fas fa-bell ms-1" style="font-size: 0.7em;"></i>
                         </span>
-                        <span>Buildings & Alarm System</span>
+                        <span>Buildings & Alarms</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link {{ Route::is('fire-safety.extinguishers') ? 'active' : '' }}" href="{{ route('fire-safety.extinguishers') }}">
                         <span class="nav-icon"><i class="fas fa-fire-extinguisher"></i></span>
-                        <span>Fire Extinguishers & Rooms</span>
+                        <span>Extinguisher & Rooms</span>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -385,7 +391,7 @@
                 <li class="nav-item">
                     <a class="nav-link {{ Route::is('fire-safety.customization') ? 'active' : '' }}" href="{{ route('fire-safety.customization') }}">
                         <span class="nav-icon"><i class="fas fa-cog"></i></span>
-                        <span>{{ auth()->user()->role === 'admin' ? 'Customization' : 'Update School Info' }}</span>
+                        <span>{{ auth()->user()->role === 'admin' ? 'Customization' : 'School Statistics' }}</span>
                     </a>
                 </li>
                 @endif
