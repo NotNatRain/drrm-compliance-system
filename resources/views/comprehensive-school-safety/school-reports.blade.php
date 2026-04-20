@@ -5,6 +5,9 @@
 <style>
     .lively-report-card {
         transition: transform 0.25s ease, box-shadow 0.25s ease;
+        border-radius: 14px;
+        border: 1px solid rgba(92, 64, 51, 0.08);
+        background: linear-gradient(180deg, #fff 0%, #fffdfc 100%);
     }
 
     .lively-report-card .lively-report-icon {
@@ -12,8 +15,8 @@
     }
 
     .lively-report-card:hover {
-        transform: translateY(-10px) scale(1.015);
-        box-shadow: 0 20px 44px rgba(52, 39, 31, 0.2);
+        transform: translateY(-6px) scale(1.01);
+        box-shadow: 0 16px 32px rgba(52, 39, 31, 0.16);
     }
 
     .lively-report-card:hover .lively-report-icon {
@@ -37,7 +40,7 @@
 </div>
 
 <div class="row g-4 mb-4">
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="csss-card p-4 lively-report-card">
             <div class="d-flex justify-content-between align-items-start mb-3">
                 <div>
@@ -52,7 +55,7 @@
         </div>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="csss-card p-4 lively-report-card">
             <div class="d-flex justify-content-between align-items-start mb-3">
                 <div>
@@ -66,7 +69,7 @@
         </div>
     </div>
 
-    <div class="col-md-3">
+    <div class="col-md-4">
         <div class="csss-card p-4 lively-report-card">
             <div class="d-flex justify-content-between align-items-start mb-3">
                 <div>
@@ -77,37 +80,6 @@
                     <i class="fas fa-building text-white" style="font-size: 1.5rem;"></i>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <div class="col-md-3">
-        <div class="csss-card p-4 lively-report-card">
-            <div class="d-flex justify-content-between align-items-start mb-3">
-                <div>
-                    <p class="csss-muted small mb-1">Total Assessments</p>
-                    <h3 class="fw-bold m-0">{{ $reportStats['total_assessments'] }}</h3>
-                </div>
-                <div class="lively-report-icon" style="width: 45px; height: 45px; background: linear-gradient(135deg, #6f42c1 0%, #9b6ad1 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-chart-bar text-white" style="font-size: 1.5rem;"></i>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-3">
-        <div class="csss-card p-4 lively-report-card">
-            <div class="d-flex justify-content-between align-items-start mb-3">
-                <div>
-                    <p class="csss-muted small mb-1">Storage Items</p>
-                    <h3 class="fw-bold m-0">{{ $reportStats['total_storage_items'] ?? 0 }}</h3>
-                </div>
-                <div class="lively-report-icon" style="width: 45px; height: 45px; background: linear-gradient(135deg, #17a2b8 0%, #20c997 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fas fa-boxes-stacked text-white" style="font-size: 1.4rem;"></i>
-                </div>
-            </div>
-            <a href="{{ route('comprehensive-school-safety.school.storage', $school->id) }}" class="btn btn-sm btn-outline-dark">
-                <i class="fas fa-arrow-right me-1"></i> Open Storage
-            </a>
         </div>
     </div>
 </div>

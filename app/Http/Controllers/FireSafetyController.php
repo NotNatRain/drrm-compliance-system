@@ -341,6 +341,43 @@ class FireSafetyController extends Controller
         return $activeSchool ?? $schools->first();
     }
 
+    private function getSchoolSwitcherOptions()
+    {
+        if (auth()->user()->role === 'admin') {
+            return School::query()
+                ->orderBy('school_name')
+                ->get(['id', 'school_name', 'school_id']);
+        }
+
+        $userSchool = School::query()
+            ->where('id', auth()->user()->school_id)
+            ->first(['id', 'school_name', 'school_id']);
+
+        return $userSchool ? collect([$userSchool]) : collect();
+    }
+
+    private function resolveScopedSchool(?School $school = null): ?School
+    {
+        if ($school) {
+            if (auth()->user()->role !== 'admin' && (int) auth()->user()->school_id !== (int) $school->id) {
+                return null;
+            }
+            return $school;
+        }
+
+        if (auth()->user()->role !== 'admin') {
+            return School::find(auth()->user()->school_id);
+        }
+
+        $activeId = session('fire_safety_active_unified_school_id');
+        if ($activeId) {
+            $active = School::find($activeId);
+            if ($active) return $active;
+        }
+
+        return School::orderBy('school_name')->first();
+    }
+
     public function alarmSystems()
     {
         $query = School::with(['alarmSystems.buildings', 'buildings']);
@@ -567,15 +604,18 @@ class FireSafetyController extends Controller
         $alarm->save();
 
         // Pivot: additional covered buildings only (primary is firesafety_alarm_systems.building_id).
-        if ($request->has('covers_multiple') && ! $request->boolean('covers_multiple')) {
+        $coversMultiple = $request->boolean('covers_multiple');
+        $incomingBuildingIds = $request->input('building_ids', $request->input('building_ids[]', []));
+        $incoming = array_values(array_unique(array_filter(array_map('intval', (array) $incomingBuildingIds))));
+
+        // Never store the primary building in the additional-coverage pivot.
+        $primaryId = (int) ($alarm->building_id ?? 0);
+        $incomingAdditional = array_values(array_diff($incoming, [$primaryId]));
+
+        if (! $coversMultiple) {
             $alarm->buildings()->sync([]);
-        } elseif ($request->has('building_ids')) {
-            $incoming = array_filter(array_map('intval', (array) $request->building_ids));
-            $existingPivot = $alarm->buildings()->pluck('firesafety_buildings.id')->all();
-            $primaryId = (int) $alarm->building_id;
-            $existingAdditional = array_values(array_diff(array_map('intval', $existingPivot), [$primaryId]));
-            $mergedAdditional = array_values(array_unique(array_merge($existingAdditional, $incoming)));
-            $alarm->buildings()->sync($mergedAdditional);
+        } else {
+            $alarm->buildings()->sync($incomingAdditional);
         }
 
         $alarm->refresh();
@@ -784,20 +824,31 @@ class FireSafetyController extends Controller
         return response()->json($archives);
     }
 
-    public function extinguishers()
+    public function extinguishers(Request $request, ?School $school = null)
     {
-        $query = School::with([
+        $resolvedSchool = $this->resolveScopedSchool($school);
+        if (!$resolvedSchool) {
+            return redirect()->route('fire-safety.dashboard')->with('error', 'Unauthorized or no school assigned.');
+        }
+
+        if (!$school) {
+            return redirect()->route('fire-safety.schools.extinguishers', ['school' => $resolvedSchool->id] + $request->query());
+        }
+
+        session(['fire_safety_active_unified_school_id' => (int) $resolvedSchool->id]);
+
+        $selectedSchool = School::with([
             'buildings',
             'buildings.actualRooms',
             'buildings.fireExtinguishers.centerRoom',
             'buildings.fireExtinguishers.coveredRooms',
-        ]);
+        ])->find($resolvedSchool->id);
 
-        if (auth()->user()->role !== 'admin') {
-            $query->where('id', auth()->user()->school_id);
+        if (!$selectedSchool) {
+            return redirect()->route('fire-safety.dashboard')->with('error', 'Selected school was not found.');
         }
 
-        $schools = $query->get();
+        $schools = collect([$selectedSchool]);
 
         // Pre-load recent updates for each school to avoid "Loading..." state on page load
         foreach ($schools as $school) {
@@ -830,6 +881,8 @@ class FireSafetyController extends Controller
             'activeSchool' => $activeSchool,
             'calculatedPriorities' => $calculatedPriorities,
             'roomTypes' => $roomTypes,
+            'schoolNavOptions' => $this->getSchoolSwitcherOptions(),
+            'schoolSwitchUrlPattern' => '/fire-safety/schools/__SCHOOL_ID__/extinguishers',
         ]);
     }
 
@@ -2370,32 +2423,43 @@ public function storeRoom(Request $request)
         return response()->json($updates);
     }
 
-    public function buildings(Request $request)
+    public function buildings(Request $request, ?School $school = null)
     {
-        $query = School::with([
+        if (auth()->user()->role === 'viewer' && !isset(auth()->user()->school_id)) {
+            return redirect()->route('fire-safety.dashboard')->with('error', 'No school assigned.');
+        }
+
+        if (!$school && $request->filled('school_id')) {
+            $requestedSchool = School::find((int) $request->input('school_id'));
+            if ($requestedSchool) {
+                return redirect()->route('fire-safety.schools.buildings', ['school' => $requestedSchool->id] + $request->query());
+            }
+        }
+
+        $resolvedSchool = $this->resolveScopedSchool($school);
+        if (!$resolvedSchool) {
+            return redirect()->route('fire-safety.dashboard')->with('error', 'Unauthorized or no school assigned.');
+        }
+
+        if (!$school) {
+            return redirect()->route('fire-safety.schools.buildings', ['school' => $resolvedSchool->id] + $request->query());
+        }
+
+        session(['fire_safety_active_unified_school_id' => (int) $resolvedSchool->id]);
+
+        $selectedSchool = School::with([
             'fireSafetyBuildings.actualRooms',
             'fireSafetyBuildings.fireExtinguishers.coveredRooms',
             'fireSafetyBuildings.alarmSystems',
-            'fireSafetyBuildings.alarmSystemsMany', // Fixed: Preload covering alarms
+            'fireSafetyBuildings.alarmSystemsMany',
             'fireSafetyBuildings.evacuationPlan'
-        ]);
+        ])->find($resolvedSchool->id);
 
-        if (auth()->user()->role !== 'admin') {
-            if (auth()->user()->role === 'viewer' && !isset(auth()->user()->school_id)) {
-                return redirect()->route('fire-safety.dashboard')->with('error', 'No school assigned.');
-            }
-            $query->where('id', auth()->user()->school_id);
-        } elseif ($request->filled('school_id')) {
-            $requestedSchool = School::find((int) $request->input('school_id'));
-            if ($requestedSchool) {
-                session(['fire_safety_active_unified_school_id' => (int) $requestedSchool->id]);
-            }
+        if (!$selectedSchool) {
+            return redirect()->route('fire-safety.dashboard')->with('error', 'Selected school was not found.');
         }
 
-        $schools = $query->get();
-        if ($schools->isEmpty() && auth()->user()->role !== 'admin') {
-            return redirect()->route('fire-safety.dashboard')->with('error', 'Unauthorized or no school assigned.');
-        }
+        $schools = collect([$selectedSchool]);
 
         $activeSchool = $this->getActiveSchool($schools);
         $buildingTypes = SystemConfiguration::where('config_type', 'building_type')->where('is_active', true)->orderBy('sort_order')->get()->unique('name');
@@ -2415,7 +2479,9 @@ public function storeRoom(Request $request)
             'alarmTypes' => $alarmTypes,
             'alarmStatusesByType' => $alarmStatusesByType,
             'safetyFeatures' => $safetyFeatures,
-            'isViewer' => auth()->user()->role === 'viewer'
+            'isViewer' => auth()->user()->role === 'viewer',
+            'schoolNavOptions' => $this->getSchoolSwitcherOptions(),
+            'schoolSwitchUrlPattern' => '/fire-safety/schools/__SCHOOL_ID__/buildings',
         ]);
     }
 
@@ -2699,6 +2765,24 @@ public function storeRoom(Request $request)
 
             if ($request->filled('rooms') && (int)$request->rooms > $building->rooms) {
                 $building->rooms = (int)$request->rooms;
+            }
+
+            // Allow reducing room capacity even without explicit room-id removals,
+            // as long as encoded/active room records do not exceed the requested capacity.
+            if ($request->filled('rooms') && (int)$request->rooms < $building->rooms) {
+                $targetRooms = (int) $request->rooms;
+                $activeRoomsCount = FireSafetyRoom::where('building_id', $id)->count();
+
+                if ($targetRooms < $activeRoomsCount) {
+                    DB::rollBack();
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Cannot reduce total rooms to {$targetRooms}. {$activeRoomsCount} room(s) are currently encoded. Remove specific rooms first or set a higher room count."
+                    ], 422);
+                }
+
+                $building->rooms = $targetRooms;
+                $cascadingMessages[] = "Room capacity updated to {$targetRooms}.";
             }
 
             // Prepare fill data except for specific handling fields
@@ -3264,9 +3348,20 @@ public function storeRoom(Request $request)
         }
     }
 
-    public function evacuationPlans()
+    public function evacuationPlans(Request $request, ?School $school = null)
     {
-        $query = School::with([
+        $resolvedSchool = $this->resolveScopedSchool($school);
+        if (!$resolvedSchool) {
+            return redirect()->route('fire-safety.dashboard')->with('error', 'Unauthorized or no school assigned.');
+        }
+
+        if (!$school) {
+            return redirect()->route('fire-safety.schools.evacuation-plans', ['school' => $resolvedSchool->id] + $request->query());
+        }
+
+        session(['fire_safety_active_unified_school_id' => (int) $resolvedSchool->id]);
+
+        $selectedSchool = School::with([
             'buildings' => function($query) {
                 $query->with([
                     'evacuationPlan',
@@ -3281,16 +3376,21 @@ public function storeRoom(Request $request)
             },
             'buildings.evacuationPlan',
             'schoolEvacuationPlan'
-        ]);
+        ])->find($resolvedSchool->id);
 
-        if (auth()->user()->role !== 'admin') {
-            $query->where('id', auth()->user()->school_id);
+        if (!$selectedSchool) {
+            return redirect()->route('fire-safety.dashboard')->with('error', 'Selected school was not found.');
         }
 
-        $schools = $query->get();
+        $schools = collect([$selectedSchool]);
         $activeSchool = $this->getActiveSchool($schools);
 
-        return view('fire-safety.evacuation-plans', compact('schools', 'activeSchool'));
+        return view('fire-safety.evacuation-plans', [
+            'schools' => $schools,
+            'activeSchool' => $activeSchool,
+            'schoolNavOptions' => $this->getSchoolSwitcherOptions(),
+            'schoolSwitchUrlPattern' => '/fire-safety/schools/__SCHOOL_ID__/evacuation-plans',
+        ]);
     }
     public function storeEvacuationPlan(Request $request)
     {

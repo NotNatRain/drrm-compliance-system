@@ -57,6 +57,12 @@
                     <h5 class="fw-bold mb-1">Risk Register</h5>
                     <p class="csss-muted small mb-0">One card per building with core safety indicators.</p>
                 </div>
+                <div class="text-end">
+                    <div class="small text-muted fw-bold">Engineer Last Inspection Date</div>
+                    <div class="badge bg-light text-dark border px-3 py-2">
+                        {{ $school->engineer_last_inspection_date ? \Carbon\Carbon::parse($school->engineer_last_inspection_date)->format('M d, Y') : 'N/A' }}
+                    </div>
+                </div>
             </div>
 
             <div class="row g-3">
@@ -168,13 +174,25 @@
             <h5 class="fw-bold mb-1">Action Tracker</h5>
             <p class="csss-muted small mb-0">This section displays the full evacuation plan pulled from Fire Safety.</p>
         </div>
-        <span class="badge bg-danger">Evacuation plan</span>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-danger">Evacuation plan</span>
+            @if(!$fireSafetyPlan && auth()->user()->role !== 'viewer')
+                <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#createSchoolEvacPlanModal">
+                    <i class="fas fa-plus me-1"></i> Create School Plan
+                </button>
+            @endif
+        </div>
     </div>
 
     @if(!$fireSafetyPlan)
         <div class="text-center py-4 border rounded-3 bg-light">
             <i class="fas fa-route text-muted" style="font-size: 2rem;"></i>
             <p class="csss-muted mt-3 mb-0">No building evacuation plan linked.</p>
+            @if(auth()->user()->role !== 'viewer')
+                <button type="button" class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#createSchoolEvacPlanModal">
+                    <i class="fas fa-plus me-1"></i> Create Evacuation Plan (Entire School)
+                </button>
+            @endif
         </div>
     @else
         <div class="row g-3">
@@ -314,6 +332,76 @@
 </div>
 
 @if(auth()->user()->role !== 'viewer')
+    <div class="modal fade" id="createSchoolEvacPlanModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-plus me-2"></i> Create Evacuation Plan (Entire School)
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="createSchoolEvacPlanForm">
+                    @csrf
+                    <div class="modal-body">
+                        <input type="hidden" name="unified_school_id" value="{{ $school->id }}">
+                        <input type="hidden" name="plan_type" value="school">
+                        <input type="hidden" name="status" value="active">
+
+                        <h6 class="fw-bold text-primary mb-3">School-Wide Evacuation Plan Details</h6>
+                        <hr>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Plan Name *</label>
+                                <input type="text" class="form-control" name="plan_no" placeholder="e.g., EP-SCHOOL" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Number of Assembly Areas *</label>
+                                <input type="number" class="form-control" name="areas" min="1" value="1" required>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Primary Assembly Area *</label>
+                                <input type="text" class="form-control" name="primary_assembly_area" placeholder="e.g., Main Quadrangle" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Secondary Assembly Area</label>
+                                <input type="text" class="form-control" name="secondary_assembly_area" placeholder="e.g., Back Gate Area">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label fw-bold">Assembly Area Capacity</label>
+                                <input type="number" class="form-control" name="assembly_capacity" placeholder="Total person capacity">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Special Instructions</label>
+                                <textarea class="form-control" name="special_instructions" rows="3" placeholder="Any specific protocols..."></textarea>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-bold">Emergency Contacts</label>
+                                <textarea class="form-control" name="emergency_contacts" rows="3" placeholder="Names and numbers..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i> Save Plan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <div class="modal fade" id="addFacilityModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content border-0 shadow">
@@ -448,6 +536,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     const editModal = document.getElementById('editFacilityModal');
     const editForm = document.getElementById('editFacilityForm');
+    const createPlanForm = document.getElementById('createSchoolEvacPlanForm');
 
     document.querySelectorAll('.facility-card').forEach((card) => {
         card.addEventListener('click', function () {
@@ -465,6 +554,55 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('editDescription').disabled = isAssembly;
         });
     });
+
+    if (createPlanForm) {
+        createPlanForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            const submitButton = createPlanForm.querySelector('button[type="submit"]');
+            const originalHtml = submitButton ? submitButton.innerHTML : '';
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+            }
+
+            try {
+                const response = await fetch("{{ route('fire-safety.evacuation-plan.store') }}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        'Accept': 'application/json',
+                    },
+                    body: new FormData(createPlanForm),
+                });
+
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Failed to create evacuation plan.');
+                }
+
+                if (typeof Swal !== 'undefined') {
+                    await Swal.fire('Success', data.message || 'Evacuation plan created successfully.', 'success');
+                }
+
+                const modalEl = document.getElementById('createSchoolEvacPlanModal');
+                const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                if (modalInstance) modalInstance.hide();
+                window.location.reload();
+            } catch (error) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire('Error', error.message || 'Unable to create evacuation plan.', 'error');
+                } else {
+                    alert(error.message || 'Unable to create evacuation plan.');
+                }
+            } finally {
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalHtml;
+                }
+            }
+        });
+    }
 });
 </script>
 @endif

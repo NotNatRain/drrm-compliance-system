@@ -1684,6 +1684,7 @@ class ComprehensiveSchoolSafetyController extends Controller
         $validated = $request->validate([
             'item_name' => ['required', 'string', 'max:255'],
             'item_type' => ['nullable', 'string', 'max:255'],
+            'source_from' => ['nullable', 'string', 'max:255'],
             'is_available' => ['nullable', 'boolean'],
             'is_functional' => ['nullable', 'boolean'],
             'remarks' => ['nullable', 'string'],
@@ -1693,6 +1694,7 @@ class ComprehensiveSchoolSafetyController extends Controller
             'school_id' => $school->id,
             'item_name' => $validated['item_name'],
             'item_type' => $validated['item_type'] ?? null,
+            'source_from' => $validated['source_from'] ?? null,
             'is_available' => (bool) ($request->boolean('is_available')),
             'is_functional' => (bool) ($request->boolean('is_functional')),
             'remarks' => $validated['remarks'] ?? null,
@@ -1700,7 +1702,7 @@ class ComprehensiveSchoolSafetyController extends Controller
 
         ActivityLog::log('comprehensive_school_safety', 'Added storage item: ' . $item->item_name, [
             'school_id' => $school->id,
-            'notes' => 'Type: ' . ($item->item_type ?? 'N/A') . ', Available: ' . ($item->is_available ? 'Yes' : 'No') . ', Functional: ' . ($item->is_functional ? 'Yes' : 'No'),
+            'notes' => 'Type: ' . ($item->item_type ?? 'N/A') . ', From: ' . ($item->source_from ?? 'N/A') . ', Available: ' . ($item->is_available ? 'Yes' : 'No') . ', Functional: ' . ($item->is_functional ? 'Yes' : 'No'),
         ]);
 
         return redirect()
@@ -1718,6 +1720,7 @@ class ComprehensiveSchoolSafetyController extends Controller
         $validated = $request->validate([
             'item_name' => ['required', 'string', 'max:255'],
             'item_type' => ['nullable', 'string', 'max:255'],
+            'source_from' => ['nullable', 'string', 'max:255'],
             'is_available' => ['nullable', 'boolean'],
             'is_functional' => ['nullable', 'boolean'],
             'remarks' => ['nullable', 'string'],
@@ -1726,6 +1729,7 @@ class ComprehensiveSchoolSafetyController extends Controller
         $item->update([
             'item_name' => $validated['item_name'],
             'item_type' => $validated['item_type'] ?? null,
+            'source_from' => $validated['source_from'] ?? null,
             'is_available' => (bool) $request->boolean('is_available'),
             'is_functional' => (bool) $request->boolean('is_functional'),
             'remarks' => $validated['remarks'] ?? null,
@@ -1733,7 +1737,7 @@ class ComprehensiveSchoolSafetyController extends Controller
 
         ActivityLog::log('comprehensive_school_safety', 'Updated storage item: ' . $item->item_name, [
             'school_id' => $school->id,
-            'notes' => 'Type: ' . ($item->item_type ?? 'N/A') . ', Available: ' . ($item->is_available ? 'Yes' : 'No') . ', Functional: ' . ($item->is_functional ? 'Yes' : 'No'),
+            'notes' => 'Type: ' . ($item->item_type ?? 'N/A') . ', From: ' . ($item->source_from ?? 'N/A') . ', Available: ' . ($item->is_available ? 'Yes' : 'No') . ', Functional: ' . ($item->is_functional ? 'Yes' : 'No'),
         ]);
 
         return redirect()

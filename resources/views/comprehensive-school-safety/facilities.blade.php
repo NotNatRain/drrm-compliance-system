@@ -48,15 +48,7 @@
                 <input type="text" name="name" placeholder="e.g., Room 101, Main Gate Pathway" class="w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500 transition-all" required>
             </div>
 
-            <div>
-                <label class="block text-sm font-medium text-slate-700 mb-1">Type</label>
-                <select name="type" class="w-full rounded-lg border-slate-200 focus:border-blue-500 focus:ring-blue-500 transition-all" required>
-                    <option value="room">Classroom / Room</option>
-                    <option value="door">Door / Exit</option>
-                    <option value="pathway">Pathway / Corridor</option>
-                    <option value="other">Other Infrastructure</option>
-                </select>
-            </div>
+            <input type="hidden" name="type" value="public/institutional">
 
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-1">Condition</label>
@@ -123,11 +115,7 @@
         <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-all group">
             <div class="flex justify-between items-start mb-4">
                 <div class="p-3 bg-blue-50 text-blue-600 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                    @if($facility->type == 'room') <i data-lucide="box" class="w-6 h-6"></i>
-                    @elseif($facility->type == 'door') <i data-lucide="door-open" class="w-6 h-6"></i>
-                    @elseif($facility->type == 'pathway') <i data-lucide="footprints" class="w-6 h-6"></i>
-                    @else <i data-lucide="building" class="w-6 h-6"></i>
-                    @endif
+                    <i data-lucide="building" class="w-6 h-6"></i>
                 </div>
                 <span class="px-2 py-1 text-xs font-bold uppercase rounded bg-slate-100 text-slate-500">{{ $facility->condition }}</span>
             </div>

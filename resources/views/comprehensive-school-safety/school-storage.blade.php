@@ -2,17 +2,118 @@
 @section('activeMenu', 'storage')
 @section('headerLabel', $school->name ?? 'Storage')
 
+@push('styles')
+<style>
+    .btn-print-storage {
+        background: #A8191F;
+        color: #fff;
+        border: none;
+    }
+
+    .storage-print-layout {
+        display: none;
+    }
+
+    .storage-print-layout .header-container {
+        position: relative;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .storage-print-layout .info-grid {
+        border: 1px solid #000;
+        padding: 10px;
+        margin-bottom: 14px;
+        font-size: 12px;
+    }
+
+    .storage-print-layout .info-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
+    }
+
+    .storage-print-layout table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .storage-print-layout th,
+    .storage-print-layout td {
+        border: 1px solid #000;
+        padding: 8px;
+        text-align: left;
+        font-size: 11px;
+    }
+
+    .storage-print-layout th {
+        background: #f2f2f2;
+        text-transform: uppercase;
+        font-size: 10px;
+    }
+
+    @media print {
+        @page {
+            size: portrait;
+            margin: 0;
+        }
+
+        body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            margin: 0;
+            padding: 0;
+            background: #fff;
+        }
+
+        .csss-sidebar,
+        .csss-topbar,
+        .csss-content > * {
+            display: none !important;
+        }
+
+        .csss-main,
+        .csss-content {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #fff !important;
+        }
+
+        .csss-content .storage-print-layout {
+            display: block !important;
+            margin: 1cm;
+        }
+
+        .storage-print-layout thead {
+            display: table-header-group;
+        }
+
+        .storage-print-layout tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h2 class="csss-section-title mb-1">Storage Inventory</h2>
         <p class="csss-muted mb-0">List items, equipment, tools, and other resources for this school.</p>
     </div>
-    @if(auth()->user()->role !== 'viewer')
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStorageItemModal">
-            <i class="fas fa-plus-circle me-1"></i> Add Item
+    <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-print-storage" onclick="window.print()">
+            <i class="fas fa-print me-1"></i> Print Report
         </button>
-    @endif
+        @if(auth()->user()->role !== 'viewer')
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStorageItemModal">
+                <i class="fas fa-plus-circle me-1"></i> Add Item
+            </button>
+        @endif
+    </div>
 </div>
 
 @if(session('success'))
@@ -34,13 +135,14 @@
         <table class="table align-middle">
             <thead class="table-light">
                 <tr>
-                    <th style="width: 22%;">Item / Equipment / Tool</th>
-                    <th style="width: 18%;">Type</th>
+                    <th style="width: 20%;">Item / Equipment / Tool</th>
+                    <th style="width: 15%;">Type</th>
+                    <th style="width: 16%;">From</th>
                     <th style="width: 10%;" class="text-center">Available</th>
                     <th style="width: 10%;" class="text-center">Functional</th>
                     <th>Remarks</th>
                     @if(auth()->user()->role !== 'viewer')
-                        <th style="width: 18%;" class="text-end">Actions</th>
+                        <th style="width: 14%;" class="text-end">Actions</th>
                     @endif
                 </tr>
             </thead>
@@ -55,6 +157,9 @@
                             </td>
                             <td>
                                 <input type="text" class="form-control form-control-sm" name="item_type" value="{{ $item->item_type }}" placeholder="e.g. Item, Equipment, Tool" {{ auth()->user()->role === 'viewer' ? 'readonly' : '' }}>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-control-sm" name="source_from" value="{{ $item->source_from }}" placeholder="e.g. LGU / Donation / School MOOE" {{ auth()->user()->role === 'viewer' ? 'readonly' : '' }}>
                             </td>
                             <td class="text-center">
                                 <input type="hidden" name="is_available" value="0">
@@ -85,7 +190,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="{{ auth()->user()->role !== 'viewer' ? '6' : '5' }}" class="text-center py-5 text-muted">
+                        <td colspan="{{ auth()->user()->role !== 'viewer' ? '7' : '6' }}" class="text-center py-5 text-muted">
                             <i class="fas fa-box-open" style="font-size: 2rem;"></i>
                             <div class="mt-2">No storage items listed yet.</div>
                         </td>
@@ -95,6 +200,63 @@
         </table>
     </div>
 
+</div>
+
+<div class="storage-print-layout">
+    <div class="header-container">
+        <div style="position: absolute; left: 0; top: 0; display: flex; align-items: center;">
+            <img src="{{ asset('images/Layer-0-1.png') }}" alt="Logo 1" style="height: 60px; margin-right: 10px;">
+            <img src="{{ asset('images/What-Is-the-Difference-Between-DepEd-Seal-and-DepEd-Logo.png') }}" alt="Logo 2" style="height: 60px; margin-right: 10px;">
+            <img src="{{ asset('images/drrmis-logo-2.png') }}" alt="Logo 3" style="height: 60px; margin-right: 15px;">
+            <div style="text-align: left;">
+                <h2 style="margin: 0; font-size: 16px; font-weight: bold; text-transform: uppercase;">DepEd DRRM</h2>
+            </div>
+        </div>
+
+        <div style="width: 100%; text-align: center; padding-left: 430px; padding-right: 30px; box-sizing: border-box;">
+            <h1 style="margin: 0; font-size: 14px; font-weight: normal; text-transform: uppercase;">Storage Inventory Report</h1>
+        </div>
+    </div>
+
+    <div class="info-grid">
+        <div class="info-row">
+            <div><strong>Name of School:</strong> {{ $school->name }}</div>
+            <div><strong>Name of School Head:</strong> {{ $school->school_head ?: 'N/A' }}</div>
+        </div>
+        <div class="info-row">
+            <div><strong>School ID:</strong> {{ $school->school_id ?: ($school->school_id_number ?: 'N/A') }}</div>
+            <div><strong>DRRM Coordinator:</strong> {{ $school->school_drrm_coordinator ?: 'N/A' }}</div>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 20%;">Item / Equipment / Tool</th>
+                <th style="width: 16%;">Type</th>
+                <th style="width: 18%;">From</th>
+                <th style="width: 10%; text-align: center;">Available</th>
+                <th style="width: 10%; text-align: center;">Functional</th>
+                <th>Remarks</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($storageItems as $item)
+                <tr>
+                    <td>{{ $item->item_name }}</td>
+                    <td>{{ $item->item_type ?: 'N/A' }}</td>
+                    <td>{{ $item->source_from ?: 'N/A' }}</td>
+                    <td style="text-align: center;">{{ $item->is_available ? 'Yes' : 'No' }}</td>
+                    <td style="text-align: center;">{{ $item->is_functional ? 'Yes' : 'No' }}</td>
+                    <td>{{ $item->remarks ?: '—' }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 20px;">No storage items listed yet.</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
 </div>
 
 @if(auth()->user()->role !== 'viewer')
@@ -115,6 +277,10 @@
                     <div class="mb-3">
                         <label class="form-label fw-bold">Type</label>
                         <input type="text" class="form-control" name="item_type" placeholder="Item, Equipment, Tool, etc.">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">From</label>
+                        <input type="text" class="form-control" name="source_from" placeholder="e.g. LGU, Donation, School MOOE">
                     </div>
                     <div class="row g-2 mb-3">
                         <div class="col-6">

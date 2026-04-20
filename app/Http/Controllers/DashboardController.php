@@ -81,17 +81,17 @@ class DashboardController extends Controller
                 ->orderBy('name')
                 ->get(['id', 'name', 'email', 'role', 'position']);
         }
-        
+
         $schools = School::orderBy('school_name')->get();
         if ($user->role === 'contributor' && $user->school_id) {
             $schools = School::where('id', $user->school_id)->get();
         }
-        
+
         $allSchools = [];
         if ($isAdmin) {
             $allSchools = School::orderBy('school_name')->get();
         }
-        
+
         $announcements = Announcement::where('is_active', true)->latest()->get();
         return view('dashboard', compact('schools', 'announcements', 'allSchools', 'isAdmin', 'contributorAssignedSchool', 'contributorSchoolAccountUsers', 'schoolUserCandidates', 'unassignedSchoolUserCandidates'));
     }
@@ -155,6 +155,13 @@ class DashboardController extends Controller
             'engineer_last_inspection_date',
             'emergency_resources',
         ]);
+
+        if (array_key_exists('school_head', $payload) && trim((string) $payload['school_head']) === '') {
+            unset($payload['school_head']);
+        }
+        if (array_key_exists('drrm_coordinator', $payload) && trim((string) $payload['drrm_coordinator']) === '') {
+            unset($payload['drrm_coordinator']);
+        }
         unset($payload['school_head_user_id'], $payload['drrm_coordinator_user_id']);
 
         if (!Schema::hasColumn('schools', 'number_gates')) {
@@ -217,7 +224,7 @@ class DashboardController extends Controller
         }
 
         $school = School::with('specifics')->findOrFail($id);
-        
+
         // Modules registration status mapping
         $modulesSatus = [
             'fire_safety' => $school->specifics->where('module', 'fire_safety')->where('key', 'original_fire_safety_id')->isNotEmpty(),
@@ -362,6 +369,13 @@ class DashboardController extends Controller
             'engineer_last_inspection_date',
             'emergency_resources',
         ]);
+
+        if (array_key_exists('school_head', $payload) && trim((string) $payload['school_head']) === '') {
+            unset($payload['school_head']);
+        }
+        if (array_key_exists('drrm_coordinator', $payload) && trim((string) $payload['drrm_coordinator']) === '') {
+            unset($payload['drrm_coordinator']);
+        }
         unset($payload['school_head_user_id'], $payload['drrm_coordinator_user_id']);
 
         if (!Schema::hasColumn('schools', 'number_gates')) {
@@ -385,15 +399,18 @@ class DashboardController extends Controller
                 'School DRRM'
             );
 
+            $manualSchoolHead = trim((string) $request->input('school_head', ''));
+            $manualDrrmCoordinator = trim((string) $request->input('drrm_coordinator', ''));
+
             $school->update([
-                'school_head' => $schoolHeadUser?->name,
-                'drrm_coordinator' => $drrmUser?->name,
+                'school_head' => $manualSchoolHead !== '' ? $manualSchoolHead : ($schoolHeadUser?->name),
+                'drrm_coordinator' => $manualDrrmCoordinator !== '' ? $manualDrrmCoordinator : ($drrmUser?->name),
             ]);
         } catch (\RuntimeException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
 
-        return response()->json(['success' => true, 'message' => 'School added successfully!', 'school' => $school]);
+        return response()->json(['success' => true, 'message' => 'School added successfully!', 'school' => $school->fresh()]);
     }
 
     /**
@@ -458,6 +475,13 @@ class DashboardController extends Controller
             'emergency_resources',
         ]);
 
+        if (array_key_exists('school_head', $payload) && trim((string) $payload['school_head']) === '') {
+            unset($payload['school_head']);
+        }
+        if (array_key_exists('drrm_coordinator', $payload) && trim((string) $payload['drrm_coordinator']) === '') {
+            unset($payload['drrm_coordinator']);
+        }
+
         if (!Schema::hasColumn('schools', 'number_gates')) {
             unset($payload['number_gates']);
         }
@@ -479,15 +503,24 @@ class DashboardController extends Controller
                 'School DRRM'
             );
 
+            $manualSchoolHead = trim((string) $request->input('school_head', ''));
+            $manualDrrmCoordinator = trim((string) $request->input('drrm_coordinator', ''));
+            $currentSchoolHead = trim((string) ($school->school_head ?? ''));
+            $currentDrrmCoordinator = trim((string) ($school->drrm_coordinator ?? ''));
+
             $school->update([
-                'school_head' => $schoolHeadUser?->name,
-                'drrm_coordinator' => $drrmUser?->name,
+                'school_head' => $manualSchoolHead !== ''
+                    ? $manualSchoolHead
+                    : ($currentSchoolHead !== '' ? $currentSchoolHead : ($schoolHeadUser?->name)),
+                'drrm_coordinator' => $manualDrrmCoordinator !== ''
+                    ? $manualDrrmCoordinator
+                    : ($currentDrrmCoordinator !== '' ? $currentDrrmCoordinator : ($drrmUser?->name)),
             ]);
         } catch (\RuntimeException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
 
-        return response()->json(['success' => true, 'message' => 'School updated successfully!']);
+        return response()->json(['success' => true, 'message' => 'School updated successfully!', 'school' => $school->fresh()]);
     }
 
     public function destroyUnifiedSchool(Request $request, $id)
@@ -781,13 +814,17 @@ class DashboardController extends Controller
         $user->needs_fs_registration = false;
         $user->save();
 
-        if ($position === 'School Head') {
+        if ($position === 'School Head' && blank($school->school_head)) {
             $school->update(['school_head' => $user->name]);
-        } elseif ($position === 'School DRRM') {
+        } elseif ($position === 'School DRRM' && blank($school->drrm_coordinator)) {
             $school->update(['drrm_coordinator' => $user->name]);
         }
 
-        return response()->json(['success' => true, 'message' => 'User assigned successfully.']);
+        return response()->json([
+            'success' => true,
+            'message' => 'User assigned successfully.',
+            'school' => $school->fresh(),
+        ]);
     }
 
     public function removeUserSchoolAssignment(Request $request, $schoolId, $userId)
@@ -809,14 +846,11 @@ class DashboardController extends Controller
         $user->needs_fs_registration = true;
         $user->save();
 
-        if ($removedPosition === 'School Head' || $removedPosition === 'School DRRM') {
-            $school->update([
-                'school_head' => User::query()->where('school_id', $schoolId)->where('position', 'School Head')->value('name'),
-                'drrm_coordinator' => User::query()->where('school_id', $schoolId)->where('position', 'School DRRM')->value('name'),
-            ]);
-        }
-
-        return response()->json(['success' => true, 'message' => 'Assignment removed successfully.']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Assignment removed successfully.',
+            'school' => $school->fresh(),
+        ]);
     }
 
     public function registerMySchool(Request $request)

@@ -1281,6 +1281,16 @@
 
         const availableUsers = Array.isArray(data.available_users) ? data.available_users : [];
         const schoolAccountUsers = Array.isArray(data.school_account_users) ? data.school_account_users : [];
+        const fallbackHeadName = data.school_head_user?.name
+            || data.school?.school_head
+            || currentSchoolDetail?.school_head
+            || '-';
+        const fallbackDrrmName = data.school_drrm_user?.name
+            || data.school?.drrm_coordinator
+            || data.school?.school_drrm_coordinator
+            || currentSchoolDetail?.drrm_coordinator
+            || currentSchoolDetail?.school_drrm_coordinator
+            || '-';
 
         headEmail.textContent = data.school_head_user?.email || 'No assigned school head account';
         drrmEmail.textContent = data.school_drrm_user?.email || 'No assigned DRRM account';
@@ -1293,7 +1303,7 @@
                 await removeSchoolAssignment(currentSchoolDetail.id, data.school_head_user.id);
             };
         } else {
-            headUser.textContent = '-';
+            headUser.textContent = fallbackHeadName;
             removeHeadBtn.classList.add('d-none');
             removeHeadBtn.onclick = null;
         }
@@ -1306,7 +1316,7 @@
                 await removeSchoolAssignment(currentSchoolDetail.id, data.school_drrm_user.id);
             };
         } else {
-            drrmUser.textContent = '-';
+            drrmUser.textContent = fallbackDrrmName;
             removeCoordinatorBtn.classList.add('d-none');
             removeCoordinatorBtn.onclick = null;
         }
@@ -1793,8 +1803,8 @@
             document.getElementById('detail_id').innerText = s.school_id || s.school_id_number || 'N/A';
             document.getElementById('detail_name').innerText = s.school_name;
             document.getElementById('detail_address').innerText = s.address;
-            document.getElementById('detail_head').innerText = data.school_head_user?.name || s.school_head || 'Not set';
-            document.getElementById('detail_coordinator').innerText = data.school_drrm_user?.name || s.drrm_coordinator || 'Not set';
+            document.getElementById('detail_head').innerText = data.school_head_user?.name || s.school_head || '-';
+            document.getElementById('detail_coordinator').innerText = data.school_drrm_user?.name || s.drrm_coordinator || s.school_drrm_coordinator || '-';
 
             // Additional Info
             document.getElementById('detail_head_contact').innerText = s.contact_number || 'N/A';
