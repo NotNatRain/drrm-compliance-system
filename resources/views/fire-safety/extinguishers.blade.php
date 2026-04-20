@@ -1070,7 +1070,7 @@
                         <div id="roomExtraEntriesContainer" class="mt-4"></div>
                     </form>
                 </div>
-                <div class="modal-footer d-flex justify-content-center gap-2">
+                <div class="modal-footer d-flex justify-content-end gap-2">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     @if(auth()->user()->role !== 'viewer')
                     <button type="button" class="btn btn-outline-primary" id="addMoreRoomBtn" onclick="saveRoomAndAddMore()">
@@ -1110,6 +1110,7 @@
                                 <select class="form-control" name="type" id="ext_type_select" required onchange="handleExtTypeChange()">
                                     <option value="ABC">ABC (Dry Chemical)</option>
                                     <option value="CO2">CO2</option>
+                                    <option value="HCFC">HCFC</option>
                                     <option value="Water">Water</option>
                                     <option value="Foam">Foam</option>
                                     <option value="Other">Other, Please Specify...</option>
@@ -1196,7 +1197,7 @@
                         <div id="extExtraEntriesContainer" class="mt-4"></div>
                     </form>
                 </div>
-                <div class="modal-footer d-flex justify-content-center gap-2">
+                <div class="modal-footer d-flex justify-content-end gap-2">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     @if(auth()->user()->role !== 'viewer')
                     <button type="button" class="btn btn-outline-primary" id="addMoreExtBtn" onclick="addMoreExtinguisherEntry()">
@@ -1358,7 +1359,7 @@
                     if (pressureInput.value < 70) pressureInput.value = 70;
                     if (pressureInput.value > 100) pressureInput.value = 100;
                     break;
-                case 'for preventive maintenance': // For Preventive Maintenance
+                case 'maintenance': // For Preventive Maintenance
                     pressureInput.min = 20;
                     pressureInput.max = 69;
                     if (pressureInput.value < 20) pressureInput.value = 20;
@@ -1376,6 +1377,27 @@
                     pressureInput.max = 100;
                     break;
             }
+        }
+
+        function validatePressureByStatus(status, pressureLevel) {
+            const pressure = Number(pressureLevel);
+            if (!Number.isFinite(pressure)) {
+                return 'Pressure must be a valid number.';
+            }
+
+            if (status === 'active' && (pressure < 70 || pressure > 100)) {
+                return 'OK (Active) pressure must be between 70 and 100.';
+            }
+
+            if (status === 'maintenance' && (pressure < 20 || pressure > 69)) {
+                return 'For Preventive Maintenance pressure must be between 20 and 69.';
+            }
+
+            if (status === 'expired' && (pressure < 0 || pressure > 19)) {
+                return 'Used pressure must be between 0 and 19.';
+            }
+
+            return null;
         }
 
         function setTodayIfEmpty(dateInput) {
@@ -1468,9 +1490,12 @@
             }
 
             try {
-                // Fetch current rooms to calculate distribution
-                const resp = await fetch(`/fire-safety/rooms/${buildingId}`);
-                const existingRooms = await resp.json();
+                // Fetch current building rooms from the actual coverage endpoint
+                const resp = await fetch(`/fire-safety/building/${buildingId}/rooms-with-coverage`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                const data = await resp.json();
+                const existingRooms = Array.isArray(data.rooms) ? data.rooms : [];
 
                 const currentTotalCount = existingRooms.length;
                 const roomsByFloor = {};
@@ -1536,6 +1561,22 @@
 
         function getSelectedRoomBuildingId() {
             return document.getElementById('roomBuildingSelect')?.value || '';
+        }
+
+        function isRoomBuildingLocked() {
+            const select = document.getElementById('roomBuildingSelect');
+            return !!(select && select.disabled && select.value);
+        }
+
+        function getLockedRoomBuildingOption() {
+            const select = document.getElementById('roomBuildingSelect');
+            if (!select || !select.value) return null;
+            const selectedOption = select.options[select.selectedIndex];
+            return {
+                value: String(select.value),
+                text: selectedOption ? selectedOption.textContent : `Building ${select.value}`,
+                floors: selectedOption?.dataset?.floors || '0'
+            };
         }
 
         let roomExtraEntryCounter = 0;
@@ -1616,13 +1657,17 @@
                         </div>
                     </div>
                     <div class="row g-3 mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label class="form-label fw-bold small text-muted text-uppercase">Room Type *</label>
                             <select class="form-select room-extra-type" required>
                                 ${getRoomTypeOptionsHtml()}
                             </select>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-muted text-uppercase">Calculated Priority</label>
+                            <input type="text" class="form-control room-extra-priority" readonly>
+                        </div>
+                        <div class="col-md-4">
                             <label class="form-label fw-bold small text-muted text-uppercase">Engineer's Last Inspection Date</label>
                             <input type="date" class="form-control room-extra-engineer-date">
                         </div>
@@ -1686,12 +1731,25 @@
             const buildingSelect = card.querySelector('.room-extra-building');
             const floorSelect = card.querySelector('.room-extra-floor');
             const typeSelect = card.querySelector('.room-extra-type');
+            const priorityInput = card.querySelector('.room-extra-priority');
             const smokeRequired = card.querySelector('.room-extra-smoke-required');
             const smokeInstalledRow = card.querySelector('.room-extra-smoke-installed-row');
             const smokeYes = card.querySelector('.room-extra-has-smoke-yes');
             const smokeNo = card.querySelector('.room-extra-has-smoke-no');
             const secondaryExit = card.querySelector('.room-extra-secondary-exit');
             const secondaryLabel = card.querySelector('.room-extra-secondary-label');
+
+            const lockInfo = getLockedRoomBuildingOption();
+            if (isRoomBuildingLocked() && lockInfo) {
+                buildingSelect.innerHTML = '';
+                const opt = document.createElement('option');
+                opt.value = lockInfo.value;
+                opt.textContent = lockInfo.text;
+                opt.dataset.floors = lockInfo.floors || '0';
+                opt.selected = true;
+                buildingSelect.appendChild(opt);
+                buildingSelect.disabled = true;
+            }
 
             const fillFloors = () => {
                 floorSelect.innerHTML = '<option value="">Select Floor</option>';
@@ -1707,6 +1765,12 @@
 
             const handleTypeSmoke = () => {
                 const t = typeSelect.selectedOptions[0]?.textContent || '';
+                const selectedOpt = typeSelect.selectedOptions[0];
+                const label = selectedOpt?.dataset?.priorityLabel || '';
+                const maxRooms = selectedOpt?.dataset?.maxRooms || '';
+                if (priorityInput) {
+                    priorityInput.value = label ? (maxRooms ? `${label} (Up to ${maxRooms} rooms)` : label) : '';
+                }
                 const show = shouldShowSmokeDetectorQuestion(t);
                 const smokeRequiredCard = smokeRequired.closest('.col-md-6')?.querySelector('.card')?.closest('.col-md-6') || smokeRequired.closest('.col-md-6');
                 if (smokeRequiredCard) {
@@ -1950,20 +2014,22 @@
         });
 
         function collectMainRoomEntry(form) {
-            const fd = new FormData(form);
+            const getValue = (selector) => form.querySelector(selector)?.value || '';
+            const smokeDetectorRequired = form.querySelector('#addRoomSmokeDetectorRequired')?.checked ? '1' : '0';
+            const hasSecondaryExit = form.querySelector('#addRoomSecondaryExit')?.checked ? '1' : '0';
             return {
-                unified_school_id: fd.get('unified_school_id') || '',
-                building_id: fd.get('building_id') || '',
-                floor_no: fd.get('floor_no') || '',
-                room_code: fd.get('room_code') || '',
-                room_name: fd.get('room_name') || '',
-                room_type_config_id: fd.get('room_type_config_id') || '',
-                engineer_last_inspection_date: fd.get('engineer_last_inspection_date') || '',
-                smoke_detector_required: fd.get('smoke_detector_required') ? '1' : '0',
-                has_smoke_detector: fd.get('has_smoke_detector') ? String(fd.get('has_smoke_detector')) : '0',
-                has_secondary_exit: fd.get('has_secondary_exit') ? '1' : '0',
-                secondary_exit_remarks: fd.get('secondary_exit_remarks') || '',
-                remarks: fd.get('remarks') || ''
+                unified_school_id: getValue('#roomSchoolId'),
+                building_id: getValue('#roomBuildingSelect'),
+                floor_no: getValue('#roomFloorSelect'),
+                room_code: getValue('input[name="room_code"]'),
+                room_name: getValue('input[name="room_name"]'),
+                room_type_config_id: getValue('#room_type_select'),
+                engineer_last_inspection_date: getValue('input[name="engineer_last_inspection_date"]'),
+                smoke_detector_required: smokeDetectorRequired,
+                has_smoke_detector: getValue('#addRoomSmokeDetector') || '0',
+                has_secondary_exit: hasSecondaryExit,
+                secondary_exit_remarks: getValue('textarea[name="secondary_exit_remarks"]'),
+                remarks: getValue('textarea[name="remarks"]')
             };
         }
 
@@ -2166,6 +2232,7 @@
                             <select class="form-control ext-extra-type" required>
                                 <option value="ABC">ABC (Dry Chemical)</option>
                                 <option value="CO2">CO2</option>
+                                <option value="HCFC">HCFC</option>
                                 <option value="Water">Water</option>
                                 <option value="Foam">Foam</option>
                                 <option value="Other">Other, Please Specify...</option>
@@ -2189,24 +2256,38 @@
                         </div>
                     </div>
                     <div class="row g-3 mb-3">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label class="form-label fw-bold">Building *</label>
                             <select class="form-control ext-extra-building" required>
                                 ${getBuildingOptionsHtml('extBuildingSelect')}
                             </select>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Floor</label>
+                            <select class="form-control ext-extra-floor">
+                                <option value="">Select Floor</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
                             <label class="form-label fw-bold">Center Room</label>
                             <select class="form-control ext-extra-center-room">
                                 <option value="">Select Center Room</option>
                             </select>
                         </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">
+                                Covered Rooms <span class="text-muted small ext-extra-covered-limit">(Up to 3)</span>
+                            </label>
+                            <select class="form-control ext-extra-covered-rooms" multiple size="4">
+                            </select>
+                            <div class="form-text small">Use Ctrl/Cmd + Click to select multiple.</div>
+                        </div>
+                    </div>
+                    <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label fw-bold">Date Checked</label>
                             <input type="date" class="form-control ext-extra-date" value="${getTodayDateString()}">
                         </div>
-                    </div>
-                    <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label fw-bold">Evaluation Result</label>
                             <select class="form-control ext-extra-eval">
@@ -2229,7 +2310,13 @@
             const statusSelect = card.querySelector('.ext-extra-status');
             const pressureInput = card.querySelector('.ext-extra-pressure');
             const buildingSelect = card.querySelector('.ext-extra-building');
+            const floorSelect = card.querySelector('.ext-extra-floor');
             const centerRoomSelect = card.querySelector('.ext-extra-center-room');
+            const coveredRoomsSelect = card.querySelector('.ext-extra-covered-rooms');
+            const coveredLimitLabel = card.querySelector('.ext-extra-covered-limit');
+            let extraRooms = [];
+            let extraCoveredRoomIds = [];
+            let extraHostRoomIds = [];
 
             const applyStatusPressure = () => {
                 const status = statusSelect.value;
@@ -2238,8 +2325,9 @@
                     pressureInput.max = 100;
                     if (Number(pressureInput.value) < 70) pressureInput.value = 70;
                 } else if (status === 'maintenance') {
-                    pressureInput.min = 0;
+                    pressureInput.min = 20;
                     pressureInput.max = 69;
+                    if (Number(pressureInput.value) < 20) pressureInput.value = 20;
                     if (Number(pressureInput.value) > 69) pressureInput.value = 69;
                 } else if (status === 'expired') {
                     pressureInput.min = 0;
@@ -2254,20 +2342,107 @@
             const loadCenterRooms = async () => {
                 centerRoomSelect.innerHTML = '<option value="">Select Center Room</option>';
                 const bId = buildingSelect.value;
+                floorSelect.innerHTML = '<option value="">Select Floor</option>';
+                coveredRoomsSelect.innerHTML = '';
+                if (coveredLimitLabel) coveredLimitLabel.textContent = '(Up to 3)';
                 if (!bId) return;
+
+                const selectedOption = buildingSelect.options[buildingSelect.selectedIndex];
+                const floors = parseInt(selectedOption?.dataset?.floors || '0', 10);
+                for (let i = 1; i <= floors; i++) {
+                    const floorOpt = document.createElement('option');
+                    floorOpt.value = i;
+                    floorOpt.textContent = `Floor ${i}`;
+                    floorSelect.appendChild(floorOpt);
+                }
                 try {
                     const resp = await fetch(`/fire-safety/building/${bId}/rooms-with-coverage`, {
                         headers: { 'Accept': 'application/json' }
                     });
                     const data = await resp.json();
-                    (data.rooms || []).forEach(r => {
-                        const opt = document.createElement('option');
-                        opt.value = r.id;
-                        opt.textContent = `${r.room_code || ('Room ' + r.id)} - Floor ${r.floor_no}`;
-                        centerRoomSelect.appendChild(opt);
-                    });
+                    extraRooms = data.rooms || [];
+                    extraCoveredRoomIds = data.covered_room_ids || [];
+                    extraHostRoomIds = data.host_room_ids || [];
                 } catch (e) {
                     console.error('Failed to load center rooms for extra entry', e);
+                    extraRooms = [];
+                    extraCoveredRoomIds = [];
+                    extraHostRoomIds = [];
+                }
+            };
+
+            const rebuildByFloor = () => {
+                centerRoomSelect.innerHTML = '<option value="">Select Center Room</option>';
+                coveredRoomsSelect.innerHTML = '';
+                if (coveredLimitLabel) coveredLimitLabel.textContent = '(Up to 3)';
+
+                const selectedFloor = floorSelect.value;
+                if (!selectedFloor) return;
+
+                const filteredRooms = extraRooms.filter(r => String(r.floor_no) === String(selectedFloor));
+                filteredRooms.forEach(r => {
+                    const roomId = Number(r.id);
+                    const isHostRoom = extraHostRoomIds.includes(roomId) || r.is_host_room === true;
+                    const canHostMore = r.can_host_more === true;
+
+                    if (!isHostRoom || canHostMore) {
+                        const opt = document.createElement('option');
+                        opt.value = r.id;
+                        opt.textContent = `${r.room_code || ('Room ' + r.id)} - ${r.room_type || 'Unknown'}`;
+                        const baseMax = r.max_rooms || 3;
+                        const hardMax = isDedicatedOrLimitedPriority(r.priority_label) ? 2 : baseMax;
+                        opt.dataset.maxRooms = hardMax;
+                        opt.dataset.priorityLabel = r.priority_label || '';
+                        centerRoomSelect.appendChild(opt);
+                    }
+                });
+            };
+
+            const handleExtraCenterRoomChange = () => {
+                const centerId = centerRoomSelect.value;
+                coveredRoomsSelect.innerHTML = '';
+                if (!centerId) {
+                    if (coveredLimitLabel) coveredLimitLabel.textContent = '(Up to 3)';
+                    return;
+                }
+
+                const selected = centerRoomSelect.selectedOptions[0];
+                const baseMax = parseInt(selected?.dataset?.maxRooms || '3', 10) || 3;
+                const priorityLabel = selected?.dataset?.priorityLabel || '';
+                const effectiveMax = isDedicatedOrLimitedPriority(priorityLabel) ? 2 : baseMax;
+                if (coveredLimitLabel) coveredLimitLabel.textContent = `(Up to ${effectiveMax})`;
+
+                const centerRoom = extraRooms.find(r => String(r.id) === String(centerId));
+                const centerFloor = centerRoom ? String(centerRoom.floor_no) : null;
+
+                const options = extraRooms.filter(r => {
+                    if (centerFloor && String(r.floor_no) !== centerFloor) return false;
+                    const roomId = Number(r.id);
+                    const isHostRoom = extraHostRoomIds.includes(roomId) || r.is_host_room === true;
+                    const isCoveredByAny = (r.is_covered === true) || extraCoveredRoomIds.includes(roomId);
+                    return !isHostRoom && !isDedicatedOrLimitedPriority(r.priority_label) && !isCoveredByAny;
+                });
+
+                options.forEach(r => {
+                    const opt = document.createElement('option');
+                    opt.value = r.id;
+                    opt.textContent = `${r.room_code || ('Room ' + r.id)} - ${r.room_type || 'Unknown'}`;
+                    coveredRoomsSelect.appendChild(opt);
+                });
+
+                let centerFound = false;
+                Array.from(coveredRoomsSelect.options).forEach(opt => {
+                    if (String(opt.value) === String(centerId)) {
+                        opt.selected = true;
+                        centerFound = true;
+                    }
+                });
+                if (!centerFound) {
+                    const injected = document.createElement('option');
+                    injected.value = centerId;
+                    injected.textContent = `${selected?.textContent || ('Room ' + centerId)} (Center)`;
+                    injected.selected = true;
+                    coveredRoomsSelect.appendChild(injected);
                 }
             };
 
@@ -2276,10 +2451,28 @@
             });
             statusSelect.addEventListener('change', applyStatusPressure);
             buildingSelect.addEventListener('change', loadCenterRooms);
+            floorSelect.addEventListener('change', rebuildByFloor);
+            centerRoomSelect.addEventListener('change', handleExtraCenterRoomChange);
+            coveredRoomsSelect.addEventListener('change', () => {
+                const selected = centerRoomSelect.selectedOptions[0];
+                const baseMax = parseInt(selected?.dataset?.maxRooms || '3', 10) || 3;
+                const priorityLabel = selected?.dataset?.priorityLabel || '';
+                const effectiveMax = isDedicatedOrLimitedPriority(priorityLabel) ? 2 : baseMax;
+                const selectedOptions = Array.from(coveredRoomsSelect.selectedOptions);
+                if (selectedOptions.length > effectiveMax) {
+                    selectedOptions.slice(effectiveMax).forEach(opt => opt.selected = false);
+                    Swal.fire('Limit Reached', `This host room can only cover up to ${effectiveMax} rooms.`, 'info');
+                }
+            });
 
             if (prefill.building_id) {
                 buildingSelect.value = String(prefill.building_id);
                 loadCenterRooms();
+            }
+
+            if (prefill.floor_no) {
+                floorSelect.value = String(prefill.floor_no);
+                rebuildByFloor();
             }
 
             applyStatusPressure();
@@ -2752,7 +2945,18 @@
                 const typeValue = card.querySelector('.ext-extra-type')?.value || 'ABC';
                 const otherTypeValue = card.querySelector('.ext-extra-other-type')?.value || '';
                 const centerRoom = card.querySelector('.ext-extra-center-room')?.value || '';
+                const coveredRooms = Array.from(card.querySelectorAll('.ext-extra-covered-rooms option:checked')).map(o => o.value);
+                const limitText = card.querySelector('.ext-extra-covered-limit')?.textContent || '(Up to 3)';
+                const maxRooms = parseInt((limitText.match(/\d+/) || ['3'])[0], 10) || 3;
                 const resolvedType = typeValue === 'Other' ? otherTypeValue.trim() : typeValue;
+
+                if (centerRoom && coveredRooms.length > maxRooms) {
+                    throw new Error(`Additional entry #${entries.length + 1}: covered rooms exceeded the limit (${maxRooms}).`);
+                }
+
+                const payloadCovered = centerRoom
+                    ? Array.from(new Set([centerRoom, ...coveredRooms]))
+                    : [];
 
                 entries.push({
                     unified_school_id: schoolId,
@@ -2765,7 +2969,7 @@
                     date_checked: card.querySelector('.ext-extra-date')?.value || getTodayDateString(),
                     evaluation_result: card.querySelector('.ext-extra-eval')?.value || 'Passed',
                     remarks: card.querySelector('.ext-extra-remarks')?.value || '',
-                    covered_room_ids: centerRoom ? [centerRoom] : []
+                    covered_room_ids: payloadCovered
                 });
             });
 
@@ -2773,6 +2977,12 @@
                 const e = entries[i];
                 if (!e.unified_school_id || !e.code || !e.type || !e.status || !e.pressure_level || !e.building_id) {
                     Swal.fire('Missing Information', `Extinguisher entry #${i + 1}: Please complete required fields.`, 'warning');
+                    return;
+                }
+
+                const pressureError = validatePressureByStatus(e.status, e.pressure_level);
+                if (pressureError) {
+                    Swal.fire('Invalid Pressure', `Extinguisher entry #${i + 1}: ${pressureError}`, 'warning');
                     return;
                 }
             }
@@ -3104,22 +3314,7 @@
                 }
             }
 
-            if (status === 'active') {
-                pressureInput.min = 70;
-                pressureInput.max = 100;
-                if (pressureInput.value < 70) pressureInput.value = 70;
-            } else if (status === 'for preventive maintenance') {
-                pressureInput.min = 0;
-                pressureInput.max = 69;
-                if (pressureInput.value >= 70) pressureInput.value = 69;
-            } else if (status === 'expired') {
-                pressureInput.min = 0;
-                pressureInput.max = 19;
-                if (pressureInput.value > 19) pressureInput.value = 19;
-            } else {
-                pressureInput.min = 0;
-                pressureInput.max = 100;
-            }
+            updatePressureConstraints(status, pressureInput);
         }
 
         function showExtRemovalReason() {
@@ -3424,6 +3619,14 @@
         async function saveExtinguisherStatus() {
             const id = document.getElementById('updateExtId').value;
             const form = document.getElementById('updateExtForm');
+
+            const status = document.getElementById('updateExtStatus')?.value || '';
+            const pressure = document.getElementById('updateExtPressure')?.value || '';
+            const pressureError = validatePressureByStatus(status, pressure);
+            if (pressureError) {
+                Swal.fire('Invalid Pressure', pressureError, 'warning');
+                return;
+            }
 
             const centerId = document.getElementById('updateCenterRoomSelect').value;
 

@@ -590,6 +590,10 @@
                                                 <label class="form-label fw-bold small">No. of Gates</label>
                                                 <input type="number" class="form-control contributor-school-input" name="number_gates" min="0" value="{{ $contributorAssignedSchool->number_gates ?? 0 }}" disabled>
                                             </div>
+                                            <div class="col-md-4">
+                                                <label class="form-label fw-bold small">Engineer Last Inspection Date</label>
+                                                <input type="date" class="form-control contributor-school-input" name="engineer_last_inspection_date" value="{{ optional($contributorAssignedSchool->engineer_last_inspection_date)->format('Y-m-d') }}" disabled>
+                                            </div>
 
                                             <div class="col-12">
                                                 <label class="form-label fw-bold small">Emergency Resources</label>
@@ -715,6 +719,10 @@
                                         <div class="col-6">
                                             <div class="school-detail-label">Number of Gates</div>
                                             <div class="school-detail-value badge bg-light text-dark border p-2" id="detail_gates">0</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="school-detail-label">Engineer Last Inspection Date</div>
+                                            <div class="school-detail-value badge bg-light text-dark border p-2" id="detail_engineer_last_inspection_date">N/A</div>
                                         </div>
                                         <div class="col-12 mt-3">
                                             <div class="school-detail-label">Emergency Resources</div>
@@ -883,17 +891,21 @@
                                 </div>
                             </div>
                             <div class="row">
-                                <div class="col-md-4 mb-3">
+                                <div class="col-md-3 mb-3">
                                     <label class="form-label fw-bold small text-uppercase">Number of Students</label>
                                     <input type="number" name="number_students" class="form-control" min="0" value="0">
                                 </div>
-                                <div class="col-md-4 mb-3">
+                                <div class="col-md-3 mb-3">
                                     <label class="form-label fw-bold small text-uppercase">Number of Personnel</label>
                                     <input type="number" name="number_personnel" class="form-control" min="0" value="0">
                                 </div>
-                                <div class="col-md-4 mb-3">
+                                <div class="col-md-3 mb-3">
                                     <label class="form-label fw-bold small text-uppercase">Number of Gates</label>
                                     <input type="number" name="number_gates" class="form-control" min="0" value="0">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label fw-bold small text-uppercase">Engineer Last Inspection Date</label>
+                                    <input type="date" name="engineer_last_inspection_date" class="form-control">
                                 </div>
                             </div>
                         </div>
@@ -985,17 +997,21 @@
                                     <label class="form-label fw-bold small">Region</label>
                                     <input type="text" name="region" class="form-control">
                                 </div>
-                                <div class="col-md-6 mb-2">
+                                <div class="col-md-3 mb-2">
                                     <label class="form-label fw-bold small">Number of Students</label>
                                     <input type="number" name="number_students" class="form-control" min="0">
                                 </div>
-                                <div class="col-md-6 mb-2">
+                                <div class="col-md-3 mb-2">
                                     <label class="form-label fw-bold small">Number of Personnel</label>
                                     <input type="number" name="number_personnel" class="form-control" min="0">
                                 </div>
-                                <div class="col-md-6 mb-2">
+                                <div class="col-md-3 mb-2">
                                     <label class="form-label fw-bold small">Number of Gates</label>
                                     <input type="number" name="number_gates" class="form-control" min="0">
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    <label class="form-label fw-bold small">Engineer Last Inspection Date</label>
+                                    <input type="date" name="engineer_last_inspection_date" class="form-control">
                                 </div>
                                 <div class="col-md-12">
                                     <label class="form-label fw-bold small">Emergency Resources</label>
@@ -1789,6 +1805,7 @@
             document.getElementById('detail_students').innerText = (s.number_students ?? 0);
             document.getElementById('detail_personnel').innerText = (s.number_personnel ?? 0);
             document.getElementById('detail_gates').innerText = (s.number_gates ?? 0);
+            document.getElementById('detail_engineer_last_inspection_date').innerText = formatSchoolDate(s.engineer_last_inspection_date);
             document.getElementById('detail_resources').innerText = s.emergency_resources || 'None specified';
             renderSchoolAssignmentPanels(data);
 
@@ -1820,6 +1837,23 @@
             console.error(err);
             Swal.fire('Error', 'Failed to load school details.', 'error');
         }
+    }
+
+    function formatSchoolDate(value) {
+        if (!value) {
+            return 'N/A';
+        }
+
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+            return value;
+        }
+
+        return new Intl.DateTimeFormat('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        }).format(date);
     }
 
     function configureModuleButton(id, isActive, url, action = null) {
@@ -1909,6 +1943,7 @@
         form.querySelector('[name="number_students"]').value = school.number_students || 0;
         form.querySelector('[name="number_personnel"]').value = school.number_personnel || 0;
         form.querySelector('[name="number_gates"]').value = school.number_gates || 0;
+        form.querySelector('[name="engineer_last_inspection_date"]').value = school.engineer_last_inspection_date || '';
         form.querySelector('[name="emergency_resources"]').value = school.emergency_resources || '';
 
         new bootstrap.Modal(document.getElementById('editSchoolModal')).show();

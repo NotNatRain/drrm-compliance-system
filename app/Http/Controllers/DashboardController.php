@@ -129,6 +129,9 @@ class DashboardController extends Controller
         if (Schema::hasColumn('schools', 'number_gates')) {
             $rules['number_gates'] = 'nullable|integer|min:0';
         }
+        if (Schema::hasColumn('schools', 'engineer_last_inspection_date')) {
+            $rules['engineer_last_inspection_date'] = 'nullable|date';
+        }
 
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
@@ -149,12 +152,16 @@ class DashboardController extends Controller
             'number_students',
             'number_personnel',
             'number_gates',
+            'engineer_last_inspection_date',
             'emergency_resources',
         ]);
         unset($payload['school_head_user_id'], $payload['drrm_coordinator_user_id']);
 
         if (!Schema::hasColumn('schools', 'number_gates')) {
             unset($payload['number_gates']);
+        }
+        if (!Schema::hasColumn('schools', 'engineer_last_inspection_date')) {
+            unset($payload['engineer_last_inspection_date']);
         }
 
         $school->update($payload);
@@ -326,6 +333,9 @@ class DashboardController extends Controller
         if (Schema::hasColumn('schools', 'number_gates')) {
             $rules['number_gates'] = 'nullable|integer|min:0';
         }
+        if (Schema::hasColumn('schools', 'engineer_last_inspection_date')) {
+            $rules['engineer_last_inspection_date'] = 'nullable|date';
+        }
 
         $validator = Validator::make($request->all(), $rules);
 
@@ -349,12 +359,16 @@ class DashboardController extends Controller
             'number_students',
             'number_personnel',
             'number_gates',
+            'engineer_last_inspection_date',
             'emergency_resources',
         ]);
         unset($payload['school_head_user_id'], $payload['drrm_coordinator_user_id']);
 
         if (!Schema::hasColumn('schools', 'number_gates')) {
             unset($payload['number_gates']);
+        }
+        if (!Schema::hasColumn('schools', 'engineer_last_inspection_date')) {
+            unset($payload['engineer_last_inspection_date']);
         }
 
         try {
@@ -414,6 +428,9 @@ class DashboardController extends Controller
         if (Schema::hasColumn('schools', 'number_gates')) {
             $rules['number_gates'] = 'nullable|integer|min:0';
         }
+        if (Schema::hasColumn('schools', 'engineer_last_inspection_date')) {
+            $rules['engineer_last_inspection_date'] = 'nullable|date';
+        }
 
         $validator = Validator::make($request->all(), $rules);
 
@@ -437,11 +454,15 @@ class DashboardController extends Controller
             'number_students',
             'number_personnel',
             'number_gates',
+            'engineer_last_inspection_date',
             'emergency_resources',
         ]);
 
         if (!Schema::hasColumn('schools', 'number_gates')) {
             unset($payload['number_gates']);
+        }
+        if (!Schema::hasColumn('schools', 'engineer_last_inspection_date')) {
+            unset($payload['engineer_last_inspection_date']);
         }
 
         try {

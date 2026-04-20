@@ -913,18 +913,23 @@ class FireSafetyController extends Controller
         if (auth()->user()->role !== 'admin' && (int)$room->unified_school_id !== (int)auth()->user()->school_id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized access to this room.'], 403);
         }
-        $validated = $request->validate([
+        $rules = [
             'room_code' => 'nullable|string|max:50',
             'room_name' => 'nullable|string',
             'room_type_config_id' => 'nullable|exists:system_configurations,id',
             'nearest_extinguisher_room_id' => 'nullable|exists:fire_safety_rooms,id',
-            'engineer_last_inspection_date' => 'nullable|date',
             'smoke_detector_required' => 'boolean',
             'has_smoke_detector' => 'boolean',
             'has_secondary_exit' => 'boolean',
             'secondary_exit_remarks' => 'nullable|string',
             'remarks' => 'nullable|string'
-        ]);
+        ];
+
+        if (Schema::hasColumn('fire_safety_rooms', 'engineer_last_inspection_date')) {
+            $rules['engineer_last_inspection_date'] = 'nullable|date';
+        }
+
+        $validated = $request->validate($rules);
 
         if (!isset($validated['smoke_detector_required'])) {
             $validated['smoke_detector_required'] = false;
@@ -1212,20 +1217,25 @@ public function storeRoom(Request $request)
         $request->merge(['unified_school_id' => $request->school_id]);
     }
 
-    $validated = $request->validate([
+    $rules = [
         'unified_school_id' => 'required|exists:schools,id',
         'building_id' => 'required|exists:firesafety_buildings,id',
         'room_code' => 'nullable|string|max:50',
         'room_name' => 'nullable|string|max:100',
         'room_type_config_id' => 'required|exists:system_configurations,id',
         'floor_no' => 'required|integer|min:1|max:50',
-        'engineer_last_inspection_date' => 'nullable|date',
         'smoke_detector_required' => 'boolean',
         'has_smoke_detector' => 'boolean',
         'has_secondary_exit' => 'boolean',
         'secondary_exit_remarks' => 'nullable|string',
         'remarks' => 'nullable|string'
-    ]);
+    ];
+
+    if (Schema::hasColumn('fire_safety_rooms', 'engineer_last_inspection_date')) {
+        $rules['engineer_last_inspection_date'] = 'nullable|date';
+    }
+
+    $validated = $request->validate($rules);
 
     if (!isset($validated['smoke_detector_required'])) {
         $validated['smoke_detector_required'] = false;
@@ -1417,6 +1427,14 @@ public function storeRoom(Request $request)
             'covered_room_ids.*' => 'integer|exists:fire_safety_rooms,id',
             'remarks' => 'nullable|string',
         ]);
+
+        $pressureError = $this->validateExtinguisherPressureByStatus($validated['status'], (int) $validated['pressure_level']);
+        if ($pressureError) {
+            return response()->json([
+                'success' => false,
+                'message' => $pressureError,
+            ], 422);
+        }
 
         // Ensure building belongs to school
         $building = FireSafetyBuilding::where('id', $validated['building_id'])
@@ -1829,6 +1847,23 @@ public function storeRoom(Request $request)
         return max(1, min(5, $requiredExtinguishers));
     }
 
+    private function validateExtinguisherPressureByStatus(string $status, int $pressure): ?string
+    {
+        if ($status === 'active' && ($pressure < 70 || $pressure > 100)) {
+            return 'OK (Active) pressure must be between 70 and 100.';
+        }
+
+        if ($status === 'maintenance' && ($pressure < 20 || $pressure > 69)) {
+            return 'For Preventive Maintenance pressure must be between 20 and 69.';
+        }
+
+        if ($status === 'expired' && ($pressure < 0 || $pressure > 19)) {
+            return 'Used pressure must be between 0 and 19.';
+        }
+
+        return null;
+    }
+
     // Update Extinguisher Status & Log Inspection
     public function updateExtinguisher(Request $request, $id)
     {
@@ -1846,6 +1881,14 @@ public function storeRoom(Request $request)
             'covered_room_ids' => 'nullable|array',
             'covered_room_ids.*' => 'integer|exists:fire_safety_rooms,id'
         ]);
+
+        $pressureError = $this->validateExtinguisherPressureByStatus($request->status, (int) $request->pressure_level);
+        if ($pressureError) {
+            return response()->json([
+                'success' => false,
+                'message' => $pressureError,
+            ], 422);
+        }
 
         try {
             DB::beginTransaction();

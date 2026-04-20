@@ -34,6 +34,7 @@ class School extends Model
         'number_students',
         'number_personnel',
         'number_gates',
+        'engineer_last_inspection_date',
         'operational_status',
         'evacuation_status',
         'occupancy_safety',
@@ -56,6 +57,7 @@ class School extends Model
         'number_students' => 'integer',
         'number_personnel' => 'integer',
         'number_gates' => 'integer',
+        'engineer_last_inspection_date' => 'date',
         'incident_count' => 'integer',
     ];
 
