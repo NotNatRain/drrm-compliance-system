@@ -103,6 +103,28 @@
             font-size: 10px;
         }
 
+        thead {
+            display: table-header-group;
+        }
+
+        tr {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        .print-page-break-row td {
+            border: 0 !important;
+            padding: 0 !important;
+            height: 0 !important;
+            font-size: 0 !important;
+            line-height: 0 !important;
+        }
+
+        .print-page-break-row {
+            page-break-after: always;
+            break-after: page;
+        }
+
         .vertical-th {
             height: 140px;
             white-space: nowrap;
@@ -344,12 +366,14 @@
         }
     </style>
 </head>
-<body onload="window.print()">
+<body>
     <div class="no-print">
         <button class="btn-print" onclick="window.print()">Print Report</button>
         <button class="btn-print" style="background: #6c757d;" onclick="window.close()">Close</button>
         <p class="small text-muted mb-0 mt-2">This merged report combines Buildings, Alarm Details, Extinguisher Details, Evacuation Plans, and Evacuation Map in one printable file.</p>
     </div>
+
+    @php $printRowLimit = 18; @endphp
 
     {{-- SECTION 1: BUILDING SUMMARY --}}
     <div class="page">
@@ -429,11 +453,11 @@
                             } else {
                                 $code = match($status) {
                                     'purchase', 'for_purchase' => 'FP',
-                                    'maintenance', 'refill' => 'FR',
+                                    'maintenance', 'refill' => 'FPM',
                                     'decommissioned', 'broken' => 'DC',
                                     'missing' => 'MS',
-                                    'expired' => 'FR',
-                                    default => 'FR'
+                                    'expired' => 'FPM',
+                                    default => 'FPM'
                                 };
                                 $extinguisherIssues[] = $ext->code . ' ' . $code;
                             }
@@ -460,30 +484,32 @@
                         $alarmBg = '#e20707';
                         $alarmContentParts = [];
                         $hasBroken = false;
-                        $hasMulti = false;
+                        $hasCovering = false;
                         $hasAlarm = false;
                         if ($buildingAlarms->count() > 0) {
                             $hasAlarm = true;
                             foreach($buildingAlarms as $alarmRow) {
                                 $status = strtolower($alarmRow->status ?? '');
                                 $isFunctional = in_array($status, ['active', 'functional', 'ok', 'online']);
+                                $inPivot = $building->alarmSystemsMany->pluck('id')->contains($alarmRow->id);
+                                $inPrimary = (int) ($alarmRow->building_id ?? 0) === (int) $building->id;
                                 if (!$isFunctional) {
                                     $hasBroken = true;
                                 }
-                                if ($alarmRow->buildings && $alarmRow->buildings->count() > 1) {
-                                    $hasMulti = true;
+                                if ($inPivot && !$inPrimary) {
+                                    $hasCovering = true;
                                 }
                                 $typeChar = 'O';
                                 if (stripos($alarmRow->alarm_type ?? '', 'Bell') !== false) $typeChar = 'B';
                                 elseif (stripos($alarmRow->alarm_type ?? '', 'Mechanical') !== false) $typeChar = 'M';
                                 elseif (stripos($alarmRow->alarm_type ?? '', 'Digital') !== false) $typeChar = 'D';
                                 else $typeChar = strtoupper(substr((string)($alarmRow->alarm_type ?? 'AL'), 0, 2));
-                                $alarmContentParts[] = ($alarmRow->code ?? 'N/A') . ' ' . $typeChar;
+                                $alarmContentParts[] = ($alarmRow->code ?? 'N/A') . ' ' . $typeChar . (($inPivot && !$inPrimary) ? ' (Covering)' : '');
                             }
 
                             if ($hasBroken) {
                                 $alarmBg = '#add8e6';
-                            } elseif ($hasMulti) {
+                            } elseif ($hasCovering) {
                                 $alarmBg = '#FFFF00';
                             } else {
                                 $alarmBg = '#90EE90';
@@ -521,6 +547,9 @@
                         <td class="center-text" style="background-color: {{ $alarmBg }};">{{ $alarmContent }}</td>
                         <td class="center-text">{{ $building->description }}</td>
                     </tr>
+                    @if(($loop->iteration % max(1, (int)$printRowLimit)) === 0 && !$loop->last)
+                        <tr class="print-page-break-row"><td colspan="13"></td></tr>
+                    @endif
                 @endforeach
             </tbody>
         </table>
@@ -595,7 +624,7 @@
                                     return trim($b->building_no . ($b->building_name ? ' (' . $b->building_name . ')' : ''));
                                 })->filter()->values();
                             @endphp
-                            {{ $primaryLabel }}@if($otherLabels->isNotEmpty()) ({{ $otherLabels->implode(', ') }})@endif
+                            Installed: {{ $primaryLabel }}@if($otherLabels->isNotEmpty())<br><small>Covering: {{ $otherLabels->implode(', ') }}</small>@endif
                         </td>
                         <td>{{ $alarm->alarm_type }}</td>
                         <td class="center-text"><strong>{{ strtoupper(str_ireplace('broken', 'defective', $alarm->status)) }}</strong></td>
@@ -603,6 +632,9 @@
                         <td>{{ $alarm->next_test_due ? \Carbon\Carbon::parse($alarm->next_test_due)->format('M d, Y') : 'N/A' }}</td>
                         <td>{{ $alarm->notes }}</td>
                     </tr>
+                    @if(($loop->iteration % max(1, (int)$printRowLimit)) === 0 && !$loop->last)
+                        <tr class="print-page-break-row"><td colspan="7"></td></tr>
+                    @endif
                 @endforeach
                 @if($alarms->isEmpty())
                     <tr>
@@ -663,6 +695,7 @@
             <thead>
                 <tr>
                     <th>Extinguisher Code</th>
+                    <th>Building</th>
                     <th>Room Covered / Location</th>
                     <th>Status</th>
                     <th>Date Last Checked</th>
@@ -675,6 +708,9 @@
                     <tr>
                         <td><strong>{{ $ext->code }}</strong></td>
                         <td>
+                            {{ $ext->building ? trim(($ext->building->building_no ?: 'N/A') . ($ext->building->building_name ? ' (' . $ext->building->building_name . ')' : '')) : 'N/A' }}
+                        </td>
+                        <td>
                             {{ $ext->centerRoom ? $ext->centerRoom->room_name : 'N/A' }}
                             @php
                                 $otherRooms = $ext->coveredRooms ? $ext->coveredRooms->filter(fn($r) => $ext->centerRoom && $r->id !== $ext->centerRoom->id) : collect();
@@ -683,15 +719,65 @@
                                 <small class="text-muted d-block">({{ $otherRooms->map(fn($r) => 'Room ' . ($r->room_code ?: $r->room_name))->implode(' & ') }} taking cover)</small>
                             @endif
                         </td>
-                        <td class="center-text"><strong>{{ strtoupper($ext->status) }}</strong></td>
+                        @php
+                            $statusValue = strtolower(trim((string) ($ext->status ?? '')));
+                            if (in_array($statusValue, ['maintenance', 'preventive_maintenance', 'for_preventive_maintenance'])) {
+                                $statusLabel = 'FOR PREVENTIVE<br>MAINTENANCE';
+                            } elseif (in_array($statusValue, ['purchase', 'for_purchase'])) {
+                                $statusLabel = 'FOR<br>PURCHASE';
+                            } else {
+                                $statusLabel = strtoupper(str_replace('_', ' ', (string) ($ext->status ?? 'N/A')));
+                            }
+                        @endphp
+                        <td class="center-text"><strong style="display:inline-block; line-height:1.1;">{!! $statusLabel !!}</strong></td>
                         <td>{{ $ext->date_checked ? \Carbon\Carbon::parse($ext->date_checked)->format('M d, Y') : 'N/A' }}</td>
                         <td>{{ $ext->type }}</td>
                         <td>{{ $ext->remarks }} {{ $ext->notes }}</td>
                     </tr>
+                    @if(($loop->iteration % max(1, (int)$printRowLimit)) === 0 && !$loop->last)
+                        <tr class="print-page-break-row"><td colspan="7"></td></tr>
+                    @endif
                 @endforeach
+
+                @php
+                    $needed = (int) ($school->buildings->sum(function ($building) {
+                        return (int) ($building->requiredExtinguishersCount ?? 0);
+                    }));
+                    $existing = (int) $extinguishers->count();
+                    $passed = (int) $extinguishers->filter(function ($ext) {
+                        return strtolower((string) ($ext->evaluation_result ?? '')) === 'passed';
+                    })->count();
+                    $summaryRemarks = ($needed > 0 && $existing >= $needed && $passed >= $needed) ? 'Passed' : 'Needs Attention';
+
+                    $activeCount = $extinguishers->where('status', 'active')->count();
+                    $maintenanceCount = $extinguishers->where('status', 'maintenance')->count();
+                    $usedCount = $extinguishers->where('status', 'expired')->count();
+                    $missingCount = $extinguishers->where('status', 'missing')->count();
+                    $purchaseCount = $extinguishers->filter(function($ext) {
+                        $status = strtolower((string) ($ext->status ?? ''));
+                        return in_array($status, ['purchase', 'for_purchase']);
+                    })->count();
+                @endphp
+                <tr style="background-color: #f7f7f7;">
+                    <td><strong>Summary</strong></td>
+                    <td><strong>Existing / Needed:</strong> {{ $existing }} / {{ $needed }}</td>
+                    <td><strong>Passed / Needed:</strong> {{ $passed }} / {{ $needed }}</td>
+                    <td class="center-text"><strong>{{ $summaryRemarks }}</strong></td>
+                    <td colspan="3">—</td>
+                </tr>
+                <tr style="background-color: #f0f4f7;">
+                    <td><strong>Status Totals</strong></td>
+                    <td><strong>Active:</strong> {{ $activeCount }}</td>
+                    <td><strong>For Preventive Maintenance:</strong> {{ $maintenanceCount }}</td>
+                    <td><strong>Used:</strong> {{ $usedCount }}</td>
+                    <td><strong>Missing:</strong> {{ $missingCount }}</td>
+                    <td><strong>For Purchase:</strong> {{ $purchaseCount }}</td>
+                    <td>—</td>
+                </tr>
+
                 @if($extinguishers->isEmpty())
                     <tr>
-                        <td colspan="6" class="center-text" style="padding: 20px;">No fire extinguishers recorded for this school.</td>
+                        <td colspan="7" class="center-text" style="padding: 20px;">No fire extinguishers recorded for this school.</td>
                     </tr>
                 @endif
             </tbody>
@@ -788,6 +874,9 @@
                         </td>
                         <td>{{ $room->remarks ?: '—' }}</td>
                     </tr>
+                    @if((($index + 1) % max(1, (int)$printRowLimit)) === 0 && !$loop->last)
+                        <tr class="print-page-break-row"><td colspan="10"></td></tr>
+                    @endif
                 @empty
                     <tr>
                         <td colspan="10" class="center-text" style="padding: 20px;">No rooms recorded for this school.</td>
@@ -903,68 +992,16 @@
 
     {{-- SECTION 5: EVACUATION MAP --}}
     <div class="page" style="page-break-after: auto;">
-        <div class="info-grid" style="background: #fafafa;">
-            <div class="info-row">
-                <div><strong>Name of School:</strong> {{ $school->school_name }}</div>
-                <div><strong>Name of School Head:</strong> {{ $school->school_head }}</div>
-            </div>
-            <div class="info-row">
-                <div><strong>School ID:</strong> {{ $school->school_id }}</div>
-                <div><strong>DRRM Coordinator:</strong> {{ $school->school_drrm_coordinator }}</div>
-            </div>
-        </div>
-
         @php
             $layoutItems = is_array($mapLayout ?? null) ? $mapLayout : [];
         @endphp
         @if(!empty($layoutItems))
-            <div class="map-canvas">
-                @foreach($layoutItems as $item)
-                    @php
-                        $x = isset($item['x']) ? (float) $item['x'] : 20;
-                        $y = isset($item['y']) ? (float) $item['y'] : 20;
-                        $w = isset($item['width']) ? max(30, (float) $item['width']) : 120;
-                        $h = isset($item['height']) ? max(30, (float) $item['height']) : 60;
-                        $type = strtolower((string)($item['type'] ?? ''));
-                        $subType = strtolower((string)($item['subType'] ?? ''));
-                        $label = $item['name'] ?? $item['label'] ?? strtoupper($item['type'] ?? 'ITEM');
-                        $rotation = isset($item['rotation']) ? (float) $item['rotation'] : 0;
-                        $isSpecific = $type === 'specific' || str_contains($subType, 'door') || str_contains($subType, 'stairs') || str_contains($subType, 'arrow') || str_contains($subType, 'bell') || str_contains($subType, 'table') || str_contains($subType, 'medical') || str_contains($subType, 'gate');
-                        $icon = '•';
-                        if (str_contains($subType, 'door')) $icon = '🚪';
-                        elseif (str_contains($subType, 'stairs')) $icon = '🪜';
-                        elseif (str_contains($subType, 'arrow')) $icon = '➡';
-                        elseif (str_contains($subType, 'bell')) $icon = '🔔';
-                        elseif (str_contains($subType, 'table')) $icon = '🗒';
-                        elseif (str_contains($subType, 'medical')) $icon = '⛑';
-                        elseif (str_contains($subType, 'gate')) $icon = '🚧';
-                        $bg = $item['color'] ?? '#ffffff';
-                    @endphp
-
-                    @if($isSpecific)
-                        <div class="map-box-item map-specific" style="left: {{ $x }}px; top: {{ $y }}px; transform: rotate({{ $rotation }}deg);">{{ $icon }}</div>
-                    @else
-                        <div class="map-box-item {{ $type === 'facility' ? 'map-facility' : '' }}" style="left: {{ $x }}px; top: {{ $y }}px; width: {{ $w }}px; height: {{ $h }}px; transform: rotate({{ $rotation }}deg); background: {{ $type === 'facility' ? $bg : 'rgba(255,255,255,0.9)' }};">
-                            {{ $label }}
-                        </div>
-                    @endif
-                @endforeach
-            </div>
-
-            <div class="map-legend">
-                <strong>Map Legend:</strong>
-                <div class="map-legend-grid">
-                    <div class="map-legend-item"><span style="width: 30px; height: 30px; background: white; border: 2px solid black; display:inline-block;"></span><strong>Building Structure</strong></div>
-                    <div class="map-legend-item"><span style="width: 24px; height: 1px; background: black; display:inline-block;"></span><strong>Floor Divider</strong></div>
-                    <div class="map-legend-item"><span style="width: 15px; height: 15px; background: #f0f0f0; border: 1px solid #333; display:inline-block;"></span><strong>Room</strong></div>
-                    <div class="map-legend-item"><span style="font-size: 16px;">🧯</span><strong>Fire Extinguisher</strong></div>
-                    <div class="map-legend-item"><span style="font-size: 16px;">🔔</span><strong>Alarm System</strong></div>
-                    <div class="map-legend-item"><span style="font-size: 14px;">⚪</span><strong>Smoke Detector</strong></div>
-                    <div class="map-legend-item"><span style="background: green; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px;">Plan OK</span><strong>Evacuation Plan</strong></div>
-                    <div class="map-legend-item"><span style="width: 20px; height: 10px; background: #28a745; border: 1px solid rgba(0,0,0,0.2); display:inline-block;"></span><strong>Campus Facility</strong></div>
-                </div>
-            </div>
-            <div class="map-source-label">Generated by the system</div>
+            <iframe
+                id="full-report-map-frame"
+                src="{{ route('fire-safety.schools.evacuation-plans', $school->id) }}?print_map=1"
+                title="Evacuation Map"
+                style="width: 100%; height: 980px; border: 0;"
+            ></iframe>
         @elseif(!empty($school->attached_evacuation_map))
             <div class="attached-map-frame">
                 <img src="{{ asset('storage/' . ltrim($school->attached_evacuation_map, '/')) }}" alt="Attached evacuation map">
@@ -974,5 +1011,28 @@
             <div class="no-data-box">No generated evacuation map layout found for this school.</div>
         @endif
     </div>
+
+    <script>
+        (function () {
+            let hasPrinted = false;
+            const printNow = function () {
+                if (hasPrinted) return;
+                hasPrinted = true;
+                window.print();
+            };
+
+            const mapFrame = document.getElementById('full-report-map-frame');
+            if (mapFrame) {
+                mapFrame.addEventListener('load', function () {
+                    setTimeout(printNow, 1200);
+                }, { once: true });
+
+                // Fallback print in case iframe load event is delayed.
+                setTimeout(printNow, 5000);
+            } else {
+                setTimeout(printNow, 300);
+            }
+        })();
+    </script>
 </body>
 </html>

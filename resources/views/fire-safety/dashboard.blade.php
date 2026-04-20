@@ -106,6 +106,7 @@
                         <h6 class="m-0 fw-bold text-primary">School Safety Status</h6>
                         <div class="d-flex gap-2 align-items-center">
                             @if(auth()->user()->role === 'admin')
+                                <input id="schoolSearchInput" type="search" class="form-control form-control-sm" placeholder="Search school name..." style="width: 220px;">
                                 <select id="statusFilter" class="form-select form-select-sm" style="width: auto;">
                                     <option value="all">All Status</option>
                                     <option value="passed">Passed</option>
@@ -224,6 +225,13 @@
                                             </tbody>
                                         </table>
                                     </div>
+                                    <div class="d-flex justify-content-between align-items-center mt-2" id="schoolsPaginationWrap">
+                                        <small class="text-muted" id="schoolsPaginationInfo">Showing 0 of 0 schools</small>
+                                        <div class="btn-group btn-group-sm" role="group" aria-label="Schools pagination">
+                                            <button type="button" class="btn btn-outline-secondary" id="schoolsPrevPageBtn">Previous</button>
+                                            <button type="button" class="btn btn-outline-secondary" id="schoolsNextPageBtn">Next</button>
+                                        </div>
+                                    </div>
                                 @else
                                     <!-- Management View for Contributors -->
                                     @php $school = $schools->first(); @endphp
@@ -329,7 +337,7 @@
                                                                             <span class="badge bg-secondary">Pending</span>
                                                                         @endif
                                                                     </div>
-                                                                    <a href="{{ route('fire-safety.buildings') }}" class="btn btn-sm w-100 {{ $bldgAlarmDone ? 'btn-success' : (($highlightBldg || $highlightBldgAlt) ? 'btn-primary' : 'btn-outline-dark') }}">
+                                                                    <a href="{{ route('fire-safety.schools.buildings', ['school' => $school->id]) }}" class="btn btn-sm w-100 {{ $bldgAlarmDone ? 'btn-success' : (($highlightBldg || $highlightBldgAlt) ? 'btn-primary' : 'btn-outline-dark') }}">
                                                                         <i class="fas {{ $bldgAlarmDone ? 'fa-edit' : 'fa-plus' }} me-1"></i> {{ $bldgAlarmDone ? 'Update' : 'Setup Now' }}
                                                                     </a>
                                                                 </div>
@@ -352,7 +360,7 @@
                                                                             <span class="badge bg-secondary">Pending</span>
                                                                         @endif
                                                                     </div>
-                                                                    <a href="{{ route('fire-safety.extinguishers') }}" class="btn btn-sm w-100 {{ $extRoomDone ? 'btn-success' : ($highlightExtRoom ? 'btn-primary' : 'btn-outline-dark') }}">
+                                                                    <a href="{{ route('fire-safety.schools.extinguishers', ['school' => $school->id]) }}" class="btn btn-sm w-100 {{ $extRoomDone ? 'btn-success' : ($highlightExtRoom ? 'btn-primary' : 'btn-outline-dark') }}">
                                                                         <i class="fas {{ $extRoomDone ? 'fa-edit' : 'fa-plus' }} me-1"></i> {{ $extRoomDone ? 'Update' : 'Setup Now' }}
                                                                     </a>
                                                                 </div>
@@ -372,7 +380,7 @@
                                                                             <span class="badge bg-secondary">Pending</span>
                                                                         @endif
                                                                     </div>
-                                                                    <a href="{{ route('fire-safety.evacuation-plans') }}" class="btn btn-sm w-100 {{ $planDone ? 'btn-success' : ($highlightPlan ? 'btn-primary' : 'btn-outline-dark') }}">
+                                                                    <a href="{{ route('fire-safety.schools.evacuation-plans', ['school' => $school->id]) }}" class="btn btn-sm w-100 {{ $planDone ? 'btn-success' : ($highlightPlan ? 'btn-primary' : 'btn-outline-dark') }}">
                                                                         <i class="fas {{ $planDone ? 'fa-edit' : 'fa-plus' }} me-1"></i> {{ $planDone ? 'Update' : 'Setup Now' }}
                                                                     </a>
                                                                 </div>
@@ -397,21 +405,21 @@
                                                                                 'label' => 'Buildings & Alarms',
                                                                                 'icons' => ['fa-building', 'fa-bell'],
                                                                                 'data' => $mi['buildings_alarms'],
-                                                                                'route' => 'fire-safety.buildings',
+                                                                                'route' => 'fire-safety.schools.buildings',
                                                                                 'schoolId' => $school->id,
                                                                             ],
                                                                             [
                                                                                 'label' => 'Extinguisher & Rooms',
                                                                                 'icons' => ['fa-fire-extinguisher', 'fa-door-open'],
                                                                                 'data' => $mi['ext_rooms'],
-                                                                                'route' => 'fire-safety.extinguishers',
+                                                                                'route' => 'fire-safety.schools.extinguishers',
                                                                                 'schoolId' => $school->id,
                                                                             ],
                                                                             [
                                                                                 'label' => 'Evacuation Plans',
                                                                                 'icons' => ['fa-map-signs'],
                                                                                 'data' => $mi['plans'],
-                                                                                'route' => 'fire-safety.evacuation-plans',
+                                                                                'route' => 'fire-safety.schools.evacuation-plans',
                                                                                 'schoolId' => $school->id,
                                                                             ],
                                                                         ];
@@ -447,7 +455,7 @@
                                                                                 @endforeach
                                                                             </td>
                                                                             <td class="text-center">
-                                                                                <a href="{{ route($cm['route']) }}" class="btn btn-sm btn-outline-{{ $arrowColor }} switch-school-link" data-school-id="{{ $cm['schoolId'] }}">
+                                                                                <a href="{{ route($cm['route'], ['school' => $cm['schoolId']]) }}" class="btn btn-sm btn-outline-{{ $arrowColor }} switch-school-link" data-school-id="{{ $cm['schoolId'] }}">
                                                                                     <i class="fas fa-arrow-right"></i>
                                                                                 </a>
                                                                             </td>
@@ -1141,17 +1149,60 @@ document.addEventListener('DOMContentLoaded', function() {
     // Filter and Sort functionality
     const statusFilter = document.getElementById('statusFilter');
     const sortFilter = document.getElementById('sortFilter');
+    const schoolSearchInput = document.getElementById('schoolSearchInput');
     const schoolsTableBody = document.getElementById('schoolsTableBody');
+    const schoolsPrevPageBtn = document.getElementById('schoolsPrevPageBtn');
+    const schoolsNextPageBtn = document.getElementById('schoolsNextPageBtn');
+    const schoolsPaginationInfo = document.getElementById('schoolsPaginationInfo');
+
+    let schoolsCurrentPage = 1;
+    const schoolsPageSize = 5;
+
+    function applySchoolsPagination(visibleRows) {
+        const totalRows = visibleRows.length;
+        const totalPages = Math.max(1, Math.ceil(totalRows / schoolsPageSize));
+
+        if (schoolsCurrentPage > totalPages) {
+            schoolsCurrentPage = totalPages;
+        }
+
+        visibleRows.forEach(row => {
+            row.style.display = 'none';
+        });
+
+        const startIndex = (schoolsCurrentPage - 1) * schoolsPageSize;
+        const paginatedRows = visibleRows.slice(startIndex, startIndex + schoolsPageSize);
+        paginatedRows.forEach(row => {
+            row.style.display = '';
+        });
+
+        if (schoolsPrevPageBtn) schoolsPrevPageBtn.disabled = schoolsCurrentPage <= 1;
+        if (schoolsNextPageBtn) schoolsNextPageBtn.disabled = schoolsCurrentPage >= totalPages;
+        if (schoolsPaginationInfo) {
+            if (totalRows === 0) {
+                schoolsPaginationInfo.textContent = 'Showing 0 of 0 schools';
+            } else {
+                const endItem = Math.min(startIndex + paginatedRows.length, totalRows);
+                schoolsPaginationInfo.textContent = `Showing ${startIndex + 1}-${endItem} of ${totalRows} schools`;
+            }
+        }
+    }
 
     function filterAndSortSchools() {
+        if (!schoolsTableBody) return;
+
         const statusValue = statusFilter.value;
         const sortValue = sortFilter.value;
+        const searchValue = (schoolSearchInput?.value || '').toLowerCase().trim();
         const rows = Array.from(schoolsTableBody.querySelectorAll('tr'));
 
         rows.forEach(row => {
             if (row.querySelector('td[colspan]')) return;
             const rowStatus = row.dataset.status;
-            if (statusValue === 'all' || rowStatus === statusValue) {
+            const schoolName = (row.dataset.schoolName || '').toLowerCase();
+            const matchesStatus = statusValue === 'all' || rowStatus === statusValue;
+            const matchesSearch = !searchValue || schoolName.includes(searchValue);
+            if (matchesStatus && matchesSearch) {
                 row.style.display = '';
             } else {
                 row.style.display = 'none';
@@ -1174,11 +1225,40 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         visibleRows.forEach(row => schoolsTableBody.appendChild(row));
+        applySchoolsPagination(visibleRows);
     }
 
-    if (statusFilter && sortFilter) {
-        statusFilter.addEventListener('change', filterAndSortSchools);
-        sortFilter.addEventListener('change', filterAndSortSchools);
+    if (statusFilter && sortFilter && schoolsTableBody) {
+        statusFilter.addEventListener('change', () => {
+            schoolsCurrentPage = 1;
+            filterAndSortSchools();
+        });
+        sortFilter.addEventListener('change', () => {
+            schoolsCurrentPage = 1;
+            filterAndSortSchools();
+        });
+        if (schoolSearchInput) {
+            schoolSearchInput.addEventListener('input', () => {
+                schoolsCurrentPage = 1;
+                filterAndSortSchools();
+            });
+        }
+        if (schoolsPrevPageBtn) {
+            schoolsPrevPageBtn.addEventListener('click', () => {
+                if (schoolsCurrentPage > 1) {
+                    schoolsCurrentPage -= 1;
+                    filterAndSortSchools();
+                }
+            });
+        }
+        if (schoolsNextPageBtn) {
+            schoolsNextPageBtn.addEventListener('click', () => {
+                schoolsCurrentPage += 1;
+                filterAndSortSchools();
+            });
+        }
+
+        filterAndSortSchools();
     }
 
     // Attach school switch handlers to inline arrow links (Blade-rendered)

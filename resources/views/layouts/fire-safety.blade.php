@@ -359,6 +359,17 @@
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="p-3">
+            @php
+                $buildingsHref = isset($activeSchool)
+                    ? route('fire-safety.schools.buildings', ['school' => $activeSchool->id])
+                    : route('fire-safety.buildings');
+                $extinguishersHref = isset($activeSchool)
+                    ? route('fire-safety.schools.extinguishers', ['school' => $activeSchool->id])
+                    : route('fire-safety.extinguishers');
+                $evacuationHref = isset($activeSchool)
+                    ? route('fire-safety.schools.evacuation-plans', ['school' => $activeSchool->id])
+                    : route('fire-safety.evacuation-plans');
+            @endphp
             <ul class="nav flex-column">
                 <li class="nav-item">
                     <a class="nav-link {{ Route::is('fire-safety.dashboard') ? 'active' : '' }}" href="{{ route('fire-safety.dashboard') }}">
@@ -367,7 +378,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {{ Route::is('fire-safety.buildings') ? 'active' : '' }}" href="{{ route('fire-safety.buildings') }}">
+                    <a class="nav-link {{ Route::is('fire-safety.buildings', 'fire-safety.schools.buildings') ? 'active' : '' }}" href="{{ $buildingsHref }}">
                         <span class="nav-icon">
                             <i class="fas fa-building"></i>
                             <i class="fas fa-bell ms-1" style="font-size: 0.7em;"></i>
@@ -376,13 +387,13 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {{ Route::is('fire-safety.extinguishers') ? 'active' : '' }}" href="{{ route('fire-safety.extinguishers') }}">
+                    <a class="nav-link {{ Route::is('fire-safety.extinguishers', 'fire-safety.schools.extinguishers') ? 'active' : '' }}" href="{{ $extinguishersHref }}">
                         <span class="nav-icon"><i class="fas fa-fire-extinguisher"></i></span>
                         <span>Extinguisher & Rooms</span>
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link {{ Route::is('fire-safety.evacuation-plans') ? 'active' : '' }}" href="{{ route('fire-safety.evacuation-plans') }}">
+                    <a class="nav-link {{ Route::is('fire-safety.evacuation-plans', 'fire-safety.schools.evacuation-plans') ? 'active' : '' }}" href="{{ $evacuationHref }}">
                         <span class="nav-icon"><i class="fas fa-map-signs"></i></span>
                         <span>Evacuation Plans</span>
                     </a>
@@ -402,7 +413,10 @@
 
     <!-- Main Content -->
     <div class="main-content">
-        @if(isset($schools) && $schools->isNotEmpty())
+        @php
+            $schoolTabItems = $schoolNavOptions ?? ($schools ?? collect());
+        @endphp
+        @if(isset($schoolTabItems) && $schoolTabItems->isNotEmpty())
             @if(auth()->user()->role === 'admin' && !request()->routeIs(['fire-safety.dashboard', 'fire-safety.customization', 'fire-safety.notifications.page']))
             <!-- School Selection Tabs (Admin only) -->
             <div class="row mb-4">
@@ -410,7 +424,7 @@
                     <div class="card dashboard-card">
                         <div class="card-body p-0">
                             <ul class="nav nav-tabs border-0" id="schoolTab" role="tablist">
-                                @if($schools->count() > 4)
+                                @if($schoolTabItems->count() > 4)
                                     <!-- > 4 Schools: Show Active + Choose Another -->
                                     <li class="nav-item">
                                         <button class="nav-link active" type="button">
@@ -424,10 +438,10 @@
                                     </li>
                                 @else
                                     <!-- <= 4 Schools: Show All Tabs -->
-                                    @foreach($schools as $school)
+                                    @foreach($schoolTabItems as $school)
                                     <li class="nav-item">
                                         <button class="nav-link {{ (isset($activeSchool) && $activeSchool->id == $school->id) ? 'active' : '' }}"
-                                                onclick="switchSchool({{ $school->id }})">
+                                                onclick="@if(!empty($schoolSwitchUrlPattern)) switchSchoolAndRedirect({{ $school->id }}, '{{ str_replace('__SCHOOL_ID__', $school->id, $schoolSwitchUrlPattern) }}') @else switchSchool({{ $school->id }}) @endif">
                                             {{ $school->school_name }}
                                         </button>
                                     </li>
@@ -439,7 +453,7 @@
                 </div>
             </div>
             @endif
-        @elseif(isset($schools) && $schools->isEmpty() && !Route::is('fire-safety.dashboard'))
+        @elseif(isset($schoolTabItems) && $schoolTabItems->isEmpty() && !Route::is('fire-safety.dashboard'))
              <div class="row mb-4">
                 <div class="col-12">
                     <div class="alert alert-warning">
@@ -468,11 +482,11 @@
                         </div>
                     </div>
                     <div class="row g-3">
-                        @if(isset($schools))
-                            @foreach($schools as $school)
+                        @if(isset($schoolTabItems))
+                            @foreach($schoolTabItems as $school)
                             <div class="col-md-6 mb-3 school-select-item" data-school-search="{{ strtolower($school->school_name . ' ' . $school->school_id) }}">
                                 <div class="card school-select-card h-100 {{ (isset($activeSchool) && $activeSchool->id == $school->id) ? 'active' : '' }}"
-                                     onclick="switchSchool({{ $school->id }})">
+                                     onclick="@if(!empty($schoolSwitchUrlPattern)) switchSchoolAndRedirect({{ $school->id }}, '{{ str_replace('__SCHOOL_ID__', $school->id, $schoolSwitchUrlPattern) }}') @else switchSchool({{ $school->id }}) @endif">
                                     <div class="card-body d-flex align-items-center">
                                         <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white me-3" style="width: 50px; height: 50px; flex-shrink: 0;">
                                             <i class="fas fa-university fa-lg"></i>

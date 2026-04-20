@@ -225,7 +225,7 @@
                                     @foreach($alarmStatusesByType as $parentId => $statuses)
                                         <optgroup label="{{ \App\Models\SystemConfiguration::find($parentId)->name }}" data-parent-id="{{ $parentId }}">
                                             @foreach($statuses as $status)
-                                                <option value="{{ $status->name }}">{{ $status->name }}</option>
+                                                <option value="{{ $status->name }}">{{ str_ireplace('Broken', 'Defective', $status->name) }}</option>
                                             @endforeach
                                         </optgroup>
                                     @endforeach
@@ -1070,7 +1070,7 @@
                     const option = document.createElement('option');
                     const statusValue = status.toLowerCase().replace(' ', '_');
                     option.value = statusValue;
-                    option.textContent = status;
+                    option.textContent = String(status).replace(/\bbroken\b/ig, 'Defective');
                     if (alarm.status === statusValue) {
                         option.selected = true;
                     }

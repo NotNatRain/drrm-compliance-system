@@ -3,7 +3,7 @@
 @section('title', 'Evacuation Plans - Fire Safety')
 @section('page_title', 'Evacuation Plans')
 @section('content')
-    <div class="container-fluid">
+    <div class="container-fluid {{ request()->boolean('print_map') ? 'evac-map-print-mode' : '' }}">
         <style>
             .school-map-canvas-container {
                 cursor: grab;
@@ -59,6 +59,34 @@
             }
             .card-collapsed .toggle-icon {
                 transform: rotate(-90deg);
+            }
+
+            .evac-map-print-mode .row.mb-4,
+            .evac-map-print-mode .card-header,
+            .evac-map-print-mode [id^="plans-content-"] {
+                display: none !important;
+            }
+
+            .evac-map-print-mode [id^="map-content-"] > .d-flex.justify-content-between.align-items-center,
+            .evac-map-print-mode .mt-3.p-3.bg-white {
+                display: none !important;
+            }
+
+            .evac-map-print-mode .card,
+            .evac-map-print-mode .card-body,
+            .evac-map-print-mode .tab-content,
+            .evac-map-print-mode .tab-pane,
+            .evac-map-print-mode [id^="generated-map-view-"] {
+                border: none !important;
+                box-shadow: none !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .evac-map-print-mode .school-map-canvas-container {
+                width: 100% !important;
+                height: 980px !important;
+                border-radius: 0 !important;
             }
         </style>
 
@@ -537,7 +565,7 @@
                                                 <div class="d-flex align-items-center"><span style="font-size: 16px; margin-right: 8px;">🔔</span> <strong>Alarm System</strong></div>
                                                 <div class="d-flex align-items-center"><span style="font-size: 14px; margin-right: 8px;">⚪</span> <strong>Smoke Detector</strong></div>
                                                 <div class="d-flex align-items-center"><span style="background: green; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px; margin-right: 8px;">Plan OK</span> <strong>Evacuation Plan</strong></div>
-                                                <div class="d-flex align-items-center"><span style="width: 20px; height: 10px; background: #28a745; border: 1px solid rgba(0,0,0,0.2); margin-right: 8px; display:inline-block;"></span> <strong>Campus Facility</strong></div>
+                                                <div class="d-flex align-items-center"><span style="width: 20px; height: 10px; background: linear-gradient(90deg, #3b82f6 0%, #10b981 50%, #f59e0b 100%); border: 1px solid rgba(0,0,0,0.2); margin-right: 8px; display:inline-block;"></span> <strong>Campus Facility (Custom Color)</strong></div>
                                             </div>
                                             <h6 class="fw-bold fs-sm mb-2 text-dark border-bottom pb-2">Building Types:</h6>
                                             <div class="d-flex flex-wrap gap-4 text-secondary small">
@@ -945,6 +973,11 @@
                             <label class="form-label fw-bold">Remarks</label>
                             <textarea class="form-control" name="remarks" rows="2" placeholder="Optional remarks"></textarea>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Facility Color</label>
+                            <input type="color" class="form-control form-control-color" name="color" id="addFacilityColor" value="#198754" title="Choose facility color">
+                            <small class="text-muted">This color will be used for this facility on the map.</small>
+                        </div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -987,6 +1020,11 @@
                         <div class="mb-3">
                             <label class="form-label fw-bold">Remarks</label>
                             <textarea class="form-control" name="remarks" id="editFacilityRemarks" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Facility Color</label>
+                            <input type="color" class="form-control form-control-color" name="color" id="editFacilityColor" value="#198754" title="Choose facility color">
+                            <small class="text-muted">This color will be used for this facility on the map.</small>
                         </div>
                     </form>
                 </div>
@@ -1039,6 +1077,7 @@
         let currentSchoolId = null;
         let currentPlanId = null;
         const userRole = "{{ auth()->user()->role }}";
+        const isMapPrintMode = {{ request()->boolean('print_map') ? 'true' : 'false' }};
 
         // Notify Administrator modal
         function openNotifyAdminModal(schoolId) {
@@ -1082,6 +1121,16 @@
         document.addEventListener('DOMContentLoaded', function() {
             const schoolId = {{ $activeSchool->id ?? 0 }};
             if (!schoolId) return;
+
+            if (isMapPrintMode) {
+                const mapTabBtn = document.getElementById(`map-tab-${schoolId}`);
+                if (mapTabBtn) {
+                    const tab = new bootstrap.Tab(mapTabBtn);
+                    tab.show();
+                }
+                initEvacuationMap(schoolId);
+                return;
+            }
 
             // Save tab choice when any tab is clicked
             document.querySelectorAll(`#evacuationTabs-${schoolId} .nav-link`).forEach(function(tabBtn) {
@@ -1557,6 +1606,11 @@
             return '#6c757d';
         }
 
+        function normalizeFacilityColor(value, fallback = '#198754') {
+            const color = String(value || '').trim();
+            return /^#([0-9a-fA-F]{6})$/.test(color) ? color : fallback;
+        }
+
         function appendRoomExitMarkers(roomDiv, hasSecondaryExit) {
             const exitSides = hasSecondaryExit ? ['left', 'right'] : ['right'];
 
@@ -1596,6 +1650,49 @@
             });
         }
 
+        function appendStairwayMarker(container, side, top, buildingWidth) {
+            if (!container) return;
+
+            const stairWrap = document.createElement('div');
+            stairWrap.style.position = 'absolute';
+            stairWrap.style.top = `${top}px`;
+            stairWrap.style.width = '34px';
+            stairWrap.style.height = '34px';
+            stairWrap.style.display = 'flex';
+            stairWrap.style.flexDirection = 'column';
+            stairWrap.style.alignItems = 'center';
+            stairWrap.style.justifyContent = 'center';
+            stairWrap.style.background = 'rgba(255,255,255,0.95)';
+            stairWrap.style.border = '1px solid #495057';
+            stairWrap.style.borderRadius = '4px';
+            stairWrap.style.boxShadow = '0 1px 2px rgba(0,0,0,0.15)';
+            stairWrap.style.pointerEvents = 'none';
+            stairWrap.style.zIndex = '2';
+
+            if (String(side).toLowerCase() === 'left') {
+                stairWrap.style.left = '6px';
+            } else {
+                stairWrap.style.left = `${Math.max(0, Number(buildingWidth || 0) - 40)}px`;
+            }
+
+            const stairIcon = document.createElement('i');
+            stairIcon.className = 'fas fa-stairs';
+            stairIcon.style.fontSize = '12px';
+            stairIcon.style.color = '#495057';
+
+            const stairLabel = document.createElement('div');
+            stairLabel.style.fontSize = '7px';
+            stairLabel.style.fontWeight = '700';
+            stairLabel.style.lineHeight = '1';
+            stairLabel.style.marginTop = '2px';
+            stairLabel.style.color = '#495057';
+            stairLabel.textContent = 'STAIR';
+
+            stairWrap.appendChild(stairIcon);
+            stairWrap.appendChild(stairLabel);
+            container.appendChild(stairWrap);
+        }
+
         async function initEvacuationMap(schoolId) {
             const canvasContainer = document.getElementById(`school-map-canvas-${schoolId}`);
             if (!canvasContainer) return;
@@ -1609,17 +1706,56 @@
             `;
 
             try {
-                const response = await fetch(`/fire-safety/school/${schoolId}/map-data`);
-                const school = await response.json();
+                const mapDataEndpoints = [
+                    `/fire-safety/school/${schoolId}/map-data`,
+                    `/fire-safety/schools/${schoolId}/map-data`
+                ];
+
+                let school = null;
+                let lastError = null;
+
+                for (const endpoint of mapDataEndpoints) {
+                    try {
+                        const response = await fetch(endpoint, {
+                            headers: {
+                                'Accept': 'application/json'
+                            }
+                        });
+
+                        if (!response.ok) {
+                            lastError = new Error(`Map data request failed (${response.status})`);
+                            continue;
+                        }
+
+                        const contentType = String(response.headers.get('content-type') || '').toLowerCase();
+                        if (!contentType.includes('application/json')) {
+                            lastError = new Error('Map data endpoint returned a non-JSON response.');
+                            continue;
+                        }
+
+                        school = await response.json();
+                        break;
+                    } catch (fetchError) {
+                        lastError = fetchError;
+                    }
+                }
+
+                if (!school || typeof school !== 'object') {
+                    throw lastError || new Error('Unable to load map data.');
+                }
+
                 mapDataArr[schoolId] = school;
 
                 // Sync facilities from shared facilities table + saved layout coordinates
-                const savedLayout = school.evacuation_map_layout || {};
+                const savedLayout = (school.evacuation_map_layout && typeof school.evacuation_map_layout === 'object')
+                    ? school.evacuation_map_layout
+                    : {};
                 const dbFacilities = Array.isArray(school.facilities) ? school.facilities : [];
                 school.facilities = dbFacilities.map((facility) => {
                     const layoutKey = `facility_${facility.id}`;
                     const layoutItem = savedLayout[layoutKey] || {};
                     const isSecondaryAssembly = String(facility.description || '').toLowerCase().includes('secondary assembly area');
+                    const defaultColor = facilityColorByType(facility.type);
                     return {
                         id: layoutKey,
                         db_id: facility.id,
@@ -1628,7 +1764,7 @@
                         description: facility.description || '',
                         condition: facility.condition || 'good',
                         remarks: facility.remarks || '',
-                        color: facilityColorByType(facility.type),
+                        color: normalizeFacilityColor(layoutItem.color || facility.color || defaultColor, defaultColor),
                         x: Number(layoutItem.x || (facility.type === 'assembly_area' ? (isSecondaryAssembly ? 760 : 420) : 300)),
                         y: Number(layoutItem.y || (facility.type === 'assembly_area' ? 300 : 300)),
                         width: Number(layoutItem.width || 200),
@@ -2126,7 +2262,6 @@
                 door: 'fa-door-open',
                 stairs: 'fa-stairs',
                 table: 'fa-table-list',
-                chair: 'fa-chair',
                 bell: 'fa-bell',
                 window: 'fa-window-maximize',
                 toilet: 'fa-toilet',
@@ -2201,6 +2336,10 @@
             const layoutItem = (savedLayout && facility.id) ? savedLayout[facility.id] : null;
             const facilityWidth = Number((layoutItem && layoutItem.width) || facility.width || 200);
             const facilityHeight = Number((layoutItem && layoutItem.height) || facility.height || 100);
+            const resolvedColor = normalizeFacilityColor(
+                (layoutItem && layoutItem.color) || facility.color,
+                facilityColorByType(facility.type)
+            );
 
             const facilityDiv = document.createElement('div');
             facilityDiv.className = 'map-element facility-element';
@@ -2214,14 +2353,14 @@
             facilityDiv.dataset.condition = facility.condition || 'good';
             facilityDiv.dataset.remarks = facility.remarks || '';
             facilityDiv.dataset.description = facility.description || '';
-            facilityDiv.dataset.color = facility.color;
+            facilityDiv.dataset.color = resolvedColor;
             facilityDiv.dataset.baseWidth = String(facilityWidth);
             facilityDiv.dataset.baseHeight = String(facilityHeight);
 
             facilityDiv.style.position = 'absolute';
             facilityDiv.style.width = `${facilityWidth}px`;
             facilityDiv.style.height = `${facilityHeight}px`;
-            facilityDiv.style.backgroundColor = facility.color;
+            facilityDiv.style.backgroundColor = resolvedColor;
             facilityDiv.style.left = (facility.x || 300) + 'px';
             facilityDiv.style.top = (facility.y || 300) + 'px';
             facilityDiv.textContent = facility.name;
@@ -2236,6 +2375,7 @@
                     description: facilityDiv.dataset.description || '',
                     condition: facilityDiv.dataset.condition || 'good',
                     remarks: facilityDiv.dataset.remarks || '',
+                    color: facilityDiv.dataset.color || '',
                 }, schoolId);
             };
 
@@ -2351,6 +2491,24 @@
             clampMapElementToCanvas(el, schoolId);
         }
 
+        function getRotatedBoundsOffsets(width, height, rotation) {
+            const w = Number(width) || 0;
+            const h = Number(height) || 0;
+            const normalized = ((Number(rotation) % 360) + 360) % 360;
+
+            if (normalized === 90) {
+                return { minX: -h, maxX: 0, minY: 0, maxY: w };
+            }
+            if (normalized === 180) {
+                return { minX: -w, maxX: 0, minY: -h, maxY: 0 };
+            }
+            if (normalized === 270) {
+                return { minX: 0, maxX: h, minY: -w, maxY: 0 };
+            }
+
+            return { minX: 0, maxX: w, minY: 0, maxY: h };
+        }
+
         function clampMapElementToCanvas(element, schoolId) {
             const canvas = document.getElementById(`school-map-canvas-${schoolId}`);
             if (!canvas) return;
@@ -2364,18 +2522,21 @@
                 ? parseFloat(element.dataset.baseHeight || element.style.height || 40)
                 : (isFacility ? parseFloat(element.dataset.baseHeight || element.style.height || 100) : parseFloat(element.dataset.baseHeight || 150));
             const rotation = parseInt(element.dataset.rotation || 0);
-            const isRotated = (rotation % 180 !== 0);
-            const w = isRotated ? bh : bw;
-            const h = isRotated ? bw : bh;
+            const offsets = getRotatedBoundsOffsets(bw, bh, rotation);
 
             const virtualW = parseFloat(canvas.style.width) || 2400;
             const virtualH = parseFloat(canvas.style.height) || 1400;
 
-            const maxLeft = Math.max(0, virtualW - w);
-            const maxTop = Math.max(0, virtualH - h);
+            const minLeft = -offsets.minX;
+            const maxLeft = virtualW - offsets.maxX;
+            const minTop = -offsets.minY;
+            const maxTop = virtualH - offsets.maxY;
 
-            const left = Math.min(Math.max(0, element.offsetLeft), maxLeft);
-            const top = Math.min(Math.max(0, element.offsetTop), maxTop);
+            const currentLeft = parseFloat(element.style.left || element.offsetLeft || 0);
+            const currentTop = parseFloat(element.style.top || element.offsetTop || 0);
+
+            const left = Math.min(Math.max(minLeft, currentLeft), Math.max(minLeft, maxLeft));
+            const top = Math.min(Math.max(minTop, currentTop), Math.max(minTop, maxTop));
 
             element.style.left = left + 'px';
             element.style.top = top + 'px';
@@ -2818,6 +2979,7 @@
                 const descInput = form.querySelector('[name="description"]');
                 const condInput = form.querySelector('[name="condition"]');
                 const remarksInput = form.querySelector('[name="remarks"]');
+                const colorInput = form.querySelector('[name="color"]');
                 const schoolIdInput = document.getElementById('addFacilitySchoolId');
 
                 const type = 'public/institutional';
@@ -2825,6 +2987,7 @@
                 const description = descInput ? descInput.value.trim() : "";
                 const condition = condInput ? condInput.value : 'good';
                 const remarks = remarksInput ? remarksInput.value.trim() : '';
+                const color = normalizeFacilityColor(colorInput ? colorInput.value : '', facilityColorByType(type));
                 const sId = schoolIdInput ? schoolIdInput.value : currentSchoolId;
 
                 if (!name) {
@@ -2852,6 +3015,7 @@
                         description,
                         condition,
                         remarks,
+                        color,
                     })
                 })
                 .then(async (response) => {
@@ -2869,7 +3033,7 @@
                         description: created.description || '',
                         condition: created.condition || 'good',
                         remarks: created.remarks || '',
-                        color: facilityColorByType(created.type),
+                        color,
                         x: 800,
                         y: 600,
                     };
@@ -2920,6 +3084,7 @@
             document.getElementById('editFacilityDesc').value = facility.description || '';
             document.getElementById('editFacilityCondition').value = facility.condition || 'good';
             document.getElementById('editFacilityRemarks').value = facility.remarks || '';
+            document.getElementById('editFacilityColor').value = normalizeFacilityColor(facility.color || '', facilityColorByType(facility.type));
 
             const isAssemblyArea = String(facility.type || '').toLowerCase() === 'assembly_area';
             document.getElementById('editFacilityDescWrap').style.display = isAssemblyArea ? 'none' : '';
@@ -2939,6 +3104,7 @@
             const type = el.dataset.facilityType || 'public/institutional';
             const condition = document.getElementById('editFacilityCondition').value || 'good';
             const remarks = document.getElementById('editFacilityRemarks').value || '';
+            const color = normalizeFacilityColor(document.getElementById('editFacilityColor').value || '', facilityColorByType(type));
 
             if (!name.trim()) {
                 Swal.fire('Required', 'Facility name is required.', 'warning');
@@ -2962,6 +3128,7 @@
                     description: desc,
                     condition,
                     remarks,
+                    color,
                 })
             })
             .then(async (response) => {
@@ -2975,8 +3142,8 @@
                 el.dataset.facilityType = type;
                 el.dataset.condition = condition;
                 el.dataset.remarks = remarks;
-                el.dataset.color = facilityColorByType(type);
-                el.style.backgroundColor = facilityColorByType(type);
+                el.dataset.color = color;
+                el.style.backgroundColor = color;
                 el.textContent = name;
 
                 bootstrap.Modal.getInstance(document.getElementById('editFacilityModal')).hide();

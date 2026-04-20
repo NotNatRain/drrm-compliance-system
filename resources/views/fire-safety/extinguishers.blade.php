@@ -816,13 +816,6 @@
                             </div>
                         </div>
 
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-4">
-                                <label class="form-label fw-bold small text-muted text-uppercase">Engineer's Last Inspection Date</label>
-                                <input type="date" class="form-control" name="engineer_last_inspection_date" id="updateRoomEngineerInspectionDate">
-                            </div>
-                        </div>
-
                         <div class="alert alert-warning d-none py-2 px-3 mb-4 small shadow-sm" id="roomTypeChangeWarning">
                             <i class="fas fa-exclamation-triangle me-2"></i>
                             Changing the room type will <strong>clear all extinguisher assignments</strong> for this room.
@@ -995,13 +988,6 @@
                             <div class="col-md-6">
                                 <label class="form-label fw-bold small text-muted text-uppercase">Calculated Priority</label>
                                 <input type="text" class="form-control bg-light" id="calculated_priority" readonly>
-                            </div>
-                        </div>
-
-                        <div class="row g-3 mb-4">
-                            <div class="col-md-6">
-                                <label class="form-label fw-bold small text-muted text-uppercase">Engineer's Last Inspection Date</label>
-                                <input type="date" class="form-control" name="engineer_last_inspection_date" id="addRoomEngineerInspectionDate">
                             </div>
                         </div>
 
@@ -1656,22 +1642,18 @@
                             <input type="text" class="form-control room-extra-name" placeholder="e.g., Science Lab">
                         </div>
                     </div>
-                    <div class="row g-3 mb-3">
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold small text-muted text-uppercase">Room Type *</label>
-                            <select class="form-select room-extra-type" required>
-                                ${getRoomTypeOptionsHtml()}
-                            </select>
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Room Type *</label>
+                                <select class="form-select room-extra-type" required>
+                                    ${getRoomTypeOptionsHtml()}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold small text-muted text-uppercase">Calculated Priority</label>
+                                <input type="text" class="form-control room-extra-priority" readonly>
+                            </div>
                         </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold small text-muted text-uppercase">Calculated Priority</label>
-                            <input type="text" class="form-control room-extra-priority" readonly>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label fw-bold small text-muted text-uppercase">Engineer's Last Inspection Date</label>
-                            <input type="date" class="form-control room-extra-engineer-date">
-                        </div>
-                    </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <div class="card bg-light border-0">
@@ -1934,7 +1916,6 @@
             resetField('input[name="room_code"]');
             resetField('input[name="room_name"]');
             resetField('#room_type_select');
-            resetField('input[name="engineer_last_inspection_date"]');
             resetField('#calculated_priority');
 
             const smokeRequired = document.getElementById('addRoomSmokeDetectorRequired');
@@ -2024,7 +2005,6 @@
                 room_code: getValue('input[name="room_code"]'),
                 room_name: getValue('input[name="room_name"]'),
                 room_type_config_id: getValue('#room_type_select'),
-                engineer_last_inspection_date: getValue('input[name="engineer_last_inspection_date"]'),
                 smoke_detector_required: smokeDetectorRequired,
                 has_smoke_detector: getValue('#addRoomSmokeDetector') || '0',
                 has_secondary_exit: hasSecondaryExit,
@@ -2049,7 +2029,6 @@
                     room_code: card.querySelector('.room-extra-code')?.value || '',
                     room_name: card.querySelector('.room-extra-name')?.value || '',
                     room_type_config_id: card.querySelector('.room-extra-type')?.value || '',
-                    engineer_last_inspection_date: card.querySelector('.room-extra-engineer-date')?.value || '',
                     smoke_detector_required: card.querySelector('.room-extra-smoke-required')?.checked ? '1' : '0',
                     has_smoke_detector: hasSmoke,
                     has_secondary_exit: card.querySelector('.room-extra-secondary-exit')?.checked ? '1' : '0',
@@ -3975,7 +3954,6 @@
                 document.getElementById('updateRoomName').value = data.room_name || '';
                 document.getElementById('updateRoomFloor').value = data.floor_no + " Floor";
                 document.getElementById('updateRoomRemarks').value = data.remarks || '';
-                document.getElementById('updateRoomEngineerInspectionDate').value = data.engineer_last_inspection_date || '';
 
                 // Populate room type
                 const updateTypeSelect = document.getElementById('updateRoomTypeSelect');

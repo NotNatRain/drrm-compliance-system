@@ -51,6 +51,24 @@
             text-transform: uppercase;
             font-size: 10px;
         }
+        thead {
+            display: table-header-group;
+        }
+        tr {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+        .print-page-break-row td {
+            border: 0 !important;
+            padding: 0 !important;
+            height: 0 !important;
+            font-size: 0 !important;
+            line-height: 0 !important;
+        }
+        .print-page-break-row {
+            page-break-after: always;
+            break-after: page;
+        }
         .status-cell {
             text-align: center;
             font-weight: bold;
@@ -101,6 +119,8 @@
         <button class="btn-print" style="background: #6c757d;" onclick="window.close()">Close</button>
     </div>
 
+    @php $printRowLimit = 18; @endphp
+
     <div class="header-container" style="position: relative; height: 80px; display: flex; align-items: center; margin-bottom: 10px;">
         <div style="position: absolute; left: 0; top: 0; display: flex; align-items: center;">
             <img src="{{ asset('images/Layer-0-1.png') }}" alt="Logo 1" style="height: 60px; margin-right: 10px;">
@@ -132,6 +152,7 @@
             <thead>
                 <tr>
                     <th>Extinguisher Code</th>
+                    <th>Building</th>
                     <th>Room Covered / Location</th>
                     <th>Status</th>
                     <th>Date Last Checked</th>
@@ -155,6 +176,9 @@
                     <tr>
                         <td><strong>{{ $ext->code }}</strong></td>
                         <td>
+                            {{ $ext->building ? trim(($ext->building->building_no ?: 'N/A') . ($ext->building->building_name ? ' (' . $ext->building->building_name . ')' : '')) : 'N/A' }}
+                        </td>
+                        <td>
                             {{ $ext->centerRoom ? $ext->centerRoom->room_name : 'N/A' }}
                             @php
                                 $otherRooms = $ext->coveredRooms->filter(fn($r) => $ext->centerRoom && $r->id !== $ext->centerRoom->id);
@@ -168,6 +192,9 @@
                         <td>{{ $ext->type }}</td>
                         <td>{{ $ext->remarks }} {{ $ext->notes }}</td>
                     </tr>
+                    @if(($loop->iteration % max(1, (int)$printRowLimit)) === 0 && !$loop->last)
+                        <tr class="print-page-break-row"><td colspan="7"></td></tr>
+                    @endif
                 @endforeach
 
                 @php
@@ -181,7 +208,9 @@
                 <tr style="background-color: #f7f7f7;">
                     <td><strong>Summary</strong></td>
                     <td>
-                        <strong>Existing / Needed:</strong> {{ $existing }} / {{ $needed }}<br>
+                        <strong>Existing / Needed:</strong> {{ $existing }} / {{ $needed }}
+                    </td>
+                    <td>
                         <strong>Passed / Needed:</strong> {{ $passed }} / {{ $needed }}
                     </td>
                     <td class="status-cell">{{ $summaryRemarks }}</td>
@@ -193,19 +222,24 @@
                     $maintenanceCount = $extinguishers->where('status', 'maintenance')->count();
                     $usedCount = $extinguishers->where('status', 'expired')->count();
                     $missingCount = $extinguishers->where('status', 'missing')->count();
+                    $purchaseCount = $extinguishers->filter(function($ext) {
+                        $status = strtolower((string) ($ext->status ?? ''));
+                        return in_array($status, ['purchase', 'for_purchase']);
+                    })->count();
                 @endphp
                 <tr style="background-color: #f0f4f7;">
                     <td><strong>Status Totals</strong></td>
+                    <td>—</td>
                     <td><strong>Active:</strong> {{ $activeCount }}</td>
                     <td><strong>For Preventive Maintenance:</strong> {{ $maintenanceCount }}</td>
                     <td><strong>Used:</strong> {{ $usedCount }}</td>
                     <td><strong>Missing:</strong> {{ $missingCount }}</td>
-                    <td>—</td>
+                    <td><strong>For Purchase:</strong> {{ $purchaseCount }}</td>
                 </tr>
 
                 @if($extinguishers->isEmpty())
                     <tr>
-                        <td colspan="6" style="text-align: center; padding: 20px;">No fire extinguishers recorded for this school.</td>
+                        <td colspan="7" style="text-align: center; padding: 20px;">No fire extinguishers recorded for this school.</td>
                     </tr>
                 @endif
             </tbody>
@@ -307,6 +341,9 @@
                     </td>
                     <td>{{ $room->remarks ?: '—' }}</td>
                 </tr>
+                @if((($index + 1) % max(1, (int)$printRowLimit)) === 0 && ($index + 1) < $rooms->count())
+                    <tr class="print-page-break-row"><td colspan="10"></td></tr>
+                @endif
             @empty
                 <tr>
                     <td colspan="10" style="text-align: center; padding: 20px;">No rooms recorded for this school.</td>

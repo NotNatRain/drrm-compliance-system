@@ -50,6 +50,28 @@
         th {
             background-color: #f2f2f2;
         }
+
+        thead {
+            display: table-header-group;
+        }
+
+        tr {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        .print-page-break-row td {
+            border: 0 !important;
+            padding: 0 !important;
+            height: 0 !important;
+            font-size: 0 !important;
+            line-height: 0 !important;
+        }
+
+        .print-page-break-row {
+            page-break-after: always;
+            break-after: page;
+        }
         .vertical-th {
             height: 140px;
             white-space: nowrap;
@@ -123,6 +145,8 @@
         <div class="info-item"><strong>Name of School DRRM Coordinator:</strong> {{ $school->school_drrm_coordinator }}</div>
     </div>
 
+    @php $printRowLimit = 18; @endphp
+
     <table>
         <thead>
             <tr>
@@ -195,11 +219,11 @@
                             // Map status to code
                             $code = match($status) {
                                 'purchase', 'for_purchase' => 'FP',
-                                'maintenance', 'refill' => 'FR',
+                                'maintenance', 'refill' => 'FPM',
                                 'decommissioned', 'broken' => 'DC',
                                 'missing' => 'MS',
-                                'expired' => 'FR',
-                                default => 'FR'
+                                'expired' => 'FPM',
+                                default => 'FPM'
                             };
                             $extinguisherIssues[] = $ext->code . ' ' . $code;
                         }
@@ -234,7 +258,7 @@
                     $alarmBg = '#e20707'; // Default Red (Missing)
                     $alarmContentParts = [];
                     $hasBroken = false;
-                    $hasMulti = false;
+                    $hasCovering = false;
                     $hasAlarm = false;
 
                     if ($alarms->count() > 0) {
@@ -242,13 +266,15 @@
                         foreach($alarms as $alarm) {
                             $status = strtolower($alarm->status ?? '');
                             $isFunctional = in_array($status, ['active', 'functional', 'ok', 'online']);
+                            $inPivot = $building->alarmSystemsMany->pluck('id')->contains($alarm->id);
+                            $inPrimary = (int) ($alarm->building_id ?? 0) === (int) $building->id;
 
                             if (!$isFunctional) {
                                 $hasBroken = true;
                             }
 
-                            if ($alarm->buildings->count() > 1) {
-                                $hasMulti = true;
+                            if ($inPivot && !$inPrimary) {
+                                $hasCovering = true;
                             }
 
                             $typeChar = 'O';
@@ -259,13 +285,13 @@
                                 $typeChar = strtoupper(substr($alarm->alarm_type, 0, 2));
                             }
 
-                            $alarmContentParts[] = $alarm->code . ' ' . $typeChar;
+                            $alarmContentParts[] = $alarm->code . ' ' . $typeChar . (($inPivot && !$inPrimary) ? ' (Covering)' : '');
                         }
 
                         if ($hasBroken) {
                             $alarmBg = '#add8e6'; // Blue (Existing but bad status)
-                        } elseif ($hasMulti) {
-                            $alarmBg = '#FFFF00'; // Yellow (Active + Multi)
+                        } elseif ($hasCovering) {
+                            $alarmBg = '#FFFF00'; // Yellow (Covered building)
                         } else {
                             $alarmBg = '#90EE90'; // Green (Active + Single)
                         }
@@ -308,6 +334,9 @@
                     <td class="center-text" style="padding: 4px; background-color: {{ $alarmBg }};">{{ $alarmContent }}</td>
                     <td class="center-text" style="padding: 4px;">{{ $building->description }}</td>
                 </tr>
+                @if(($loop->iteration % $printRowLimit) === 0 && !$loop->last)
+                    <tr class="print-page-break-row"><td colspan="13"></td></tr>
+                @endif
             @endforeach
         </tbody>
     </table>

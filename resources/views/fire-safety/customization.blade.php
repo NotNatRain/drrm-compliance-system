@@ -201,13 +201,11 @@
                                                         $manageUrl = route('dashboard', [
                                                             'tab' => 'schools',
                                                             'school_id' => $school->id,
-                                                            'highlight' => '1',
-                                                            'scroll' => '1',
+                                                            'highlight' => auth()->user()->role === 'admin' ? '1' : '0',
+                                                            'scroll' => auth()->user()->role === 'admin' ? '1' : '0',
                                                         ]);
                                                     @endphp
-                                                    <a href="{{ $manageUrl }}" class="btn btn-sm btn-outline-primary">
-                                                        <i class="fas fa-arrow-right me-1"></i> Manage
-                                                    </a>
+                                                    <a href="{{ $manageUrl }}" class="fw-semibold text-primary text-decoration-none">Manage</a>
                                                 </td>
                                             </tr>
                                             @endforeach

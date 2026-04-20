@@ -66,6 +66,9 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])->group(function () {
     Route::get('/dashboard', [FireSafetyController::class, 'dashboard'])->name('fire-safety.dashboard');
     Route::get('/alarm-systems', [FireSafetyController::class, 'alarmSystems'])->name('fire-safety.alarm-systems');
+    Route::get('/schools/{school}/extinguishers', [FireSafetyController::class, 'extinguishers'])->name('fire-safety.schools.extinguishers');
+    Route::get('/schools/{school}/buildings', [FireSafetyController::class, 'buildings'])->name('fire-safety.schools.buildings');
+    Route::get('/schools/{school}/evacuation-plans', [FireSafetyController::class, 'evacuationPlans'])->name('fire-safety.schools.evacuation-plans');
     Route::get('/extinguishers', [FireSafetyController::class, 'extinguishers'])->name('fire-safety.extinguishers');
     Route::get('/buildings', [FireSafetyController::class, 'buildings'])->name('fire-safety.buildings');
     Route::get('/evacuation-plans', [FireSafetyController::class, 'evacuationPlans'])->name('fire-safety.evacuation-plans');
@@ -77,9 +80,13 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     Route::get('/building/{buildingId}/has-plan', [FireSafetyController::class, 'checkBuildingPlan']);
     Route::get('/building/{buildingId}/evacuation-data', [FireSafetyController::class, 'getBuildingEvacuationData']);
     Route::get('/school/{schoolId}/map-data', [FireSafetyController::class, 'getSchoolMapData']);
+    Route::get('/schools/{schoolId}/map-data', [FireSafetyController::class, 'getSchoolMapData']);
     Route::post('/school/{schoolId}/map-save', [FireSafetyController::class, 'saveMapLayout']);
+    Route::post('/schools/{schoolId}/map-save', [FireSafetyController::class, 'saveMapLayout']);
     Route::post('/school/{schoolId}/decrement-gates', [FireSafetyController::class, 'decrementSchoolGates'])->name('fire-safety.school.decrement-gates');
+    Route::post('/schools/{schoolId}/decrement-gates', [FireSafetyController::class, 'decrementSchoolGates']);
     Route::post('/school/{schoolId}/map-notify', [FireSafetyController::class, 'notifyMapUpdate'])->name('fire-safety.map.notify');
+    Route::post('/schools/{schoolId}/map-notify', [FireSafetyController::class, 'notifyMapUpdate']);
     Route::post('/facilities', [FireSafetyController::class, 'storeSharedFacility'])->name('fire-safety.facilities.store');
     Route::put('/facilities/{facilityId}', [FireSafetyController::class, 'updateSharedFacility'])->name('fire-safety.facilities.update');
     Route::delete('/facilities/{facilityId}', [FireSafetyController::class, 'deleteSharedFacility'])->name('fire-safety.facilities.delete');

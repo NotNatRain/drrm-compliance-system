@@ -51,6 +51,28 @@
             text-transform: uppercase;
             font-size: 10px;
         }
+
+        thead {
+            display: table-header-group;
+        }
+
+        tr {
+            break-inside: avoid;
+            page-break-inside: avoid;
+        }
+
+        .print-page-break-row td {
+            border: 0 !important;
+            padding: 0 !important;
+            height: 0 !important;
+            font-size: 0 !important;
+            line-height: 0 !important;
+        }
+
+        .print-page-break-row {
+            page-break-after: always;
+            break-after: page;
+        }
         .status-cell {
             text-align: center;
             font-weight: bold;
@@ -113,6 +135,8 @@
         </div>
     </div>
 
+    @php $printRowLimit = 18; @endphp
+
     <table>
         <thead>
             <tr>
@@ -140,7 +164,7 @@
                                 return trim($b->building_no . ($b->building_name ? ' (' . $b->building_name . ')' : ''));
                             })->filter()->values();
                         @endphp
-                        {{ $primaryLabel }}@if($otherLabels->isNotEmpty()) ({{ $otherLabels->implode(', ') }})@endif
+                        Installed: {{ $primaryLabel }}@if($otherLabels->isNotEmpty())<br><small>Covering: {{ $otherLabels->implode(', ') }}</small>@endif
                     </td>
                     <td>{{ $alarm->alarm_type }}</td>
                     <td class="status-cell">{{ strtoupper(str_ireplace('broken', 'defective', $alarm->status)) }}</td>
@@ -148,6 +172,9 @@
                     <td>{{ $alarm->next_test_due ? \Carbon\Carbon::parse($alarm->next_test_due)->format('M d, Y') : 'N/A' }}</td>
                     <td>{{ $alarm->notes }}</td>
                 </tr>
+                    @if(($loop->iteration % $printRowLimit) === 0 && !$loop->last)
+                        <tr class="print-page-break-row"><td colspan="7"></td></tr>
+                    @endif
             @endforeach
             @if($alarms->isEmpty())
                 <tr>
