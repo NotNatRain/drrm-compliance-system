@@ -44,7 +44,10 @@ class FireSafetyController extends Controller
             'fireSafetyBuildings.alarmSystemsMany',
             'fireSafetyBuildings.fireExtinguishers.coveredRooms',
             'fireSafetyBuildings.evacuationPlan'
-        ])->withCount(['fireSafetyExtinguishers as extinguishers_count', 'fireSafetyAlarms as alarm_systems_count', 'fireSafetyBuildings as buildings_count', 'fireSafetyEvacuationPlans as evacuation_plans_count']);
+        ])->withCount(['fireSafetyExtinguishers as extinguishers_count', 'fireSafetyAlarms as alarm_systems_count', 'fireSafetyBuildings as buildings_count', 'fireSafetyEvacuationPlans as evacuation_plans_count'])
+            ->whereHas('specifics', function ($q) {
+                $q->where('module', 'fire_safety')->where('key', 'original_fire_safety_id');
+            });
 
         if (auth()->user()->role !== 'admin') {
             $query->where('id', auth()->user()->school_id);

@@ -9,9 +9,11 @@ use App\Models\School;
 use App\Models\SchoolSpecificsInformation;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use App\Services\SchoolPermanentDeletionService;
 
@@ -298,7 +300,8 @@ class DashboardController extends Controller
             'typhoon_flood' => $school->specifics->where('module', 'typhoon_flood')->where('key', 'original_evacuation_center_id')->isNotEmpty(),
             'incident_checklist' => $school->specifics->where('module', 'incident')->where('key', 'original_incident_school_id')->isNotEmpty(),
             'comprehensive_school_safety' => $school->specifics->where('module', 'comprehensive')->where('key', 'original_cmpr_school_id')->isNotEmpty(),
-            'hazard_mapping' => $school->specifics->where('module', 'hazard_mapping')->isNotEmpty(),
+            // Hazard Mapping is now open once user has module access.
+            'hazard_mapping' => true,
             default => false,
         };
 
@@ -925,7 +928,11 @@ class DashboardController extends Controller
     public function storeAnnouncement(Request $request)
     {
         if (Auth::user()->role !== 'admin') {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+
+            abort(403, 'Unauthorized');
         }
 
         $validator = Validator::make($request->all(), [
@@ -933,30 +940,55 @@ class DashboardController extends Controller
             'when' => 'required|date',
             'where' => 'required|string|max:255',
             'why' => 'required|string',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // 2MB max (current runtime safe ceiling)
+        ], [
+            'image.required' => 'Please select an image file.',
+            'image.max' => 'Image is too large. Use an image 2MB or smaller.',
+            'image.image' => 'The uploaded file must be an image.',
+            'image.mimes' => 'Allowed image formats: jpeg, png, jpg, gif.',
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+            }
+
+            return redirect()->back()->with('error', $validator->errors()->first());
         }
 
         try {
             // Check if there's an existing active announcement and deactivate it
 
+            $validated = $validator->validated();
             $imagePath = $request->file('image')->store('announcements', 'public');
 
+            $normalizedWhen = Carbon::parse((string) $validated['when'])->format('Y-m-d H:i:s');
+
             $announcement = Announcement::create([
-                'what' => $request->what,
-                'when' => $request->when,
-                'where' => $request->where,
-                'why' => $request->why,
+                'what' => $validated['what'],
+                'when' => $normalizedWhen,
+                'where' => $validated['where'],
+                'why' => $validated['why'],
                 'image_path' => $imagePath,
                 'is_active' => true,
             ]);
 
-            return response()->json(['success' => true, 'message' => 'Announcement posted successfully!', 'announcement' => $announcement]);
+            if ($request->expectsJson()) {
+                return response()->json(['success' => true, 'message' => 'Announcement posted successfully!', 'announcement' => $announcement]);
+            }
+
+            return redirect()->back()->with('success', 'Announcement posted successfully!');
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Failed to save announcement: ' . $e->getMessage()], 500);
+            Log::error('Dashboard announcement posting failed', [
+                'user_id' => Auth::id(),
+                'message' => $e->getMessage(),
+            ]);
+
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Failed to save announcement: ' . $e->getMessage()], 500);
+            }
+
+            return redirect()->back()->with('error', 'Failed to save announcement: ' . $e->getMessage());
         }
     }
 

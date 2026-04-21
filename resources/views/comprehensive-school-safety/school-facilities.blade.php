@@ -227,7 +227,7 @@
 </div>
 
 <div class="mb-3">
-    <a href="{{ route('hazard-mapping.dashboard') }}" class="btn w-100 text-white fw-bold py-3 js-module-link" data-module="hazard_mapping" data-school-id="{{ $school->id }}" style="background: linear-gradient(135deg, #0D7377 0%, #14a3a8 100%); border: none;">
+    <a href="{{ route('hazard-mapping.dashboard') }}" class="btn w-100 text-white fw-bold py-3" style="background: linear-gradient(135deg, #0D7377 0%, #14a3a8 100%); border: none;">
         <i class="fas fa-map-marked-alt me-2"></i> To see passageway and detailed safety hazards go to Hazard Mapping Compliance System
     </a>
 </div>
@@ -303,6 +303,21 @@
                             <input type="date" class="form-control" name="observation_date" value="{{ now()->toDateString() }}" required>
                         </div>
 
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Floor Number</label>
+                            <select class="form-select" name="floor_number" id="summaryFindingFloorNumber">
+                                <option value="">-- Select floor --</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Room</label>
+                            <select class="form-select" name="room_code" id="summaryFindingRoomCode">
+                                <option value="">-- Select room --</option>
+                            </select>
+                            <div class="form-text">Use room list from Fire Safety records for this building.</div>
+                        </div>
+
                         <div class="col-12">
                             <label class="form-label fw-bold">Description *</label>
                             <textarea class="form-control" name="description" rows="3" placeholder="Describe the finding in detail" required></textarea>
@@ -311,6 +326,33 @@
                         <div class="col-12">
                             <label class="form-label fw-bold">Remarks</label>
                             <textarea class="form-control" name="remarks" rows="2" placeholder="Additional info / remarks"></textarea>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-bold mb-2">Room Inside Information (for Hazard Mapping)</label>
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <input type="number" min="0" class="form-control" name="chairs_count" placeholder="No. of Chairs">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="number" min="0" class="form-control" name="tables_count" placeholder="No. of Tables">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="number" min="0" class="form-control" name="tv_count" placeholder="No. of TVs">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="number" min="0" class="form-control" name="electric_fan_count" placeholder="No. of Electric Fans">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="number" min="0" class="form-control" name="ceiling_fan_count" placeholder="No. of Ceiling Fans">
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="number" min="0" class="form-control" name="water_dispenser_count" placeholder="No. of Water Dispensers">
+                                </div>
+                                <div class="col-md-12">
+                                    <input type="text" class="form-control" name="window_type" placeholder="Window Type (e.g., Jalousie, Sliding, Awning)">
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -671,6 +713,21 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 @php
+    $buildingFloorPayload = ($fireSafetyBuildings ?? collect())->mapWithKeys(function ($building) {
+        $maxFloor = max(1, (int) ($building->floors ?? 1));
+        return [(string) $building->id => range(1, $maxFloor)];
+    });
+
+    $roomLookupPayload = ($roomsByBuilding ?? collect())->map(function ($rows) {
+        return $rows->map(function ($room) {
+            return [
+                'code' => (string) ($room->room_code ?? ''),
+                'name' => (string) ($room->room_name ?? ''),
+                'floor_no' => (int) ($room->floor_no ?? 1),
+            ];
+        })->values();
+    });
+
     $findingsByBuildingPayload = ($findingsByBuilding ?? collect())->map(function ($rows) use ($school) {
         return $rows->map(function ($f) use ($school) {
             return [
@@ -679,6 +736,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 'concern_type' => $f->concern_type,
                 'priority' => strtoupper((string) $f->priority),
                 'observation_date' => optional($f->observation_date)->format('M d, Y') ?? $f->observation_date,
+                'floor_number' => $f->floor_number,
+                'room_code' => $f->room_code,
+                'chairs_count' => (int) ($f->chairs_count ?? 0),
+                'tables_count' => (int) ($f->tables_count ?? 0),
+                'tv_count' => (int) ($f->tv_count ?? 0),
+                'electric_fan_count' => (int) ($f->electric_fan_count ?? 0),
+                'ceiling_fan_count' => (int) ($f->ceiling_fan_count ?? 0),
+                'water_dispenser_count' => (int) ($f->water_dispenser_count ?? 0),
+                'window_type' => $f->window_type,
                 'description' => $f->description,
                 'remarks' => $f->remarks,
                 'delete_url' => route('comprehensive-school-safety.school.summary-findings.destroy', [$school->id, $f->id]),
@@ -696,8 +762,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const findingsContainer = document.getElementById('existingFindingsContainer');
     const concernCategoryInput = document.getElementById('concernCategoryInput');
     const concernTypeInput = document.getElementById('concernTypeInput');
+    const floorNumberInput = document.getElementById('summaryFindingFloorNumber');
+    const roomCodeInput = document.getElementById('summaryFindingRoomCode');
     const otherConcernCategoryInput = document.getElementById('otherConcernCategoryInput');
     const otherConcernTypeInput = document.getElementById('otherConcernTypeInput');
+    const roomLookup = @json($roomLookupPayload);
+    const buildingFloors = @json($buildingFloorPayload);
 
     function toggleOtherField(selectElement, inputElement) {
         if (!selectElement || !inputElement) {
@@ -714,6 +784,56 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     const findingsByBuilding = @json($findingsByBuildingPayload);
+
+    function populateFloorOptions(buildingId, selectedFloor = '') {
+        if (!floorNumberInput) {
+            return;
+        }
+
+        const floors = buildingFloors[String(buildingId)] || [1];
+        floorNumberInput.innerHTML = '<option value="">-- Select floor --</option>';
+        floors.forEach((floorNo) => {
+            const option = document.createElement('option');
+            option.value = String(floorNo);
+            option.textContent = floorNo === 1 ? 'Ground Floor' : `Floor ${floorNo}`;
+            if (String(selectedFloor) === String(floorNo)) {
+                option.selected = true;
+            }
+            floorNumberInput.appendChild(option);
+        });
+    }
+
+    function populateRoomOptions(buildingId, selectedFloor = '', selectedRoomCode = '') {
+        if (!roomCodeInput) {
+            return;
+        }
+
+        const floor = selectedFloor ? parseInt(selectedFloor, 10) : null;
+        const rows = (roomLookup[String(buildingId)] || []).filter((room) => {
+            if (!floor) {
+                return true;
+            }
+            return parseInt(room.floor_no || 1, 10) === floor;
+        });
+
+        roomCodeInput.innerHTML = '<option value="">-- Select room --</option>';
+        rows.forEach((room) => {
+            const option = document.createElement('option');
+            option.value = room.code || '';
+            option.textContent = room.code ? `${room.code} - ${room.name || 'Room'}` : (room.name || 'Room');
+            if (String(selectedRoomCode || '').toUpperCase() === String(room.code || '').toUpperCase()) {
+                option.selected = true;
+            }
+            roomCodeInput.appendChild(option);
+        });
+    }
+
+    if (floorNumberInput) {
+        floorNumberInput.addEventListener('change', function () {
+            const buildingId = buildingIdField ? buildingIdField.value : '';
+            populateRoomOptions(buildingId, this.value, roomCodeInput ? roomCodeInput.value : '');
+        });
+    }
 
     if (concernCategoryInput) {
         concernCategoryInput.addEventListener('change', function () {
@@ -748,12 +868,24 @@ document.addEventListener('DOMContentLoaded', function () {
         findingsContainer.innerHTML = rows.map((row) => {
             const badge = findingPriorityBadge(row.priority);
             const remarks = row.remarks ? `<div class="small mt-1"><strong>Remarks:</strong> ${row.remarks}</div>` : '';
+            const placement = [
+                row.floor_number ? `Floor ${row.floor_number}` : '',
+                row.room_code ? `Room ${row.room_code}` : ''
+            ].filter(Boolean).join(' | ');
+            const insideInfo = `
+                <div class="small mt-2 text-muted">
+                    Chairs: ${row.chairs_count || 0}, Tables: ${row.tables_count || 0}, TV: ${row.tv_count || 0},
+                    Electric Fans: ${row.electric_fan_count || 0}, Ceiling Fans: ${row.ceiling_fan_count || 0},
+                    Water Dispensers: ${row.water_dispenser_count || 0}${row.window_type ? ', Window: ' + row.window_type : ''}
+                </div>
+            `;
             return `
                 <div class="border rounded bg-white p-3 mb-2">
                     <div class="d-flex justify-content-between align-items-start gap-2">
                         <div>
                             <div class="fw-bold">${row.concern_category} - ${row.concern_type}</div>
                             <div class="small text-muted">Observed: ${row.observation_date}</div>
+                            ${placement ? `<div class="small text-muted">${placement}</div>` : ''}
                         </div>
                         <div class="d-flex align-items-center gap-2">
                             <span class="badge bg-${badge}">${row.priority}</span>
@@ -765,6 +897,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         </div>
                     </div>
                     <div class="small mt-2">${row.description}</div>
+                    ${insideInfo}
                     ${remarks}
                 </div>
             `;
@@ -783,6 +916,9 @@ document.addEventListener('DOMContentLoaded', function () {
             if (buildingIdField) {
                 buildingIdField.value = buildingId;
             }
+
+            populateFloorOptions(buildingId);
+            populateRoomOptions(buildingId);
 
             if (concernCategoryInput) {
                 concernCategoryInput.value = '';

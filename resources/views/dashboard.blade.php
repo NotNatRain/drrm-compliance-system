@@ -268,6 +268,20 @@
         </div>
     @endif
 
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+            <i class="fas fa-check-circle me-1"></i> {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            <i class="fas fa-triangle-exclamation me-1"></i> {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     @if($announcements->count() > 0)
         {{-- ... (Rest of Carousel remains same) --}}
         <div id="announcementCarousel" class="carousel slide announcement-banner mb-5" data-bs-ride="carousel" data-bs-interval="5000">
@@ -432,8 +446,8 @@
             <!-- Hazard Mapping -->
             <div class="col-md-4 mb-4">
                 @php $canAccessHazard = $isAdmin || in_array('hazard_mapping', $modules); @endphp
-                <a href="#" class="text-decoration-none module-card-link"
-                   data-module="hazard_mapping" data-can-access="{{ $canAccessHazard ? '1' : '0' }}" data-theme-color="#0D7377" data-under-development="1">
+                     <a href="{{ route('hazard-mapping.dashboard') }}" class="text-decoration-none module-card-link"
+                         data-module="hazard_mapping" data-can-access="{{ $canAccessHazard ? '1' : '0' }}" data-theme-color="#0D7377">
                     <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #0D7377;">
                         <div class="card-body text-center p-5">
                             <div class="mb-4">
@@ -1210,7 +1224,7 @@
                 <h5 class="modal-title" id="announceModalLabel"><i class="fas fa-bullhorn me-2"></i> Create System Announcement</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="announceForm" enctype="multipart/form-data">
+            <form id="announceForm" method="POST" action="{{ route('announcements.store', [], false) }}" enctype="multipart/form-data">
                 @csrf
                 <div class="modal-body">
                     <div class="row g-3">
@@ -1232,7 +1246,7 @@
                         </div>
                         <div class="col-12">
                             <label class="form-label fw-bold">Upload Poster/Flyer (Panoramic/Widescreen 16:9 recommended)</label>
-                            <p class="text-info small mb-2"><i class="fas fa-info-circle me-1"></i> Note: Uploading an image should've be in a landscape form for best results.</p>
+                            <p class="text-info small mb-2"><i class="fas fa-info-circle me-1"></i> Note: Upload a landscape image for best results (maximum file size: 2MB).</p>
                             <input type="file" name="image" class="form-control" accept="image/*" required onchange="previewImage(this)">
                             <div id="imagePreview" class="mt-3 d-none">
                                 <p class="small text-muted mb-2">Image Preview:</p>
@@ -1418,8 +1432,6 @@
         const links = document.querySelectorAll('a.module-card-link[data-module]');
         const modalEl = document.getElementById('noModuleAccessModal');
         const modal = modalEl ? bootstrap.Modal.getOrCreateInstance(modalEl) : null;
-        const hazardComingSoonModalEl = document.getElementById('hazardModuleComingSoonModal');
-        const hazardComingSoonModal = hazardComingSoonModalEl ? bootstrap.Modal.getOrCreateInstance(hazardComingSoonModalEl) : null;
         const headerEl = document.getElementById('noModuleAccessModalHeader');
         const closeBtn = document.getElementById('noModuleAccessCloseBtn');
 
@@ -1431,12 +1443,6 @@
 
         links.forEach(a => {
             a.addEventListener('click', function (e) {
-                if (this.getAttribute('data-under-development') === '1') {
-                    e.preventDefault();
-                    if (hazardComingSoonModal) hazardComingSoonModal.show();
-                    return;
-                }
-
                 const canAccess = this.getAttribute('data-can-access') === '1';
                 if (canAccess) return;
                 e.preventDefault();
@@ -1449,8 +1455,16 @@
     function previewImage(input) {
         const preview = document.getElementById('imagePreview');
         const previewImg = document.getElementById('previewImg');
+        const maxBytes = 2 * 1024 * 1024; // 2MB
 
         if (input.files && input.files[0]) {
+            if (input.files[0].size > maxBytes) {
+                input.value = '';
+                preview.classList.add('d-none');
+                Swal.fire('File Too Large', 'Please upload an image that is 2MB or smaller.', 'warning');
+                return;
+            }
+
             const reader = new FileReader();
             reader.onload = function(e) {
                 previewImg.src = e.target.result;
@@ -1460,45 +1474,27 @@
         }
     }
 
-    document.getElementById('announceForm').addEventListener('submit', function(e) {
-        e.preventDefault();
+    document.addEventListener('DOMContentLoaded', function () {
+        const announceForm = document.getElementById('announceForm');
+        if (!announceForm) {
+            return;
+        }
 
-        const formData = new FormData(this);
-        const submitBtn = document.getElementById('submitAnnounce');
+        announceForm.addEventListener('submit', function (event) {
+            const fileInput = announceForm.querySelector('input[name="image"]');
+            const submitBtn = document.getElementById('submitAnnounce');
+            const maxBytes = 2 * 1024 * 1024; // 2MB
 
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Posting...';
-
-        fetch("{{ route('announcements.store') }}", {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            if (fileInput && fileInput.files && fileInput.files[0] && fileInput.files[0].size > maxBytes) {
+                event.preventDefault();
+                Swal.fire('File Too Large', 'Please upload an image that is 2MB or smaller.', 'warning');
+                return;
             }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Posted!',
-                    text: data.message,
-                    timer: 2000,
-                    showConfirmButton: false
-                }).then(() => {
-                    location.reload();
-                });
-            } else {
-                Swal.fire('Error', data.message, 'error');
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i> Post Announcement';
+
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Posting...';
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            Swal.fire('Error', 'Something went wrong!', 'error');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fas fa-paper-plane me-2"></i> Post Announcement';
         });
     });
 

@@ -1326,6 +1326,12 @@ class ComprehensiveSchoolSafetyController extends Controller
     {
         $school = $this->findSchoolOrAbortForUser((int) $schoolId);
         $fireSafetyBuildings = $school->buildings()->latest()->get();
+        $roomsByBuilding = $school->rooms()
+            ->orderBy('building_id')
+            ->orderByRaw('COALESCE(floor_no, 1)')
+            ->orderBy('room_code')
+            ->get()
+            ->groupBy('building_id');
         $fireSafetyPlan = $school->schoolEvacuationPlan;
         $facilities = $school->facilities()->latest()->get();
         $summaryFindings = ComprehensiveSummaryFinding::query()
@@ -1398,6 +1404,7 @@ class ComprehensiveSchoolSafetyController extends Controller
             'fireSafetyPlan',
             'assessmentSummary',
             'riskRegister',
+            'roomsByBuilding',
             'facilities',
             'summaryFindings',
             'findingsByBuilding',
@@ -1410,6 +1417,10 @@ class ComprehensiveSchoolSafetyController extends Controller
     {
         $school = $this->findSchoolOrAbortForUser((int) $schoolId);
 
+        $hasFloorNumber = Schema::hasColumn('cmpr_schl_sfty_sumFindings', 'floor_number');
+        $hasRoomCode = Schema::hasColumn('cmpr_schl_sfty_sumFindings', 'room_code');
+        $hasInsideDetails = Schema::hasColumn('cmpr_schl_sfty_sumFindings', 'chairs_count');
+
         $validated = $request->validate([
             'building_id' => ['required', 'integer', 'exists:firesafety_buildings,id'],
             'concern_category' => ['required', 'string', 'max:255'],
@@ -1420,6 +1431,15 @@ class ComprehensiveSchoolSafetyController extends Controller
             'priority' => ['required', 'string', 'in:high,medium,low'],
             'observation_date' => ['required', 'date'],
             'remarks' => ['nullable', 'string'],
+            'floor_number' => ['nullable', 'integer', 'min:1', 'max:50'],
+            'room_code' => ['nullable', 'string', 'max:100'],
+            'chairs_count' => ['nullable', 'integer', 'min:0', 'max:5000'],
+            'tables_count' => ['nullable', 'integer', 'min:0', 'max:5000'],
+            'tv_count' => ['nullable', 'integer', 'min:0', 'max:500'],
+            'electric_fan_count' => ['nullable', 'integer', 'min:0', 'max:2000'],
+            'ceiling_fan_count' => ['nullable', 'integer', 'min:0', 'max:2000'],
+            'water_dispenser_count' => ['nullable', 'integer', 'min:0', 'max:500'],
+            'window_type' => ['nullable', 'string', 'max:255'],
         ]);
 
         $building = $school->buildings()->where('id', (int) $validated['building_id'])->first();
@@ -1439,7 +1459,7 @@ class ComprehensiveSchoolSafetyController extends Controller
             $concernType = trim((string) $validated['other_concern_type']);
         }
 
-        $finding = ComprehensiveSummaryFinding::create([
+        $payload = [
             'school_id' => $school->id,
             'building_id' => $building->id,
             'concern_category' => $category,
@@ -1448,11 +1468,32 @@ class ComprehensiveSchoolSafetyController extends Controller
             'priority' => strtolower((string) $validated['priority']),
             'observation_date' => $validated['observation_date'],
             'remarks' => $validated['remarks'] ?? null,
-        ]);
+        ];
+
+        if ($hasFloorNumber) {
+            $payload['floor_number'] = !empty($validated['floor_number']) ? (int) $validated['floor_number'] : null;
+        }
+
+        if ($hasRoomCode) {
+            $payload['room_code'] = !empty($validated['room_code']) ? trim((string) $validated['room_code']) : null;
+        }
+
+        if ($hasInsideDetails) {
+            $payload['chairs_count'] = (int) ($validated['chairs_count'] ?? 0);
+            $payload['tables_count'] = (int) ($validated['tables_count'] ?? 0);
+            $payload['tv_count'] = (int) ($validated['tv_count'] ?? 0);
+            $payload['electric_fan_count'] = (int) ($validated['electric_fan_count'] ?? 0);
+            $payload['ceiling_fan_count'] = (int) ($validated['ceiling_fan_count'] ?? 0);
+            $payload['water_dispenser_count'] = (int) ($validated['water_dispenser_count'] ?? 0);
+            $payload['window_type'] = !empty($validated['window_type']) ? trim((string) $validated['window_type']) : null;
+        }
+
+        $finding = ComprehensiveSummaryFinding::create($payload);
 
         ActivityLog::log('comprehensive_school_safety', 'Added summary finding for ' . ($building->building_name ?? ('Building ' . $building->building_no)), [
             'school_id' => $school->id,
-            'notes' => 'Category: ' . $finding->concern_category . ', Type: ' . $finding->concern_type . ', Priority: ' . strtoupper((string) $finding->priority),
+            'notes' => 'Category: ' . $finding->concern_category . ', Type: ' . $finding->concern_type . ', Priority: ' . strtoupper((string) $finding->priority) .
+                (!empty($finding->room_code) ? (', Room: ' . $finding->room_code) : ''),
         ]);
 
         return redirect()

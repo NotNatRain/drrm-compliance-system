@@ -15,6 +15,13 @@ class ComprehensiveSummaryFinding extends Model
 
     protected $casts = [
         'observation_date' => 'date',
+        'floor_number' => 'integer',
+        'chairs_count' => 'integer',
+        'tables_count' => 'integer',
+        'tv_count' => 'integer',
+        'electric_fan_count' => 'integer',
+        'ceiling_fan_count' => 'integer',
+        'water_dispenser_count' => 'integer',
     ];
 
     public function school()
