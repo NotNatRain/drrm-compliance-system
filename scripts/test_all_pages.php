@@ -204,7 +204,7 @@ try {
     $tfSchools = DB::table('schools')->where('has_typhoon_flood', true)->count();
     $incSchools = DB::table('schools')->where('has_incident_checklist', true)->count();
     $compSchools = DB::table('schools')->where('has_comprehensive', true)->count();
-    
+
     echo "✓ Schools registered: $schoolCount total\n";
     echo "  - Fire Safety: $fsSchools schools\n";
     echo "  - Typhoon/Flood: $tfSchools schools\n";
@@ -247,7 +247,7 @@ $viewsPath = resource_path('views');
 if (is_dir($viewsPath)) {
     $viewCount = count(glob("$viewsPath/**/*.blade.php", GLOB_RECURSIVE));
     echo "✓ Views directory OK: $viewCount blade templates\n";
-    
+
     // Check specific critical views
     $criticalViews = [
         'dashboard.blade.php',
@@ -255,7 +255,7 @@ if (is_dir($viewsPath)) {
         'typhoon/dashboard.blade.php',
         'incident/dashboard.blade.php'
     ];
-    
+
     foreach ($criticalViews as $view) {
         $viewPath = "$viewsPath/$view";
         if (file_exists($viewPath)) {
@@ -293,17 +293,17 @@ try {
     $appUrl = config('app.url');
     $appName = config('app.name');
     $appEnv = config('app.env');
-    
+
     echo "✓ App configured:\n";
     echo "  - Name: $appName\n";
     echo "  - URL: $appUrl\n";
     echo "  - Environment: $appEnv\n";
-    
+
     if ($appEnv === 'production') {
         echo "  ⚠ Running in PRODUCTION mode\n";
         $results['warnings'][] = 'Running in production environment';
     }
-    
+
     $results['passed'][] = 'Application Configuration';
 } catch (\Exception $e) {
     echo "✗ Configuration error: " . $e->getMessage() . "\n";
