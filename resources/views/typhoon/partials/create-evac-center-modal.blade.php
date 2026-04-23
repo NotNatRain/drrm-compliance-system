@@ -68,8 +68,6 @@
                             <select name="usage_status" class="form-select" required>
                                 <option value="cleared">Cleared</option>
                                 <option value="occupied">Occupied</option>
-                                <option value="full">Full</option>
-                                <option value="decamp">Decamp</option>
                             </select>
                         </div>
                         <div class="col-md-12">

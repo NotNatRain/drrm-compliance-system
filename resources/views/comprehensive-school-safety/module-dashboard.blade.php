@@ -76,16 +76,7 @@
     <div class="csss-card p-5 text-center">
         <i class="fas fa-inbox" style="font-size: 3rem; color: #ccc; margin-bottom: 1rem;"></i>
         <h5 class="csss-muted">No schools registered in this module yet</h5>
-        <p class="csss-muted mb-3">Add schools on <strong>DRRM Main Dashboard → Schools</strong>, then register them here to use Comprehensive School Safety.</p>
-        @if($isAdminView && ($directorySchoolsForComprehensiveRegistration ?? collect())->isNotEmpty())
-            <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#registerSchoolFromDirectoryModal">
-                <i class="fas fa-link me-1"></i> Register school
-            </button>
-        @elseif($isAdminView && ($stats['directory_total'] ?? 0) === 0)
-            <p class="small text-muted mb-0">There are no schools in the main directory yet.</p>
-        @elseif($isAdminView)
-            <p class="small text-muted mb-0">Every directory school is already registered for this module.</p>
-        @endif
+        <p class="csss-muted mb-0">Schools now appear here automatically after they are created in the main directory.</p>
     </div>
 @else
     <div class="row g-3" id="schoolsContainer">
@@ -136,22 +127,6 @@
             </div>
         @endforeach
 
-        @if($isAdminView && ($directorySchoolsForComprehensiveRegistration ?? collect())->isNotEmpty())
-        <div class="col-md-6 col-lg-4">
-            <div class="csss-card p-4 h-100 d-flex flex-column justify-content-center align-items-center text-center school-card-item"
-                 id="addSchoolCard"
-                 style="cursor: pointer; border: 2px dashed var(--csss-border);">
-                <div style="width: 72px; height: 72px; border-radius: 16px; background: linear-gradient(135deg, var(--csss-primary) 0%, var(--csss-primary-soft) 100%); display: flex; align-items: center; justify-content: center;" class="mb-3">
-                    <i class="fas fa-link text-white" style="font-size: 1.75rem;"></i>
-                </div>
-                <h5 class="fw-bold mb-1">Register another school</h5>
-                <p class="csss-muted mb-3">Choose a school from the main DRRM directory that is not yet in this module.</p>
-                <button type="button" class="btn btn-dark w-100 js-open-register-from-directory" data-bs-toggle="modal" data-bs-target="#registerSchoolFromDirectoryModal">
-                    <i class="fas fa-school me-1"></i> Register school
-                </button>
-            </div>
-        </div>
-        @endif
     </div>
 @endif
 
@@ -167,24 +142,6 @@ document.querySelectorAll('.school-card-item').forEach(card => {
     });
 });
 
-const addSchoolCard = document.getElementById('addSchoolCard');
-if (addSchoolCard) {
-    addSchoolCard.addEventListener('click', function(ev) {
-        if (ev.target.closest('.js-open-register-from-directory')) {
-            return;
-        }
-        ev.preventDefault();
-        if (typeof bootstrap === 'undefined') return;
-        const m = document.getElementById('registerSchoolFromDirectoryModal');
-        if (m) new bootstrap.Modal(m).show();
-    });
-}
-
-document.querySelectorAll('.js-open-register-from-directory').forEach(button => {
-    button.addEventListener('click', function(event) {
-        event.stopPropagation();
-    });
-});
 </script>
 
 @endsection

@@ -303,18 +303,17 @@
             <i class="fas fa-boxes-stacked"></i> Storage
         </a>
 
+{{--
         <a class="csss-menu-link {{ $activeMenu === 'students' ? 'active' : '' }}"
            href="{{ $selectedSchool ? route('comprehensive-school-safety.school.students', $selectedSchool->id) : route('comprehensive-school-safety.dashboard') }}">
             <i class="fas fa-users"></i> Students
         </a>
+--}}
 
         @if($isAdmin)
             <div class="mt-auto pt-3 border-top border-secondary-subtle">
                 <button type="button" class="csss-menu-link w-100" data-bs-toggle="modal" data-bs-target="#switchSchoolModal">
                     <i class="fas fa-school"></i> Switch School
-                </button>
-                <button type="button" class="csss-menu-link w-100 mt-2 js-open-register-from-directory" data-bs-toggle="modal" data-bs-target="#registerSchoolFromDirectoryModal">
-                    <i class="fas fa-plus-circle"></i> Add School
                 </button>
             </div>
         @endif
@@ -372,90 +371,6 @@
 </div>
 
 @if($isAdmin)
-    <div class="modal fade" id="registerSchoolFromDirectoryModal" tabindex="-1" aria-labelledby="registerSchoolFromDirectoryModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content" style="border-radius: 16px; border: 1px solid var(--csss-border);">
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title fw-bold" id="registerSchoolFromDirectoryModalLabel">Register school for Comprehensive School Safety</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body pt-3">
-                    <p class="text-muted small">School master data is maintained on <strong>DRRM Main Dashboard → Schools</strong>. Here you only link a directory school to this module.</p>
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Select school *</label>
-                        <select class="form-select" id="csssDirectorySchoolSelect" required @if(($directorySchoolsForComprehensiveRegistration ?? collect())->isEmpty()) disabled @endif>
-                            <option value="">— Choose a school —</option>
-                            @foreach($directorySchoolsForComprehensiveRegistration ?? [] as $dir)
-                                <option
-                                    value="{{ $dir->id }}"
-                                    data-school-name="{{ e($dir->school_name) }}"
-                                    data-school-id="{{ e($dir->school_id ?? '') }}"
-                                    data-school-id-num="{{ e($dir->school_id_number ?? '') }}"
-                                    data-address="{{ e($dir->address ?? '') }}"
-                                    data-head="{{ e($dir->school_head ?? '') }}"
-                                    data-drrm="{{ e($dir->drrm_coordinator ?? '') }}"
-                                    data-contact="{{ e($dir->contact_number ?? '') }}"
-                                    data-district="{{ e($dir->district ?? '') }}"
-                                    data-division="{{ e($dir->division ?? '') }}"
-                                    data-region="{{ e($dir->region ?? '') }}"
-                                >
-                                    {{ $dir->school_name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div id="csssDirectoryReadonly" class="border rounded p-3 bg-light" style="display:none;">
-                        <p class="small fw-semibold text-uppercase text-muted mb-2">School information (read-only)</p>
-                        <div class="row g-2 small">
-                            <div class="col-md-6">
-                                <strong>ID / Code:</strong>
-                                <input type="text" id="csss_ro_code" class="form-control form-control-sm mt-1" value="" readonly>
-                            </div>
-                            <div class="col-md-6">
-                                <strong>Name:</strong>
-                                <input type="text" id="csss_ro_name" class="form-control form-control-sm mt-1" value="" readonly>
-                            </div>
-                            <div class="col-12">
-                                <strong>Address:</strong>
-                                <input type="text" id="csss_ro_addr" class="form-control form-control-sm mt-1" value="" readonly>
-                            </div>
-                            <div class="col-md-4">
-                                <strong>Region:</strong>
-                                <input type="text" id="csss_ro_region" class="form-control form-control-sm mt-1" value="" readonly>
-                            </div>
-                            <div class="col-md-4">
-                                <strong>Division:</strong>
-                                <input type="text" id="csss_ro_division" class="form-control form-control-sm mt-1" value="" readonly>
-                            </div>
-                            <div class="col-md-4">
-                                <strong>District:</strong>
-                                <input type="text" id="csss_ro_district" class="form-control form-control-sm mt-1" value="" readonly>
-                            </div>
-                            <div class="col-md-6">
-                                <strong>Head:</strong>
-                                <input type="text" id="csss_ro_head" class="form-control form-control-sm mt-1" value="" readonly>
-                            </div>
-                            <div class="col-md-6">
-                                <strong>DRRM coordinator:</strong>
-                                <input type="text" id="csss_ro_drrm" class="form-control form-control-sm mt-1" value="" readonly>
-                            </div>
-                            <div class="col-12">
-                                <strong>Contact:</strong>
-                                <input type="text" id="csss_ro_contact" class="form-control form-control-sm mt-1" value="" readonly>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-dark" id="csssRegisterSubmitBtn" onclick="csssRegisterFromDirectory()" @if(($directorySchoolsForComprehensiveRegistration ?? collect())->isEmpty()) disabled @endif>
-                        <i class="fas fa-link me-1"></i> Register for this module
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- School Selection Modal -->
     <div class="modal fade" id="switchSchoolModal" tabindex="-1" role="dialog" aria-labelledby="switchSchoolLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
@@ -510,85 +425,6 @@
         </div>
     </div>
 
-        <script>
-            const csssDirectorySchoolSelect = document.getElementById('csssDirectorySchoolSelect');
-            if (csssDirectorySchoolSelect) {
-                csssDirectorySchoolSelect.addEventListener('change', function() {
-                    const opt = this.options[this.selectedIndex];
-                    const box = document.getElementById('csssDirectoryReadonly');
-                    if (!opt || !opt.value) {
-                        box.style.display = 'none';
-                        return;
-                    }
-
-                    box.style.display = 'block';
-                    const code = opt.dataset.schoolIdNum || opt.dataset.schoolId || '—';
-                    document.getElementById('csss_ro_code').value = code;
-                    document.getElementById('csss_ro_name').value = opt.dataset.schoolName || '';
-                    document.getElementById('csss_ro_addr').value = opt.dataset.address || '—';
-                    document.getElementById('csss_ro_region').value = opt.dataset.region || '—';
-                    document.getElementById('csss_ro_division').value = opt.dataset.division || '—';
-                    document.getElementById('csss_ro_district').value = opt.dataset.district || '—';
-                    document.getElementById('csss_ro_head').value = opt.dataset.head || '—';
-                    document.getElementById('csss_ro_drrm').value = opt.dataset.drrm || '—';
-                    document.getElementById('csss_ro_contact').value = opt.dataset.contact || '—';
-                });
-            }
-
-            async function csssRegisterFromDirectory() {
-                const sel = document.getElementById('csssDirectorySchoolSelect');
-                if (!sel || !sel.value) {
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({ icon: 'warning', title: 'Select a school', text: 'Choose a school from the main directory.' });
-                    } else {
-                        alert('Select a school from the main directory.');
-                    }
-                    return;
-                }
-
-                try {
-                    const response = await fetch('{{ route("comprehensive-school-safety.schools.register-from-directory") }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                        },
-                        body: JSON.stringify({ unified_school_id: parseInt(sel.value, 10) })
-                    });
-
-                    const data = await response.json();
-
-                    if (response.ok && data.success) {
-                        if (typeof Swal !== 'undefined') {
-                            Swal.fire({ icon: 'success', title: 'Registered', text: data.message || 'School registered.', confirmButtonText: 'OK' })
-                                .then(() => location.reload());
-                        } else {
-                            location.reload();
-                        }
-                    } else {
-                        const msg = data.message || 'Failed to register school.';
-                        if (typeof Swal !== 'undefined') {
-                            Swal.fire({ icon: 'error', title: 'Notice', text: msg });
-                        } else {
-                            alert(msg);
-                        }
-                    }
-                } catch (e) {
-                    console.error(e);
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({ icon: 'error', title: 'Error', text: 'Request failed.' });
-                    }
-                }
-            }
-
-            if (typeof bootstrap !== 'undefined' && window.location.hash === '#schoolsDirectory' && document.getElementById('registerSchoolFromDirectoryModal')) {
-                const modalElement = document.getElementById('registerSchoolFromDirectoryModal');
-                if (modalElement && document.querySelector('#csssDirectorySchoolSelect option:not([value=""])')) {
-                    new bootstrap.Modal(modalElement).show();
-                }
-            }
-        </script>
     @endif
 
 @stack('scripts')

@@ -344,9 +344,6 @@
                 <button type="button" class="btn btn-warning text-white px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#announceSomethingModal">
                     <i class="fas fa-bullhorn"></i>
                 </button>
-                <button type="button" class="btn btn-primary px-3" data-bs-toggle="modal" data-bs-target="#createEvacCenterModal">
-                    <i class="fas fa-plus-circle me-1"></i> Add Center
-                </button>
                 @endif
             </div>
         </div>
@@ -500,10 +497,10 @@
                     <div class="occupancy-summary">
                         <div class="d-flex justify-content-between small mb-1">
                             <span class="text-muted">Total System Capacity</span>
-                            <span class="fw-bold">85% Utilized</span>
+                            <span class="fw-bold">{{ $totalSystemCapacity ?? 0 }}</span>
                         </div>
                         <div class="progress" style="height: 8px; background: #f1f5f9;">
-                            <div class="progress-bar bg-warning" role="progressbar" style="width: 85%;"></div>
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 100%;"></div>
                         </div>
                     </div>
                 </div>
@@ -942,6 +939,24 @@
                         </select>
                     </div>
 
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Family Encoding Mode <span class="text-danger">*</span></label>
+                            <select name="registration_mode" id="familyRegistrationMode" class="form-select" required>
+                                <option value="new" selected>Encode new family</option>
+                                <option value="existing">Register existing</option>
+                            </select>
+                            <input type="hidden" name="existing_family_id" id="existingFamilyId" value="">
+                        </div>
+                        <div class="col-md-6 d-none" id="existingFamilySelectorWrap">
+                            <label class="form-label small fw-bold">Registered Family in This Center</label>
+                            <select id="existingFamilySelect" class="form-select">
+                                <option value="">-- Select existing family --</option>
+                            </select>
+                            <small class="text-muted">Only families previously registered in the selected evacuation center are listed.</small>
+                        </div>
+                    </div>
+
                     {{-- Family-level fields --}}
                     <div class="row mb-3">
                         <div class="col-md-12">
@@ -966,13 +981,13 @@
                                 <option value="female">Female</option>
                             </select>
                         </div>
-                        <div class="col-md-12 mb-2">
-                            <label class="form-label small fw-bold">Individual Needs (Optional)</label>
-                            <input type="text" name="members[0][needs]" class="form-control" placeholder="Specific needs for the head (e.g. medication)">
+                        <div class="col-12 mb-2">
+                            <small class="text-muted" id="headVulnerabilityHint">Member Vulnerabilities: None</small>
                         </div>
-                        <div class="col-md-12">
-                            <label class="form-label small fw-bold">Collective Family Needs (Optional)</label>
-                            <textarea name="collective_needs" class="form-control" rows="1" placeholder="e.g. Rice, medicine, blankets (shared items)"></textarea>
+                        <div class="col-12 mt-2">
+                            <label class="form-label small fw-bold">Collective Family Needs <span class="text-danger">*</span></label>
+                            <div class="family-needs-builder" data-family-needs-builder="create" data-need-options='@json($familyNeedOptions ?? [])' data-existing-needs='[]'></div>
+                            <small class="text-muted d-block mt-2">Choose a need and quantity. Selecting <strong>Others Please Specify</strong> will reveal a custom need field.</small>
                         </div>
                     </div>
 
@@ -1042,9 +1057,11 @@
             'full_name' => $fullName,
             'display_name' => \Illuminate\Support\Str::limit($fullName, 12),
             'occupancy' => $ec->current_occupancy,
+            'capacity' => $ec->capacity > 0 ? $ec->capacity : 0,
             'created_at' => optional($ec->created_at)->toDateTimeString(),
         ];
     })->values();
+    $totalSystemCapacity = $evacuationCenters->sum(fn ($ec) => (int) ($ec->capacity ?? 0));
 @endphp
 
 @push('scripts')
@@ -1094,6 +1111,7 @@
             const filteredData = getFilteredData();
             const labels = filteredData.map((item) => item.display_name ?? item.full_name ?? '');
             const dataOccupancy = filteredData.map((item) => item.occupancy ?? 0);
+            const dataCapacity = filteredData.map((item) => item.capacity ?? 0);
             const minWidth = Math.max((labels.length * 92), 420);
 
             if (scrollContainer) {
@@ -1121,6 +1139,16 @@
                         barPercentage: 0.72,
                         categoryPercentage: 0.7,
                         maxBarThickness: 28,
+                    }, {
+                        label: 'Capacity',
+                        data: dataCapacity,
+                        backgroundColor: 'rgba(255, 193, 7, 0.45)',
+                        borderColor: 'rgba(255, 193, 7, 1)',
+                        borderWidth: 2,
+                        borderRadius: 5,
+                        barPercentage: 0.72,
+                        categoryPercentage: 0.7,
+                        maxBarThickness: 28,
                     }]
                 },
                 options: {
@@ -1137,7 +1165,8 @@
                                     return filteredData[dataIndex]?.full_name ?? context?.[0]?.label ?? '';
                                 },
                                 label: function(context) {
-                                    return `Current Occupancy: ${context.parsed.y}`;
+                                    const label = context.dataset.label || 'Value';
+                                    return `${label}: ${context.parsed.y}`;
                                 }
                             }
                         }
@@ -1180,95 +1209,399 @@
     });
 
     // 2. Family Modal Logic
+    const existingFamiliesByCenter = @json($existingFamiliesByCenter ?? []);
     const familyModalEl = document.getElementById('familyRegistrationModal');
-    if (familyModalEl) {
-        familyModalEl.addEventListener('show.bs.modal', function (event) {
-            const button = event.relatedTarget;
-            const select = familyModalEl.querySelector('#modal_evacuation_center_id');
-            const lockedHint = familyModalEl.querySelector('#lockedCenterHint');
-            if (button && select) {
-                const ecId = button.getAttribute('data-ec-id');
-                if (ecId) {
-                    select.value = ecId;
-                    select.dataset.lockedValue = ecId;
-                    select.style.pointerEvents = 'none';
-                    select.style.backgroundColor = '#e9f2ff';
-                    if (lockedHint) {
-                        lockedHint.classList.remove('d-none');
-                    }
-                } else {
-                    delete select.dataset.lockedValue;
-                    select.style.pointerEvents = '';
-                    select.style.backgroundColor = '';
-                    if (lockedHint) {
-                        lockedHint.classList.add('d-none');
-                    }
-                }
-            }
-        });
-
-        familyModalEl.addEventListener('hidden.bs.modal', function () {
-            const select = familyModalEl.querySelector('#modal_evacuation_center_id');
-            const lockedHint = familyModalEl.querySelector('#lockedCenterHint');
-            if (!select) {
-                return;
-            }
-            delete select.dataset.lockedValue;
-            select.style.pointerEvents = '';
-            select.style.backgroundColor = '';
-            if (lockedHint) {
-                lockedHint.classList.add('d-none');
-            }
-        });
-
-        const select = familyModalEl.querySelector('#modal_evacuation_center_id');
-        if (select) {
-            select.addEventListener('change', function () {
-                if (this.dataset.lockedValue) {
-                    this.value = this.dataset.lockedValue;
-                }
-            });
-        }
-    }
-
-    // Dynamic family members
-    let memberIndex = 1;
+    const familyForm = document.getElementById('familyRegistrationForm');
+    const modalCenterSelect = document.getElementById('modal_evacuation_center_id');
+    const lockedCenterHint = document.getElementById('lockedCenterHint');
+    const registrationModeSelect = document.getElementById('familyRegistrationMode');
+    const existingFamilyWrap = document.getElementById('existingFamilySelectorWrap');
+    const existingFamilySelect = document.getElementById('existingFamilySelect');
+    const existingFamilyIdInput = document.getElementById('existingFamilyId');
+    const membersContainer = document.getElementById('family-members-container');
     const addMemberBtn = document.getElementById('add-member-btn');
-    if(addMemberBtn) {
-        addMemberBtn.addEventListener('click', function() {
-            const container = document.getElementById('family-members-container');
-            const newRow = document.createElement('div');
-            newRow.className = 'row g-2 mb-2 member-row border-bottom pb-2';
-            newRow.innerHTML = `
-                <div class="col-md-4">
-                    <input type="text" name="members[${memberIndex}][full_name]" class="form-control" placeholder="Full name" required>
-                </div>
-                <div class="col-md-2">
-                    <input type="number" name="members[${memberIndex}][age]" class="form-control" placeholder="Age" required min="0">
-                </div>
-                <div class="col-md-2">
-                    <select name="members[${memberIndex}][gender]" class="form-select" required>
-                        <option value="">Gender</option>
-                        <option value="male">Male</option>
-                        <option value="female">Female</option>
+    const headNameInput = document.getElementById('input_head_name');
+    const hiddenHeadNameInput = document.getElementById('hidden_head_name');
+    const headAgeInput = familyForm ? familyForm.querySelector('input[name="members[0][age]"]') : null;
+    const headGenderSelect = familyForm ? familyForm.querySelector('select[name="members[0][gender]"]') : null;
+    const headVulnerabilityHint = document.getElementById('headVulnerabilityHint');
+    const builderEl = document.querySelector('.family-needs-builder[data-family-needs-builder="create"]');
+
+    let memberIndex = 1;
+
+    function initializeFamilyNeedsBuilder(builder) {
+        if (!builder) {
+            return;
+        }
+
+        const needOptions = JSON.parse(builder.dataset.needOptions || '[]');
+        const existingNeeds = JSON.parse(builder.dataset.existingNeeds || '[]');
+        let rowIndex = 0;
+
+        const buildOptions = (selectedValue = '') => {
+            const baseOptions = ['<option value="">-- Select need --</option>']
+                .concat(needOptions.map((need) => {
+                    const safeNeed = String(need).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+                    const selected = safeNeed === selectedValue ? ' selected' : '';
+                    return `<option value="${safeNeed}"${selected}>${safeNeed}</option>`;
+                }))
+                .concat(needOptions.includes('Others Please Specify') ? [] : ['<option value="Others Please Specify">Others Please Specify</option>']);
+
+            return baseOptions.join('');
+        };
+
+        const addRow = (need = {}, shouldFocus = false) => {
+            const row = document.createElement('div');
+            row.className = 'row g-2 mb-2 align-items-start family-need-row';
+            row.dataset.rowIndex = String(rowIndex++);
+
+            const selectedNeed = need.need_name || '';
+            const isCustom = !!need.is_custom || (selectedNeed && !needOptions.includes(selectedNeed));
+            const customNeedValue = isCustom ? selectedNeed : (need.custom_need || '');
+            const quantityValue = need.quantity || 1;
+
+            row.innerHTML = `
+                <div class="col-md-6">
+                    <select class="form-select family-need-select" name="needs[${row.dataset.rowIndex}][need_name]" required>
+                        ${buildOptions(selectedNeed && !isCustom ? selectedNeed : '')}
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <input type="text" name="members[${memberIndex}][needs]" class="form-control" placeholder="Individual needs">
+                    <input type="number" class="form-control family-need-quantity" name="needs[${row.dataset.rowIndex}][quantity]" min="1" max="999" value="${quantityValue}" placeholder="Qty" required>
                 </div>
-                <div class="col-md-1">
-                    <button type="button" class="btn btn-outline-danger btn-sm remove-member">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                <div class="col-md-3">
+                    <button type="button" class="btn btn-outline-danger w-100 family-need-remove">Remove</button>
                 </div>
-                <input type="hidden" name="members[${memberIndex}][is_head]" value="0">
+                <div class="col-12 family-need-custom-wrap ${isCustom ? '' : 'd-none'}">
+                    <input type="text" class="form-control mt-1 family-need-custom" name="needs[${row.dataset.rowIndex}][custom_need]" placeholder="Please specify other need" value="${customNeedValue}">
+                </div>
             `;
-            container.appendChild(newRow);
-            memberIndex++;
 
-            newRow.querySelector('.remove-member').addEventListener('click', function() {
-                newRow.remove();
+            const select = row.querySelector('.family-need-select');
+            const customWrap = row.querySelector('.family-need-custom-wrap');
+            const customInput = row.querySelector('.family-need-custom');
+            const removeBtn = row.querySelector('.family-need-remove');
+
+            select.addEventListener('change', function () {
+                const isOther = this.value === 'Others Please Specify';
+                customWrap.classList.toggle('d-none', !isOther);
+                customInput.required = isOther;
+                if (!isOther) {
+                    customInput.value = '';
+                }
+
+                if (this.value && row === builder.lastElementChild) {
+                    addRow({}, false);
+                }
             });
+
+            customInput.addEventListener('input', function () {
+                if (this.value && row === builder.lastElementChild) {
+                    addRow({}, false);
+                }
+            });
+
+            removeBtn.addEventListener('click', function () {
+                if (builder.children.length <= 1) {
+                    select.value = '';
+                    customInput.value = '';
+                    customWrap.classList.add('d-none');
+                    customInput.required = false;
+                    row.querySelector('.family-need-quantity').value = 1;
+                    return;
+                }
+
+                row.remove();
+            });
+
+            builder.appendChild(row);
+
+            if (selectedNeed) {
+                if (isCustom) {
+                    select.value = 'Others Please Specify';
+                    customWrap.classList.remove('d-none');
+                    customInput.required = true;
+                } else {
+                    select.value = selectedNeed;
+                }
+            }
+
+            if (shouldFocus) {
+                select.focus();
+            }
+        };
+
+        builder.innerHTML = '';
+        if (existingNeeds.length > 0) {
+            existingNeeds.forEach((need, index) => addRow(need, index === 0));
+            addRow({}, false);
+        } else {
+            addRow({}, true);
+        }
+    }
+
+    function getMemberVulnerabilityLabel(age) {
+        const tags = [];
+        if (age >= 60) {
+            tags.push('Senior Citizen');
+        }
+        if (age >= 0 && age <= 5) {
+            tags.push('Child under 5');
+        }
+        return tags.length ? tags.join(' | ') : 'None';
+    }
+
+    function refreshFamilyVulnerabilityFlags() {
+        if (!familyForm) return;
+
+        const ageInputs = familyForm.querySelectorAll('input[name*="[age]"]');
+        let hasSenior = false;
+        let hasChild = false;
+
+        ageInputs.forEach((input) => {
+            const age = Number(input.value);
+            if (!Number.isNaN(age)) {
+                if (age >= 60) hasSenior = true;
+                if (age <= 5) hasChild = true;
+            }
+        });
+
+        const seniorCheck = document.getElementById('flagSenior');
+        const childCheck = document.getElementById('flagChild');
+        if (seniorCheck) seniorCheck.checked = hasSenior;
+        if (childCheck) childCheck.checked = hasChild;
+    }
+
+    function bindAgeAutoFlags(ageInput, hintEl) {
+        if (!ageInput || !hintEl) return;
+        const update = () => {
+            const age = Number(ageInput.value);
+            hintEl.textContent = `Member Vulnerabilities: ${Number.isNaN(age) ? 'None' : getMemberVulnerabilityLabel(age)}`;
+            refreshFamilyVulnerabilityFlags();
+        };
+        ageInput.addEventListener('input', update);
+        update();
+    }
+
+    function addMemberRow(member = {}) {
+        if (!membersContainer) return;
+
+        const row = document.createElement('div');
+        row.className = 'row g-2 mb-2 member-row border-bottom pb-2';
+        row.innerHTML = `
+            <div class="col-md-4">
+                <input type="text" name="members[${memberIndex}][full_name]" class="form-control" placeholder="Full name" value="${member.full_name ?? ''}" required>
+            </div>
+            <div class="col-md-2">
+                <input type="number" name="members[${memberIndex}][age]" class="form-control member-age-input" placeholder="Age" value="${member.age ?? ''}" required min="0">
+            </div>
+            <div class="col-md-2">
+                <select name="members[${memberIndex}][gender]" class="form-select" required>
+                    <option value="">Gender</option>
+                    <option value="male" ${member.gender === 'male' ? 'selected' : ''}>Male</option>
+                    <option value="female" ${member.gender === 'female' ? 'selected' : ''}>Female</option>
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-center justify-content-end">
+                <button type="button" class="btn btn-outline-danger btn-sm remove-member">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            <div class="col-12">
+                <small class="text-muted member-vulnerability-hint">Member Vulnerabilities: None</small>
+            </div>
+            <input type="hidden" name="members[${memberIndex}][is_head]" value="0">
+        `;
+        membersContainer.appendChild(row);
+
+        const ageInput = row.querySelector('.member-age-input');
+        const hint = row.querySelector('.member-vulnerability-hint');
+        bindAgeAutoFlags(ageInput, hint);
+
+        row.querySelector('.remove-member').addEventListener('click', function() {
+            row.remove();
+            refreshFamilyVulnerabilityFlags();
+        });
+
+        memberIndex++;
+    }
+
+    function setNeedsBuilderExistingNeeds(needs = []) {
+        if (!builderEl) return;
+        builderEl.dataset.existingNeeds = JSON.stringify(needs);
+        initializeFamilyNeedsBuilder(builderEl);
+    }
+
+    function clearFamilyDetails() {
+        if (!familyForm) return;
+        if (headNameInput) headNameInput.value = '';
+        if (hiddenHeadNameInput) hiddenHeadNameInput.value = '';
+        if (headAgeInput) headAgeInput.value = '';
+        if (headGenderSelect) headGenderSelect.value = '';
+        if (headVulnerabilityHint) headVulnerabilityHint.textContent = 'Member Vulnerabilities: None';
+
+        ['flagPregnant', 'flagPwd', 'flagSenior', 'flagLactating', 'flagChild'].forEach((id) => {
+            const el = document.getElementById(id);
+            if (el) el.checked = false;
+        });
+
+        if (membersContainer) {
+            membersContainer.innerHTML = '';
+        }
+        memberIndex = 1;
+        if (existingFamilyIdInput) existingFamilyIdInput.value = '';
+
+        setNeedsBuilderExistingNeeds([]);
+        refreshFamilyVulnerabilityFlags();
+    }
+
+    function centerFamilies(centerId) {
+        return existingFamiliesByCenter[String(centerId)] || [];
+    }
+
+    function refreshExistingFamilyChoices() {
+        if (!existingFamilySelect || !modalCenterSelect) return;
+        const centerId = modalCenterSelect.value;
+        const families = centerFamilies(centerId);
+
+        existingFamilySelect.innerHTML = '<option value="">-- Select existing family --</option>';
+        families.forEach((family) => {
+            const status = family.checked_out_at ? 'History' : 'Current';
+            const timestamp = family.created_at ? new Date(family.created_at).toLocaleDateString() : '';
+            const label = `#${family.id} - ${family.head_family_name} (${status}${timestamp ? ' • ' + timestamp : ''})`;
+            const option = document.createElement('option');
+            option.value = family.id;
+            option.textContent = label;
+            existingFamilySelect.appendChild(option);
+        });
+    }
+
+    function fillFormFromExistingFamily(family) {
+        if (!family) return;
+        const members = Array.isArray(family.members) ? family.members : [];
+        const head = members.find((m) => !!m.is_head) || members[0] || { full_name: family.head_family_name, age: '', gender: '' };
+
+        if (headNameInput) headNameInput.value = head.full_name || family.head_family_name || '';
+        if (hiddenHeadNameInput) hiddenHeadNameInput.value = headNameInput ? headNameInput.value : '';
+        if (headAgeInput) headAgeInput.value = head.age ?? '';
+        if (headGenderSelect) headGenderSelect.value = head.gender ?? '';
+
+        if (membersContainer) {
+            membersContainer.innerHTML = '';
+        }
+        memberIndex = 1;
+
+        members.filter((m) => !m.is_head).forEach((member) => addMemberRow(member));
+
+        const pregnant = document.getElementById('flagPregnant');
+        const pwd = document.getElementById('flagPwd');
+        const senior = document.getElementById('flagSenior');
+        const lactating = document.getElementById('flagLactating');
+        const child = document.getElementById('flagChild');
+        if (pregnant) pregnant.checked = !!family.has_pregnant;
+        if (pwd) pwd.checked = !!family.has_pwd;
+        if (senior) senior.checked = !!family.has_senior;
+        if (lactating) lactating.checked = !!family.has_lactating;
+        if (child) child.checked = !!family.has_child_under5;
+
+        setNeedsBuilderExistingNeeds(family.needs || []);
+        if (existingFamilyIdInput) {
+            existingFamilyIdInput.value = family.id;
+        }
+        refreshFamilyVulnerabilityFlags();
+    }
+
+    if (headNameInput && hiddenHeadNameInput) {
+        headNameInput.addEventListener('input', function () {
+            hiddenHeadNameInput.value = this.value;
+        });
+    }
+    bindAgeAutoFlags(headAgeInput, headVulnerabilityHint);
+
+    if (addMemberBtn) {
+        addMemberBtn.addEventListener('click', function() {
+            addMemberRow({});
+        });
+    }
+
+    if (registrationModeSelect) {
+        registrationModeSelect.addEventListener('change', function () {
+            const existingMode = this.value === 'existing';
+            if (existingFamilyWrap) {
+                existingFamilyWrap.classList.toggle('d-none', !existingMode);
+            }
+            clearFamilyDetails();
+            if (existingMode) {
+                refreshExistingFamilyChoices();
+            }
+        });
+    }
+
+    if (existingFamilySelect) {
+        existingFamilySelect.addEventListener('change', function () {
+            if (!existingFamilyIdInput) return;
+            const selectedId = Number(this.value);
+            existingFamilyIdInput.value = selectedId ? String(selectedId) : '';
+
+            const families = centerFamilies(modalCenterSelect ? modalCenterSelect.value : '');
+            const family = families.find((row) => Number(row.id) === selectedId);
+            clearFamilyDetails();
+            if (family) {
+                fillFormFromExistingFamily(family);
+            }
+        });
+    }
+
+    if (modalCenterSelect) {
+        modalCenterSelect.addEventListener('change', function () {
+            if (this.dataset.lockedValue) {
+                this.value = this.dataset.lockedValue;
+            }
+            if (registrationModeSelect && registrationModeSelect.value === 'existing') {
+                clearFamilyDetails();
+                refreshExistingFamilyChoices();
+            }
+        });
+    }
+
+    if (familyModalEl) {
+        familyModalEl.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            if (button && modalCenterSelect) {
+                const ecId = button.getAttribute('data-ec-id');
+                if (ecId) {
+                    modalCenterSelect.value = ecId;
+                    modalCenterSelect.dataset.lockedValue = ecId;
+                    modalCenterSelect.style.pointerEvents = 'none';
+                    modalCenterSelect.style.backgroundColor = '#e9f2ff';
+                    if (lockedCenterHint) lockedCenterHint.classList.remove('d-none');
+                } else {
+                    delete modalCenterSelect.dataset.lockedValue;
+                    modalCenterSelect.style.pointerEvents = '';
+                    modalCenterSelect.style.backgroundColor = '';
+                    if (lockedCenterHint) lockedCenterHint.classList.add('d-none');
+                }
+            }
+
+            if (registrationModeSelect) {
+                registrationModeSelect.value = 'new';
+            }
+            if (existingFamilyWrap) {
+                existingFamilyWrap.classList.add('d-none');
+            }
+            if (existingFamilySelect) {
+                existingFamilySelect.value = '';
+                refreshExistingFamilyChoices();
+            }
+            clearFamilyDetails();
+        });
+
+        familyModalEl.addEventListener('hidden.bs.modal', function () {
+            if (!modalCenterSelect) return;
+            delete modalCenterSelect.dataset.lockedValue;
+            modalCenterSelect.style.pointerEvents = '';
+            modalCenterSelect.style.backgroundColor = '';
+            if (lockedCenterHint) lockedCenterHint.classList.add('d-none');
         });
     }
 

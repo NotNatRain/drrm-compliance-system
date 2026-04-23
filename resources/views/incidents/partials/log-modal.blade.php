@@ -77,6 +77,7 @@
                                         </div>
 
                                         <div id="incident_existing_school_container">
+                                            <input type="search" class="form-control mb-2" id="incident_school_search_input" placeholder="Type to search school..." autocomplete="off">
                                             <select class="form-select" id="incident_school_existing_select" name="school_name_existing">
                                                 <option value="">-- School Choices --</option>
                                                 @foreach($fireSafetySchools as $fsSchool)
@@ -179,6 +180,7 @@
                                         </div>
 
                                         <div id="compliance_existing_school_container">
+                                            <input type="search" class="form-control mb-2" id="compliance_school_search_input" placeholder="Type to search school..." autocomplete="off">
                                             <select class="form-select" id="compliance_school_existing_select" name="compliance_school_name_existing">
                                                 <option value="">-- School Choices --</option>
                                                 @foreach($fireSafetySchools as $fsSchool)
@@ -232,6 +234,10 @@
         const complianceStatusSelect = document.getElementById('incident_status_id');
         const complianceOtherGroup = document.getElementById('compliance_other_status_group');
         const complianceOtherInput = document.getElementById('compliance_other_status');
+        const incidentSchoolSearchInput = document.getElementById('incident_school_search_input');
+        const complianceSchoolSearchInput = document.getElementById('compliance_school_search_input');
+        const incidentSchoolSelect = document.getElementById('incident_school_existing_select');
+        const complianceSchoolSelect = document.getElementById('compliance_school_existing_select');
 
         function toggleIncidentOther() {
             if (!incidentTypeSelect || !incidentOtherGroup || !incidentOtherInput) return;
@@ -257,6 +263,33 @@
         if (complianceStatusSelect) {
             complianceStatusSelect.addEventListener('change', toggleComplianceOther);
             toggleComplianceOther();
+        }
+
+        function filterSchoolSelect(searchInput, selectEl) {
+            if (!searchInput || !selectEl) return;
+
+            const keyword = (searchInput.value || '').trim().toLowerCase();
+            Array.from(selectEl.options).forEach((option, index) => {
+                if (index === 0) {
+                    option.hidden = false;
+                    return;
+                }
+
+                const text = (option.textContent || '').toLowerCase();
+                option.hidden = keyword !== '' && !text.includes(keyword);
+            });
+        }
+
+        if (incidentSchoolSearchInput && incidentSchoolSelect) {
+            incidentSchoolSearchInput.addEventListener('input', function () {
+                filterSchoolSelect(incidentSchoolSearchInput, incidentSchoolSelect);
+            });
+        }
+
+        if (complianceSchoolSearchInput && complianceSchoolSelect) {
+            complianceSchoolSearchInput.addEventListener('input', function () {
+                filterSchoolSelect(complianceSchoolSearchInput, complianceSchoolSelect);
+            });
         }
 
         if (!logModalEl || typeof bootstrap === 'undefined' || logModalEl.dataset.autoOpen !== '1') {

@@ -14,7 +14,6 @@ class TypFldFamilyMember extends Model
         'full_name',
         'age',
         'gender',
-        'needs',
         'is_head',
         'status',
     ];

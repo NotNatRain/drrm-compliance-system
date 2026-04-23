@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Timeline Report</title>
+    <title>Archives Report</title>
     <style>
         @page { size: portrait; margin: 0; }
         body { font-family: Arial, sans-serif; font-size: 11px; margin: 0; padding: 0; }
@@ -34,7 +34,7 @@
                 <img src="{{ asset('images/drrmis-logo-2.png') }}" alt="Logo 3">
                 <div style="text-align:left;"><h2 style="margin:0; font-size:16px; font-weight:bold; text-transform:uppercase;">DepEd DRRM</h2></div>
             </div>
-            <div class="title-center"><h1 style="margin:0; font-size:14px; font-weight:normal; text-transform:uppercase;">School Safety Timeline Report</h1></div>
+            <div class="title-center"><h1 style="margin:0; font-size:14px; font-weight:normal; text-transform:uppercase;">School Safety Archives Report</h1></div>
         </div>
 
         <table>
@@ -60,7 +60,7 @@
                         <td>{{ $event['details'] }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="4" style="text-align:center; padding:20px;">No timeline entries found.</td></tr>
+                    <tr><td colspan="4" style="text-align:center; padding:20px;">No archive entries found.</td></tr>
                 @endforelse
             </tbody>
         </table>

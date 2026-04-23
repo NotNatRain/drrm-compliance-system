@@ -74,7 +74,7 @@
                         <tr>
                             <th class="ps-4">Username</th>
                             <th>Email Address</th>
-                            <th>Role & Position</th>
+                            <th>Role</th>
                             <th>Module Access</th>
                             <th>Assigned School</th>
                             <th>Status</th>
@@ -89,18 +89,16 @@
                             <td>
                                 @php
                                     $roleLabel = ucfirst($user->role ?? 'user');
-                                    $positionLabel = $user->position ?: 'Not set';
                                 @endphp
                                 <span class="badge {{ $user->role === 'admin' ? 'bg-danger' : ($user->role === 'contributor' ? 'bg-success' : 'bg-info text-dark') }}">
                                     {{ $roleLabel }}
                                 </span>
-                                @if($user->role !== 'admin')
-                                    <div class="small text-muted mt-1">{{ $positionLabel }}</div>
-                                @endif
                             </td>
                             <td>
                                 @if($user->role === 'admin')
                                     <span class="text-muted small">All Modules</span>
+                                @elseif($user->role === 'contributor')
+                                    <span class="text-muted small">All Modules excluding Comprehensive Safety</span>
                                 @else
                                     @php
                                         $modules = $user->module_access ?? [];
@@ -109,6 +107,7 @@
                                             'typhoon_flood',
                                             'incident_checklist',
                                             'comprehensive_school_safety',
+                                            'hazard_mapping',
                                         ];
                                         $hasAllModules = empty(array_diff($coreComplianceModules, $modules));
                                     @endphp
@@ -222,15 +221,6 @@
                             <div class="form-text text-danger">Maximum of 2 Administrators reached (~ Admin role disabled).</div>
                         @endif
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Position</label>
-                        <select name="position" id="addUserPosition" class="form-select">
-                            <option value="">-- Select Position --</option>
-                            <option value="School Head">School Head</option>
-                            <option value="School DRRM">School DRRM</option>
-                            <option value="School Account">School Account</option>
-                        </select>
-                    </div>
                     <div id="adminConfirmation" class="mb-3 d-none">
                         <label class="form-label text-danger fw-bold">Admin Password Confirmation</label>
                         <input type="password" name="admin_confirmation" class="form-control" placeholder="Your password to confirm admin creation">
@@ -280,15 +270,6 @@
                                 <option value="admin">Admin</option>
                             </select>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Position</label>
-                            <select name="position" id="editUserPosition" class="form-select">
-                                <option value="">-- Select Position --</option>
-                                <option value="School Head">School Head</option>
-                                <option value="School DRRM">School DRRM</option>
-                                <option value="School Account">School Account</option>
-                            </select>
-                        </div>
                     @endif
                 </div>
                 <div class="modal-footer bg-light">
@@ -314,6 +295,9 @@
                 <input type="hidden" name="user_id" id="assignUserId">
                 <div class="modal-body">
                     <p class="mb-3">Select WHICH compliance systems <strong id="assignUserName"></strong> can see and assign a school if applicable.</p>
+                    <div id="contributorModuleNotice" class="alert alert-info small d-none">
+                        Contributor accounts automatically include Fire Safety, Typhoon/Flood, Incident Checklist, and Hazard Mapping. You can only toggle Comprehensive School Safety.
+                    </div>
 
                     <div class="border rounded p-3 mb-3 bg-light">
                         <label class="small fw-bold mb-2 d-block">Select School</label>
@@ -332,7 +316,7 @@
                     
                     <div class="list-group">
                         <!-- Fire Safety -->
-                        <div class="list-group-item">
+                        <div class="list-group-item module-row" data-module-row="fire_safety">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <div class="form-check">
                                     <input class="form-check-input module-check" type="checkbox" name="modules[]" value="fire_safety" id="checkFS">
@@ -343,7 +327,7 @@
                         </div>
 
                         <!-- Typhoon/Flooding -->
-                        <div class="list-group-item">
+                        <div class="list-group-item module-row" data-module-row="typhoon_flood">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <div class="form-check">
                                     <input class="form-check-input module-check" type="checkbox" name="modules[]" value="typhoon_flood" id="checkTF">
@@ -354,7 +338,7 @@
                         </div>
 
                         <!-- Incident Checklist -->
-                        <div class="list-group-item">
+                        <div class="list-group-item module-row" data-module-row="incident_checklist">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <div class="form-check">
                                     <input class="form-check-input module-check" type="checkbox" name="modules[]" value="incident_checklist" id="checkIC">
@@ -365,7 +349,7 @@
                         </div>
 
                         <!-- School Safety -->
-                        <div class="list-group-item">
+                        <div class="list-group-item module-row" data-module-row="comprehensive_school_safety">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <div class="form-check">
                                     <input class="form-check-input module-check" type="checkbox" name="modules[]" value="comprehensive_school_safety" id="checkSS">
@@ -376,7 +360,7 @@
                         </div>
 
                         <!-- Hazard Mapping -->
-                        <div class="list-group-item">
+                        <div class="list-group-item module-row" data-module-row="hazard_mapping">
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="form-check">
                                     <input class="form-check-input module-check" type="checkbox" name="modules[]" value="hazard_mapping" id="checkHM">
@@ -454,26 +438,6 @@ document.addEventListener('DOMContentLoaded', function() {
         ? bootstrap.Modal.getOrCreateInstance(document.getElementById('csssSecurityRestrictionModal'))
         : null;
 
-    function syncAddPositionByRole() {
-        const roleSelect = document.querySelector('#addUserForm select[name="role"]');
-        const posSelect = document.getElementById('addUserPosition');
-        if (!roleSelect || !posSelect) return;
-
-        const isAdmin = roleSelect.value === 'admin';
-        posSelect.disabled = isAdmin;
-        if (isAdmin) posSelect.value = '';
-    }
-
-    function syncEditPositionByRole() {
-        const roleSelect = document.getElementById('editUserRole');
-        const posSelect = document.getElementById('editUserPosition');
-        if (!roleSelect || !posSelect) return;
-
-        const isAdmin = roleSelect.value === 'admin';
-        posSelect.disabled = isAdmin;
-        if (isAdmin) posSelect.value = '';
-    }
-
     // Role monitoring for Admin password
     if (isAdminView) {
         const roleSelect = document.querySelector('#addUserForm select[name="role"]');
@@ -487,10 +451,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     adminConfirm.classList.add('d-none');
                     adminConfirm.querySelector('input').removeAttribute('required');
                 }
-                syncAddPositionByRole();
             });
-
-            syncAddPositionByRole();
         }
     }
 
@@ -506,7 +467,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     adminConfirm.classList.add('d-none');
                     adminConfirm.querySelector('input').removeAttribute('required');
                 }
-                syncAddPositionByRole();
             });
         }
     }
@@ -619,9 +579,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const formData = new FormData(this);
                 const userId = document.getElementById('assignUserId').value;
+                const userRole = assignForm.dataset.userRole || '';
                 const modules = [];
                 this.querySelectorAll('input[name="modules[]"]:checked').forEach(c => modules.push(c.value));
                 const universalSchoolId = formData.get('universal_school_id') || '';
+
+                if (userRole === 'contributor') {
+                    ['fire_safety', 'typhoon_flood', 'incident_checklist', 'hazard_mapping'].forEach(module => {
+                        if (!modules.includes(module)) {
+                            modules.push(module);
+                        }
+                    });
+                }
 
                 if (modules.length > 0 && !universalSchoolId) {
                     await Swal.fire({
@@ -684,26 +653,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-function syncAddPositionByRole() {
-    const roleSelect = document.querySelector('#addUserForm select[name="role"]');
-    const posSelect = document.getElementById('addUserPosition');
-    if (!roleSelect || !posSelect) return;
-
-    const isAdmin = roleSelect.value === 'admin';
-    posSelect.disabled = isAdmin;
-    if (isAdmin) posSelect.value = '';
-}
-
-function syncEditPositionByRole() {
-    const roleSelect = document.getElementById('editUserRole');
-    const posSelect = document.getElementById('editUserPosition');
-    if (!roleSelect || !posSelect) return;
-
-    const isAdmin = roleSelect.value === 'admin';
-    posSelect.disabled = isAdmin;
-    if (isAdmin) posSelect.value = '';
-}
-
 function editUser(userId) {
     const modalEl = document.getElementById('editUserModal');
     if (!modalEl) return;
@@ -723,20 +672,11 @@ function editUser(userId) {
             const nameInput = document.getElementById('editUserName');
             const emailInput = document.getElementById('editUserEmail');
             const roleSelect = document.getElementById('editUserRole');
-            const positionSelect = document.getElementById('editUserPosition');
 
             if (idInput) idInput.value = user.id;
             if (nameInput) nameInput.value = user.name;
             if (emailInput) emailInput.value = user.email;
             if (roleSelect) roleSelect.value = user.role;
-            if (positionSelect) positionSelect.value = user.position || '';
-            syncEditPositionByRole();
-
-            if (roleSelect) {
-                roleSelect.onchange = function () {
-                    syncEditPositionByRole();
-                };
-            }
             
             const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
             modal.show();
@@ -772,6 +712,8 @@ function assignAccess(userId) {
             const assignForm = document.getElementById('assignForm');
             const universalSchoolSelect = document.getElementById('universalSchoolSelect');
             const csssCheckbox = document.getElementById('checkSS');
+            const contributorNotice = document.getElementById('contributorModuleNotice');
+            const defaultContributorModules = ['fire_safety', 'typhoon_flood', 'incident_checklist', 'hazard_mapping'];
 
             if (userIdInput) userIdInput.value = user.id;
             if (userNameSpan) userNameSpan.textContent = user.name;
@@ -779,6 +721,7 @@ function assignAccess(userId) {
             csssRestrictionConfirmed = false;
             
             const isAdmin = user.role === 'admin';
+            const isContributor = user.role === 'contributor';
             const saveBtn = modalEl.querySelector('button[type="submit"]');
 
             // Clear checks and hide all school divs first
@@ -789,6 +732,11 @@ function assignAccess(userId) {
                 } else {
                     c.checked = false;
                     c.disabled = false;
+                }
+
+                const moduleRow = c.closest('.list-group-item');
+                if (moduleRow) {
+                    moduleRow.classList.remove('d-none');
                 }
             });
 
@@ -803,9 +751,40 @@ function assignAccess(userId) {
                 });
                 if (assignForm) {
                     assignForm.dataset.initialModules = JSON.stringify(access);
+                    assignForm.dataset.userRole = user.role || '';
                 }
             } else if (assignForm) {
                 assignForm.dataset.initialModules = JSON.stringify(['fire_safety', 'typhoon_flood', 'incident_checklist', 'comprehensive_school_safety', 'hazard_mapping']);
+                assignForm.dataset.userRole = 'admin';
+            }
+
+            if (isContributor) {
+                defaultContributorModules.forEach(module => {
+                    const check = modalEl.querySelector(`.module-check[value="${module}"]`);
+                    if (check) {
+                        check.checked = true;
+                        check.disabled = true;
+                        const moduleRow = check.closest('.module-row');
+                        if (moduleRow) moduleRow.classList.add('d-none');
+                    }
+                });
+
+                ['checkSS'].forEach(id => {
+                    const check = document.getElementById(id);
+                    const moduleRow = check ? check.closest('.module-row') : null;
+                    if (check) {
+                        check.disabled = false;
+                    }
+                    if (moduleRow) {
+                        moduleRow.classList.remove('d-none');
+                    }
+                });
+
+                if (contributorNotice) {
+                    contributorNotice.classList.remove('d-none');
+                }
+            } else if (contributorNotice) {
+                contributorNotice.classList.add('d-none');
             }
 
             // If admin, hide save button or show "Admin has full access" message

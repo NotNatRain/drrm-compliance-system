@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\ActivityLog;
 use App\Models\ComprehensiveAssessment;
 use App\Models\ComprehensiveAssessmentItem;
+use App\Models\ComprehensiveArchive;
 use App\Models\ComprehensiveFacility;
 use App\Models\ComprehensiveStorage;
 use App\Models\ComprehensiveStudent;
 use App\Models\ComprehensiveSummaryFinding;
 use App\Models\School;
 use App\Models\SchoolSpecificsInformation;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
@@ -24,6 +26,157 @@ class ComprehensiveSchoolSafetyController extends Controller
     private const STUDENT_IMPORT_ATTACHMENTS_KEY = 'student_import_attachments';
     private const ASSESSMENT_SUMMARY_KEY_PREFIX = 'assessment_summary_';
     private const CATEGORY_DIVIDER = ':::';
+    private const ACADEMIC_YEAR_START_MONTH = 6;
+
+    private function academicYearFromDate($dateValue): string
+    {
+        try {
+            $date = $dateValue ? Carbon::parse($dateValue) : now();
+        } catch (\Throwable $e) {
+            $date = now();
+        }
+
+        $year = (int) $date->year;
+        $startYear = (int) ($date->month >= self::ACADEMIC_YEAR_START_MONTH ? $year : ($year - 1));
+
+        return $startYear . '-' . ($startYear + 1);
+    }
+
+    private function currentAcademicYearLabel(): string
+    {
+        return $this->academicYearFromDate(now());
+    }
+
+    private function formatDateValue($value, string $format = 'Y-m-d'): ?string
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($value)->format($format);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    private function ensureAcademicYearForAssessments(School $school): void
+    {
+        if (!Schema::hasColumn('cmpr_schl_sfty_assessments', 'academic_year')) {
+            return;
+        }
+
+        $school->assessments()
+            ->whereNull('academic_year')
+            ->orderBy('id')
+            ->chunkById(100, function ($rows) {
+                foreach ($rows as $row) {
+                    $row->academic_year = $this->academicYearFromDate($row->date_visited ?? $row->created_at);
+                    $row->save();
+                }
+            });
+    }
+
+    private function snapshotFacilityArchiveForAcademicYear(School $school, ?string $academicYear = null): void
+    {
+        if (!Schema::hasTable('cmpr_schl_sfty_archives')) {
+            return;
+        }
+
+        $resolvedAcademicYear = $academicYear ?: $this->currentAcademicYearLabel();
+        $facilitiesSnapshot = $school->facilities()
+            ->orderBy('name')
+            ->get(['id', 'name', 'type', 'condition', 'description', 'remarks', 'updated_at'])
+            ->map(function ($facility) {
+                return [
+                    'id' => (int) $facility->id,
+                    'name' => (string) ($facility->name ?? ''),
+                    'type' => (string) ($facility->type ?? ''),
+                    'condition' => (string) ($facility->condition ?? ''),
+                    'description' => (string) ($facility->description ?? ''),
+                    'remarks' => (string) ($facility->remarks ?? ''),
+                    'updated_at' => optional($facility->updated_at)->toDateTimeString(),
+                ];
+            })
+            ->values()
+            ->all();
+
+        ComprehensiveArchive::updateOrCreate(
+            [
+                'school_id' => $school->id,
+                'archive_type' => 'facility',
+                'academic_year' => $resolvedAcademicYear,
+            ],
+            [
+                'payload' => [
+                    'facility_count' => count($facilitiesSnapshot),
+                    'facilities' => $facilitiesSnapshot,
+                ],
+                'archived_at' => now(),
+            ]
+        );
+    }
+
+    private function ensureAcademicYearArchives(School $school): void
+    {
+        if (!Schema::hasTable('cmpr_schl_sfty_archives')) {
+            return;
+        }
+
+        $this->ensureAcademicYearForAssessments($school);
+
+        $currentAcademicYear = $this->currentAcademicYearLabel();
+        $this->snapshotFacilityArchiveForAcademicYear($school, $currentAcademicYear);
+
+        if (!Schema::hasColumn('cmpr_schl_sfty_assessments', 'academic_year')) {
+            return;
+        }
+
+        $archivedAssessmentYears = $school->assessments()
+            ->whereNotNull('academic_year')
+            ->where('academic_year', '!=', $currentAcademicYear)
+            ->select('academic_year')
+            ->distinct()
+            ->pluck('academic_year')
+            ->filter(fn ($year) => trim((string) $year) !== '');
+
+        foreach ($archivedAssessmentYears as $academicYear) {
+            $yearAssessments = $school->assessments()
+                ->where('academic_year', $academicYear)
+                ->orderBy('date_visited')
+                ->get(['id', 'date_visited', 'assessed_by', 'total_score', 'status']);
+
+            if ($yearAssessments->isEmpty()) {
+                continue;
+            }
+
+            ComprehensiveArchive::updateOrCreate(
+                [
+                    'school_id' => $school->id,
+                    'archive_type' => 'assessment',
+                    'academic_year' => (string) $academicYear,
+                ],
+                [
+                    'payload' => [
+                        'assessment_count' => $yearAssessments->count(),
+                        'average_score' => round((float) $yearAssessments->avg('total_score'), 2),
+                        'latest_date' => $this->formatDateValue($yearAssessments->last()->date_visited),
+                        'assessments' => $yearAssessments->map(function ($assessment) {
+                            return [
+                                'id' => (int) $assessment->id,
+                                'code' => $this->getAssessmentCode((int) $assessment->id),
+                                'date_visited' => $this->formatDateValue($assessment->date_visited),
+                                'assessed_by' => (string) ($assessment->assessed_by ?? ''),
+                                'total_score' => (float) ($assessment->total_score ?? 0),
+                                'status' => (string) ($assessment->status ?? ''),
+                            ];
+                        })->values()->all(),
+                    ],
+                    'archived_at' => now(),
+                ]
+            );
+        }
+    }
 
     private function ensureAdmin(): void
     {
@@ -611,26 +764,52 @@ class ComprehensiveSchoolSafetyController extends Controller
     public function schoolAssessments($schoolId)
     {
         $school = $this->findSchoolOrAbortForUser((int) $schoolId);
-        $assessments = $school->assessments()->latest()->paginate(15);
+        $this->ensureAcademicYearArchives($school);
+
+        $currentAcademicYear = $this->currentAcademicYearLabel();
+        $assessmentQuery = $school->assessments();
+
+        if (Schema::hasColumn('cmpr_schl_sfty_assessments', 'academic_year')) {
+            $assessmentQuery->where('academic_year', $currentAcademicYear);
+        }
+
+        $assessments = $assessmentQuery->latest()->paginate(15);
 
         $assessments->getCollection()->transform(function ($assessment) {
             $assessment->assessment_code = $this->getAssessmentCode((int) $assessment->id);
             return $assessment;
         });
 
-        return view('comprehensive-school-safety.school-assessments', compact('school', 'assessments'));
+        $archivedAssessmentHistory = collect();
+        if (Schema::hasTable('cmpr_schl_sfty_archives')) {
+            $archivedAssessmentHistory = ComprehensiveArchive::query()
+                ->where('school_id', $school->id)
+                ->where('archive_type', 'assessment')
+                ->orderByDesc('academic_year')
+                ->get();
+        }
+
+        return view('comprehensive-school-safety.school-assessments', compact(
+            'school',
+            'assessments',
+            'currentAcademicYear',
+            'archivedAssessmentHistory'
+        ));
     }
 
     public function newSafetyAssessmentForm($schoolId)
     {
         $school = $this->findSchoolOrAbortForUser((int) $schoolId);
+        $this->ensureAcademicYearArchives($school);
         $assessmentSections = $this->getAssessmentSections((int) $school->id);
         $assessmentSummary = '';
+        $currentAcademicYear = $this->currentAcademicYearLabel();
 
         return view('comprehensive-school-safety.school-assessment-form', compact(
             'school',
             'assessmentSections',
-            'assessmentSummary'
+            'assessmentSummary',
+            'currentAcademicYear'
         ));
     }
 
@@ -685,7 +864,9 @@ class ComprehensiveSchoolSafetyController extends Controller
     public function storeAssessment(Request $request, $schoolId)
     {
         $school = $this->findSchoolOrAbortForUser((int) $schoolId);
+        $this->ensureAcademicYearArchives($school);
         $assessmentSections = $this->getAssessmentSections((int) $school->id);
+        $currentAcademicYear = $this->currentAcademicYearLabel();
 
         $validated = $request->validate([
             'date_visited' => ['required', 'date'],
@@ -695,14 +876,20 @@ class ComprehensiveSchoolSafetyController extends Controller
 
         $totalScore = 0;
 
-        DB::transaction(function () use ($request, $school, $validated, $assessmentSections, &$totalScore) {
-            $assessment = ComprehensiveAssessment::create([
+        DB::transaction(function () use ($request, $school, $validated, $assessmentSections, $currentAcademicYear, &$totalScore) {
+            $assessmentPayload = [
                 'school_id' => $school->id,
                 'date_visited' => $validated['date_visited'],
                 'assessed_by' => $validated['assessed_by'],
                 'total_score' => 0,
                 'status' => 'completed',
-            ]);
+            ];
+
+            if (Schema::hasColumn('cmpr_schl_sfty_assessments', 'academic_year')) {
+                $assessmentPayload['academic_year'] = $currentAcademicYear;
+            }
+
+            $assessment = ComprehensiveAssessment::create($assessmentPayload);
 
             foreach ($assessmentSections as $categoryKey => $section) {
                 foreach ($this->expandSectionItemsForSubmission($section) as $expandedItem) {
@@ -746,8 +933,10 @@ class ComprehensiveSchoolSafetyController extends Controller
     public function updateAssessment(Request $request, $schoolId, $assessmentId)
     {
         $school = $this->findSchoolOrAbortForUser((int) $schoolId);
+        $this->ensureAcademicYearForAssessments($school);
         $assessment = ComprehensiveAssessment::where('school_id', $school->id)->findOrFail((int) $assessmentId);
         $assessmentSections = $this->getAssessmentSectionsForAssessment($assessment);
+        $currentAcademicYear = $this->currentAcademicYearLabel();
 
         $validated = $request->validate([
             'date_visited' => ['required', 'date'],
@@ -757,7 +946,7 @@ class ComprehensiveSchoolSafetyController extends Controller
 
         $totalScore = 0;
 
-        DB::transaction(function () use ($request, $school, $assessment, $validated, $assessmentSections, &$totalScore) {
+        DB::transaction(function () use ($request, $school, $assessment, $validated, $assessmentSections, $currentAcademicYear, &$totalScore) {
             $assessment->items()->delete();
 
             foreach ($assessmentSections as $categoryKey => $section) {
@@ -782,11 +971,17 @@ class ComprehensiveSchoolSafetyController extends Controller
                 }
             }
 
-            $assessment->update([
+            $updatePayload = [
                 'date_visited' => $validated['date_visited'],
                 'assessed_by' => $validated['assessed_by'],
                 'total_score' => $totalScore,
-            ]);
+            ];
+
+            if (Schema::hasColumn('cmpr_schl_sfty_assessments', 'academic_year')) {
+                $updatePayload['academic_year'] = $assessment->academic_year ?: $currentAcademicYear;
+            }
+
+            $assessment->update($updatePayload);
 
             $this->saveAssessmentSummary((int) $school->id, (int) $assessment->id, $validated['summary_sheet'] ?? '');
 
@@ -1325,6 +1520,7 @@ class ComprehensiveSchoolSafetyController extends Controller
     public function schoolFacilities($schoolId)
     {
         $school = $this->findSchoolOrAbortForUser((int) $schoolId);
+        $this->ensureAcademicYearArchives($school);
         $fireSafetyBuildings = $school->buildings()->latest()->get();
         $roomsByBuilding = $school->rooms()
             ->orderBy('building_id')
@@ -1521,6 +1717,95 @@ class ComprehensiveSchoolSafetyController extends Controller
             ->with('success', 'Summary finding deleted.');
     }
 
+    public function updateSummaryFinding(Request $request, $schoolId, $findingId)
+    {
+        $school = $this->findSchoolOrAbortForUser((int) $schoolId);
+        $finding = ComprehensiveSummaryFinding::query()
+            ->where('school_id', $school->id)
+            ->findOrFail((int) $findingId);
+
+        $hasFloorNumber = Schema::hasColumn('cmpr_schl_sfty_sumFindings', 'floor_number');
+        $hasRoomCode = Schema::hasColumn('cmpr_schl_sfty_sumFindings', 'room_code');
+        $hasInsideDetails = Schema::hasColumn('cmpr_schl_sfty_sumFindings', 'chairs_count');
+
+        $validated = $request->validate([
+            'building_id' => ['required', 'integer', 'exists:firesafety_buildings,id'],
+            'concern_category' => ['required', 'string', 'max:255'],
+            'other_concern_category' => ['nullable', 'string', 'max:255'],
+            'concern_type' => ['required', 'string', 'max:255'],
+            'other_concern_type' => ['nullable', 'string', 'max:255'],
+            'description' => ['required', 'string'],
+            'priority' => ['required', 'string', 'in:high,medium,low'],
+            'observation_date' => ['required', 'date'],
+            'remarks' => ['nullable', 'string'],
+            'floor_number' => ['nullable', 'integer', 'min:1', 'max:50'],
+            'room_code' => ['nullable', 'string', 'max:100'],
+            'chairs_count' => ['nullable', 'integer', 'min:0', 'max:5000'],
+            'tables_count' => ['nullable', 'integer', 'min:0', 'max:5000'],
+            'tv_count' => ['nullable', 'integer', 'min:0', 'max:500'],
+            'electric_fan_count' => ['nullable', 'integer', 'min:0', 'max:2000'],
+            'ceiling_fan_count' => ['nullable', 'integer', 'min:0', 'max:2000'],
+            'water_dispenser_count' => ['nullable', 'integer', 'min:0', 'max:500'],
+            'window_type' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $building = $school->buildings()->where('id', (int) $validated['building_id'])->first();
+        if (!$building) {
+            return redirect()
+                ->route('comprehensive-school-safety.school.facilities', $school->id)
+                ->with('error', 'Invalid building selected for this school.');
+        }
+
+        $category = trim((string) $validated['concern_category']);
+        if (($category === '__other__' || strcasecmp($category, 'Others Please Specify') === 0) && !empty($validated['other_concern_category'])) {
+            $category = trim((string) $validated['other_concern_category']);
+        }
+
+        $concernType = trim((string) $validated['concern_type']);
+        if ($concernType === '__other__' && !empty($validated['other_concern_type'])) {
+            $concernType = trim((string) $validated['other_concern_type']);
+        }
+
+        $payload = [
+            'building_id' => $building->id,
+            'concern_category' => $category,
+            'concern_type' => $concernType,
+            'description' => $validated['description'],
+            'priority' => strtolower((string) $validated['priority']),
+            'observation_date' => $validated['observation_date'],
+            'remarks' => $validated['remarks'] ?? null,
+        ];
+
+        if ($hasFloorNumber) {
+            $payload['floor_number'] = !empty($validated['floor_number']) ? (int) $validated['floor_number'] : null;
+        }
+
+        if ($hasRoomCode) {
+            $payload['room_code'] = !empty($validated['room_code']) ? trim((string) $validated['room_code']) : null;
+        }
+
+        if ($hasInsideDetails) {
+            $payload['chairs_count'] = (int) ($validated['chairs_count'] ?? 0);
+            $payload['tables_count'] = (int) ($validated['tables_count'] ?? 0);
+            $payload['tv_count'] = (int) ($validated['tv_count'] ?? 0);
+            $payload['electric_fan_count'] = (int) ($validated['electric_fan_count'] ?? 0);
+            $payload['ceiling_fan_count'] = (int) ($validated['ceiling_fan_count'] ?? 0);
+            $payload['water_dispenser_count'] = (int) ($validated['water_dispenser_count'] ?? 0);
+            $payload['window_type'] = !empty($validated['window_type']) ? trim((string) $validated['window_type']) : null;
+        }
+
+        $finding->update($payload);
+
+        ActivityLog::log('comprehensive_school_safety', 'Updated summary finding', [
+            'school_id' => $school->id,
+            'notes' => 'Category: ' . ($finding->concern_category ?? 'N/A') . ', Type: ' . ($finding->concern_type ?? 'N/A') . ', Priority: ' . strtoupper((string) $finding->priority),
+        ]);
+
+        return redirect()
+            ->route('comprehensive-school-safety.school.facilities', $school->id)
+            ->with('success', 'Summary finding updated successfully.');
+    }
+
     public function storeFacility(Request $request, $schoolId)
     {
         $school = $this->findSchoolOrAbortForUser((int) $schoolId);
@@ -1546,6 +1831,8 @@ class ComprehensiveSchoolSafetyController extends Controller
             'school_id' => $school->id,
             'notes' => 'Type: ' . ($facility->type ?? 'N/A') . ', Condition: ' . ($facility->condition ?? 'N/A'),
         ]);
+
+        $this->snapshotFacilityArchiveForAcademicYear($school);
 
         return redirect()
             ->route('comprehensive-school-safety.school.facilities', $school->id)
@@ -1580,6 +1867,8 @@ class ComprehensiveSchoolSafetyController extends Controller
             'notes' => 'Type: ' . ($facility->type ?? 'N/A') . ', Condition: ' . ($facility->condition ?? 'N/A'),
         ]);
 
+        $this->snapshotFacilityArchiveForAcademicYear($school);
+
         return redirect()
             ->route('comprehensive-school-safety.school.facilities', $school->id)
             ->with('success', 'Facility updated successfully.');
@@ -1588,7 +1877,16 @@ class ComprehensiveSchoolSafetyController extends Controller
     public function schoolReports($schoolId)
     {
         $school = $this->findSchoolOrAbortForUser((int) $schoolId);
-        $assessments = $school->assessments()->latest()->get(['id', 'date_visited', 'assessed_by', 'total_score', 'status']);
+        $this->ensureAcademicYearArchives($school);
+
+        $currentAcademicYear = $this->currentAcademicYearLabel();
+        $assessments = $school->assessments()
+            ->latest()
+            ->get(['id', 'date_visited', 'assessed_by', 'total_score', 'status', 'academic_year']);
+
+        if (Schema::hasColumn('cmpr_schl_sfty_assessments', 'academic_year')) {
+            $assessments = $assessments->where('academic_year', $currentAcademicYear)->values();
+        }
 
         $reportStats = [
             'assessments_completed' => $school->assessments()->where('status', 'completed')->count(),
@@ -1598,7 +1896,55 @@ class ComprehensiveSchoolSafetyController extends Controller
             'total_storage_items' => $school->storageItems()->count(),
         ];
 
-        return view('comprehensive-school-safety.school-reports', compact('school', 'reportStats', 'assessments'));
+        $allItems = ComprehensiveAssessmentItem::query()
+            ->whereIn('assessment_id', $assessments->pluck('id'))
+            ->get();
+
+        $compliantCount = $allItems->where('is_compliant', true)->count();
+        $nonCompliantCount = $allItems->where('is_compliant', false)->count();
+        $totalReviewed = $compliantCount + $nonCompliantCount;
+
+        $assessmentPreview = [
+            'latest_code' => $assessments->isNotEmpty() ? $this->getAssessmentCode((int) $assessments->first()->id) : 'N/A',
+            'latest_date' => $assessments->isNotEmpty() ? ($this->formatDateValue($assessments->first()->date_visited, 'M d, Y') ?: 'N/A') : 'N/A',
+            'average_score' => $assessments->isNotEmpty() ? round((float) $assessments->avg('total_score'), 2) : 0,
+            'compliance_rate' => $totalReviewed > 0 ? round(($compliantCount / $totalReviewed) * 100, 1) : 0,
+            'total_reviewed' => $totalReviewed,
+        ];
+
+        $buildings = $school->buildings()->latest()->get();
+        $summaryFindings = ComprehensiveSummaryFinding::query()
+            ->where('school_id', $school->id)
+            ->latest('observation_date')
+            ->latest()
+            ->get();
+
+        $safetyIndexPreview = [
+            'average_score' => $buildings->isNotEmpty() ? round((float) $buildings->avg('safety_score'), 1) : 0,
+            'building_count' => $buildings->count(),
+            'high_findings' => $summaryFindings->where('priority', 'high')->count(),
+            'medium_findings' => $summaryFindings->where('priority', 'medium')->count(),
+            'low_findings' => $summaryFindings->where('priority', 'low')->count(),
+        ];
+
+        $archives = collect();
+        if (Schema::hasTable('cmpr_schl_sfty_archives')) {
+            $archives = ComprehensiveArchive::query()
+                ->where('school_id', $school->id)
+                ->orderByDesc('academic_year')
+                ->orderByDesc('archived_at')
+                ->get();
+        }
+
+        return view('comprehensive-school-safety.school-reports', compact(
+            'school',
+            'reportStats',
+            'assessments',
+            'currentAcademicYear',
+            'assessmentPreview',
+            'safetyIndexPreview',
+            'archives'
+        ));
     }
 
     public function printAssessmentReport(Request $request, $schoolId)
@@ -1671,6 +2017,8 @@ class ComprehensiveSchoolSafetyController extends Controller
     {
         $school = $this->findSchoolOrAbortForUser((int) $schoolId);
 
+        $this->ensureAcademicYearArchives($school);
+
         $assessmentEvents = $school->assessments()
             ->latest('date_visited')
             ->get()
@@ -1698,6 +2046,35 @@ class ComprehensiveSchoolSafetyController extends Controller
 
         $timelineEvents = $assessmentEvents
             ->concat($findingEvents)
+            ->sortByDesc(function ($event) {
+                return strtotime((string) $event['event_date']);
+            })
+            ->values();
+
+        $archiveEvents = collect();
+        if (Schema::hasTable('cmpr_schl_sfty_archives')) {
+            $archiveEvents = ComprehensiveArchive::query()
+                ->where('school_id', $school->id)
+                ->orderByDesc('academic_year')
+                ->get()
+                ->map(function ($archive) {
+                    $payload = is_array($archive->payload) ? $archive->payload : [];
+                    $typeLabel = $archive->archive_type === 'facility' ? 'Facility Records' : 'Assessment History';
+                    $summaryText = $archive->archive_type === 'facility'
+                        ? 'Facility records captured: ' . (int) ($payload['facility_count'] ?? 0)
+                        : 'Assessments archived: ' . (int) ($payload['assessment_count'] ?? 0) . ' | Average score: ' . (float) ($payload['average_score'] ?? 0);
+
+                    return [
+                        'event_date' => $this->formatDateValue($archive->archived_at) ?: now()->toDateString(),
+                        'event_type' => 'Archive Snapshot',
+                        'title' => $archive->academic_year . ' - ' . $typeLabel,
+                        'details' => $summaryText,
+                    ];
+                });
+        }
+
+        $timelineEvents = $timelineEvents
+            ->concat($archiveEvents)
             ->sortByDesc(function ($event) {
                 return strtotime((string) $event['event_date']);
             })

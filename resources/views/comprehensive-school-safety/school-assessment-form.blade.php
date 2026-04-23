@@ -95,6 +95,10 @@
                     <div class="invalid-feedback">{{ $message }}</div>
                 @enderror
             </div>
+            <div class="col-md-6">
+                <label class="form-label fw-600">Academic Year</label>
+                <input type="text" class="form-control" value="{{ $currentAcademicYear ?? ($assessment->academic_year ?? 'N/A') }}" disabled>
+            </div>
         </div>
     </div>
 

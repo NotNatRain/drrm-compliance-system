@@ -368,93 +368,103 @@
     </div>
 
     <div class="row g-4 mb-4">
-        {{-- History Table (Larger and moved to Profile's old spot) --}}
+        {{-- Current Occupants + Registry History --}}
         <div class="col-lg-8">
-            <div class="dashboard-card h-100 shadow-lg border-0" style="min-height: 520px;">
-                <div class="card-header-custom py-3">
-                    <div class="d-flex justify-content-between align-items-center w-100">
-                        <span><i class="fas fa-people-arrows me-2"></i>Recent Master Registry History</span>
-                        <span class="badge bg-info bg-opacity-10 text-info px-3 py-2" style="font-size: 0.7rem;">MASTER DATABASE</span>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="dashboard-card shadow-lg border-0 h-100" style="min-height: 520px;">
+                        <div class="card-header-custom py-3 d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-house-user me-2"></i>Current Occupants</span>
+                            <span class="badge bg-primary bg-opacity-10 text-info px-3 py-2" style="font-size: 0.7rem;">ACTIVE</span>
+                        </div>
+                        <div class="table-responsive" style="height: calc(100% - 55px); overflow-y: auto;">
+                            <table class="table table-custom table-hover mb-0">
+                                <thead class="sticky-top">
+                                    <tr>
+                                        <th class="ps-4">Family ID</th>
+                                        <th>Head of Family</th>
+                                        <th class="text-center">Members</th>
+                                        <th class="pe-4">Needs</th>
+                                        <th class="text-center pe-4">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($families->whereNull('checked_out_at') as $family)
+                                        <tr>
+                                            <td class="ps-4"><span class="badge bg-dark">#{{ $family->id }}</span></td>
+                                            <td><div class="fw-bold fs-6 text-primary">{{ $family->head_family_name }}</div><small class="text-muted">{{ $family->created_at->format('M d, Y h:i A') }}</small></td>
+                                            <td class="text-center"><span class="badge bg-light text-dark border p-2" style="min-width: 35px;">{{ $family->members_count }}</span></td>
+                                            <td class="pe-4"><small class="text-truncate d-block" style="max-width: 180px;" title="{{ $family->needs_summary }}">{{ $family->needs_summary ?: '—' }}</small></td>
+                                            <td class="text-center pe-4">
+                                                <div class="d-flex justify-content-center gap-2">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#updateFamilyModal{{ $family->id }}">
+                                                        <i class="fas fa-pen"></i>
+                                                    </button>
+                                                    <form id="decampFamilyForm{{ $family->id }}" method="POST" action="{{ route('typhoon.families.decamp', $family->id) }}" onsubmit="return confirm('Mark this family as decamped?');">
+                                                        @csrf
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                            <i class="fas fa-person-walking-arrow-right"></i>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="5" class="text-center py-5 opacity-50">
+                                                <i class="fas fa-house-user fa-3x mb-3 text-muted"></i>
+                                                <p class="h6 mb-0">No families currently taking cover.</p>
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-                <div class="table-responsive" style="height: calc(100% - 55px); overflow-y: auto;">
-                    <table class="table table-custom table-hover mb-0">
-                        <thead class="sticky-top">
-                            <tr>
-                                <th class="ps-4">Timestamp</th>
-                                <th>Head of Family</th>
-                                <th class="text-center">Members</th>
-                                <th>Vulnerability Flags</th>
-                                <th class="pe-4">Collective Needs</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($families as $family)
-                                <tr>
-                                    <td class="ps-4"><span class="fw-bold text-muted">{{ $family->created_at->format('M d, Y') }}</span><br><small>{{ $family->created_at->format('h:i A') }}</small></td>
-                                    <td><div class="fw-bold fs-6 text-primary">{{ $family->head_family_name }}</div></td>
-                                    <td class="text-center"><span class="badge bg-light text-dark border p-2" style="min-width: 35px;">{{ $family->members_count }}</span></td>
-                                    <td>
-                                        @php $flags = []; @endphp
-                                        @if($family->has_pregnant) @php $flags[] = 'Pregnant'; @endphp @endif
-                                        @if($family->has_pwd) @php $flags[] = 'PWD'; @endphp @endif
-                                        @if($family->has_senior) @php $flags[] = 'Senior'; @endphp @endif
-                                        @if($family->has_lactating) @php $flags[] = 'Lactating'; @endphp @endif
-                                        @if($family->has_child_under5) @php $flags[] = 'Child <5'; @endphp @endif
-                                        
-                                        @foreach($flags as $flag)
-                                            <span class="badge bg-warning text-dark me-1" style="font-size: 0.65rem;">{{ $flag }}</span>
-                                        @endforeach
-                                        @if(empty($flags)) <small class="text-muted italic">None</small> @endif
-                                    </td>
-                                    <td class="pe-4"><small class="text-truncate d-block" style="max-width: 200px;" title="{{ $family->collective_needs }}">{{ $family->collective_needs ?? '—' }}</small></td>
-                                </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="text-center py-5 opacity-50">
-                                        <i class="fas fa-users-slash fa-4x mb-3 text-muted"></i>
-                                        <p class="h5">No family registrations recorded for this site yet.</p>
-                                    </td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                <div class="col-md-6">
+                    <div class="dashboard-card shadow-lg border-0 h-100" style="min-height: 520px;">
+                        <div class="card-header-custom py-3 d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-archive me-2"></i>Registry History</span>
+                            <span class="badge bg-secondary bg-opacity-25 text-white px-3 py-2" style="font-size: 0.7rem;">DECAMPED</span>
+                        </div>
+                        <div class="table-responsive" style="height: calc(100% - 55px); overflow-y: auto;">
+                            <table class="table table-custom table-hover mb-0">
+                                <thead class="sticky-top">
+                                    <tr>
+                                        <th class="ps-4">Family ID</th>
+                                        <th>Head of Family</th>
+                                        <th class="text-center">Members</th>
+                                        <th class="pe-4">Decamped At</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($families->whereNotNull('checked_out_at') as $family)
+                                        <tr>
+                                            <td class="ps-4"><span class="badge bg-dark">#{{ $family->id }}</span></td>
+                                            <td><div class="fw-bold fs-6 text-primary">{{ $family->head_family_name }}</div><small class="text-muted">{{ $family->created_at->format('M d, Y h:i A') }}</small></td>
+                                            <td class="text-center"><span class="badge bg-light text-dark border p-2" style="min-width: 35px;">{{ $family->members_count }}</span></td>
+                                            <td class="pe-4"><small>{{ optional($family->checked_out_at)->format('M d, Y h:i A') }}</small></td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="4" class="text-center py-5 opacity-50">
+                                                <i class="fas fa-history fa-3x mb-3 text-muted"></i>
+                                                <p class="h6 mb-0">No decamped family records yet.</p>
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="col-lg-4">
-            {{-- Site Activity Logs (Half Height) --}}
-            <div class="dashboard-card mb-4 shadow-lg border-0" style="height: calc(50% - 12px);">
-                <div class="card-header-custom py-3"><i class="fas fa-history me-2"></i>Site Intelligence Feed</div>
-                <div class="p-4" style="height: calc(100% - 55px); overflow-y: auto;">
-                    @if($lastUsedAt)
-                        <div class="mb-4 d-flex align-items-center">
-                            <div class="stat-icon-small bg-primary bg-opacity-10 p-2 rounded text-primary me-3">
-                                <i class="fas fa-calendar-check"></i>
-                            </div>
-                            <div>
-                                <div class="profile-property mb-0" style="font-size: 0.7rem;">Last Activation Date</div>
-                                <div class="fw-bold">{{ $lastUsedAt->format('F d, Y') }} <small class="text-muted">{{ $lastUsedAt->format('h:i A') }}</small></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="profile-property mb-2" style="font-size: 0.7rem;">Latest Situation Summary (SITREP)</div>
-                            <div class="p-3 bg-light rounded border-start border-4 border-info">
-                                <p class="mb-0 small text-dark" style="line-height: 1.6;">{{ $ec->reports_status ?? 'No recent narrative reports submitted.' }}</p>
-                            </div>
-                        </div>
-                    @else
-                        <div class="text-center py-5 opacity-50">
-                            <i class="fas fa-calendar-times fa-3x mb-3 text-muted"></i>
-                            <p>This station has no recorded usage history.</p>
-                        </div>
-                    @endif
-                </div>
-            </div>
-            
-            {{-- Quick Announcements (Other Half Height) --}}
-            <div class="dashboard-card shadow-lg border-0" style="height: calc(50% - 12px);">
+            {{-- Quick Announcements --}}
+            <div class="dashboard-card shadow-lg border-0" style="height: 100%; min-height: 520px;">
                 <div class="card-header-custom d-flex justify-content-between align-items-center py-3">
                     <span><i class="fas fa-bullhorn me-2"></i>Quick Announcements</span>
                     <button class="btn btn-sm btn-info text-white fw-bold px-3 shadow-sm" style="font-size: 0.7rem;" data-bs-toggle="modal" data-bs-target="#announceSomethingModal">
@@ -490,6 +500,63 @@
     </div>
 </div>
 
+@foreach($families as $family)
+    @if(!$family->checked_out_at)
+        <div class="modal fade" id="updateFamilyModal{{ $family->id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <form method="POST" action="{{ route('typhoon.families.update', $family->id) }}">
+                    @csrf
+                    @method('PUT')
+                    <div class="modal-content shadow">
+                        <div class="modal-header" style="background-color: var(--card-header-bg); color: white;">
+                            <h5 class="modal-title fw-bold"><i class="fas fa-user-edit me-2 text-info"></i>UPDATE FAMILY DETAILS</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body p-4 text-dark">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <label class="form-label fw-bold text-muted small mb-0">HEAD OF FAMILY</label>
+                                    <span class="badge bg-dark">Family ID #{{ $family->id }}</span>
+                                </div>
+                                <input type="text" name="head_family_name" class="form-control" value="{{ $family->head_family_name }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted small">COLLECTIVE FAMILY NEEDS</label>
+                                <div class="family-needs-builder" data-family-needs-builder="edit-{{ $family->id }}" data-need-options='@json($familyNeedOptions ?? [])' data-existing-needs='@json($family->needs->map(function ($need) { return ["need_name" => $need->need_name, "quantity" => $need->quantity, "is_custom" => $need->is_custom]; }))'></div>
+                                <small class="text-muted d-block mt-2">Choose a need and quantity. Selecting <strong>Others Please Specify</strong> will reveal a custom need field.</small>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" name="has_pregnant" value="1" id="pregnant{{ $family->id }}" @checked($family->has_pregnant)><label class="form-check-label" for="pregnant{{ $family->id }}">Pregnant</label></div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" name="has_pwd" value="1" id="pwd{{ $family->id }}" @checked($family->has_pwd)><label class="form-check-label" for="pwd{{ $family->id }}">PWD</label></div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" name="has_senior" value="1" id="senior{{ $family->id }}" @checked($family->has_senior)><label class="form-check-label" for="senior{{ $family->id }}">Senior</label></div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" name="has_lactating" value="1" id="lactating{{ $family->id }}" @checked($family->has_lactating)><label class="form-check-label" for="lactating{{ $family->id }}">Lactating</label></div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="form-check"><input class="form-check-input" type="checkbox" name="has_child_under5" value="1" id="child{{ $family->id }}" @checked($family->has_child_under5)><label class="form-check-label" for="child{{ $family->id }}">Child Under 5</label></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer bg-light d-flex justify-content-between">
+                            <button type="button" class="btn btn-outline-danger fw-bold" onclick="if(confirm('Mark this family as decamped?')) { document.getElementById('decampFamilyForm{{ $family->id }}').submit(); }">DECAMP FAMILY</button>
+                            <div>
+                                <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">CANCEL</button>
+                                <button type="submit" class="btn btn-primary px-5 fw-bold shadow-sm">SAVE CHANGES</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+@endforeach
+
 {{-- Update status / reports modal --}}
 <div class="modal fade" id="updateCenterStatusModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
@@ -507,9 +574,12 @@
                         <select name="usage_status" class="form-select form-select-lg">
                             <option value="cleared" @selected($ec->usage_status === 'cleared')>CLEARED / STANDBY</option>
                             <option value="occupied" @selected($ec->usage_status === 'occupied')>OCCUPIED / ACTIVE</option>
-                            <option value="full" @selected($ec->usage_status === 'full')>AT CAPACITY / FULL</option>
-                            <option value="decamp" @selected($ec->usage_status === 'decamp')>DECAMP</option>
                         </select>
+                        <small class="text-muted">FULL and DECAMP are system-derived based on occupancy and family decamp records.</small>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold text-muted small">SITE CAPACITY</label>
+                        <input type="number" name="capacity" class="form-control form-control-lg" min="0" value="{{ old('capacity', $ec->capacity) }}" placeholder="Enter evacuation capacity">
                     </div>
                     <div class="mb-4">
                         <label class="form-label fw-bold text-muted small">RESOURCE INVENTORY SUMMARY</label>
@@ -670,7 +740,7 @@
                             {{ implode(', ', $v) ?: '—' }}
                         </td>
                         <td style="padding:0.7rem 0.75rem; color:#8892b0;">{{ $family->created_at->format('M d, Y') }}</td>
-                        <td style="padding:0.7rem 0.75rem; color:#8892b0; font-size:0.75rem;">{{ Str::limit($family->collective_needs, 40) }}</td>
+                        <td style="padding:0.7rem 0.75rem; color:#8892b0; font-size:0.75rem;">{{ Str::limit($family->needs_summary, 40) }}</td>
                     </tr>
                     @empty
                     <tr><td colspan="5" style="text-align:center; color:#8892b0; padding:2rem;">No registered families in this center.</td></tr>
@@ -689,6 +759,126 @@
 
 @push('scripts')
 <script>
+    function initializeFamilyNeedsBuilder(builder) {
+        if (!builder || builder.dataset.initialized === '1') {
+            return;
+        }
+
+        const needOptions = JSON.parse(builder.dataset.needOptions || '[]');
+        const existingNeeds = JSON.parse(builder.dataset.existingNeeds || '[]');
+        let rowIndex = 0;
+
+        const buildOptions = (selectedValue = '') => {
+            const options = ['<option value="">-- Select need --</option>'];
+
+            needOptions.forEach((need) => {
+                const selected = need === selectedValue ? ' selected' : '';
+                options.push(`<option value="${need}"${selected}>${need}</option>`);
+            });
+
+            if (!needOptions.includes('Others Please Specify')) {
+                const selected = selectedValue === 'Others Please Specify' ? ' selected' : '';
+                options.push(`<option value="Others Please Specify"${selected}>Others Please Specify</option>`);
+            }
+
+            return options.join('');
+        };
+
+        const addRow = (need = {}, shouldFocus = false) => {
+            const row = document.createElement('div');
+            row.className = 'row g-2 mb-2 align-items-start family-need-row';
+            row.dataset.rowIndex = String(rowIndex++);
+
+            const selectedNeed = need.need_name || '';
+            const isCustom = !!need.is_custom || (selectedNeed && !needOptions.includes(selectedNeed));
+            const customNeedValue = isCustom ? selectedNeed : (need.custom_need || '');
+            const quantityValue = need.quantity || 1;
+
+            row.innerHTML = `
+                <div class="col-md-6">
+                    <select class="form-select family-need-select" name="needs[${row.dataset.rowIndex}][need_name]" required>
+                        ${buildOptions(selectedNeed && !isCustom ? selectedNeed : (isCustom ? 'Others Please Specify' : ''))}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input type="number" class="form-control family-need-quantity" name="needs[${row.dataset.rowIndex}][quantity]" min="1" max="999" value="${quantityValue}" placeholder="Qty" required>
+                </div>
+                <div class="col-md-3">
+                    <button type="button" class="btn btn-outline-danger w-100 family-need-remove">Remove</button>
+                </div>
+                <div class="col-12 family-need-custom-wrap ${isCustom ? '' : 'd-none'}">
+                    <input type="text" class="form-control mt-1 family-need-custom" name="needs[${row.dataset.rowIndex}][custom_need]" placeholder="Please specify other need" value="${customNeedValue}">
+                </div>
+            `;
+
+            const select = row.querySelector('.family-need-select');
+            const customWrap = row.querySelector('.family-need-custom-wrap');
+            const customInput = row.querySelector('.family-need-custom');
+            const removeBtn = row.querySelector('.family-need-remove');
+
+            select.addEventListener('change', function () {
+                const isOther = this.value === 'Others Please Specify';
+                customWrap.classList.toggle('d-none', !isOther);
+                customInput.required = isOther;
+                if (!isOther) {
+                    customInput.value = '';
+                }
+
+                if (this.value && row === builder.lastElementChild) {
+                    addRow({}, false);
+                }
+            });
+
+            customInput.addEventListener('input', function () {
+                if (this.value && row === builder.lastElementChild) {
+                    addRow({}, false);
+                }
+            });
+
+            removeBtn.addEventListener('click', function () {
+                if (builder.children.length <= 1) {
+                    select.value = '';
+                    customInput.value = '';
+                    customWrap.classList.add('d-none');
+                    customInput.required = false;
+                    row.querySelector('.family-need-quantity').value = 1;
+                    return;
+                }
+
+                row.remove();
+            });
+
+            builder.appendChild(row);
+
+            if (selectedNeed) {
+                if (isCustom) {
+                    select.value = 'Others Please Specify';
+                    customWrap.classList.remove('d-none');
+                    customInput.required = true;
+                } else {
+                    select.value = selectedNeed;
+                }
+            }
+
+            if (shouldFocus) {
+                select.focus();
+            }
+        };
+
+        builder.innerHTML = '';
+
+        if (existingNeeds.length > 0) {
+            existingNeeds.forEach((need, index) => addRow(need, index === 0));
+            addRow({}, false);
+        } else {
+            addRow({}, true);
+        }
+
+        builder.dataset.initialized = '1';
+    }
+
+    document.querySelectorAll('[data-family-needs-builder]').forEach(initializeFamilyNeedsBuilder);
+
     function printEvacCard() {
         const card = document.getElementById('printCard');
         const html = `<html><head><title>Print Report</title>

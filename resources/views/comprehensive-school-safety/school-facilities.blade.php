@@ -262,8 +262,16 @@
             <form method="POST" action="{{ route('comprehensive-school-safety.school.summary-findings.store', $school->id) }}">
                 @csrf
                 <input type="hidden" name="building_id" id="summaryFindingsBuildingId">
+                <input type="hidden" name="_method" id="summaryFindingsMethod" value="POST">
 
                 <div class="modal-body">
+                    <div class="alert alert-secondary d-flex align-items-center justify-content-between" id="summaryFindingsLockBanner" role="alert">
+                        <span><i class="fas fa-lock me-2"></i>This modal opens in locked mode. Click Update to enable editing.</span>
+                        <button type="button" class="btn btn-sm btn-outline-dark" id="summaryFindingsUnlockBtn">
+                            <i class="fas fa-pen me-1"></i> Update
+                        </button>
+                    </div>
+
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label fw-bold">Concerns *</label>
@@ -366,7 +374,8 @@
 
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                    <button type="submit" class="btn btn-primary">Save Finding</button>
+                    <button type="button" class="btn btn-outline-dark d-none" id="summaryFindingsCancelEditBtn">Cancel Update</button>
+                    <button type="submit" class="btn btn-primary d-none" id="summaryFindingsSubmitBtn">Save Finding</button>
                 </div>
             </form>
         </div>
@@ -736,6 +745,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 'concern_type' => $f->concern_type,
                 'priority' => strtoupper((string) $f->priority),
                 'observation_date' => optional($f->observation_date)->format('M d, Y') ?? $f->observation_date,
+                'observation_date_raw' => optional($f->observation_date)->format('Y-m-d') ?? null,
                 'floor_number' => $f->floor_number,
                 'room_code' => $f->room_code,
                 'chairs_count' => (int) ($f->chairs_count ?? 0),
@@ -748,6 +758,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 'description' => $f->description,
                 'remarks' => $f->remarks,
                 'delete_url' => route('comprehensive-school-safety.school.summary-findings.destroy', [$school->id, $f->id]),
+                'update_url' => route('comprehensive-school-safety.school.summary-findings.update', [$school->id, $f->id]),
             ];
         })->values();
     });
@@ -764,10 +775,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const concernTypeInput = document.getElementById('concernTypeInput');
     const floorNumberInput = document.getElementById('summaryFindingFloorNumber');
     const roomCodeInput = document.getElementById('summaryFindingRoomCode');
+    const lockBanner = document.getElementById('summaryFindingsLockBanner');
+    const unlockBtn = document.getElementById('summaryFindingsUnlockBtn');
+    const cancelEditBtn = document.getElementById('summaryFindingsCancelEditBtn');
+    const submitBtn = document.getElementById('summaryFindingsSubmitBtn');
+    const methodInput = document.getElementById('summaryFindingsMethod');
+    const summaryForm = modalElement ? modalElement.querySelector('form') : null;
     const otherConcernCategoryInput = document.getElementById('otherConcernCategoryInput');
     const otherConcernTypeInput = document.getElementById('otherConcernTypeInput');
     const roomLookup = @json($roomLookupPayload);
     const buildingFloors = @json($buildingFloorPayload);
+    const defaultStoreUrl = "{{ route('comprehensive-school-safety.school.summary-findings.store', $school->id) }}";
+    let isSummaryEditEnabled = false;
 
     function toggleOtherField(selectElement, inputElement) {
         if (!selectElement || !inputElement) {
@@ -854,6 +873,62 @@ document.addEventListener('DOMContentLoaded', function () {
         return 'warning text-dark';
     }
 
+    function setSummaryEditMode(enabled) {
+        isSummaryEditEnabled = !!enabled;
+
+        if (unlockBtn) {
+            unlockBtn.classList.toggle('d-none', isSummaryEditEnabled);
+        }
+        if (cancelEditBtn) {
+            cancelEditBtn.classList.toggle('d-none', !isSummaryEditEnabled);
+        }
+        if (submitBtn) {
+            submitBtn.classList.toggle('d-none', !isSummaryEditEnabled);
+        }
+        if (lockBanner) {
+            lockBanner.classList.toggle('alert-secondary', !isSummaryEditEnabled);
+            lockBanner.classList.toggle('alert-warning', isSummaryEditEnabled);
+            const bannerText = lockBanner.querySelector('span');
+            if (bannerText) {
+                bannerText.innerHTML = isSummaryEditEnabled
+                    ? '<i class="fas fa-lock-open me-2"></i>Update mode enabled. You can edit details and save changes.'
+                    : '<i class="fas fa-lock me-2"></i>This modal opens in locked mode. Click Update to enable editing.';
+            }
+        }
+
+        const editableElements = modalElement.querySelectorAll('input, select, textarea');
+        editableElements.forEach((element) => {
+            if (element.id === 'summaryFindingsBuildingId' || element.id === 'summaryFindingsMethod') {
+                return;
+            }
+            element.disabled = !isSummaryEditEnabled;
+        });
+
+        const deleteButtons = modalElement.querySelectorAll('.js-finding-delete-btn');
+        deleteButtons.forEach((button) => {
+            button.disabled = !isSummaryEditEnabled;
+        });
+
+        const editButtons = modalElement.querySelectorAll('.js-finding-edit-btn');
+        editButtons.forEach((button) => {
+            button.disabled = !isSummaryEditEnabled;
+        });
+    }
+
+    function resetSummaryFormToCreate() {
+        if (!summaryForm) {
+            return;
+        }
+
+        summaryForm.action = defaultStoreUrl;
+        if (methodInput) {
+            methodInput.value = 'POST';
+        }
+        if (submitBtn) {
+            submitBtn.textContent = 'Save Finding';
+        }
+    }
+
     function renderExistingFindings(buildingId) {
         if (!findingsContainer) {
             return;
@@ -889,10 +964,13 @@ document.addEventListener('DOMContentLoaded', function () {
                         </div>
                         <div class="d-flex align-items-center gap-2">
                             <span class="badge bg-${badge}">${row.priority}</span>
+                            <button type="button" class="btn btn-sm btn-outline-primary js-finding-edit-btn" data-finding-id="${row.id}">
+                                <i class="fas fa-pen"></i>
+                            </button>
                             <form method="POST" action="${row.delete_url}" onsubmit="return confirm('Delete this finding?')">
                                 <input type="hidden" name="_token" value="{{ csrf_token() }}">
                                 <input type="hidden" name="_method" value="DELETE">
-                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fas fa-trash"></i></button>
+                                <button type="submit" class="btn btn-sm btn-outline-danger js-finding-delete-btn"><i class="fas fa-trash"></i></button>
                             </form>
                         </div>
                     </div>
@@ -908,6 +986,11 @@ document.addEventListener('DOMContentLoaded', function () {
         button.addEventListener('click', function () {
             const buildingId = this.dataset.buildingId;
             const buildingTitle = this.dataset.buildingTitle || 'Building';
+
+            if (summaryForm) {
+                summaryForm.reset();
+            }
+            resetSummaryFormToCreate();
 
             if (titleTarget) {
                 titleTarget.textContent = buildingTitle;
@@ -930,12 +1013,91 @@ document.addEventListener('DOMContentLoaded', function () {
             toggleOtherField(concernTypeInput, otherConcernTypeInput);
 
             renderExistingFindings(buildingId);
+            setSummaryEditMode(false);
 
             if (modalInstance) {
                 modalInstance.show();
             }
         });
     });
+
+    if (unlockBtn) {
+        unlockBtn.addEventListener('click', function () {
+            setSummaryEditMode(true);
+        });
+    }
+
+    if (cancelEditBtn) {
+        cancelEditBtn.addEventListener('click', function () {
+            resetSummaryFormToCreate();
+            setSummaryEditMode(false);
+        });
+    }
+
+    if (findingsContainer) {
+        findingsContainer.addEventListener('click', function (event) {
+            const editButton = event.target.closest('.js-finding-edit-btn');
+            if (!editButton || !isSummaryEditEnabled) {
+                return;
+            }
+
+            const findingId = String(editButton.dataset.findingId || '');
+            const buildingId = buildingIdField ? String(buildingIdField.value || '') : '';
+            const rows = findingsByBuilding[buildingId] || [];
+            const row = rows.find((item) => String(item.id) === findingId);
+            if (!row || !summaryForm) {
+                return;
+            }
+
+            summaryForm.action = row.update_url;
+            if (methodInput) {
+                methodInput.value = 'PUT';
+            }
+            if (submitBtn) {
+                submitBtn.textContent = 'Update Finding';
+            }
+
+            if (concernCategoryInput) {
+                concernCategoryInput.value = row.concern_category || '';
+            }
+            if (concernTypeInput) {
+                concernTypeInput.value = row.concern_type || '';
+            }
+            if (floorNumberInput) {
+                populateFloorOptions(buildingId, row.floor_number || '');
+                floorNumberInput.value = row.floor_number || '';
+            }
+            populateRoomOptions(buildingId, row.floor_number || '', row.room_code || '');
+
+            const fields = {
+                observation_date: row.observation_date_raw || '',
+                description: row.description || '',
+                remarks: row.remarks || '',
+                chairs_count: row.chairs_count ?? '',
+                tables_count: row.tables_count ?? '',
+                tv_count: row.tv_count ?? '',
+                electric_fan_count: row.electric_fan_count ?? '',
+                ceiling_fan_count: row.ceiling_fan_count ?? '',
+                water_dispenser_count: row.water_dispenser_count ?? '',
+                window_type: row.window_type || '',
+            };
+
+            Object.keys(fields).forEach((name) => {
+                const input = summaryForm.querySelector(`[name="${name}"]`);
+                if (input) {
+                    input.value = fields[name];
+                }
+            });
+
+            const priorityInput = summaryForm.querySelector('[name="priority"]');
+            if (priorityInput) {
+                priorityInput.value = String(row.priority || '').toLowerCase();
+            }
+
+            toggleOtherField(concernCategoryInput, otherConcernCategoryInput);
+            toggleOtherField(concernTypeInput, otherConcernTypeInput);
+        });
+    }
 });
 </script>
 @endpush

@@ -228,6 +228,8 @@ Route::prefix('typhoon')->middleware(['auth', 'module.access:typhoon_flood'])->g
     Route::get('/choose-school', [TyphoonController::class, 'chooseSchool'])->name('typhoon.choose-school');
     Route::post('/set-school/{id}', [TyphoonController::class, 'setActiveSchool'])->name('typhoon.set-school');
     Route::post('/families', [TyphoonController::class, 'storeFamily'])->name('typhoon.families.store');
+    Route::put('/families/{id}', [TyphoonController::class, 'updateFamily'])->name('typhoon.families.update');
+    Route::post('/families/{id}/decamp', [TyphoonController::class, 'decampFamily'])->name('typhoon.families.decamp');
     Route::get('/evacuation-center/{id}', [TyphoonController::class, 'showEvacuationCenter'])->name('typhoon.evacuation-center.show');
     Route::post('/evacuation-center', [TyphoonController::class, 'storeEvacuationCenter'])->name('typhoon.evacuation-center.store');
     Route::put('/evacuation-center/{id}', [TyphoonController::class, 'updateEvacuationCenter'])->name('typhoon.evacuation-center.update');
@@ -307,6 +309,7 @@ Route::prefix('comprehensive-school-safety')
         Route::post('/schools/{schoolId}/facilities', [ComprehensiveSchoolSafetyController::class, 'storeFacility'])->name('school.facilities.store');
         Route::put('/schools/{schoolId}/facilities/{facilityId}', [ComprehensiveSchoolSafetyController::class, 'updateFacility'])->name('school.facilities.update');
         Route::post('/schools/{schoolId}/summary-findings', [ComprehensiveSchoolSafetyController::class, 'storeSummaryFinding'])->name('school.summary-findings.store');
+        Route::put('/schools/{schoolId}/summary-findings/{findingId}', [ComprehensiveSchoolSafetyController::class, 'updateSummaryFinding'])->name('school.summary-findings.update');
         Route::delete('/schools/{schoolId}/summary-findings/{findingId}', [ComprehensiveSchoolSafetyController::class, 'destroySummaryFinding'])->name('school.summary-findings.destroy');
         Route::get('/schools/{schoolId}/reports', [ComprehensiveSchoolSafetyController::class, 'schoolReports'])->name('school.reports');
         Route::get('/schools/{schoolId}/reports/assessment-print', [ComprehensiveSchoolSafetyController::class, 'printAssessmentReport'])->name('school.reports.assessment-print');

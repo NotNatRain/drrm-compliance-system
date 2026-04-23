@@ -1,0 +1,238 @@
+Drrm Compliance System - User Manual
+
+1. Drrm Compliance System (General)
+
+1.1 Login Page
+Overview: The entry point of the system where users authenticate their identity to access school safety data.
+- Access the system via the provided URL.
+- Log in using your email and password.
+- Roles: Admin (Full access), Contributor (School-specific), Viewer (Read-only).
+
+1.2 Drrm Compliance Main Dashboard - Compliance Tab
+Overview: A high-level overview of the entire DRRM system, showing compliance statuses across all modules.
+- Central hub for all safety modules.
+- Click on any module card (Fire Safety, Typhoon/Flood, Incident Checklist, CSS) to enter.
+- Displays high-level compliance percentages for the selected school.
+
+1.3 Drrm Compliance Main Dashboard - Schools Tab
+Overview: A directory of schools within the division, allowing admins to manage school data and view specific school profiles.
+- Admin: Manage all schools, view school IDs, and overall statuses.
+- Contributor: View assigned school details.
+- Search bar: Find schools by name or ID.
+
+1.4 User Page
+Overview: Centralized user management for controlling system access, adding new staff, and assigning roles/schools.
+- Manage accounts and roles.
+- Admins can add new users and assign them to specific schools.
+
+1.5 Activity Log
+Overview: A transparency tool that tracks all administrative actions to maintain accountability within the system.
+- Audit trail for all system changes.
+- Records who, what, and when.
+
+1.6 Create System Announcement Modal
+Overview: A tool for broadcasting critical updates or emergency notifications to all users in the system.
+- Click the notification/announcement button to broadcast messages.
+- Enter a title and content to inform all users about system updates or emergencies.
+
+
+2. Fire Safety Compliance System
+
+2.1 Dashboard Page
+Overview: A management console for monitoring fire safety compliance across all schools in the division.
+- Division Cards:
+  - Passed Inspections: Schools that are 100% compliant.
+  - Ongoing Improvement: Schools with active safety issues.
+  - Unconfigured: Schools waiting for initial setup.
+  - Total Schools: Overall count in the division.
+- Buttons:
+  - Generate Report: Download a division-wide summary.
+  - Print/Success: Actions for individual schools to view or print details.
+
+2.2 Building Page
+Overview: Detailed management of school structures, including floor levels, room counts, and safety feature tracking.
+- Add Building: Click "Add Building", enter code, floors, and rooms.
+- Update Building: Click "View Details / Update" to change info or add safety features.
+- Alarm Fire Extinguisher: Indicators on the building card show equipment status.
+- Rooms: Displays the breakdown of rooms created for that building.
+- Division Cards (Summary):
+  - Total Buildings, Compliance Ratio, Active Alarms.
+- History Button: View records of removed buildings, floors, or rooms.
+- Inspection: "Inspect Now" records drills and checklist results.
+
+2.3 Alarm Management
+Overview: Tracks the installation, functionality, and maintenance schedule of fire alarm systems across the campus.
+- Add Alarm: Specify code, type, and buildings covered.
+- Update Alarm: Mark as functional or needs maintenance.
+- Record Test: Set the last test date for maintenance tracking.
+
+2.4 Extinguisher Page - Room Management
+Overview: Ensures that every classroom and office has adequate safety coverage by mapping rooms to their respective buildings.
+- Division Cards:
+  - Total Rooms: Count of rooms in the building database.
+  - Room Coverage Status: Percent of rooms with a nearby extinguisher.
+- Add Room: Create a new room entry for a specific building/floor.
+- Update Room: Inspect the room for secondary exits and smoke detectors.
+- History Button: Access logs of previous room configurations.
+
+2.5 Extinguisher Page - Extinguisher Management
+Overview: Monitors the inventory, location, and maintenance status of fire extinguishers to ensure immediate availability.
+- Add Extinguisher: Provide code, type, and its primary "Center Room".
+- Assign Extinguisher: Select up to 3 rooms covered by the unit.
+- Update/Delete: Change pressure levels or status (OK, Used, Missing). 
+- Decommission: Use the removal option to archive the unit.
+- History Button: View all inspection logs for extinguishers.
+
+2.6 Evacuation Plan Page
+Overview: Central repository for school-wide and building-specific evacuation maps and emergency protocols.
+- Division Cards:
+  - Shows how many buildings have uploaded plans and how many are missing.
+- Evacuation Plan Tab:
+  - Upload/View maps showing egress routes for each floor.
+- Evacuation Site Tab:
+  - Manage and locate the assembly area/safe zone for the school.
+
+2.7 Customization Page
+Overview: A management page for administrators to define system-wide parameters such as equipment types and operational statuses.
+- How to Customize: Navigate to the Customization page via the sidebar or settings icon.
+- Add & Edit: Use the "Add New" buttons to create new alarm types or extinguisher classifications. Click the "Edit" icon on existing items to update their labels or active status.
+- Purpose: Ensures the system terminology matches the school's actual inventory and local safety standards.
+
+2.8 Full Fire Safety Report
+Overview: A comprehensive, printable summary of a school's entire fire safety infrastructure and compliance status.
+- Printing Layout: Accessed via the "Full Report" button. It opens a clean, document-ready view.
+- What it Displays:
+  - School Information & Profile.
+  - Summary of All Buildings (Floors, Rooms, Compliance).
+  - List of All Installed Alarms and their last test dates.
+  - List of All Fire Extinguishers and their pressure levels.
+  - Overall Compliance Rating and pending safety issues.
+
+2.9 Notification Page
+Overview: A dedicated hub for tracking automated safety alerts, scheduled maintenance, and administrative messages.
+- What it Displays:
+  - Maintenance Alerts: Notifications for upcoming alarm tests or expired extinguishers.
+  - System Announcements: Messages from the division administrator.
+  - Activity Updates: Logs of recent room inspections or building updates.
+- Usage: Use the "Mark as Read" feature to manage your task list and ensure no safety deadline is missed.
+
+
+3. Typhoon Flood Monitoring System
+
+3.1 Dashboard
+Overview: A real-time monitoring screen for weather alerts and the active status of evacuation centers during disasters.
+- Screening: Displays current weather alerts, active monitoring status, and active typhoon tracks.
+- Buttons:
+  - Add Center: Opens modal to register a new Evacuation Center.
+  - Active Centers: Filter to see only currently occupied sites.
+  - Status Indicators: Red (Extreme Warning), Yellow (Watch), Blue (Normal).
+
+3.2 Report Posting
+Overview: Facilitates the generation of official monitoring reports for submission to local government or education authorities.
+- Generate and save monitoring reports as PDF.
+- Click "Generate PDF" or the "Print" icon to create a formal document of the current status.
+
+3.3 Dashboard - Evacuation Centers & Register Family
+Overview: Manages the registration and allocation of evacuees to safe zones during emergency situations.
+- Center Display: Shows current occupancy, capacity, and status (Operating/Standby).
+- Register Family Modal: 
+  - Fill in Head of Family, No. of Members, and specific needs (Pillows, Blankets, Food, etc.).
+  - Select an existing school/center for assignment.
+
+3.4 Evacuation Center Page
+Overview: A detailed view of a specific evacuation site, including family demographics and supply needs.
+- Displays: Breakdown of families, member counts, and specific needs inventory.
+- Buttons:
+  - Add Needs: Request/Update supplies for families.
+  - Transfer Family: Move family to a different center if needed.
+  - Evacuate Family: Mark family as having returned home safely.
+
+3.5 Notification Page
+Overview: A history of weather advisories and administrative alerts related to disaster monitoring.
+- Displays system-wide weather alerts and manual announcements from administrators.
+
+
+4. Incident Checklist System
+
+4.1 Dashboard - Administrator
+Overview: The main control panel for logging and tracking campus incidents and compliance events on a global calendar.
+- Log Incident: Click "Log New Incident" to record date, type (e.g., Flood, Fire), and affected school.
+- Calendar: Interactive view of all logged events. Click any date to view or add details.
+- Legend Filters: Toggle view for specific types (Rainfall, Landslide, Accident, etc.).
+
+4.2 Dashboard - Contributor
+Overview: A specialized reporting interface for school-level staff to submit daily logs and incident reports.
+- Differentiator: Restricted to viewing and reporting for their assigned school only.
+- How To Use: Submit daily incident/compliance reports for approval.
+- Buttons:
+  - Pending Review: Shows reports waiting for Admin approval.
+  - Registered: Confirmed reports appearing on the calendar.
+  - Rejected: Reports sent back with a reason for correction.
+
+4.3 Quick Checklist & Data Chart
+Overview: Visual analytics and task management tools to help users track progress and export safety data for reporting.
+- Printing: Click "Print Analytics" or the "Print" icon on charts to export pie/column data.
+- Calendar Printing: Use "Print Calendar" to get a hard copy of the monthly log.
+- Quick Checklist: Sidebar for tracking daily safety tasks; click items to mark as done.
+
+
+5. Comprehensive School Safety (CSS) System
+
+5.1 Dashboard
+Overview: A snapshot of Comprehensive School Safety metrics, focusing on student totals and facility conditions.
+- Kpi Cards: Real-time count of Assessments Completed, Total Students, and Facilities.
+- School Info: Displays basic demographic and contact data for the active school.
+
+5.2 Assessment Page
+Overview: An interactive checklist based on national safety pillars to evaluate a school's overall disaster readiness.
+- How To Assess: 
+  - Click "Start New Assessment".
+  - Fill in General Info (Assessor, Date).
+  - Navigate through Pillars using the sticky menu.
+  - Rate items (Yes/No), assign Points, and add Remarks.
+- Buttons:
+  - Pillar Links: Instant jump to specific checklist sections.
+
+5.3 Edit Assessment Page
+Overview: Allows assessors to refine previous evaluations as school conditions change or improvements are made.
+- Click "Edit" on a completed assessment to update ratings or remarks.
+- Totals are automatically recalculated upon saving.
+
+5.4 Facility Page
+Overview: Integrates physical facility data with safety findings to create a comprehensive risk register.
+- How To Use: Register assembly areas and generic school structures.
+- Data Displayed: 
+  - Risk Register: Summary of safety indicators pulled from Fire Safety buildings.
+  - Evacuation Plan: The school-wide protocol for emergencies.
+
+5.5 Analytics & Reports Page
+Overview: Compiles assessment data into actionable summaries and historical archives for long-term planning.
+- Data Reported: Compliance rates, average safety scores, and student/facility totals.
+- Buttons:
+  - Print Assessment: Detailed questionnaire report for a specific date.
+  - Print Safety Index: Scorecard overview for all school buildings.
+  - Print Archives: Historical timeline of safety assessments.
+
+5.6 Printing Layout
+Overview: Standardized templates for generating high-quality physical copies of assessments and safety scorecards.
+- Assessment: High-resolution table of all checklist criteria and responses.
+- Safety Index: Visual summary of building conditions and priority findings.
+
+5.7 Storage
+Overview: An inventory management system for emergency supplies, medical kits, and rescue equipment.
+- How To Use: Manage the inventory of emergency equipment (tools, medicine, supplies).
+- Item Concerns: Track if items are Functional, Available, and where they were sourced from.
+- Print Report: Official inventory list for physical audits.
+
+
+6. Hazard Mapping
+
+6.1 Dashboard
+Overview: A visual mapping tool that provides multi-dimensional views of hazards and structural data across the school grounds.
+- Map Navigation:
+  - Entire School: View overall stats and building-level safety features.
+  - Building Model: View a vertical stack of floors and finding counts.
+  - Floor View: Topdown layout of rooms, hallways, and stairs.
+- Primary Concerns:
+  - Hazards/Vulnerabilities: Identifying high-risk areas per floor.
+  - Room Allocation: Viewing specific inventory (chairs, tables, TV) inside each room.

@@ -81,9 +81,7 @@ class IncidentController extends Controller
             // Re-using same logic for dropdowns
             $incidentTypes = IncidentType::orderBy('priority')->get();
             $incidentStatuses = IncidentStatus::orderBy('name')->get();
-            $fireSafetySchools = !$assignedIncidentSchoolName
-                ? $this->getUnifiedIncidentSchoolOptions()
-                : collect();
+            $fireSafetySchools = $this->getUnifiedIncidentSchoolOptions();
 
             return view('incidents.reporting_dashboard', compact(
                 'myReports',
@@ -219,7 +217,7 @@ class IncidentController extends Controller
         // Get unique schools for autocomplete
         $schools = School::orderBy('school_name')->pluck('school_name')->toArray();
 
-        // Unified schools for dropdown (Fire Safety + Typhoon/Flood centers + Incident inputs)
+        // Unified schools for dropdown (all directory schools)
         $fireSafetySchools = $this->getUnifiedIncidentSchoolOptions();
 
         return view('incidents.dashboard', compact(

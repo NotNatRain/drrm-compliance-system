@@ -7,10 +7,12 @@ use App\Models\FireSafetyNotification;
 use App\Models\School;
 use App\Models\TypFldFamily;
 use App\Models\TypFldFamilyMember;
+use App\Models\TypFldNeed;
 use App\Models\TypFldMonitoringSnapshot;
 use App\Models\SchoolSpecificsInformation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
@@ -61,6 +63,121 @@ class TyphoonController extends Controller
         return [];
     }
 
+    private function canManageSchool($user, School $school): bool
+    {
+        if ($user->role === 'admin') {
+            return true;
+        }
+
+        return (int) $user->school_id === (int) $school->id
+            || (int) $user->typhoon_school_id === (int) $school->id;
+    }
+
+    private function currentOccupancyCount(int $schoolId): int
+    {
+        return TypFldFamilyMember::query()
+            ->join('typ_fld_families', 'typ_fld_families.id', '=', 'typ_fld_family_members.family_id')
+            ->where('typ_fld_families.school_id', $schoolId)
+            ->whereNull('typ_fld_families.checked_out_at')
+            ->count();
+    }
+
+    private function syncEvacuationStatus(School $school): void
+    {
+        $currentOccupancyCount = $this->currentOccupancyCount($school->id);
+        $capacity = (int) $school->evacuation_capacity;
+
+        if ($capacity > 0 && $currentOccupancyCount >= $capacity) {
+            $school->evacuation_status = 'full';
+        } elseif ($currentOccupancyCount > 0) {
+            $school->evacuation_status = 'occupied';
+        }
+
+        $school->save();
+    }
+
+    private function familyNeedOptions()
+    {
+        $defaultNeedOptions = [
+            'Rice',
+            'Water',
+            'Ready-to-Eat Food',
+            'Medicine',
+            'Blanket',
+            'Clothing',
+            'Hygiene Kit',
+            'Baby Supplies',
+            'Diapers',
+            'Milk',
+            'Sleeping Mat',
+            'Others Please Specify',
+        ];
+
+        $databaseNeedOptions = DB::table('typ_fld_needs')
+            ->where('need_name', '!=', 'Others Please Specify')
+            ->orderBy('need_name')
+            ->pluck('need_name')
+            ->all();
+
+        return collect($defaultNeedOptions)
+            ->merge($databaseNeedOptions)
+            ->unique()
+            ->values();
+    }
+
+    private function normalizeFamilyNeeds(array $needsRows): array
+    {
+        return collect($needsRows)
+            ->map(function ($row) {
+                $needName = trim((string) ($row['need_name'] ?? ''));
+                $customNeed = trim((string) ($row['custom_need'] ?? ''));
+                $quantity = max(1, (int) ($row['quantity'] ?? 1));
+
+                if ($needName === 'Others Please Specify') {
+                    $needName = $customNeed;
+                }
+
+                return [
+                    'need_name' => $needName,
+                    'quantity' => $quantity,
+                    'is_custom' => $customNeed !== '',
+                ];
+            })
+            ->filter(fn ($row) => $row['need_name'] !== '')
+            ->values()
+            ->all();
+    }
+
+    private function syncFamilyNeeds(TypFldFamily $family, array $needsRows): void
+    {
+        $family->needs()->delete();
+
+        foreach ($this->normalizeFamilyNeeds($needsRows) as $row) {
+            $family->needs()->create($row);
+        }
+    }
+
+    private function deriveAgeFlags(array $members): array
+    {
+        $hasSenior = false;
+        $hasChildUnder5 = false;
+
+        foreach ($members as $member) {
+            $age = (int) ($member['age'] ?? -1);
+            if ($age >= 60) {
+                $hasSenior = true;
+            }
+            if ($age >= 0 && $age <= 5) {
+                $hasChildUnder5 = true;
+            }
+        }
+
+        return [
+            'has_senior' => $hasSenior,
+            'has_child_under5' => $hasChildUnder5,
+        ];
+    }
+
     private function attachCurrentOccupancy($ec)
     {
         $ec->current_occupancy = TypFldFamilyMember::query()
@@ -102,7 +219,7 @@ class TyphoonController extends Controller
 
     public function dashboard()
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
         $evacuationCentersQuery = $this->typhoonRegisteredEvacuationCentersQuery();
         if ($user->role !== 'admin') {
@@ -280,6 +397,43 @@ class TyphoonController extends Controller
         $contributorActiveSchoolId = ($contributorIds && count($contributorIds) === 1) ? $contributorIds[0] : null;
 
         $unregisteredSchools = $this->schoolsNotYetRegisteredForTyphoon();
+        $familyNeedOptions = $this->familyNeedOptions();
+        $existingFamiliesByCenter = TypFldFamily::query()
+            ->with(['members', 'needs'])
+            ->whereIn('school_id', $evacuationCenters->pluck('id')->all())
+            ->latest()
+            ->get()
+            ->groupBy('school_id')
+            ->map(function ($families) {
+                return $families->map(function ($family) {
+                    return [
+                        'id' => $family->id,
+                        'head_family_name' => $family->head_family_name,
+                        'checked_out_at' => optional($family->checked_out_at)->toDateTimeString(),
+                        'created_at' => optional($family->created_at)->toDateTimeString(),
+                        'has_pregnant' => (bool) $family->has_pregnant,
+                        'has_pwd' => (bool) $family->has_pwd,
+                        'has_senior' => (bool) $family->has_senior,
+                        'has_lactating' => (bool) $family->has_lactating,
+                        'has_child_under5' => (bool) $family->has_child_under5,
+                        'members' => $family->members->map(function ($member) {
+                            return [
+                                'full_name' => $member->full_name,
+                                'age' => (int) $member->age,
+                                'gender' => $member->gender,
+                                'is_head' => (bool) $member->is_head,
+                            ];
+                        })->values(),
+                        'needs' => $family->needs->map(function ($need) {
+                            return [
+                                'need_name' => $need->need_name,
+                                'quantity' => (int) $need->quantity,
+                                'is_custom' => (bool) $need->is_custom,
+                            ];
+                        })->values(),
+                    ];
+                })->values();
+            });
 
         return view('typhoon.dashboard', [
             'evacuationCenters' => $evacuationCenters,
@@ -306,6 +460,8 @@ class TyphoonController extends Controller
             'activeSchoolId' => $contributorActiveSchoolId,
             'activeTyphoon' => $activeTyphoon,
             'unregisteredSchools' => $unregisteredSchools,
+            'familyNeedOptions' => $familyNeedOptions,
+            'existingFamiliesByCenter' => $existingFamiliesByCenter,
             'quickAnnouncements' => FireSafetyNotification::forCompliance('typhoon_flood')
                 ->where(function ($q) use ($contributorActiveSchoolId) {
                     $q->whereNull('school_id')
@@ -320,7 +476,7 @@ class TyphoonController extends Controller
 
     public function chooseSchool()
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
         $centersQuery = $this->typhoonRegisteredEvacuationCentersQuery();
         if ($user->role !== 'admin') {
@@ -361,7 +517,7 @@ class TyphoonController extends Controller
     {
         $school = School::findOrFail($id);
 
-        if (auth()->user()->role !== 'admin' && (int) auth()->user()->school_id !== (int) $school->id && (int) auth()->user()->typhoon_school_id !== (int) $school->id) {
+        if (Auth::user()->role !== 'admin' && (int) Auth::user()->school_id !== (int) $school->id && (int) Auth::user()->typhoon_school_id !== (int) $school->id) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
@@ -374,8 +530,13 @@ class TyphoonController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'evacuation_center_id' => 'required|integer|exists:schools,id',
+            'registration_mode' => 'required|string|in:new,existing',
+            'existing_family_id' => 'nullable|integer|exists:typ_fld_families,id|required_if:registration_mode,existing',
             'head_family_name' => 'required|string|max:255',
-            'collective_needs' => 'nullable|string|max:2000',
+            'needs' => 'required|array|min:1',
+            'needs.*.need_name' => 'required|string|max:255',
+            'needs.*.custom_need' => 'nullable|string|max:255',
+            'needs.*.quantity' => 'required|integer|min:1|max:999',
             'has_pregnant' => 'nullable|boolean',
             'has_pwd' => 'nullable|boolean',
             'has_senior' => 'nullable|boolean',
@@ -386,7 +547,6 @@ class TyphoonController extends Controller
             'members.*.full_name' => 'required|string|max:255',
             'members.*.age' => 'required|integer|min:0|max:120',
             'members.*.gender' => 'required|in:male,female',
-            'members.*.needs' => 'nullable|string|max:255',
         ]);
 
         if ($validator->fails()) {
@@ -395,52 +555,100 @@ class TyphoonController extends Controller
 
         $ec = School::findOrFail($request->evacuation_center_id);
 
-        $currentOccupancyCount = TypFldFamilyMember::query()
-            ->join('typ_fld_families', 'typ_fld_families.id', '=', 'typ_fld_family_members.family_id')
-            ->where('typ_fld_families.school_id', $ec->id)
-            ->whereNull('typ_fld_families.checked_out_at')
-            ->count();
+        $currentOccupancyCount = $this->currentOccupancyCount($ec->id);
 
         $capacity = $ec->evacuation_capacity;
         if ($capacity > 0 && $currentOccupancyCount >= $capacity) {
             return redirect()->back()->with('error', "Evacuation Center is full (Capacity: {$capacity}, Current: {$currentOccupancyCount}). Cannot register more families.")->withInput();
         }
 
-        $user = auth()->user();
-        if ($user->role !== 'admin' && (int) $user->school_id !== (int) $ec->id && (int) $user->typhoon_school_id !== (int) $ec->id) {
+        $user = Auth::user();
+        if (!$this->canManageSchool($user, $ec)) {
             return redirect()->back()->with('error', 'Unauthorized evacuation center.');
         }
 
-        DB::transaction(function () use ($request, $ec) {
+        $existingFamilyTemplate = null;
+        if ($request->registration_mode === 'existing') {
+            $existingFamilyTemplate = TypFldFamily::with(['members', 'needs'])
+                ->where('id', (int) $request->existing_family_id)
+                ->where('school_id', $ec->id)
+                ->first();
+
+            if (!$existingFamilyTemplate) {
+                return redirect()->back()->with('error', 'Selected existing family is not from this evacuation center.')->withInput();
+            }
+        }
+
+        DB::transaction(function () use ($request, $ec, $existingFamilyTemplate) {
+            $existingFamily = $existingFamilyTemplate;
+
+            $members = (array) $request->input('members', []);
+            if (empty($members) && $existingFamily) {
+                $members = $existingFamily->members
+                    ->map(function ($member) {
+                        return [
+                            'full_name' => $member->full_name,
+                            'age' => (int) $member->age,
+                            'gender' => $member->gender,
+                            'is_head' => (bool) $member->is_head,
+                        ];
+                    })
+                    ->values()
+                    ->all();
+            }
+
+            $ageFlags = $this->deriveAgeFlags($members);
+
             $family = TypFldFamily::create([
                 'school_id' => $ec->id,
-                'head_family_name' => $request->head_family_name,
-                'collective_needs' => $request->collective_needs,
-                'has_pregnant' => (bool) $request->has_pregnant,
-                'has_pwd' => (bool) $request->has_pwd,
-                'has_senior' => (bool) $request->has_senior,
-                'has_lactating' => (bool) $request->has_lactating,
-                'has_child_under5' => (bool) $request->has_child_under5,
+                'head_family_name' => $request->head_family_name ?: ($existingFamily?->head_family_name ?? ''),
+                'has_pregnant' => (bool) $request->has_pregnant || (bool) ($existingFamily?->has_pregnant ?? false),
+                'has_pwd' => (bool) $request->has_pwd || (bool) ($existingFamily?->has_pwd ?? false),
+                'has_senior' => (bool) $request->has_senior || $ageFlags['has_senior'] || (bool) ($existingFamily?->has_senior ?? false),
+                'has_lactating' => (bool) $request->has_lactating || (bool) ($existingFamily?->has_lactating ?? false),
+                'has_child_under5' => (bool) $request->has_child_under5 || $ageFlags['has_child_under5'] || (bool) ($existingFamily?->has_child_under5 ?? false),
                 'checked_in_at' => $request->confirm_check_in ? now() : null,
             ]);
 
-            $members = $request->members ?? [];
             foreach ($members as $idx => $m) {
                 TypFldFamilyMember::create([
                     'family_id' => $family->id,
                     'full_name' => $m['full_name'],
                     'age' => (int) $m['age'],
                     'gender' => $m['gender'],
-                    'needs' => $m['needs'] ?? null,
                     'is_head' => $idx === 0,
                     'status' => 'normal',
                 ]);
             }
+
+            $needsRows = (array) $request->input('needs', []);
+            if (empty($needsRows) && $existingFamily) {
+                $needsRows = $existingFamily->needs
+                    ->map(function ($need) {
+                        return [
+                            'need_name' => $need->is_custom ? 'Others Please Specify' : $need->need_name,
+                            'custom_need' => $need->is_custom ? $need->need_name : null,
+                            'quantity' => (int) $need->quantity,
+                        ];
+                    })
+                    ->values()
+                    ->all();
+            }
+
+            $this->syncFamilyNeeds($family, $needsRows);
+
+            // First check-in should activate the center state automatically.
+            $ec->evacuation_status = 'occupied';
+            $ec->save();
+
+            $this->syncEvacuationStatus($ec);
         });
 
         ActivityLog::log('typhoon_flood', 'Registered family: ' . $request->head_family_name, [
             'school_id' => $ec->id,
-            'notes' => $request->collective_needs,
+            'notes' => collect($this->normalizeFamilyNeeds((array) $request->input('needs', [])))
+                ->pluck('need_name')
+                ->implode(', '),
         ]);
 
         return redirect()->route('typhoon.dashboard')->with('success', 'Family registered successfully.');
@@ -449,14 +657,14 @@ class TyphoonController extends Controller
     public function showEvacuationCenter($id)
     {
         $ec = School::findOrFail($id);
-        $user = auth()->user();
+        $user = Auth::user();
         if ($user->role !== 'admin' && (int) $user->school_id !== (int) $ec->id && (int) $user->typhoon_school_id !== (int) $ec->id) {
             abort(403, 'Unauthorized');
         }
 
         session(['typhoon_active_school_id' => $ec->id]);
 
-        $families = TypFldFamily::withCount('members')
+        $families = TypFldFamily::with(['needs'])->withCount('members')
             ->where('school_id', $ec->id)
             ->latest()
             ->get();
@@ -468,6 +676,8 @@ class TyphoonController extends Controller
             ->where('typ_fld_families.school_id', $ec->id)
             ->whereNull('typ_fld_families.checked_out_at')
             ->count();
+
+        $familyNeedOptions = $this->familyNeedOptions();
 
         $evacuationCenters = $this->typhoonRegisteredEvacuationCentersQuery()->get()->map(function ($center) {
             return $this->attachCurrentOccupancy($center);
@@ -489,19 +699,20 @@ class TyphoonController extends Controller
             'currentOccupancy' => $currentOccupancy,
             'evacuationCenters' => $evacuationCenters,
             'quickAnnouncements' => $quickAnnouncements,
+            'familyNeedOptions' => $familyNeedOptions,
         ]);
     }
 
     public function storeEvacuationCenter(Request $request)
     {
-        $user = auth()->user();
+        $user = Auth::user();
         if (!$user) {
             abort(403);
         }
 
         $validator = Validator::make($request->all(), [
             'existing_school_id' => 'required|integer|exists:schools,id',
-            'usage_status' => 'required|string|in:cleared,occupied,full,decamp',
+            'usage_status' => 'required|string|in:cleared,occupied',
             'emergency_resources' => 'nullable|string|max:2000',
             'capacity' => 'required|integer|min:0',
         ]);
@@ -554,13 +765,14 @@ class TyphoonController extends Controller
     public function updateEvacuationCenter(Request $request, $id)
     {
         $ec = School::findOrFail($id);
-        $user = auth()->user();
-        if ($user->role !== 'admin' && (int) $user->school_id !== (int) $ec->id && (int) $user->typhoon_school_id !== (int) $ec->id) {
+        $user = Auth::user();
+        if (!$this->canManageSchool($user, $ec)) {
             abort(403, 'Unauthorized');
         }
 
         $validator = Validator::make($request->all(), [
-            'usage_status' => 'required|string|in:cleared,occupied,full,decamp',
+            'usage_status' => 'required|string|in:cleared,occupied',
+            'capacity' => 'required|integer|min:0',
             'emergency_resources' => 'nullable|string|max:2000',
             'reports_status' => 'nullable|string|max:2000',
         ]);
@@ -569,10 +781,21 @@ class TyphoonController extends Controller
             return redirect()->back()->with('error', $validator->errors()->first())->withInput();
         }
 
+        $hasDecampState = $ec->evacuation_status === 'decamp'
+            || (TypFldFamily::where('school_id', $ec->id)->count() > 0
+                && TypFldFamily::where('school_id', $ec->id)->whereNull('checked_out_at')->count() === 0);
+
+        if ($request->usage_status === 'cleared' && !$hasDecampState) {
+            return redirect()->back()->with('error', 'Site can only be set to CLEARED/STANDBY after decamp is recorded.')->withInput();
+        }
+
         $ec->evacuation_status = $request->usage_status;
+        $ec->evacuation_capacity = (int) $request->capacity;
         $ec->emergency_resources = $request->emergency_resources;
         $ec->reports_status = $request->reports_status;
         $ec->save();
+
+        $this->syncEvacuationStatus($ec);
 
         FireSafetyNotification::create([
             'compliance_type' => 'typhoon_flood',
@@ -595,6 +818,88 @@ class TyphoonController extends Controller
         return redirect()->route('typhoon.evacuation-center.show', $ec->id)->with('success', 'Evacuation center updated.');
     }
 
+    public function updateFamily(Request $request, $id)
+    {
+        $family = TypFldFamily::with('school')->findOrFail($id);
+        $user = Auth::user();
+
+        if (!$this->canManageSchool($user, $family->school)) {
+            abort(403, 'Unauthorized');
+        }
+
+        if ($family->checked_out_at) {
+            return redirect()->back()->with('error', 'Cannot update a decamped family.');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'head_family_name' => 'required|string|max:255',
+            'needs' => 'required|array|min:1',
+            'needs.*.need_name' => 'required|string|max:255',
+            'needs.*.custom_need' => 'nullable|string|max:255',
+            'needs.*.quantity' => 'required|integer|min:1|max:999',
+            'has_pregnant' => 'nullable|boolean',
+            'has_pwd' => 'nullable|boolean',
+            'has_senior' => 'nullable|boolean',
+            'has_lactating' => 'nullable|boolean',
+            'has_child_under5' => 'nullable|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->with('error', $validator->errors()->first())->withInput();
+        }
+
+        $family->update([
+            'head_family_name' => $request->head_family_name,
+            'has_pregnant' => (bool) $request->has_pregnant,
+            'has_pwd' => (bool) $request->has_pwd,
+            'has_senior' => (bool) $request->has_senior,
+            'has_lactating' => (bool) $request->has_lactating,
+            'has_child_under5' => (bool) $request->has_child_under5,
+        ]);
+
+        $this->syncFamilyNeeds($family, (array) $request->input('needs', []));
+
+        ActivityLog::log('typhoon_flood', 'Updated family: ' . $family->head_family_name, [
+            'school_id' => $family->school_id,
+        ]);
+
+        return redirect()->route('typhoon.evacuation-center.show', $family->school_id)->with('success', 'Family details updated.');
+    }
+
+    public function decampFamily($id)
+    {
+        $family = TypFldFamily::with('school')->findOrFail($id);
+        $user = Auth::user();
+
+        if (!$this->canManageSchool($user, $family->school)) {
+            abort(403, 'Unauthorized');
+        }
+
+        if ($family->checked_out_at) {
+            return redirect()->back()->with('info', 'Family already marked as decamped.');
+        }
+
+        $family->checked_out_at = now();
+        $family->save();
+
+        $activeFamiliesCount = TypFldFamily::where('school_id', $family->school_id)
+            ->whereNull('checked_out_at')
+            ->count();
+
+        if ($activeFamiliesCount === 0) {
+            $family->school->evacuation_status = 'decamp';
+            $family->school->save();
+        } else {
+            $this->syncEvacuationStatus($family->school);
+        }
+
+        ActivityLog::log('typhoon_flood', 'Decamped family: ' . $family->head_family_name, [
+            'school_id' => $family->school_id,
+        ]);
+
+        return redirect()->route('typhoon.evacuation-center.show', $family->school_id)->with('success', 'Family marked as decamped.');
+    }
+
     public function storeAnnouncement(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -608,7 +913,7 @@ class TyphoonController extends Controller
             return redirect()->back()->with('error', $validator->errors()->first())->withInput();
         }
 
-        $user = auth()->user();
+        $user = Auth::user();
 
         FireSafetyNotification::create([
             'compliance_type' => 'typhoon_flood',
@@ -628,7 +933,7 @@ class TyphoonController extends Controller
 
     public function notifications()
     {
-        $user = auth()->user();
+        $user = Auth::user();
         $query = $this->typhoonNotificationsQueryForUser($user)
             ->latest();
 
@@ -661,7 +966,7 @@ class TyphoonController extends Controller
 
     public function markAllNotificationsRead()
     {
-        $user = auth()->user();
+        $user = Auth::user();
         $query = $this->typhoonNotificationsQueryForUser($user, true);
 
         $query->update(['is_read' => true]);
@@ -671,7 +976,7 @@ class TyphoonController extends Controller
 
     public function realtime(Request $request)
     {
-        $user = auth()->user();
+        $user = Auth::user();
         $activeSchoolId = session('typhoon_active_school_id');
         if ($user->role !== 'admin') {
             $activeSchoolId = $user->typhoon_school_id ?: $user->school_id;

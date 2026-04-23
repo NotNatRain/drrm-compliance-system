@@ -29,6 +29,31 @@ class DashboardController extends Controller
         return $schoolId ? (int) $schoolId : null;
     }
 
+    private function registerSchoolAcrossModules(School $school): void
+    {
+        $registrations = [
+            ['module' => 'fire_safety', 'key' => 'original_fire_safety_id'],
+            ['module' => 'typhoon_flood', 'key' => 'original_evacuation_center_id'],
+            ['module' => 'incident', 'key' => 'original_incident_school_id'],
+            ['module' => 'comprehensive', 'key' => 'original_cmpr_school_id'],
+        ];
+
+        foreach ($registrations as $registration) {
+            SchoolSpecificsInformation::updateOrInsert(
+                [
+                    'school_id' => $school->id,
+                    'module' => $registration['module'],
+                    'key' => $registration['key'],
+                ],
+                [
+                    'value' => (string) $school->id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+        }
+    }
+
     /**
      * Create a new controller instance.
      */
@@ -94,8 +119,53 @@ class DashboardController extends Controller
             $allSchools = School::orderBy('school_name')->get();
         }
 
+        // --- NEW OVERALL SYSTEM METRICS ---
+        $totalSchoolsCount = School::count();
+        $totalUsersCount = User::count();
+
+        // 1. Fire Safety Compliance %
+        $fsPassed = School::where('fire_safety_status', 'passed')->count();
+        $fsRate = $totalSchoolsCount > 0 ? ($fsPassed / $totalSchoolsCount) * 100 : 0;
+
+        // 2. Typhoon Monitoring %
+        $tfOperating = School::where('evacuation_status', 'operating')->count();
+        $tfRate = $totalSchoolsCount > 0 ? ($tfOperating / $totalSchoolsCount) * 100 : 0;
+
+        // 3. Incident Checklist %
+        $icLogs = School::where('incident_count', '>', 0)->count();
+        $icRate = $totalSchoolsCount > 0 ? ($icLogs / $totalSchoolsCount) * 100 : 0;
+
+        // 4. CSS Assessment %
+        $cssPassed = School::whereHas('assessments', function($q) {
+            $q->where('status', 'completed');
+        })->count();
+        $cssRate = $totalSchoolsCount > 0 ? ($cssPassed / $totalSchoolsCount) * 100 : 0;
+
+        // 5. Hazard Mapping %
+        $hmConfigured = School::whereHas('fireSafetyBuildings')->count();
+        $hmRate = $totalSchoolsCount > 0 ? ($hmConfigured / $totalSchoolsCount) * 100 : 0;
+
+        $overallComplianceRate = round(($fsRate + $tfRate + $icRate + $cssRate + $hmRate) / 5, 1);
+
+        // 4th Metric: Total Population (Students + Personnel)
+        $totalPopulationCount = School::sum('number_students') + School::sum('number_personnel');
+        // --- END METRICS ---
+
         $announcements = Announcement::where('is_active', true)->latest()->get();
-        return view('dashboard', compact('schools', 'announcements', 'allSchools', 'isAdmin', 'contributorAssignedSchool', 'contributorSchoolAccountUsers', 'schoolUserCandidates', 'unassignedSchoolUserCandidates'));
+        return view('dashboard', compact(
+            'schools', 
+            'announcements', 
+            'allSchools', 
+            'isAdmin', 
+            'contributorAssignedSchool', 
+            'contributorSchoolAccountUsers', 
+            'schoolUserCandidates', 
+            'unassignedSchoolUserCandidates',
+            'totalSchoolsCount',
+            'totalUsersCount',
+            'overallComplianceRate',
+            'totalPopulationCount'
+        ));
     }
 
     public function updateAssignedSchool(Request $request)
@@ -180,17 +250,6 @@ class DashboardController extends Controller
 
     private function syncSchoolRoleAssignment(School $school, ?int $userId, string $position): ?User
     {
-        $currentAssignedUser = User::query()
-            ->where('school_id', $school->id)
-            ->where('position', $position)
-            ->first();
-
-        if ($currentAssignedUser && (!$userId || (int) $currentAssignedUser->id !== (int) $userId)) {
-            $currentAssignedUser->school_id = null;
-            $currentAssignedUser->position = null;
-            $currentAssignedUser->save();
-        }
-
         if (!$userId) {
             return null;
         }
@@ -209,8 +268,13 @@ class DashboardController extends Controller
             throw new \RuntimeException('Selected user is already assigned to another school.');
         }
 
+        User::query()
+            ->where('school_id', $school->id)
+            ->where('id', '!=', $selectedUser->id)
+            ->update(['school_id' => null, 'position' => null]);
+
         $selectedUser->school_id = $school->id;
-        $selectedUser->position = $position;
+        $selectedUser->position = null;
         $selectedUser->save();
 
         return $selectedUser;
@@ -240,7 +304,7 @@ class DashboardController extends Controller
             ->where('school_id', $school->id)
             ->whereIn('role', ['contributor', 'viewer'])
             ->orderBy('name')
-            ->get(['id', 'name', 'email', 'role', 'position']);
+            ->get(['id', 'name', 'email', 'role']);
 
         $availableUsers = User::query()
             ->whereNull('school_id')
@@ -258,22 +322,13 @@ class DashboardController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'email', 'role', 'position']);
 
-        $schoolHeadUser = $assignedUsers->firstWhere('position', 'School Head');
-        $schoolDrrmUser = $assignedUsers->firstWhere('position', 'School DRRM');
-        $schoolAccountUsers = $assignedUsers
-            ->where('position', 'School Account')
-            ->values();
-
         return response()->json([
             'school' => $school,
             'modules' => $modulesSatus,
             'assigned_users' => $assignedUsers,
             'available_users' => $availableUsers,
-            'school_head_user' => $schoolHeadUser,
-            'school_drrm_user' => $schoolDrrmUser,
-            'school_head_user_id' => $schoolHeadUser?->id,
-            'drrm_coordinator_user_id' => $schoolDrrmUser?->id,
-            'school_account_users' => $schoolAccountUsers,
+            'school_account_user' => $assignedUsers->first(),
+            'school_account_users' => $assignedUsers->take(1)->values(),
         ]);
     }
 
@@ -295,15 +350,7 @@ class DashboardController extends Controller
         $school = School::with('specifics')->findOrFail($schoolId);
         $module = $validated['module'];
 
-        $registered = match ($module) {
-            'fire_safety' => $school->specifics->where('module', 'fire_safety')->where('key', 'original_fire_safety_id')->isNotEmpty(),
-            'typhoon_flood' => $school->specifics->where('module', 'typhoon_flood')->where('key', 'original_evacuation_center_id')->isNotEmpty(),
-            'incident_checklist' => $school->specifics->where('module', 'incident')->where('key', 'original_incident_school_id')->isNotEmpty(),
-            'comprehensive_school_safety' => $school->specifics->where('module', 'comprehensive')->where('key', 'original_cmpr_school_id')->isNotEmpty(),
-            // Hazard Mapping is now open once user has module access.
-            'hazard_mapping' => true,
-            default => false,
-        };
+        $registered = in_array($module, ['fire_safety', 'typhoon_flood', 'incident_checklist', 'comprehensive_school_safety', 'hazard_mapping'], true);
 
         return response()->json([
             'registered' => $registered,
@@ -327,9 +374,7 @@ class DashboardController extends Controller
             'school_id' => 'nullable|string|max:255',
             'address' => 'required|string',
             'school_head' => 'nullable|string|max:255',
-            'school_head_user_id' => 'nullable|integer|exists:users,id',
             'drrm_coordinator' => 'nullable|string|max:255',
-            'drrm_coordinator_user_id' => 'nullable|integer|exists:users,id',
             'district' => 'nullable|string|max:255',
             'division' => 'nullable|string|max:255',
             'region' => 'nullable|string|max:255',
@@ -358,9 +403,7 @@ class DashboardController extends Controller
             'school_id',
             'address',
             'school_head',
-            'school_head_user_id',
             'drrm_coordinator',
-            'drrm_coordinator_user_id',
             'district',
             'division',
             'region',
@@ -379,7 +422,6 @@ class DashboardController extends Controller
         if (array_key_exists('drrm_coordinator', $payload) && trim((string) $payload['drrm_coordinator']) === '') {
             unset($payload['drrm_coordinator']);
         }
-        unset($payload['school_head_user_id'], $payload['drrm_coordinator_user_id']);
 
         if (!Schema::hasColumn('schools', 'number_gates')) {
             unset($payload['number_gates']);
@@ -390,25 +432,7 @@ class DashboardController extends Controller
 
         try {
             $school = School::create($payload);
-
-            $schoolHeadUser = $this->syncSchoolRoleAssignment(
-                $school,
-                $request->filled('school_head_user_id') ? (int) $request->input('school_head_user_id') : null,
-                'School Head'
-            );
-            $drrmUser = $this->syncSchoolRoleAssignment(
-                $school,
-                $request->filled('drrm_coordinator_user_id') ? (int) $request->input('drrm_coordinator_user_id') : null,
-                'School DRRM'
-            );
-
-            $manualSchoolHead = trim((string) $request->input('school_head', ''));
-            $manualDrrmCoordinator = trim((string) $request->input('drrm_coordinator', ''));
-
-            $school->update([
-                'school_head' => $manualSchoolHead !== '' ? $manualSchoolHead : ($schoolHeadUser?->name),
-                'drrm_coordinator' => $manualDrrmCoordinator !== '' ? $manualDrrmCoordinator : ($drrmUser?->name),
-            ]);
+            $this->registerSchoolAcrossModules($school);
         } catch (\RuntimeException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -432,9 +456,7 @@ class DashboardController extends Controller
             'school_id' => 'nullable|string|max:255',
             'address' => 'required|string',
             'school_head' => 'nullable|string|max:255',
-            'school_head_user_id' => 'nullable|integer|exists:users,id',
             'drrm_coordinator' => 'nullable|string|max:255',
-            'drrm_coordinator_user_id' => 'nullable|integer|exists:users,id',
             'district' => 'nullable|string|max:255',
             'division' => 'nullable|string|max:255',
             'region' => 'nullable|string|max:255',
@@ -463,9 +485,7 @@ class DashboardController extends Controller
             'school_id',
             'address',
             'school_head',
-            'school_head_user_id',
             'drrm_coordinator',
-            'drrm_coordinator_user_id',
             'district',
             'division',
             'region',
@@ -494,31 +514,6 @@ class DashboardController extends Controller
 
         try {
             $school->update($payload);
-
-            $schoolHeadUser = $this->syncSchoolRoleAssignment(
-                $school,
-                $request->filled('school_head_user_id') ? (int) $request->input('school_head_user_id') : null,
-                'School Head'
-            );
-            $drrmUser = $this->syncSchoolRoleAssignment(
-                $school,
-                $request->filled('drrm_coordinator_user_id') ? (int) $request->input('drrm_coordinator_user_id') : null,
-                'School DRRM'
-            );
-
-            $manualSchoolHead = trim((string) $request->input('school_head', ''));
-            $manualDrrmCoordinator = trim((string) $request->input('drrm_coordinator', ''));
-            $currentSchoolHead = trim((string) ($school->school_head ?? ''));
-            $currentDrrmCoordinator = trim((string) ($school->drrm_coordinator ?? ''));
-
-            $school->update([
-                'school_head' => $manualSchoolHead !== ''
-                    ? $manualSchoolHead
-                    : ($currentSchoolHead !== '' ? $currentSchoolHead : ($schoolHeadUser?->name)),
-                'drrm_coordinator' => $manualDrrmCoordinator !== ''
-                    ? $manualDrrmCoordinator
-                    : ($currentDrrmCoordinator !== '' ? $currentDrrmCoordinator : ($drrmUser?->name)),
-            ]);
         } catch (\RuntimeException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
         }
@@ -607,7 +602,6 @@ class DashboardController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
             'role' => 'required|string|in:admin,contributor,viewer',
-            'position' => 'nullable|string|in:School Head,School DRRM,School Account',
             'admin_confirmation' => 'required_if:role,admin'
         ]);
 
@@ -625,13 +619,20 @@ class DashboardController extends Controller
             }
         }
 
+        $defaultContributorModules = [
+            'fire_safety',
+            'typhoon_flood',
+            'incident_checklist',
+            'hazard_mapping',
+        ];
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $request->role,
-            'position' => $request->role === 'admin' ? null : $request->position,
-            'module_access' => [], // Start empty
+            'position' => null,
+            'module_access' => $request->role === 'contributor' ? $defaultContributorModules : [],
             'needs_fs_registration' => ($request->role === 'contributor'),
             'needs_tf_registration' => ($request->role === 'contributor'),
         ]);
@@ -669,7 +670,6 @@ class DashboardController extends Controller
 
         if ($isAdmin) {
             $rules['role'] = 'required|string|in:admin,contributor,viewer';
-            $rules['position'] = 'nullable|string|in:School Head,School DRRM,School Account';
         }
 
         $validator = Validator::make($request->all(), $rules);
@@ -683,7 +683,25 @@ class DashboardController extends Controller
 
         if ($isAdmin) {
             $user->role = $request->role;
-            $user->position = $request->role === 'admin' ? null : $request->position;
+            $user->position = null;
+
+            if ($request->role === 'contributor') {
+                $currentModules = collect((array) $user->module_access);
+                $baseModules = collect([
+                    'fire_safety',
+                    'typhoon_flood',
+                    'incident_checklist',
+                    'hazard_mapping',
+                ]);
+
+                $mergedModules = $baseModules
+                    ->merge($currentModules->contains('comprehensive_school_safety') ? ['comprehensive_school_safety'] : [])
+                    ->unique()
+                    ->values()
+                    ->all();
+
+                $user->module_access = $mergedModules;
+            }
         }
 
         if ($request->filled('password')) {
@@ -734,6 +752,19 @@ class DashboardController extends Controller
             ->values()
             ->all();
 
+        if ($user->role === 'contributor') {
+            $selectedModules = [
+                'fire_safety',
+                'typhoon_flood',
+                'incident_checklist',
+                'hazard_mapping',
+            ];
+
+            if (in_array('comprehensive_school_safety', (array) $request->input('modules', []), true)) {
+                $selectedModules[] = 'comprehensive_school_safety';
+            }
+        }
+
         $universalSchoolId = $request->filled('universal_school_id')
             ? (int) $request->input('universal_school_id')
             : null;
@@ -776,14 +807,12 @@ class DashboardController extends Controller
         $user = User::findOrFail($userId);
 
         $validator = Validator::make($request->all(), [
-            'position' => 'required|string|in:School Head,School DRRM,School Account',
+            'school_id' => 'nullable|integer|exists:schools,id',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
         }
-
-        $position = (string) $request->position;
 
         if (!in_array($user->role, ['contributor', 'viewer'], true)) {
             return response()->json(['success' => false, 'message' => 'Only contributors/viewers can be assigned.'], 422);
@@ -799,29 +828,15 @@ class DashboardController extends Controller
             return response()->json(['success' => false, 'message' => 'This user is already assigned to another school.'], 422);
         }
 
-        // School Head and School DRRM should have only one account each per school.
-        if (in_array($position, ['School Head', 'School DRRM'], true)) {
-            $existing = User::query()
-                ->where('school_id', $school->id)
-                ->where('position', $position)
-                ->where('id', '!=', $user->id)
-                ->first();
-
-            if ($existing) {
-                return response()->json(['success' => false, 'message' => "{$position} is already assigned. Remove it first."], 422);
-            }
-        }
+        User::query()
+            ->where('school_id', $school->id)
+            ->where('id', '!=', $user->id)
+            ->update(['school_id' => null, 'position' => null]);
 
         $user->school_id = $school->id;
-        $user->position = $position;
+        $user->position = null;
         $user->needs_fs_registration = false;
         $user->save();
-
-        if ($position === 'School Head' && blank($school->school_head)) {
-            $school->update(['school_head' => $user->name]);
-        } elseif ($position === 'School DRRM' && blank($school->drrm_coordinator)) {
-            $school->update(['drrm_coordinator' => $user->name]);
-        }
 
         return response()->json([
             'success' => true,
@@ -838,7 +853,6 @@ class DashboardController extends Controller
 
         $school = School::findOrFail($schoolId);
         $user = User::findOrFail($userId);
-        $removedPosition = $user->position;
 
         if ((int) $user->school_id !== (int) $schoolId) {
             return response()->json(['success' => false, 'message' => 'User is not assigned to this school.'], 422);
@@ -888,23 +902,7 @@ class DashboardController extends Controller
                     'evacuation_status' => 'cleared',
                 ]);
 
-                SchoolSpecificsInformation::updateOrInsert(
-                    [
-                        'school_id' => $school->id,
-                        'module' => 'fire_safety',
-                        'key' => 'original_fire_safety_id',
-                    ],
-                    ['value' => (string) $school->id, 'created_at' => now(), 'updated_at' => now()]
-                );
-
-                SchoolSpecificsInformation::updateOrInsert(
-                    [
-                        'school_id' => $school->id,
-                        'module' => 'typhoon_flood',
-                        'key' => 'original_evacuation_center_id',
-                    ],
-                    ['value' => (string) $school->id, 'created_at' => now(), 'updated_at' => now()]
-                );
+                $this->registerSchoolAcrossModules($school);
 
                 if ($user->needs_fs_registration) {
                     $user->school_id = $school->id;

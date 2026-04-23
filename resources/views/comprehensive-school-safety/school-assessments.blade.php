@@ -9,9 +9,14 @@
         </div>
         <div>
             <h2 class="csss-section-title mb-1">Assessments</h2>
-            <p class="csss-muted mb-0">{{ $assessments->count() }} assessment{{ $assessments->count() !== 1 ? 's' : '' }} on record</p>
+            <p class="csss-muted mb-0">Academic Year {{ $currentAcademicYear ?? 'N/A' }}: {{ $assessments->count() }} assessment{{ $assessments->count() !== 1 ? 's' : '' }} on record</p>
         </div>
     </div>
+</div>
+
+<div class="alert alert-info mb-4" role="alert">
+    <i class="fas fa-archive me-2"></i>
+    Assessments automatically reset to blank every new academic year. Previous years are preserved in the archive history below.
 </div>
 
 <div style="margin-bottom: 1rem;">
@@ -81,6 +86,55 @@
                             </div>
                         @endif
                     @endif
+</div>
+
+<div class="csss-card p-4 mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold mb-0">Assessment Archives</h5>
+        <span class="badge bg-secondary">Assessment History by Academic Year</span>
+    </div>
+
+    @php
+        $archiveRows = $archivedAssessmentHistory ?? collect();
+    @endphp
+
+    @if($archiveRows->isEmpty())
+        <p class="text-muted mb-0">No archived assessment history yet.</p>
+    @else
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Academic Year</th>
+                        <th>Archived At</th>
+                        <th>Assessment Count</th>
+                        <th>Average Score</th>
+                        <th>Latest Assessment Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($archiveRows as $archive)
+                        @php
+                            $payload = is_array($archive->payload) ? $archive->payload : [];
+                        @endphp
+                        <tr>
+                            <td class="fw-semibold">{{ $archive->academic_year }}</td>
+                            <td>{{ $archive->archived_at ? $archive->archived_at->format('M d, Y h:i A') : 'N/A' }}</td>
+                            <td>{{ (int) ($payload['assessment_count'] ?? 0) }}</td>
+                            <td>{{ (float) ($payload['average_score'] ?? 0) }}</td>
+                            <td>
+                                @if(!empty($payload['latest_date']))
+                                    {{ \Carbon\Carbon::parse($payload['latest_date'])->format('M d, Y') }}
+                                @else
+                                    N/A
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
 </div>
 
 @endsection

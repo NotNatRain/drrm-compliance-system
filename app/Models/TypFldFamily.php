@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\TypFldNeed;
+
 
 class TypFldFamily extends Model
 {
@@ -13,7 +15,6 @@ class TypFldFamily extends Model
     protected $fillable = [
         'school_id',
         'head_family_name',
-        'collective_needs',
         'has_pregnant',
         'has_pwd',
         'has_senior',
@@ -41,6 +42,27 @@ class TypFldFamily extends Model
     public function members(): HasMany
     {
         return $this->hasMany(TypFldFamilyMember::class, 'family_id');
+    }
+
+    public function needs(): HasMany
+    {
+        return $this->hasMany(TypFldNeed::class, 'family_id');
+    }
+
+    public function getNeedsSummaryAttribute(): string
+    {
+        return $this->needs
+            ->map(function (TypFldNeed $need) {
+                $label = $need->need_name;
+
+                if ((int) $need->quantity > 1) {
+                    $label .= ' x' . $need->quantity;
+                }
+
+                return $label;
+            })
+            ->filter()
+            ->implode(', ');
     }
 }
 

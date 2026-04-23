@@ -63,10 +63,12 @@
                         <span class="font-medium">Assessments</span>
                     </a>
 
+{{--
                     <a href="{{ route('schools.students.index', $school) }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all {{ request()->routeIs('schools.students.*') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
                         <i data-lucide="users" class="w-5 h-5"></i>
                         <span class="font-medium">Students</span>
                     </a>
+--}}
 
                     <a href="{{ route('schools.facilities.index', $school) }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all {{ request()->routeIs('schools.facilities.*') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
                         <i data-lucide="building-2" class="w-5 h-5"></i>
@@ -78,10 +80,12 @@
                         <span class="font-medium">Assessments</span>
                     </a>
 
+{{--
                     <a href="{{ route('students.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all {{ request()->routeIs('students.*') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
                         <i data-lucide="users" class="w-5 h-5"></i>
                         <span class="font-medium">Students</span>
                     </a>
+--}}
 
                     <a href="{{ route('facilities.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all {{ request()->routeIs('facilities.*') ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
                         <i data-lucide="building-2" class="w-5 h-5"></i>

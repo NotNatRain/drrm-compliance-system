@@ -121,17 +121,9 @@
                                 </select>
                             @endif
 
-                            @if(auth()->user()->role === 'admin' || (auth()->user()->role === 'contributor' && !auth()->user()->school_id))
-                                <button class="btn btn-outline-primary flex-grow-1 flex-md-grow-0" data-bs-toggle="modal" data-bs-target="#addInspectionModal">
-                                    <i class="fas fa-plus-circle me-1"></i> Register School
-                                </button>
-                                <button class="btn btn-info flex-grow-1 flex-md-grow-0" data-bs-toggle="modal" data-bs-target="#evacInfoModal">
-                                    <i class="fas fa-map-signs me-2"></i> View Evacuation Plans
-                                </button>
-                                <a href="{{ route('fire-safety.report.school-summary') }}" target="_blank" class="btn btn-success flex-grow-1 flex-md-grow-0">
-                                    <i class="fas fa-file-pdf me-2"></i> Generate Report
-                                </a>
-                            @endif
+                            <a href="{{ route('fire-safety.report.school-summary') }}" target="_blank" class="btn btn-success flex-grow-1 flex-md-grow-0">
+                                <i class="fas fa-file-pdf me-2"></i> Generate Report
+                            </a>
                         </div>
                     </div>
                     <div class="card-body">
@@ -901,19 +893,7 @@
             </div>
         </div>
 
-        <!-- Evacuation Plans Info Modal -->
-        <div class="modal fade" id="evacInfoModal">
-            <div class="modal-dialog modal-sm">
-                <div class="modal-content">
-                    <div class="modal-body text-center">
-                        <i class="fas fa-map-signs fa-3x text-info mb-3"></i>
-                        <h5>Evacuation Plans</h5>
-                        <p>View evacuation routes, assembly points, and emergency procedures.</p>
-                        <a href="{{ route('fire-safety.evacuation-plans') }}" class="btn btn-info">View All Plans</a>
-                    </div>
-                </div>
-            </div>
-        </div>
+
     </div>
 
 @endsection

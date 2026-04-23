@@ -95,7 +95,12 @@
                     <h6 class="fw-bold mb-2">
                         <i class="fas fa-file-pdf" style="color: var(--csss-primary);"></i> Assessment Report
                     </h6>
-                    <p class="text-muted small mb-3">Comprehensive assessment compliance summary for this school.</p>
+                    <div class="text-muted small mb-3">
+                        <div><strong>Academic Year:</strong> {{ $currentAcademicYear ?? 'N/A' }}</div>
+                        <div><strong>Latest Assessment:</strong> {{ $assessmentPreview['latest_code'] ?? 'N/A' }} ({{ $assessmentPreview['latest_date'] ?? 'N/A' }})</div>
+                        <div><strong>Average Score:</strong> {{ $assessmentPreview['average_score'] ?? 0 }}</div>
+                        <div><strong>Compliance Rate:</strong> {{ $assessmentPreview['compliance_rate'] ?? 0 }}% from {{ $assessmentPreview['total_reviewed'] ?? 0 }} reviewed checklist rows</div>
+                    </div>
                     <button type="button" class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#printAssessmentModal">
                         <i class="fas fa-print"></i> Print
                     </button>
@@ -109,7 +114,11 @@
                     <h6 class="fw-bold mb-2">
                         <i class="fas fa-chart-pie" style="color: var(--csss-primary);"></i> Safety Index
                     </h6>
-                    <p class="text-muted small mb-3">Current safety compliance index and rating for the school.</p>
+                    <div class="text-muted small mb-3">
+                        <div><strong>Average Building Score:</strong> {{ $safetyIndexPreview['average_score'] ?? 0 }}</div>
+                        <div><strong>Building Coverage:</strong> {{ $safetyIndexPreview['building_count'] ?? 0 }} buildings</div>
+                        <div><strong>Priority Findings:</strong> High {{ $safetyIndexPreview['high_findings'] ?? 0 }}, Medium {{ $safetyIndexPreview['medium_findings'] ?? 0 }}, Low {{ $safetyIndexPreview['low_findings'] ?? 0 }}</div>
+                    </div>
                     <a href="{{ route('comprehensive-school-safety.school.reports.safety-index-print', $school->id) }}" target="_blank" class="btn btn-sm btn-outline-dark">
                         <i class="fas fa-print"></i> Print
                     </a>
@@ -121,16 +130,59 @@
             <div class="card border-0" style="border-radius: 12px; background: linear-gradient(135deg, rgba(92, 64, 51, 0.05) 0%, rgba(139, 111, 71, 0.05) 100%); border-left: 4px solid var(--csss-primary);">
                 <div class="card-body p-4">
                     <h6 class="fw-bold mb-2">
-                        <i class="fas fa-calendar-alt" style="color: var(--csss-primary);"></i> Timeline
+                        <i class="fas fa-archive" style="color: var(--csss-primary);"></i> Archives
                     </h6>
-                    <p class="text-muted small mb-3">Assessment history and timeline of changes over time.</p>
+                    <div class="text-muted small mb-3">
+                        <div><strong>Includes:</strong> Assessment History & Facility Records</div>
+                        <div><strong>Total Snapshots:</strong> {{ ($archives ?? collect())->count() }}</div>
+                        <div><strong>Latest Academic Year:</strong> {{ ($archives ?? collect())->first()->academic_year ?? 'N/A' }}</div>
+                    </div>
                     <a href="{{ route('comprehensive-school-safety.school.reports.timeline-print', $school->id) }}" target="_blank" class="btn btn-sm btn-outline-dark">
-                        <i class="fas fa-print"></i> Print
+                        <i class="fas fa-print"></i> Print Archives
                     </a>
                 </div>
             </div>
         </div>
     </div>
+</div>
+
+<div class="csss-card p-4 mt-4">
+    <h5 class="fw-bold mb-3">Archive Records</h5>
+    @if(($archives ?? collect())->isEmpty())
+        <p class="text-muted mb-0">No archive snapshots yet.</p>
+    @else
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Academic Year</th>
+                        <th>Record Type</th>
+                        <th>Snapshot Details</th>
+                        <th>Archived At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach(($archives ?? collect()) as $archive)
+                        @php
+                            $payload = is_array($archive->payload) ? $archive->payload : [];
+                        @endphp
+                        <tr>
+                            <td class="fw-semibold">{{ $archive->academic_year }}</td>
+                            <td>{{ $archive->archive_type === 'facility' ? 'Facility Records' : 'Assessment History' }}</td>
+                            <td>
+                                @if($archive->archive_type === 'facility')
+                                    Facilities captured: {{ (int) ($payload['facility_count'] ?? 0) }}
+                                @else
+                                    Assessments: {{ (int) ($payload['assessment_count'] ?? 0) }}, Avg Score: {{ (float) ($payload['average_score'] ?? 0) }}
+                                @endif
+                            </td>
+                            <td>{{ $archive->archived_at ? $archive->archived_at->format('M d, Y h:i A') : 'N/A' }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
 </div>
 
 <div class="modal fade" id="printAssessmentModal" tabindex="-1" aria-hidden="true">
