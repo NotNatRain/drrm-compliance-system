@@ -393,7 +393,7 @@ class FireSafetyController extends Controller
         $activeSchool = $this->getActiveSchool($schools);
 
         $alarmTypes = SystemConfiguration::where('config_type', 'alarm_type')->where('is_active', true)->orderBy('sort_order')->get();
-        $alarmStatusesByType = SystemConfiguration::where('config_type', 'alarm_status')->where('is_active', true)->whereNotNull('parent_id')->get()->groupBy('parent_id');
+        $alarmStatusesByType = SystemConfiguration::where('config_type', 'alarm_status')->where('is_active', true)->get()->groupBy('parent_id');
 
         return view('fire-safety.alarm-systems', [
             'schools' => $schools,

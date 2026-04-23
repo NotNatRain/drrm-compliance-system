@@ -155,14 +155,9 @@
                                 <h6 class="m-0 fw-bold text-primary">
                                     <i class="fas fa-school me-2"></i> All Schools
                                 </h6>
-                                <div class="d-flex flex-wrap gap-1">
-                                    <button class="btn btn-primary btn-sm flex-grow-1" data-bs-toggle="modal" data-bs-target="#addSchoolModal">
-                                        <i class="fas fa-plus me-1"></i> Register
-                                    </button>
                                     <button class="btn btn-sm btn-outline-secondary flex-grow-1" type="button" onclick="openSchoolHistoryModal()">
                                         <i class="fas fa-history me-1"></i> History
                                     </button>
-                                </div>
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
@@ -912,78 +907,9 @@
             </div>
         </div>
         @endif
-    </div>
-
-    <!-- Modals for Admin -->
     @if(auth()->user()->role === 'admin')
-    <!-- Register school from main directory -->
-    <div class="modal fade" id="addSchoolModal" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header" style="background-color: var(--fire-red); color: white;">
-                    <h5 class="modal-title">
-                        <i class="fas fa-school me-2"></i> Register school for Fire Safety
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="addSchoolForm">
-                        @csrf
-                        <p class="text-muted small">Schools are created on <strong>DRRM Main Dashboard → Schools</strong>. Here you link an existing directory school to Fire Safety.</p>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Select school *</label>
-                            <select class="form-select" id="fs_custom_reg_select" required>
-                                <option value="">— Choose a school —</option>
-                                @foreach($directorySchoolsForFireRegistration ?? [] as $dir)
-                                    <option
-                                        value="{{ $dir->id }}"
-                                        data-school-name="{{ e($dir->school_name) }}"
-                                        data-school-id="{{ e($dir->school_id ?? '') }}"
-                                        data-school-id-num="{{ e($dir->school_id_number ?? '') }}"
-                                        data-address="{{ e($dir->address ?? '') }}"
-                                        data-head="{{ e($dir->school_head ?? '') }}"
-                                        data-drrm="{{ e($dir->drrm_coordinator ?? '') }}"
-                                    >
-                                        {{ $dir->school_name }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div id="fs_custom_reg_readonly" class="border rounded p-3 bg-light" style="display:none;">
-                            <div class="row g-2 small">
-                                <div class="col-md-6">
-                                    <strong>ID / Code:</strong>
-                                    <input type="text" id="fs_cr_code" class="form-control form-control-sm mt-1" value="" readonly>
-                                </div>
-                                <div class="col-md-6">
-                                    <strong>Name:</strong>
-                                    <input type="text" id="fs_cr_name" class="form-control form-control-sm mt-1" value="" readonly>
-                                </div>
-                                <div class="col-12">
-                                    <strong>Address:</strong>
-                                    <input type="text" id="fs_cr_addr" class="form-control form-control-sm mt-1" value="" readonly>
-                                </div>
-                                <div class="col-md-6">
-                                    <strong>Head:</strong>
-                                    <input type="text" id="fs_cr_head" class="form-control form-control-sm mt-1" value="" readonly>
-                                </div>
-                                <div class="col-md-6">
-                                    <strong>DRRM:</strong>
-                                    <input type="text" id="fs_cr_drrm" class="form-control form-control-sm mt-1" value="" readonly>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="saveNewSchool()">
-                        <i class="fas fa-link me-2"></i> Register for Fire Safety
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Modals for Admin -->
+
 
     <!-- Edit School Modal -->
     <div class="modal fade" id="editSchoolModal" tabindex="-1">

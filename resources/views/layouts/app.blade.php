@@ -161,6 +161,9 @@
                                             <a class="dropdown-item py-2" href="#" data-bs-toggle="modal" data-bs-target="#announceModal">
                                                 <i class="fas fa-bullhorn text-warning me-2"></i> Announce
                                             </a>
+                                            <a class="dropdown-item py-2" href="{{ route('admin.database.download') }}">
+                                                <i class="fas fa-database text-success me-2"></i> Download Database
+                                            </a>
                                             <div class="dropdown-divider"></div>
                                         @endif
                                         <a class="dropdown-item py-2" href="{{ route('logout') }}"

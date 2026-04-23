@@ -2279,14 +2279,16 @@
             if (isMiniBldg) {
                 roomsIn.value = 1;
                 floorsIn.value = 1;
-                roomsIn.disabled = true;
-                floorsIn.disabled = true;
+                roomsIn.readOnly = true;
+                floorsIn.readOnly = true;
                 btnIncRooms.disabled = true;
                 btnIncFloors.disabled = true;
                 btnIncRooms.style.display = 'none';
                 btnIncFloors.style.display = 'none';
                 if (roomFloorSec) roomFloorSec.style.display = 'none';
             } else {
+                roomsIn.readOnly = true; // Always readOnly because we use +/- buttons
+                floorsIn.readOnly = true;
                 roomsIn.disabled = false;
                 floorsIn.disabled = false;
                 btnIncRooms.disabled = false;
@@ -2908,6 +2910,9 @@
 
             const floors = parseInt(formData.get('floors')) || 1;
             const rooms = parseInt(formData.get('rooms')) || 1;
+
+            formData.set('floors', floors);
+            formData.set('rooms', rooms);
 
             if (rooms < floors) {
                 Swal.fire('Invalid Configuration', 'Total rooms cannot be less than total floors. Each floor must have at least one room.', 'warning');

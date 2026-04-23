@@ -236,3 +236,39 @@ Overview: A visual mapping tool that provides multi-dimensional views of hazards
 - Primary Concerns:
   - Hazards/Vulnerabilities: Identifying high-risk areas per floor.
   - Room Allocation: Viewing specific inventory (chairs, tables, TV) inside each room.
+
+
+
+
+
+
+
+
+
+
+7. Developer Guide
+
+Overview: Instructions for developers to set up the local development environment after cloning the project from GitHub.
+
+7.1 Cloning the Repository
+To get the source code, navigate to your local web server directory (e.g., xampp/htdocs) and clone the project from GitHub.
+- GitHub Account: adankristopherdumpit-doings
+- Repository Link: https://github.com/adankristopherdumpit-doings/drrmcompliance
+- Access: Access to the repository is restricted. Please contact the account owner (adankristopherdumpit-doings) to be granted collaborator permissions.
+- Command:
+  git clone https://github.com/adankristopherdumpit-doings/drrmcompliance.git
+
+7.2 Installing Dependencies (Composer)
+The system relies on various PHP libraries and the Laravel framework. These must be installed manually after cloning as they are not included in the repository.
+- Action: Open your terminal/command prompt, navigate to the project folder, and run:
+  composer install
+- Why this is necessary: 
+  - It downloads all required third-party libraries (the "vendor" folder).
+  - It ensures you are using the correct versions of the libraries as defined by the original developer.
+  - It prepares the system logic to be fully functional on your device.
+
+7.3 Basic Setup
+After installing dependencies, ensure you perform these final steps:
+- Environment: Rename '.env.example' to '.env' and update your database credentials.
+- App Key: Run 'php artisan key:generate'.
+- Database: Run 'php artisan migrate' to create the necessary tables.

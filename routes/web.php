@@ -8,6 +8,7 @@ use App\Http\Controllers\TyphoonController;
 use App\Http\Controllers\IncidentController;
 use App\Http\Controllers\ComprehensiveSchoolSafetyController;
 use App\Http\Controllers\HazardMappingController;
+use App\Http\Controllers\DatabaseBackupController;
 Route::get('/', function () {
     return view('welcome');
 });
@@ -51,6 +52,10 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::post('/announcements', [DashboardController::class, 'storeAnnouncement'])->name('announcements.store');
     Route::delete('/announcements/{id}', [DashboardController::class, 'deleteAnnouncement'])->name('announcements.destroy');
+
+    // Database Backup (Admin Only)
+    Route::get('/admin/database/download', [DatabaseBackupController::class, 'download'])
+        ->name('admin.database.download');
 
     // Unified School Management (Phase 2)
     Route::get('/schools/details/{id}', [DashboardController::class, 'getUnifiedSchoolDetails'])->name('schools.unified-details');

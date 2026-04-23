@@ -221,13 +221,36 @@
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Status *</label>
                                 <select class="form-control" name="status" id="addStatusSelect" required>
-                                    <option value="functional">Functional (Active)</option>
+                                    <option value="">Select Status</option>
+                                    
+                                    @php
+                                        $generalStatuses = collect();
+                                        foreach([null, 0, "", "0"] as $key) {
+                                            $generalStatuses = $generalStatuses->merge($alarmStatusesByType->get($key, collect()));
+                                        }
+                                        $generalStatuses = $generalStatuses->unique('id');
+                                    @endphp
+
+                                    @if($generalStatuses->isNotEmpty())
+                                    <optgroup label="General Statuses" data-parent-id="general">
+                                        @foreach($generalStatuses as $status)
+                                            <option value="{{ $status->name }}">{{ str_ireplace('Broken', 'Defective', $status->name) }}</option>
+                                        @endforeach
+                                    </optgroup>
+                                    @endif
+
                                     @foreach($alarmStatusesByType as $parentId => $statuses)
-                                        <optgroup label="{{ \App\Models\SystemConfiguration::find($parentId)->name }}" data-parent-id="{{ $parentId }}">
+                                        @php 
+                                            if (in_array($parentId, [null, 0, "", "0"], true)) continue;
+                                            $parent = \App\Models\SystemConfiguration::find($parentId); 
+                                        @endphp
+                                        @if($parent)
+                                        <optgroup label="{{ $parent->name }}" data-parent-id="{{ $parentId }}">
                                             @foreach($statuses as $status)
                                                 <option value="{{ $status->name }}">{{ str_ireplace('Broken', 'Defective', $status->name) }}</option>
                                             @endforeach
                                         </optgroup>
+                                        @endif
                                     @endforeach
                                 </select>
                             </div>
@@ -665,7 +688,8 @@
 
                     optgroups.forEach(group => {
                         const parentId = group.getAttribute('data-parent-id');
-                        if (parentId == typeId) {
+                        // Always show general statuses OR statuses for the selected type
+                        if (parentId === 'general' || (typeId && parentId == typeId)) {
                             group.style.display = '';
                             group.disabled = false;
                         } else {
@@ -901,8 +925,11 @@
         const statusOptions = {
             @foreach($alarmTypes as $type)
                 '{{ $type->name }}': [
-                    @php $typeStatuses = $alarmStatusesByType->get($type->id, collect()); @endphp
-                    @foreach($typeStatuses as $s)
+                    @php 
+                        $typeStatuses = $alarmStatusesByType->get($type->id, collect());
+                        $allStatusesForType = $typeStatuses->merge($generalStatuses)->unique('name');
+                    @endphp
+                    @foreach($allStatusesForType as $s)
                         '{{ $s->name }}',
                     @endforeach
                 ],
