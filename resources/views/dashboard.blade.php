@@ -359,7 +359,7 @@
                             </div>
                             <h3 class="card-title fw-bold" style="color: #D12428;">Fire Safety</h3>
                             <p class="card-text text-muted">
-                                Alarm systems, fire extinguishers, building inspections, and evacuation plans management
+                                Fire extinguishers, building inspections, and evacuation plans management
                             </p>
                         </div>
                         <div class="card-footer bg-transparent text-center border-0">
@@ -443,6 +443,31 @@
                 </a>
             </div>
 
+                        <!-- Drill Monitoring Module -->
+            <div class="col-md-4 mb-4">
+                @php $canAccessDrillMonitoring = $isAdmin || in_array('drill_monitoring', $modules); @endphp
+                <a href="#" class="text-decoration-none module-card-link"
+                   data-module="drill_monitoring" data-can-access="{{ $canAccessDrillMonitoring ? '1' : '0' }}" data-theme-color="#FF6F00">
+                    <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #FF6F00;">
+                        <div class="card-body text-center p-5">
+                            <div class="mb-4">
+                                <i class="fas fa-bell fa-4x" style="color: #FF6F00;"></i>
+                            </div>
+                            <h3 class="card-title fw-bold" style="color: #FF6F00;">Drill monitoring</h3>
+                            <p class="card-text text-muted">
+                                Track, log, and evaluate emergency evacuation drills, response times, and compliance metrics.
+                            </p>
+                        </div>
+                        <div class="card-footer bg-transparent text-center border-0">
+                            <span class="btn" style="background-color: #FF6F00; color: white;">
+                                <i class="fas fa-arrow-right"></i> Enter
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+
             <!-- Hazard Mapping -->
             <div class="col-md-4 mb-4">
                 @php $canAccessHazard = $isAdmin || in_array('hazard_mapping', $modules); @endphp
@@ -467,6 +492,40 @@
                 </a>
             </div>
         </div>
+
+                <!-- Second Row For Alignment -->
+        <div class="row">
+            <!-- Left Empty Spacer to Center-Align Content -->
+            <div class="col-md-4 mb-4 d-none d-md-block"></div>
+
+            <!-- Casualty Tracking Module -->
+            <div class="col-md-4 mb-4">
+                @php $canAccessCasualtyTracking = $isAdmin || in_array('casualty_tracking', $modules); @endphp
+                <a href="#" class="text-decoration-none module-card-link"
+                   data-module="casualty_tracking" data-can-access="{{ $canAccessCasualtyTracking ? '1' : '0' }}" data-theme-color="#6f42c1">
+                    <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #6f42c1;">
+                        <div class="card-body text-center p-5">
+                            <div class="mb-4">
+                                <i class="fas fa-user-injured fa-4x" style="color: #6f42c1;"></i>
+                            </div>
+                            <h3 class="card-title fw-bold" style="color: #6f42c1;">Casualty tracking</h3>
+                            <p class="card-text text-muted">
+                                Monitor real-time status updates, injury severity classifications, and medical transport records during incidents.
+                            </p>
+                        </div>
+                        <div class="card-footer bg-transparent text-center border-0">
+                            <span class="btn" style="background-color: #6f42c1; color: white;">
+                                <i class="fas fa-arrow-right"></i> Enter
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
+            <!-- Right Empty Spacer to Maintain Grid Flow -->
+            <div class="col-md-4 mb-4 d-none d-md-block"></div>
+        </div>
+
 
         <!-- Quick Stats -->
         <div class="row mt-5 mx-lg-5">
