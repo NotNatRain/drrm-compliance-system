@@ -151,8 +151,8 @@ class DashboardController extends Controller
         $hmConfigured = School::whereHas('fireSafetyBuildings')->count();
         $hmRate = $totalSchoolsCount > 0 ? ($hmConfigured / $totalSchoolsCount) * 100 : 0;
 
-        // 7. Damage Assessment %
-        $daCompleted = School::whereHas('damageAssessment', function($q) {
+        // 7. Damage Report %
+        $daCompleted = School::whereHas('damageReport', function($q) {
             $q->where('status', 'completed');
         })->count();
         $daRate = $totalSchoolsCount > 0 ? ($daCompleted / $totalSchoolsCount) * 100 : 0;

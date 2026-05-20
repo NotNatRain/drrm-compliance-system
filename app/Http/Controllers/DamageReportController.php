@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\DamageAssessment;
+use App\Models\DamageReport;
 use App\Models\School;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -39,21 +39,21 @@ class DmgAssessmentController extends Controller
         }
 
         // Fetch damage assessments for the active school
-        $damageAssessments = DamageAssessment::where('school_id', $activeSchool->id)
-            ->orderBy('inspection_date', 'desc') // Assuming 'inspection_date' exists in DamageAssessment model
+        $damageReport = DamageReport::where('school_id', $activeSchool->id)
+            ->orderBy('inspection_date', 'desc') // Assuming 'inspection_date' exists in DamageReport model
             ->paginate(15);
 
         // Calculate some basic stats
         $stats = [
-            'total_assessments' => DamageAssessment::where('school_id', $activeSchool->id)->count(),
-            'completed_assessments' => DamageAssessment::where('school_id', $activeSchool->id)
+            'total_assessments' => DamageReport::where('school_id', $activeSchool->id)->count(),
+            'completed_assessments' => DamageReport::where('school_id', $activeSchool->id)
                 ->where('status', 'completed')
                 ->count(),
             // Add more stats as needed, e.g., average damage score, number of critical findings
         ];
 
-        return view('DamageAssessment.dashboard', compact(
-            'schools', 'activeSchool', 'damageAssessments', 'stats'
+        return view('DamageReport.Dashboard', compact(
+            'schools', 'activeSchool', 'damageReport', 'stats'
         ));
     }
 }

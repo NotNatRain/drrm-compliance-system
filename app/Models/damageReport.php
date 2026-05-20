@@ -5,9 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class DamageAssessment extends Model
+class DamageReport extends Model
 {
-    protected $table = 'damage_assessments';
+    protected $table = 'damage_reports';
 
     // PLACEHOLDER:replace and fix the tables(the columns)
     protected $fillable = [

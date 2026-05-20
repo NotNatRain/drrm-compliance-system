@@ -34,6 +34,20 @@
 
 @section('content')
 <div class="container-fluid py-4">
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+            <i class="fas fa-check-circle me-1"></i> {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            <i class="fas fa-exclamation-triangle me-1"></i> {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
     <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
         <h2 class="h4 mb-0 text-gray-800"><i class="fas fa-bell text-drill-orange me-2"></i>Drill Monitoring Dashboard: {{ $activeSchool->school_name }}</h2>
         <div class="d-flex gap-2">
@@ -49,6 +63,58 @@
             <button class="btn btn-drill-orange btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#logMonitoringModal">
                 <i class="fas fa-plus"></i> Log New Drill Monitoring
             </button>
+            <div class="modal fade" id="logMonitoringModal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Log New Drill Monitoring</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form action="{{ route('drill-monitoring.store') }}" method="POST">
+                                @csrf
+                                <input type="hidden" name="unified_school_id" value="{{ $activeSchool->id }}">
+                                <div class="mb-3">
+                                    <label for="monitoring_date" class="form-label">Monitoring Date</label>
+                                    <input type="date" class="form-control" id="monitoring_date" name="monitoring_date" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="monitoring_time" class="form-label">Monitoring Time</label>
+                                    <input type="time" class="form-control" id="monitoring_time" name="monitoring_time" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="drill_type" class="form-label">Drill Type</label>
+                                    <select class="form-select" id="drill_type" name="drill_type" required>
+                                        <option value="Fire">Fire</option>
+                                        <option value="Earthquake">Earthquake</option>
+                                        <option value="Flood">Flood</option>
+                                        <option value="Typhoon">Typhoon</option>
+                                        <option value="Bomb Threat">Bomb Threat</option>
+                                        <option value="Others">Others</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="no_of_students" class="form-label">Number of Students</label>
+                                    <input type="number" class="form-control" id="no_of_students" name="no_of_students" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="no_of_personnel" class="form-label">Number of Personnel</label>
+                                    <input type="number" class="form-control" id="no_of_personnel" name="no_of_personnel" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="monitored_by" class="form-label">Monitored By</label>
+                                    <input type="text" class="form-control" id="monitored_by" name="monitored_by" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="remarks" class="form-label">Remarks</label>
+                                    <textarea class="form-control" id="remarks" name="remarks" rows="3"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-drill-orange">Log Monitoring</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

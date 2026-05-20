@@ -276,12 +276,7 @@
                                             data-bs-target="#addBuildingModal">
                                         <i class="fas fa-plus me-1"></i> Add Building
                                     </button>
-                                    <button class="btn btn-success btn-sm inspect-now-btn"
-                                            data-school-id="{{ $school->id }}"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#inspectNowModal">
-                                        <i class="fas fa-clipboard-check me-1"></i> Inspect Now
-                                    </button>
+
                                     @endif
 
                                     <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#printOptionsModal">
@@ -2367,7 +2362,7 @@
 
                 const response = await fetch('{{ route('fire-safety.inspection.store') }}', {
                     method: 'POST',
-                    headers: {
+                    headers: { // This route is now handled by DrillMonitoringController
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                         'Accept': 'application/json'
                     },

@@ -1019,7 +1019,7 @@
                             <i class="fas fa-plus"></i> Add Member
                         </button>
                     </div>
-
+                    <div id="family-members-container">
                     </div>
 
                     <hr>

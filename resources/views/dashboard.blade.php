@@ -227,7 +227,7 @@
     #btn_incident:hover { background-color: #F2C94C; border-color: #F2C94C; color: #212529; }
     #btn_comprehensive:hover { background-color: #5C4033; border-color: #5C4033; color: #fff; }
     #btn_hazard:hover { background-color: #0D7377; border-color: #0D7377; color: #fff; }
-    #btn_damage_assessment:hover { background-color: #6f42c1; border-color: #6f42c1; color: #fff; }
+    #btn_damage_report:hover { background-color: #6f42c1; border-color: #6f42c1; color: #fff; }
 
     /* Margins for the layout as requested */
     .schools-tab-container {
@@ -382,9 +382,9 @@
                             <div class="mb-4">
                                 <i class="fas fa-umbrella fa-4x" style="color: #1B4C6D;"></i>
                             </div>
-                            <h3 class="card-title fw-bold" style="color: #1B4C6D;">Typhoon/Flooding</h3>
+                            <h3 class="card-title fw-bold" style="color: #1B4C6D;">Evacuation Monitoring</h3>
                             <p class="card-text text-muted">
-                                Casualty tracking, evacuation centers, evacuee management, and real-time monitoring
+                                Evacuation centers, evacuee management, and monitoring Evacuation centers.
                             </p>
                         </div>
                         <div class="card-footer bg-transparent text-center border-0">
@@ -499,18 +499,17 @@
             <!-- Left Empty Spacer to Center-Align Content -->
             <div class="col-md-4 mb-4 d-none d-md-block"></div>
 
-            <!-- Damage Assessment
+            <!-- Damage Report
               Module --> 
             <div class="col-md-4 mb-4">
-                @php $canAccessDamageAssessment = $isAdmin || in_array('damage_assessment', $modules); @endphp
-                <a href="#" class="text-decoration-none module-card-link"
-                   data-module="DamageAssessment" data-can-access="{{ $canAccessDamageAssessment ? '1' : '0' }}" data-theme-color="#6f42c1">
+                @php $canAccessDamageReport = $isAdmin || in_array('damage_reports', $modules); @endphp
+                <a href="#" class="text-decoration-none module-card-link" data-module="DamageReport" data-can-access="{{ $canAccessDamageReport ? '1' : '0' }}" data-theme-color="#6f42c1">
                     <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #6f42c1;">
                         <div class="card-body text-center p-5">
                             <div class="mb-4">
                                 <i class="fas fa-user-injured fa-4x" style="color: #6f42c1;"></i>
                             </div>
-                            <h3 class="card-title fw-bold" style="color: #6f42c1;">Damage Assessment</h3>
+                            <h3 class="card-title fw-bold" style="color: #6f42c1;">Damage Reports</h3>
                             <p class="card-text text-muted">
                                 Track damages of facilities and resources. Assess the severity of damage and make decisions for recovery and rehabilitation.
                             </p>
