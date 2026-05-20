@@ -227,6 +227,7 @@
     #btn_incident:hover { background-color: #F2C94C; border-color: #F2C94C; color: #212529; }
     #btn_comprehensive:hover { background-color: #5C4033; border-color: #5C4033; color: #fff; }
     #btn_hazard:hover { background-color: #0D7377; border-color: #0D7377; color: #fff; }
+    #btn_damage_assessment:hover { background-color: #6f42c1; border-color: #6f42c1; color: #fff; }
 
     /* Margins for the layout as requested */
     .schools-tab-container {
@@ -443,17 +444,17 @@
                 </a>
             </div>
 
-                        <!-- Drill Monitoring Module -->
+                        <!--Drill Monitoring -->
             <div class="col-md-4 mb-4">
                 @php $canAccessDrillMonitoring = $isAdmin || in_array('drill_monitoring', $modules); @endphp
-                <a href="#" class="text-decoration-none module-card-link"
+                <a href="{{ route('drill-monitoring.dashboard') }}" class="text-decoration-none module-card-link"
                    data-module="drill_monitoring" data-can-access="{{ $canAccessDrillMonitoring ? '1' : '0' }}" data-theme-color="#FF6F00">
                     <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #FF6F00;">
                         <div class="card-body text-center p-5">
                             <div class="mb-4">
                                 <i class="fas fa-bell fa-4x" style="color: #FF6F00;"></i>
                             </div>
-                            <h3 class="card-title fw-bold" style="color: #FF6F00;">Drill monitoring</h3>
+                            <h3 class="card-title fw-bold" style="color: #FF6F00;">Drill Monitoring</h3>
                             <p class="card-text text-muted">
                                 Track, log, and evaluate emergency evacuation drills, response times, and compliance metrics.
                             </p>
@@ -498,19 +499,20 @@
             <!-- Left Empty Spacer to Center-Align Content -->
             <div class="col-md-4 mb-4 d-none d-md-block"></div>
 
-            <!-- Casualty Tracking Module -->
+            <!-- Damage Assessment
+              Module --> 
             <div class="col-md-4 mb-4">
-                @php $canAccessCasualtyTracking = $isAdmin || in_array('casualty_tracking', $modules); @endphp
+                @php $canAccessDamageAssessment = $isAdmin || in_array('damage_assessment', $modules); @endphp
                 <a href="#" class="text-decoration-none module-card-link"
-                   data-module="casualty_tracking" data-can-access="{{ $canAccessCasualtyTracking ? '1' : '0' }}" data-theme-color="#6f42c1">
+                   data-module="DamageAssessment" data-can-access="{{ $canAccessDamageAssessment ? '1' : '0' }}" data-theme-color="#6f42c1">
                     <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #6f42c1;">
                         <div class="card-body text-center p-5">
                             <div class="mb-4">
                                 <i class="fas fa-user-injured fa-4x" style="color: #6f42c1;"></i>
                             </div>
-                            <h3 class="card-title fw-bold" style="color: #6f42c1;">Casualty tracking</h3>
+                            <h3 class="card-title fw-bold" style="color: #6f42c1;">Damage Assessment</h3>
                             <p class="card-text text-muted">
-                                Monitor real-time status updates, injury severity classifications, and medical transport records during incidents.
+                                Track damages of facilities and resources. Assess the severity of damage and make decisions for recovery and rehabilitation.
                             </p>
                         </div>
                         <div class="card-footer bg-transparent text-center border-0">
@@ -816,6 +818,9 @@
                                     </button>
                                     <button id="btn_comprehensive" class="btn btn-module text-start mb-2 py-3 border">
                                         <i class="fas fa-school me-2 d-inline"></i> CSS Assessment
+                                    </button>
+                                    <button id="btn_damage_assessment" class="btn btn-module text-start mb-2 py-3 border">
+                                        <i class="fas fa-user-injured me-2 d-inline"></i> Damage Assessment
                                     </button>
                                     <button id="btn_hazard" class="btn btn-module text-start py-3 border">
                                         <i class="fas fa-map-marked-alt me-2 d-inline"></i> Hazard (Dev)
@@ -1723,6 +1728,7 @@
             configureModuleButton('btn_typhoon', m.typhoon_flood, `/typhoon/evacuation-center/${s.id}`);
             configureModuleButton('btn_incident', m.incident_checklist, null, () => showIncidentModuleChoice(s));
             configureModuleButton('btn_comprehensive', m.comprehensive_school_safety, `/comprehensive-school-safety/schools/${s.id}/assessments`);
+            configureModuleButton('btn_damage_assessment', m.damage_assessment, `/damage-assessment/dashboard?school_id=${s.id}`);
             configureModuleButton('btn_hazard', m.hazard_mapping, `#`);
 
             // Setup Edit Button

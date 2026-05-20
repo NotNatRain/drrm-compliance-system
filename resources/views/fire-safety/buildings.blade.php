@@ -414,7 +414,7 @@
                 </div>
 
                 <!-- History Section -->
-                <div class="row mt-4" id="inspection-history-section">
+                <div class="row mt-4" id="layouts">
                     <!-- Inspected Checklist History -->
                     <div class="col-lg-6">
                         <div class="card dashboard-card h-100">

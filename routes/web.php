@@ -9,6 +9,7 @@ use App\Http\Controllers\IncidentController;
 use App\Http\Controllers\ComprehensiveSchoolSafetyController;
 use App\Http\Controllers\HazardMappingController;
 use App\Http\Controllers\DatabaseBackupController;
+use App\Http\Controllers\DrillMonitoringController;
 Route::get('/', function () {
     return view('welcome');
 });
@@ -326,6 +327,17 @@ Route::prefix('comprehensive-school-safety')
         Route::delete('/schools/{schoolId}/storage/{storageId}', [ComprehensiveSchoolSafetyController::class, 'destroyStorageItem'])->name('school.storage.destroy');
     });
 
+// Drill Monitoring Routes
+Route::prefix('drill-monitoring')
+    ->name('drill-monitoring.')
+    ->middleware(['auth', 'module.access:drill_monitoring'])
+    ->group(function () {
+        Route::get('/dashboard', [DrillMonitoringController::class, 'dashboard'])->name('dashboard');
+        Route::get('/{id}', [DrillMonitoringController::class, 'show'])->name('show');
+        Route::post('/store', [DrillMonitoringController::class, 'store'])->name('store');
+        Route::delete('/{id}', [DrillMonitoringController::class, 'destroy'])->name('destroy');
+    });
+
 // Hazard Mapping Routes
 Route::prefix('hazard-mapping')
     ->name('hazard-mapping.')
@@ -336,4 +348,3 @@ Route::prefix('hazard-mapping')
         Route::put('/schools/{schoolId}/floor/{floorId}', [HazardMappingController::class, 'updateFloor'])->name('school.floor.update');
         Route::post('/schools/{schoolId}/floor/add', [HazardMappingController::class, 'addFloor'])->name('school.floor.add');
     });
-

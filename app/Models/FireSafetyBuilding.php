@@ -18,6 +18,7 @@ class FireSafetyBuilding extends Model
         'floors',
         'rooms',
         'max_floors',
+        'capacity',
         'max_rooms',
         'year_constructed',
         'last_renovation',

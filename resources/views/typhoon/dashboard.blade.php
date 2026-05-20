@@ -981,16 +981,13 @@
                                 <option value="female">Female</option>
                             </select>
                         </div>
-                        <div class="col-12 mb-2">
-                            <small class="text-muted" id="headVulnerabilityHint">Member Vulnerabilities: None</small>
-                        </div>
                         <div class="col-12 mt-2">
                             <label class="form-label small fw-bold">Collective Family Needs <span class="text-danger">*</span></label>
                             <div class="family-needs-builder" data-family-needs-builder="create" data-need-options='@json($familyNeedOptions ?? [])' data-existing-needs='[]'></div>
                             <small class="text-muted d-block mt-2">Choose a need and quantity. Selecting <strong>Others Please Specify</strong> will reveal a custom need field.</small>
                         </div>
+    
                     </div>
-
                     <div class="mb-3 p-2 bg-light rounded">
                         <label class="form-label fw-bold small">Family Vulnerabilities / Special Concerns</label>
                         <div class="d-flex flex-wrap gap-3">
@@ -1010,12 +1007,9 @@
                                 <input class="form-check-input" type="checkbox" name="has_lactating" value="1" id="flagLactating">
                                 <label class="form-check-label" for="flagLactating">Lactating</label>
                             </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="has_child_under5" value="1" id="flagChild">
-                                <label class="form-check-label" for="flagChild">Child under 5</label>
-                            </div>
                         </div>
                     </div>
+
 
                     <hr>
 
@@ -1025,9 +1019,7 @@
                             <i class="fas fa-plus"></i> Add Member
                         </button>
                     </div>
-                    
-                    <div id="family-members-container">
-                        {{-- Dynamic members start here --}}
+
                     </div>
 
                     <hr>
@@ -1376,7 +1368,6 @@
         if (!ageInput || !hintEl) return;
         const update = () => {
             const age = Number(ageInput.value);
-            hintEl.textContent = `Member Vulnerabilities: ${Number.isNaN(age) ? 'None' : getMemberVulnerabilityLabel(age)}`;
             refreshFamilyVulnerabilityFlags();
         };
         ageInput.addEventListener('input', update);
