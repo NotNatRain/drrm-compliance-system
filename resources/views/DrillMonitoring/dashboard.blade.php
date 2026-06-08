@@ -109,7 +109,6 @@
                                     <label for="remarks" class="form-label">Remarks</label>
                                     <textarea class="form-control" id="remarks" name="remarks" rows="3"></textarea>
                                 </div>
-                                <button type="submit" class="btn btn-drill-orange">Log Monitoring</button>
                             </form>
                         </div>
                     </div>
