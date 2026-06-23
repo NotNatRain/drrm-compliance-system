@@ -9,6 +9,7 @@ use App\Http\Controllers\IncidentController;
 use App\Http\Controllers\ComprehensiveSchoolSafetyController;
 use App\Http\Controllers\HazardMappingController;
 use App\Http\Controllers\DatabaseBackupController;
+use App\Http\Controllers\InventoryStorageController;
 use App\Http\Controllers\DrillMonitoringController;
 Route::get('/', function () {
     return view('welcome');
@@ -96,6 +97,10 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     Route::post('/facilities', [FireSafetyController::class, 'storeSharedFacility'])->name('fire-safety.facilities.store');
     Route::put('/facilities/{facilityId}', [FireSafetyController::class, 'updateSharedFacility'])->name('fire-safety.facilities.update');
     Route::delete('/facilities/{facilityId}', [FireSafetyController::class, 'deleteSharedFacility'])->name('fire-safety.facilities.delete');
+
+    //Dropdown
+    // In routes/api.php (do NOT include the '/api' prefix here, Laravel adds it automatically)
+Route::get('/firesafety-buildings/{building_id}/rooms', [FireSafetyController::class, 'getRooms']);
 
 
     
@@ -246,6 +251,8 @@ Route::prefix('typhoon')->middleware(['auth', 'module.access:typhoon_flood'])->g
     Route::post('/notifications/{id}/mark-read', [TyphoonController::class, 'markNotificationRead'])->name('typhoon.notification.mark-read');
     Route::post('/notifications/mark-all-read', [TyphoonController::class, 'markAllNotificationsRead'])->name('typhoon.notifications.mark-all-read');
     Route::post('/announcements', [TyphoonController::class, 'storeAnnouncement'])->name('typhoon.announcements.store');
+    
+
     // Add other typhoon routes here
 });
 
@@ -371,3 +378,15 @@ Route::prefix('hazard-mapping')
         Route::post('/schools/{schoolId}/floor/add', [HazardMappingController::class, 'addFloor'])->name('school.floor.add');
         
     });
+
+// Damage reports routes
+
+// Inventory Management Routes
+Route::prefix('inventory-storage')
+    ->name('inventory-storage.')
+    ->middleware(['auth', 'module.access:inventory_storage'])
+    ->group(function () {
+        Route::get('/dashboard', [InventoryStorageController::class, 'dashboard'])->name('dashboard');
+        Route::post('/store', [InventoryStorageController::class, 'store'])->name('store');
+    });
+    

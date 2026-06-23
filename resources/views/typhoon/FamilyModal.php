@@ -12,37 +12,8 @@
                 </div>
                 
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Evacuation Center / School <span class="text-danger">*</span></label>
-                        <div id="lockedCenterHint" class="small text-primary mb-1 d-none">
-                            <i class="fas fa-lock me-1"></i> Locked to selected evacuation center.
-                        </div>
-                        <select name="evacuation_center_id" id="modal_evacuation_center_id" class="form-select" required>
-                            <option value="">-- Select Evacuation Center --</option>
-                            @foreach($evacuationCenters ?? [] as $ec)
-                                <option value="{{ $ec->id }}">
-                                    {{ $ec->school_name ?? $ec->identification ?? ('Evacuation Center #' . $ec->id) }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <!-- Fire Safety Building Dropdown -->
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Building <span class="text-danger">*</span></label>
-                                <select name="room" id="firesafety_rooms" class="form-select">
-                                    <option value="">-- Select Building --</option>
-                                </select>
-                            </div>
 
-                            <!-- Room Dropdown (Populated from the selected building) -->
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Room <span class="text-danger">*</span></label>
-                                <select name="room_id" id="room_id" class="form-select">
-                                    <option value="">-- Select Room --</option>
-                                </select>
-                            </div>
-                        </div>
-
-                    <div class="row mb-3">
+                  <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">Family Encoding Mode <span class="text-danger">*</span></label>
                             <select name="registration_mode" id="familyRegistrationMode" class="form-select" required>
@@ -84,6 +55,28 @@
                                 <option value="female">Female</option>
                             </select>
                         </div>
+                        <!-- Head of Family Vulnerability Tags -->
+                        <div class="col-12 vulnerability-wrapper mt-2">
+                            <div class="p-2 bg-light rounded border">
+                                <label class="form-label fw-bold small mb-1">Head Vulnerabilities / Special Concerns</label>
+                                <select class="form-select form-select-sm mb-2 vulnerability-selector">
+                                    <option value="">-- Add Concern --</option>
+                                    <option value="flagPregnant">Pregnant</option>
+                                    <option value="flagPwd">PWD</option>
+                                    <option value="flagSenior">Senior Citizen</option>
+                                    <option value="flagLactating">Lactating</option>
+                                    <option value="flagChild">Child Under 5</option>
+                                </select>
+                                <div class="vulnerability-tags-container d-flex flex-wrap gap-2"></div>
+                                <div class="d-none">
+                                    <input class="form-check-input vulnerability-checkbox flagPregnant" type="checkbox" name="has_pregnant" value="1" id="flagPregnant">
+                                    <input class="form-check-input vulnerability-checkbox flagPwd" type="checkbox" name="has_pwd" value="1" id="flagPwd">
+                                    <input class="form-check-input vulnerability-checkbox flagSenior" type="checkbox" name="has_senior" value="1" id="flagSenior">
+                                    <input class="form-check-input vulnerability-checkbox flagLactating" type="checkbox" name="has_lactating" value="1" id="flagLactating">
+                                    <input class="form-check-input vulnerability-checkbox flagChild" type="checkbox" name="has_child_under5" value="1" id="flagChild">
+                                </div>
+                            </div>
+                        </div>
                         <div class="col-12 mt-2">
                             <label class="form-label small fw-bold">Collective Family Needs <span class="text-danger">*</span></label>
                             <div class="family-needs-builder" data-family-needs-builder="create" data-need-options='@json($familyNeedOptions ?? [])' data-existing-needs='[]'></div>
@@ -112,6 +105,43 @@
                     </div>
                 </div>
 
+
+                    <!-- Evacuation Center Dropdown -->
+                <div class="modal-body">
+                    <div class="col-12">
+                        <label class="form-label fw-bold small text-uppercase text-muted">Evacuation Center / School <span class="text-danger">*</span></label>
+                        <div id="lockedCenterHint" class="small text-primary mb-1 d-none">
+                            <i class="fas fa-lock me-1"></i> Locked to selected evacuation center.
+                        </div>
+                        <select name="evacuation_center_id" id="modal_evacuation_center_id" class="form-select" required>
+                            <option value="">-- Select Evacuation Center --</option>
+                            @foreach($evacuationCenters ?? [] as $ec)
+                                <option value="{{ $ec->id }}">
+                                    {{ $ec->school_name ?? $ec->identification ?? ('Evacuation Center #' . $ec->id) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+<!--work in progress-->
+                    <!-- Fire Safety Building Dropdown -->
+                    <div class="col-12">
+                        <label class="form-label fw-bold small text-uppercase text-muted">Building <span class="text-danger">*</span></label>
+                        <select name="building_id" id="firesafety_buildings" class="form-select" required>
+                            <option value="">-- Select Building --</option> 
+                        </select>
+                    </div>
+
+                    <!-- Room Dropdown -->
+                    <div class="col-12">
+                        <label class="form-label fw-bold small text-uppercase text-muted">Room <span class="text-danger">*</span></label>
+                        <select name="room_id" id="fire_safety_rooms" class="form-select" required>
+                            <option value="">-- Select Room --</option>
+                        </select>
+                    </div>
+                </div>
+<!--work in progress-->
+
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn" style="background-color: #1B4C6D; color: white;">
@@ -121,6 +151,4 @@
             </div>
         </form>
     </div>
-
-
 </div>

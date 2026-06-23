@@ -978,7 +978,10 @@ class FireSafetyController extends Controller
             'has_smoke_detector' => 'boolean',
             'has_secondary_exit' => 'boolean',
             'secondary_exit_remarks' => 'nullable|string',
-            'remarks' => 'nullable|string'
+            'remarks' => 'nullable|string',
+            'is_evacuation_room' => 'boolean',
+            'Buffer_evac' => 'boolean',
+            'Main_evac' => 'boolean',
         ];
 
         if (Schema::hasColumn('fire_safety_rooms', 'engineer_last_inspection_date')) {
@@ -997,6 +1000,18 @@ class FireSafetyController extends Controller
 
         if (!isset($validated['has_secondary_exit'])) {
             $validated['has_secondary_exit'] = false;
+        }
+
+        if (!isset($validated['is_evacuation_room'])) {
+            $validated['is_evacuation_room'] = false;
+        }
+
+        if (!isset($validated['Buffer_evac'])) {
+            $validated['Buffer_evac'] = false;
+        }
+
+        if (!isset($validated['Main_evac'])) {
+            $validated['Main_evac'] = false;
         }
 
         // If room type changed, update the snapshot fields and clear all extinguisher coverage for this room
@@ -1284,7 +1299,10 @@ public function storeRoom(Request $request)
         'has_smoke_detector' => 'boolean',
         'has_secondary_exit' => 'boolean',
         'secondary_exit_remarks' => 'nullable|string',
-        'remarks' => 'nullable|string'
+        'remarks' => 'nullable|string',
+        'is_evacuation_room' => 'boolean',
+        'Buffer_evac' => 'boolean',
+        'Main_evac' => 'boolean'
     ];
 
     if (Schema::hasColumn('fire_safety_rooms', 'engineer_last_inspection_date')) {
@@ -1303,6 +1321,18 @@ public function storeRoom(Request $request)
 
     if (!isset($validated['has_secondary_exit'])) {
         $validated['has_secondary_exit'] = false;
+    }
+
+    if (!isset($validated['is_evacuation_room'])) {
+        $validated['is_evacuation_room'] = false;
+    }
+
+    if (!isset($validated['Buffer_evac'])) {
+        $validated['Buffer_evac'] = false;
+    }
+
+    if (!isset($validated['Main_evac'])) {
+        $validated['Main_evac'] = false;
     }
 
     // ensure room_name is not null since database column is non-nullable
@@ -1448,6 +1478,9 @@ public function storeRoom(Request $request)
             'has_secondary_exit' => $room->has_secondary_exit,
             'secondary_exit_remarks' => $room->secondary_exit_remarks,
             'is_center_room' => $isCenterRoom,
+            'is_evacuation_room' => (bool)$room->is_evacuation_room,
+            'Buffer_evac' => (bool)$room->Buffer_evac,
+            'Main_evac' => (bool)$room->Main_evac,
             'host_room_id' => $hostRoomId,
             'host_room_code' => $hostRoomCode,
             'building' => $room->building ? ($room->building->building_no . ($room->building->building_name ? ' - ' . $room->building->building_name : '')) : 'N/A',
@@ -2419,7 +2452,10 @@ public function storeRoom(Request $request)
                     'inspector' => $r->lastInspector->name ?? 'Unknown',
                     'remarks' => $remarks,
                     'last_updated' => $r->updated_at->format('Y-m-d h:i A'),
-                    'approval_status' => $r->approval_status
+                    'approval_status' => $r->approval_status,
+                    'is_evacuation_room' => (bool)$r->is_evacuation_room,
+                    'Main_evac' => (bool)$r->Main_evac,
+                    'Buffer_evac' => (bool)$r->Buffer_evac
                 ];
             });
 
@@ -2560,7 +2596,9 @@ public function storeRoom(Request $request)
             'other_building_type' => 'nullable|string|max:100',
             'description' => 'nullable|string',
             'features' => 'nullable|array',
-            'required_extinguishers' => 'nullable|integer|min:0'
+            'required_extinguishers' => 'nullable|integer|min:0',
+            'compliance_status' => 'nullable|in:Compliant,Non-Compliant,Partially Compliant',
+            'compliance_reason' => 'nullable|required_if:compliance_status,Non-Compliant|string|max:500'
         ]);
 
         if ($request->building_type === 'Others' && $request->has('other_building_type')) {
@@ -2599,6 +2637,11 @@ public function storeRoom(Request $request)
     if (isset($validated['features'])) {
         $validated['features'] = implode(',', $validated['features']);
     }
+    $validated['features'] = $validated['features'] ?? null;
+
+    // Fallback if the field is empty in the request
+    $validated['compliance_status'] = $validated['compliance_status'] ?? 'Non-Compliant';
+
     $building = FireSafetyBuilding::create($validated);
 
         ActivityLog::log('fire_safety', 'Created building: ' . ($building->building_name ?? $building->building_no), [
@@ -5440,4 +5483,15 @@ public function storeRoom(Request $request)
 
         return redirect()->back()->with('error', 'Failed to upload image.');
     }
+
+
+public function getRoomsForBuilding($building_id)
+{
+    // Laravel queries your database (visible in phpMyAdmin)
+    $rooms = DB::table('fire_safety_rooms') // or whatever your rooms table is named
+               ->where('building_id', $building_id)
+               ->get();
+
+    return response()->json($rooms);
+}
 }

@@ -596,37 +596,6 @@
                 </div>
                 
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Evacuation Center / School <span class="text-danger">*</span></label>
-                        <div id="lockedCenterHint" class="small text-primary mb-1 d-none">
-                            <i class="fas fa-lock me-1"></i> Locked to selected evacuation center.
-                        </div>
-                        <select name="evacuation_center_id" id="modal_evacuation_center_id" class="form-select" required>
-                            <option value="">-- Select Evacuation Center --</option>
-                            @foreach($evacuationCenters ?? [] as $ec)
-                                <option value="{{ $ec->id }}">
-                                    {{ $ec->school_name ?? $ec->identification ?? ('Evacuation Center #' . $ec->id) }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <!-- Fire Safety Building Dropdown -->
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Building <span class="text-danger">*</span></label>
-                                <select name="room" id="firesafety_rooms" class="form-select">
-                                    <option value="">-- Select Building --</option>
-                                </select>
-                            </div>
-
-                            <!-- Room Dropdown (Populated from the selected building) -->
-                            <div class="mb-3">
-                                <label class="form-label fw-bold">Room <span class="text-danger">*</span></label>
-                                <select name="room_id" id="room_id" class="form-select">
-                                    <option value="">-- Select Room --</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        
 
                   <div class="row mb-3">
                         <div class="col-md-6">
@@ -670,6 +639,28 @@
                                 <option value="female">Female</option>
                             </select>
                         </div>
+                        <!-- Head of Family Vulnerability Tags -->
+                        <div class="col-12 vulnerability-wrapper mt-2">
+                            <div class="p-2 bg-light rounded border">
+                                <label class="form-label fw-bold small mb-1">Head Vulnerabilities / Special Concerns</label>
+                                <select class="form-select form-select-sm mb-2 vulnerability-selector">
+                                    <option value="">-- Add Concern --</option>
+                                    <option value="flagPregnant">Pregnant</option>
+                                    <option value="flagPwd">PWD</option>
+                                    <option value="flagSenior">Senior Citizen</option>
+                                    <option value="flagLactating">Lactating</option>
+                                    <option value="flagChild">Child Under 5</option>
+                                </select>
+                                <div class="vulnerability-tags-container d-flex flex-wrap gap-2"></div>
+                                <div class="d-none">
+                                    <input class="form-check-input vulnerability-checkbox flagPregnant" type="checkbox" name="has_pregnant" value="1" id="flagPregnant">
+                                    <input class="form-check-input vulnerability-checkbox flagPwd" type="checkbox" name="has_pwd" value="1" id="flagPwd">
+                                    <input class="form-check-input vulnerability-checkbox flagSenior" type="checkbox" name="has_senior" value="1" id="flagSenior">
+                                    <input class="form-check-input vulnerability-checkbox flagLactating" type="checkbox" name="has_lactating" value="1" id="flagLactating">
+                                    <input class="form-check-input vulnerability-checkbox flagChild" type="checkbox" name="has_child_under5" value="1" id="flagChild">
+                                </div>
+                            </div>
+                        </div>
                         <div class="col-12 mt-2">
                             <label class="form-label small fw-bold">Collective Family Needs <span class="text-danger">*</span></label>
                             <div class="family-needs-builder" data-family-needs-builder="create" data-need-options='@json($familyNeedOptions ?? [])' data-existing-needs='[]'></div>
@@ -697,6 +688,43 @@
                         </label>
                     </div>
                 </div>
+
+
+                    <!-- Evacuation Center Dropdown -->
+                <div class="modal-body">
+                    <div class="col-12">
+                        <label class="form-label fw-bold small text-uppercase text-muted">Evacuation Center / School <span class="text-danger">*</span></label>
+                        <div id="lockedCenterHint" class="small text-primary mb-1 d-none">
+                            <i class="fas fa-lock me-1"></i> Locked to selected evacuation center.
+                        </div>
+                        <select name="evacuation_center_id" id="modal_evacuation_center_id" class="form-select" required>
+                            <option value="">-- Select Evacuation Center --</option>
+                            @foreach($evacuationCenters ?? [] as $ec)
+                                <option value="{{ $ec->id }}">
+                                    {{ $ec->school_name ?? $ec->identification ?? ('Evacuation Center #' . $ec->id) }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+<!--work in progress-->
+                    <!-- Fire Safety Building Dropdown -->
+                    <div class="col-12">
+                        <label class="form-label fw-bold small text-uppercase text-muted">Building <span class="text-danger">*</span></label>
+                        <select name="building_id" id="firesafety_buildings" class="form-select" required>
+                            <option value="">-- Select Building --</option> 
+                        </select>
+                    </div>
+
+                    <!-- Room Dropdown -->
+                    <div class="col-12">
+                        <label class="form-label fw-bold small text-uppercase text-muted">Room <span class="text-danger">*</span></label>
+                        <select name="room_id" id="fire_safety_rooms" class="form-select" required>
+                            <option value="">-- Select Room --</option>
+                        </select>
+                    </div>
+                </div>
+<!--work in progress-->
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -845,15 +873,12 @@
                                     <th class="pe-4 text-end">Management</th>
                                 </tr>
                             </thead>
-                            <tbody>
                             <tbody id="evacuationCentersTableBody">
                                 @forelse($evacuationCenters ?? [] as $ec)
-                                <tr>
                                 <tr class="school-row">
                                     <td class="ps-4">
-                                        <div class="fw-bold fs-6">{{ $ec->school_name ?? $ec->identification ?? ('Center #' . $ec->id) }}</div>
                                         <div class="fw-bold fs-6 school-name-text">{{ $ec->school_name ?? $ec->identification ?? ('Center #' . $ec->id) }}</div>
-                                        <small class="text-muted">UID: {{ $ec->id }}</small>
+                                        <small class="text-muted">UID: {{ $ec->school_id }}</small>
                                     </td>
                                     <td>
                                         <div class="small"><i class="fas fa-map-marker-alt me-1 text-danger"></i> {{ Str::limit($ec->location, 40) }}</div>
@@ -1050,7 +1075,7 @@
 
 @php
     $chartData = $evacuationCenters->map(function($ec) {
-        $fullName = $ec->school->school_name ?? $ec->identification ?? 'Center #'.$ec->id;
+        $fullName = optional($ec->school)->school_name ?? $ec->identification ?? 'Center #'.$ec->id;
         return [
             'full_name' => $fullName,
             'display_name' => \Illuminate\Support\Str::limit($fullName, 12),
@@ -1062,6 +1087,7 @@
     $totalSystemCapacity = $evacuationCenters->sum(fn ($ec) => (int) ($ec->capacity ?? 0));
 @endphp
 
+{{-- ===================== SCRIPTS ===================== --}}
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
@@ -1215,8 +1241,6 @@
     const registrationModeSelect = document.getElementById('familyRegistrationMode');
     const existingFamilyWrap = document.getElementById('existingFamilySelectorWrap');
     const existingFamilySelect = document.getElementById('existingFamilySelect');
-    const firesafetyRoomsSelect = document.getElementById('firesafety_rooms');
-    const roomIdSelect = document.getElementById('room_id');
     const existingFamilyIdInput = document.getElementById('existingFamilyId');
     const membersContainer = document.getElementById('family-members-container');
     const addMemberBtn = document.getElementById('add-member-btn');
@@ -1226,6 +1250,11 @@
     const headGenderSelect = familyForm ? familyForm.querySelector('select[name="members[0][gender]"]') : null;
     const headVulnerabilityHint = document.getElementById('headVulnerabilityHint');
     const builderEl = document.querySelector('.family-needs-builder[data-family-needs-builder="create"]');
+    
+    // dropdown boxes
+    const firesafetyBuildingsSelect = document.getElementById('firesafety_buildings');
+    const roomIdSelect = document.getElementById('fire_safety_rooms');
+
 
     let memberIndex = 1;
 
@@ -1385,69 +1414,62 @@
     // Add member function
     function addMemberRow(member = {}) {
         if (!membersContainer) return;
-
-        // Ensure vulnerability wrapper is visible when members are added
-        const wrapper = document.getElementById('familyVulnerabilitiesWrapper');
-        if (wrapper) wrapper.classList.remove('d-none');
-
         const row = document.createElement('div');
-        row.className = 'row g-2 mb-2 member-row border-bottom pb-2';
+        row.className = 'row g-2 mb-3 member-row border-bottom pb-3';
         row.innerHTML = `
-            <div class="col-md-4">
+            <div class="col-md-6 mb-2">
+                <label class="form-label small fw-bold">Full Name <span class="text-danger">*</span></label>
                 <input type="text" name="members[${memberIndex}][full_name]" class="form-control" placeholder="Full name" value="${member.full_name ?? ''}" required>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-3 mb-2">
+                <label class="form-label small fw-bold">Age <span class="text-danger">*</span></label>
                 <input type="number" name="members[${memberIndex}][age]" class="form-control member-age-input" placeholder="Age" value="${member.age ?? ''}" required min="0">
             </div>
-            <div class="col-md-2">
+            <div class="col-md-3 mb-2">
+                <label class="form-label small fw-bold">Gender <span class="text-danger">*</span></label>
                 <select name="members[${memberIndex}][gender]" class="form-select" required>
-                    <option value="">Gender</option>
+                    <option value="">Select...</option>
                     <option value="male" ${member.gender === 'male' ? 'selected' : ''}>Male</option>
                     <option value="female" ${member.gender === 'female' ? 'selected' : ''}>Female</option>
                 </select>
             </div>
-<!-- Family vulnerabilities section (checkboxes) -->
-<div id="familyVulnerabilitiesWrapper" class="mb-3 p-2 bg-light rounded">
-    <label class="form-label fw-bold small">Family Vulnerabilities / Special Concerns</label>
-    <div class="d-flex flex-wrap gap-3">
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="has_pregnant" value="1" id="flagPregnant">
-            <label class="form-check-label" for="flagPregnant">Pregnant</label>
-        </div>
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="has_pwd" value="1" id="flagPwd">
-            <label class="form-check-label" for="flagPwd">PWD</label>
-        </div>
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="has_senior" value="1" id="flagSenior">
-            <label class="form-check-label" for="flagSenior">Senior Citizen</label>
-        </div>
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="has_lactating" value="1" id="flagLactating">
-            <label class="form-check-label" for="flagLactating">Lactating</label>
-        </div>
-        <div class="form-check">
-            <input class="form-check-input" type="checkbox" name="has_child_under5" value="1" id="flagChild">
-            <label class="form-check-label" for="flagChild">Child Under 5</label>
-        </div>
-    </div>
-</div>
-
-            <div class="col-md-4 d-flex align-items-center justify-content-end">
-                <button type="button" class="btn btn-outline-danger btn-sm remove-member">
-                    <i class="fas fa-trash"></i>
-                </button>
+            
+            <!-- Member Vulnerability Tags -->
+            <div class="col-12 vulnerability-wrapper mt-1">
+                <div class="p-2 bg-light rounded border">
+                    <label class="form-label fw-bold small mb-1">Vulnerabilities / Concerns</label>
+                    <select class="form-select form-select-sm mb-2 vulnerability-selector">
+                        <option value="">-- Add Concern --</option>
+                        <option value="flagPregnant">Pregnant</option>
+                        <option value="flagPwd">PWD</option>
+                        <option value="flagSenior">Senior Citizen</option>
+                        <option value="flagLactating">Lactating</option>
+                        <option value="flagChild">Child Under 5</option>
+                    </select>
+                    <div class="vulnerability-tags-container d-flex flex-wrap gap-2">
+                        <!-- Tags will appear here -->
+                    </div>
+                    <div class="d-none">
+                        <input class="form-check-input vulnerability-checkbox flagPregnant" type="checkbox" name="has_pregnant" value="1">
+                        <input class="form-check-input vulnerability-checkbox flagPwd" type="checkbox" name="has_pwd" value="1">
+                        <input class="form-check-input vulnerability-checkbox flagSenior" type="checkbox" name="has_senior" value="1">
+                        <input class="form-check-input vulnerability-checkbox flagLactating" type="checkbox" name="has_lactating" value="1">
+                        <input class="form-check-input vulnerability-checkbox flagChild" type="checkbox" name="has_child_under5" value="1">
+                    </div>
+                </div>
             </div>
-            <div class="col-12">
-                <small class="text-muted member-vulnerability-hint">Member Vulnerabilities: None</small>
+
+            <div class="col-12 d-flex align-items-center justify-content-end mt-2">
+                <button type="button" class="btn btn-outline-danger btn-sm remove-member">
+                    <i class="fas fa-trash me-1"></i> Remove Member
+                </button>
             </div>
             <input type="hidden" name="members[${memberIndex}][is_head]" value="0">
         `;
         membersContainer.appendChild(row);
 
         const ageInput = row.querySelector('.member-age-input');
-        const hint = row.querySelector('.member-vulnerability-hint');
-        bindAgeAutoFlags(ageInput, hint);
+        ageInput.addEventListener('input', refreshFamilyVulnerabilityFlags);
 
         row.querySelector('.remove-member').addEventListener('click', function() {
             row.remove();
@@ -1469,24 +1491,67 @@
         if (hiddenHeadNameInput) hiddenHeadNameInput.value = '';
         if (headAgeInput) headAgeInput.value = '';
         if (headGenderSelect) headGenderSelect.value = '';
-        if (headVulnerabilityHint) headVulnerabilityHint.textContent = 'Member Vulnerabilities: None';
-
-        ['flagPregnant', 'flagPwd', 'flagSenior', 'flagLactating', 'flagChild'].forEach((id) => {
-            const el = document.getElementById(id);
-            if (el) el.checked = false;
-        });
+        
+        document.querySelectorAll('.vulnerability-checkbox').forEach(cb => cb.checked = false);
+        document.querySelectorAll('.vulnerability-tags-container').forEach(c => c.innerHTML = '');
 
         if (membersContainer) {
             membersContainer.innerHTML = '';
         }
         memberIndex = 1;
         if (existingFamilyIdInput) existingFamilyIdInput.value = '';
-
-        const wrapper = document.getElementById('familyVulnerabilitiesWrapper');
-        if (wrapper) wrapper.classList.add('d-none');
-
         setNeedsBuilderExistingNeeds([]);
         refreshFamilyVulnerabilityFlags();
+    }
+
+    // Vulnerability Tag System Logic
+    function addVulnerabilityTag(container, checkbox, label) {
+        if (!container || !checkbox || checkbox.checked) return;
+        const tag = document.createElement('span');
+        tag.className = 'badge bg-primary d-flex align-items-center gap-2 py-2 px-3 shadow-sm';
+        tag.style.borderRadius = '50px';
+        tag.style.fontSize = '0.75rem';
+        tag.innerHTML = `${label} <i class="fas fa-times" style="cursor:pointer;"></i>`;
+        checkbox.checked = true;
+        tag.querySelector('.fa-times').addEventListener('click', () => {
+            checkbox.checked = false;
+            tag.remove();
+        });
+        container.appendChild(tag);
+    }
+
+    // Event Delegation for the Dropdown
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.classList.contains('vulnerability-selector')) {
+            const select = e.target;
+            const val = select.value;
+            if (!val) return;
+            const label = select.options[select.selectedIndex].text;
+            const wrapper = select.closest('.vulnerability-wrapper');
+            const container = wrapper.querySelector('.vulnerability-tags-container');
+            const checkbox = wrapper.querySelector('.' + val);
+            
+            if (container && checkbox) {
+                addVulnerabilityTag(container, checkbox, label);
+            }
+            select.value = '';
+        }
+    });
+
+    // Sync existing flags to tags (for auto-detection or edit mode)
+    function syncVulnerabilityTags() {
+        const headWrapper = document.querySelector('.vulnerability-wrapper');
+        if (!headWrapper) return;
+        const container = headWrapper.querySelector('.vulnerability-tags-container');
+
+        ['flagPregnant', 'flagPwd', 'flagSenior', 'flagLactating', 'flagChild'].forEach(id => {
+            const cb = document.getElementById(id);
+            if (cb && cb.checked) {
+                cb.checked = false; // Reset temporarily to let addVulnerabilityTag handle it
+                const label = document.querySelector(`label[for="${id}"]`)?.textContent || id.replace('flag', '');
+                addVulnerabilityTag(container, cb, label);
+            }
+        });
     }
 
     function centerFamilies(centerId) {
@@ -1550,7 +1615,6 @@
             hiddenHeadNameInput.value = this.value;
         });
     }
-    bindAgeAutoFlags(headAgeInput, headVulnerabilityHint);
 
     if (addMemberBtn) {
         addMemberBtn.addEventListener('click', function() {
@@ -1592,54 +1656,60 @@
                 this.value = this.dataset.lockedValue;
             }
 
-            // Auto-populate Fire Safety Buildings based on the selected School
             const schoolId = this.value;
-            if (firesafetyRoomsSelect) {
-                firesafetyRoomsSelect.innerHTML = '<option value="">-- Loading Buildings --</option>';
-                if (roomIdSelect) roomIdSelect.innerHTML = '<option value="">-- Select Building First --</option>';
-                
+            if (firesafetyBuildingsSelect) {
+                firesafetyBuildingsSelect.innerHTML = '<option value="">-- Loading Buildings --</option>';
+                if (roomIdSelect) {
+                    roomIdSelect.innerHTML = '<option value="">-- Select Room --</option>';
+                    roomIdSelect.disabled = true;
+                }
+
                 if (schoolId) {
                     try {
-                        const response = await fetch(`/fire-safety/buildings-list/${schoolId}`);
+                        const response = await fetch(`/fire-safety/buildings/${schoolId}`);
                         const buildings = await response.json();
-                        firesafetyRoomsSelect.innerHTML = '<option value="">-- Select Building --</option>';
+                        firesafetyBuildingsSelect.innerHTML = '<option value="">-- Select Building --</option>';
                         buildings.forEach(b => {
                             const opt = document.createElement('option');
                             opt.value = b.id;
-                            opt.textContent = b.building_no + (b.building_name ? ` (${b.building_name})` : '');
-                            firesafetyRoomsSelect.appendChild(opt);
+                            const bName = b.building_name ? ` - ${b.building_name}` : '';
+                            opt.textContent = `${b.building_no}${bName}`;
+                            firesafetyBuildingsSelect.appendChild(opt);
                         });
                     } catch (e) {
-                        firesafetyRoomsSelect.innerHTML = '<option value="">-- Error loading buildings --</option>';
+                        firesafetyBuildingsSelect.innerHTML = '<option value="">-- Error loading buildings --</option>';
                     }
                 } else {
-                    firesafetyRoomsSelect.innerHTML = '<option value="">-- Select Building --</option>';
+                    firesafetyBuildingsSelect.innerHTML = '<option value="">-- Select Building --</option>';
                 }
-            }
-
-            if (registrationModeSelect && registrationModeSelect.value === 'existing') {
-                clearFamilyDetails();
-                refreshExistingFamilyChoices();
             }
         });
     }
 
-    if (firesafetyRoomsSelect) {
-        firesafetyRoomsSelect.addEventListener('change', async function() {
+    if (firesafetyBuildingsSelect) {
+        firesafetyBuildingsSelect.addEventListener('change', async function () {
             const buildingId = this.value;
             if (roomIdSelect) {
                 roomIdSelect.innerHTML = '<option value="">-- Loading Rooms --</option>';
+                roomIdSelect.disabled = true;
+
                 if (buildingId) {
                     try {
                         const response = await fetch(`/fire-safety/rooms/${buildingId}`);
                         const rooms = await response.json();
                         roomIdSelect.innerHTML = '<option value="">-- Select Room --</option>';
-                        rooms.forEach(r => {
-                            const opt = document.createElement('option');
-                            opt.value = r.id;
-                            opt.textContent = r.room_code + (r.room_name ? ` - ${r.room_name}` : '');
-                            roomIdSelect.appendChild(opt);
-                        });
+                        if (rooms && rooms.length > 0) {
+                            roomIdSelect.disabled = false;
+                            rooms.forEach(r => {
+                                const opt = document.createElement('option');
+                                opt.value = r.id;
+                                const rName = r.room_name ? ` - ${r.room_name}` : '';
+                                opt.textContent = `${r.room_code || 'Room'}${rName}`;
+                                roomIdSelect.appendChild(opt);
+                            });
+                        } else {
+                            roomIdSelect.innerHTML = '<option value="">No rooms found</option>';
+                        }
                     } catch (e) {
                         roomIdSelect.innerHTML = '<option value="">-- Error loading rooms --</option>';
                     }
@@ -1661,6 +1731,8 @@
                     modalCenterSelect.style.pointerEvents = 'none';
                     modalCenterSelect.style.backgroundColor = '#e9f2ff';
                     if (lockedCenterHint) lockedCenterHint.classList.remove('d-none');
+                    // Automatically trigger building fetch for the pre-selected center
+                    modalCenterSelect.dispatchEvent(new Event('change'));
                 } else {
                     delete modalCenterSelect.dataset.lockedValue;
                     modalCenterSelect.style.pointerEvents = '';
@@ -1766,7 +1838,7 @@
         });
     }
 </script>
-@endpush
+@endsection
 @include('typhoon.partials.choose-school-modal')
 
 {{-- MODAL: QUICK ANNOUNCEMENT (Global for Admin) --}}
@@ -1808,4 +1880,3 @@
         </form>
     </div>
 </div>
-@endsection

@@ -227,7 +227,8 @@
     #btn_incident:hover { background-color: #F2C94C; border-color: #F2C94C; color: #212529; }
     #btn_comprehensive:hover { background-color: #5C4033; border-color: #5C4033; color: #fff; }
     #btn_hazard:hover { background-color: #0D7377; border-color: #0D7377; color: #fff; }
-    #btn_damage_report:hover { background-color: #6f42c1; border-color: #6f42c1; color: #fff; }
+    #btn_inventory:hover { background-color: #17a2b8; border-color: #17a2b8; color: #fff; }
+    #btn_damage_assessment:hover { background-color: #6f42c1; border-color: #6f42c1; color: #fff; }
 
     /* Margins for the layout as requested */
     .schools-tab-container {
@@ -495,15 +496,11 @@
         </div>
 
                 <!-- Second Row For Alignment -->
-        <div class="row">
-            <!-- Left Empty Spacer to Center-Align Content -->
-            <div class="col-md-4 mb-4 d-none d-md-block"></div>
-
-            <!-- Damage Report
-              Module --> 
-            <div class="col-md-4 mb-4">
+         <div class="row">
+            <!-- Damage Report Module --> 
+            <div class="col-md-6 col-lg-4 offset-lg-2 mb-4">
                 @php $canAccessDamageReport = $isAdmin || in_array('damage_reports', $modules); @endphp
-                <a href="#" class="text-decoration-none module-card-link" data-module="DamageReport" data-can-access="{{ $canAccessDamageReport ? '1' : '0' }}" data-theme-color="#6f42c1">
+                <a href="#" class="text-decoration-none module-card-link" data-module="damage_reports" data-can-access="{{ $canAccessDamageReport ? '1' : '0' }}" data-theme-color="#6f42c1">
                     <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #6f42c1;">
                         <div class="card-body text-center p-5">
                             <div class="mb-4">
@@ -523,8 +520,28 @@
                 </a>
             </div>
 
-            <!-- Right Empty Spacer to Maintain Grid Flow -->
-            <div class="col-md-4 mb-4 d-none d-md-block"></div>
+            <!-- Inventory Module --> 
+            <div class="col-md-6 col-lg-4 mb-4">
+                @php $canAccessInventory = $isAdmin || in_array('inventory_storage', $modules); @endphp
+                <a href="{{ route('inventory-storage.dashboard') }}" class="text-decoration-none module-card-link" data-module="inventory_storage" data-can-access="{{ $canAccessInventory ? '1' : '0' }}" data-theme-color="#17a2b8">
+                    <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #17a2b8;">
+                        <div class="card-body text-center p-5">
+                            <div class="mb-4">
+                                <i class="fas fa-boxes fa-4x" style="color: #17a2b8;"></i>
+                            </div>
+                            <h3 class="card-title fw-bold" style="color: #17a2b8;">Inventory</h3>
+                            <p class="card-text text-muted">
+                                Manage and track sources, gears and equipment inventory for disaster preparedness, response, and recovery operations.
+                            </p>
+                        </div>
+                        <div class="card-footer bg-transparent text-center border-0">
+                            <span class="btn" style="background-color: #17a2b8; color: white;">
+                                <i class="fas fa-arrow-right"></i> Enter
+                            </span>
+                        </div>
+                    </div>
+                </a>
+            </div>
         </div>
 
 

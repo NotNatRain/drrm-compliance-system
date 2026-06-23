@@ -10,7 +10,7 @@ use App\Models\School;
 class FireSafetyBuilding extends Model
 {
     protected $table = 'firesafety_buildings';
-
+    
     protected $fillable = [
         'unified_school_id',
         'building_no',
@@ -27,10 +27,16 @@ class FireSafetyBuilding extends Model
         'description',
         'features',
         'required_extinguishers',
-        // compliance / scoring fields
         'safety_score',
+        'compliance_reason',
         'compliance_status',
-        'compliance_reason'
+    ];
+
+    protected $attributes = [
+        'safety_score' => 0,
+        'compliance_status' => 'Non-Compliant',
+        'compliance_reason' => null,
+        'features' => null,
     ];
 
     protected $appends = [
@@ -243,4 +249,5 @@ class FireSafetyBuilding extends Model
             return explode(',', $this->features);
         }
     }
+
 }
