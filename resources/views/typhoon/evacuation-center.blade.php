@@ -237,7 +237,7 @@
             </a>
             <div>
                 <h1 class="h3 mb-0 fw-bold text-white">
-                    {{ $ec->school->school_name ?? 'NOT DEFINED' }}
+                    {{ $ec->school_name ?? 'NOT DEFINED' }}
                 </h1>
                 <div class="small text-info opacity-75 fw-bold text-uppercase tracking-wider">EVACUATION HUB</div>
             </div>
@@ -671,7 +671,7 @@
                 </div>
             </div>
             <div style="text-align:right;">
-                <div style="font-size:1.5rem; font-weight:800; color:#00d2ff; letter-spacing:1px; line-height:1;">{{ $ec->school->school_name ?? $ec->identification }}</div>
+                <div style="font-size:1.5rem; font-weight:800; color:#00d2ff; letter-spacing:1px; line-height:1;">{{ $ec->school_name ?? $ec->identification }}</div>
                 <div style="font-size:0.8rem; color:#8892b0; margin-top:0.35rem;">{{ $ec->location ?? $ec->school->address }}</div>
                 <div style="font-size:0.65rem; color:#00d2ff; margin-top:0.2rem; font-weight:700; letter-spacing:1px;">📅 {{ now()->format('F d, Y | h:i A') }}</div>
             </div>

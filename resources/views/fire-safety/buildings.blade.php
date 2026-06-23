@@ -276,7 +276,7 @@
                                             data-bs-target="#addBuildingModal">
                                         <i class="fas fa-plus me-1"></i> Add Building
                                     </button>
-
+                        
                                     @endif
 
                                     <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#printOptionsModal">
@@ -718,7 +718,8 @@
                                     <option value="">Select Type</option>
                                     <option value="Earthquake">Earthquake</option>
                                     <option value="Fire">Fire</option>
-                                    <option value="Both">Both Earthquake & Fire</option>
+                                    <option value="Tsunami">Tsunami</option>
+                                    <option value="Lockdown">Lockdown</option>
                                 </select>
                             </div>
                             <div class="col-md-4">

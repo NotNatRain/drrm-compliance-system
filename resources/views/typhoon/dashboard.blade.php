@@ -582,6 +582,133 @@
     </div>
     @endif
 
+{{-- Family Registration Modal (Already Updated) --}}
+<div class="modal fade" id="familyRegistrationModal" tabindex="-1" aria-labelledby="familyRegistrationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <form method="POST" action="{{ route('typhoon.families.store') }}" id="familyRegistrationForm">
+            @csrf
+            <div class="modal-content">
+                <div class="modal-header" style="background-color: var(--bg-dark); color: var(--accent-blue); border-bottom: 1px solid var(--glass-border);">
+                    <h5 class="modal-title" id="familyRegistrationModalLabel">
+                        <i class="fas fa-people-arrows me-2"></i> Register Family Evacuee
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Evacuation Center / School <span class="text-danger">*</span></label>
+                        <div id="lockedCenterHint" class="small text-primary mb-1 d-none">
+                            <i class="fas fa-lock me-1"></i> Locked to selected evacuation center.
+                        </div>
+                        <select name="evacuation_center_id" id="modal_evacuation_center_id" class="form-select" required>
+                            <option value="">-- Select Evacuation Center --</option>
+                            @foreach($evacuationCenters ?? [] as $ec)
+                                <option value="{{ $ec->id }}">
+                                    {{ $ec->school_name ?? $ec->identification ?? ('Evacuation Center #' . $ec->id) }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <!-- Fire Safety Building Dropdown -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Building <span class="text-danger">*</span></label>
+                                <select name="room" id="firesafety_rooms" class="form-select">
+                                    <option value="">-- Select Building --</option>
+                                </select>
+                            </div>
+
+                            <!-- Room Dropdown (Populated from the selected building) -->
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Room <span class="text-danger">*</span></label>
+                                <select name="room_id" id="room_id" class="form-select">
+                                    <option value="">-- Select Room --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        
+
+                  <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Family Encoding Mode <span class="text-danger">*</span></label>
+                            <select name="registration_mode" id="familyRegistrationMode" class="form-select" required>
+                                <option value="new" selected>Encode new family</option>
+                                <option value="existing">Register existing</option>
+                            </select>
+                            <input type="hidden" name="existing_family_id" id="existingFamilyId" value="">
+                        </div>
+                        <div class="col-md-6 d-none" id="existingFamilySelectorWrap">
+                            <label class="form-label small fw-bold">Registered Family in This Center</label>
+                            <select id="existingFamilySelect" class="form-select">
+                                <option value="">-- Select existing family --</option>
+                            </select>
+                            <small class="text-muted">Only families previously registered in the selected evacuation center are listed.</small>
+                        </div>
+                    </div>
+
+                    {{-- Family-level fields --}}
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <h6 class="fw-bold text-primary"><i class="fas fa-user-tie"></i> Head of Family Details</h6>
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <label class="form-label small fw-bold">Full Name (Head) <span class="text-danger">*</span></label>
+                            <input type="text" name="head_family_name" id="input_head_name" class="form-control" placeholder="Full name of head" required
+                                oninput="document.getElementById('hidden_head_name').value = this.value">
+                            <input type="hidden" name="members[0][full_name]" id="hidden_head_name">
+                            <input type="hidden" name="members[0][is_head]" value="1">
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label class="form-label small fw-bold">Age <span class="text-danger">*</span></label>
+                            <input type="number" name="members[0][age]" class="form-control" placeholder="Age" required min="0" max="150">
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <label class="form-label small fw-bold">Gender <span class="text-danger">*</span></label>
+                            <select name="members[0][gender]" class="form-select" required>
+                                <option value="">Select...</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                            </select>
+                        </div>
+                        <div class="col-12 mt-2">
+                            <label class="form-label small fw-bold">Collective Family Needs <span class="text-danger">*</span></label>
+                            <div class="family-needs-builder" data-family-needs-builder="create" data-need-options='@json($familyNeedOptions ?? [])' data-existing-needs='[]'></div>
+                            <small class="text-muted d-block mt-2">Choose a need and quantity. Selecting <strong>Others Please Specify</strong> will reveal a custom need field.</small>
+                        </div>
+                    </div>
+
+
+                    <hr>
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label fw-bold mb-0">Other Family Members</label>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="add-member-btn">
+                            <i class="fas fa-plus"></i> Add Member
+                        </button>
+                    </div>
+                    <div id="family-members-container">
+                    </div>
+
+                    <hr>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="confirm_check_in" id="confirmCheckIn" checked>
+                        <label class="form-check-label" for="confirmCheckIn">
+                            Check-in this family now (sets current date/time)
+                        </label>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn" style="background-color: #1B4C6D; color: white;">
+                        <i class="fas fa-save"></i> Register Family
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
     {{-- Bottom Row: Evacuation Centers Status --}}
     <div class="row g-4">
         <div class="col-12">
@@ -602,7 +729,7 @@
                         <div class="row align-items-center">
                             <div class="col-md-4 border-end">
                                 <div class="stat-label mb-1">Center Name</div>
-                                <div class="h4 fw-bold text-primary mb-1">{{ $ec->school->school_name ?? $ec->identification }}</div>
+                                <div class="h4 fw-bold text-primary mb-1">{{ $ec->school_name ?? $ec->identification }}</div>
                                 <div class="small text-muted mb-3"><i class="fas fa-id-card me-1"></i> UID: {{ $ec->id }}</div>
                                 
                                 <div class="stat-label mb-1">Location</div>
@@ -657,7 +784,7 @@
                                             data-bs-toggle="modal"
                                             data-bs-target="#familyRegistrationModal"
                                             data-ec-id="{{ $ec->id }}"
-                                            data-ec-name="{{ $ec->school->school_name ?? $ec->identification }}">
+                                            data-ec-name="{{ $ec->school_name ?? $ec->identification }}">
                                         <i class="fas fa-user-plus me-1"></i> Register Family
                                     </button>
                                     <a href="{{ route('typhoon.evacuation-center.show', $ec->id) }}" class="btn btn-outline-primary fw-bold">
@@ -691,8 +818,13 @@
             @else
                 <!-- Admin Table View -->
                 <div class="dashboard-card">
-                    <div class="card-header-custom d-flex justify-content-between align-items-center">
+                    <div class="card-header-custom d-flex justify-content-between align-items-center flex-wrap gap-3">
                         <span><i class="fas fa-hospital-user"></i>Evacuation Centers Status Monitoring</span>
+
+                        <div style="min-width: 250px;">
+                            <input type="text" id="schoolSearchInput" class="form-control form-control-sm bg-white bg-opacity-10 border-white border-opacity-25 text-white" placeholder="Search school name..." style="font-family: 'Space Grotesk', sans-serif; text-transform: none; letter-spacing: normal;">
+                        </div>
+
                         <div class="d-flex gap-2">
                             <span class="badge bg-success">CLEARED</span>
                             <span class="badge bg-primary">OCCUPIED</span>
@@ -714,10 +846,13 @@
                                 </tr>
                             </thead>
                             <tbody>
+                            <tbody id="evacuationCentersTableBody">
                                 @forelse($evacuationCenters ?? [] as $ec)
                                 <tr>
+                                <tr class="school-row">
                                     <td class="ps-4">
-                                        <div class="fw-bold fs-6">{{ $ec->school->school_name ?? $ec->identification ?? ('Center #' . $ec->id) }}</div>
+                                        <div class="fw-bold fs-6">{{ $ec->school_name ?? $ec->identification ?? ('Center #' . $ec->id) }}</div>
+                                        <div class="fw-bold fs-6 school-name-text">{{ $ec->school_name ?? $ec->identification ?? ('Center #' . $ec->id) }}</div>
                                         <small class="text-muted">UID: {{ $ec->id }}</small>
                                     </td>
                                     <td>
@@ -750,7 +885,7 @@
                                                     data-bs-toggle="modal"
                                                     data-bs-target="#familyRegistrationModal"
                                                     data-ec-id="{{ $ec->id }}"
-                                                    data-ec-name="{{ $ec->school->school_name ?? $ec->identification ?? ('Center #' . $ec->id) }}">
+                                                    data-ec-name="{{ $ec->school_name ?? $ec->identification ?? ('Center #' . $ec->id) }}">
                                                 <i class="fas fa-user-plus me-1"></i> Register
                                             </button>
                                             <a href="{{ route('typhoon.evacuation-center.show', $ec->id) }}" class="btn btn-sm btn-action rounded-end">
@@ -780,6 +915,7 @@
     {{-- Shared modals --}}
     @include('typhoon.partials.choose-school-modal')
     @include('typhoon.partials.create-evac-center-modal')
+    @include('typhoon.FamilyModal')
 </div>
 
 {{-- ===================== SOCIAL / PRINT OVERLAY ===================== --}}
@@ -883,7 +1019,7 @@
                 <tbody>
                     @forelse($evacuationCenters ?? [] as $ec)
                     <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                        <td style="padding:0.6rem 0.75rem; font-weight:700; color:#e2e8f0;">{{ $ec->school->school_name ?? $ec->identification ?? ('Center #' . $ec->id) }}</td>
+                        <td style="padding:0.6rem 0.75rem; font-weight:700; color:#e2e8f0;">{{ $ec->school_name ?? $ec->identification ?? ('Center #' . $ec->id) }}</td>
                         <td style="padding:0.6rem 0.75rem; color:#8892b0; font-size:0.78rem;">{{ Str::limit($ec->location, 40) }}</td>
                         <td style="padding:0.6rem 0.75rem; text-align:center; color:#8892b0;">{{ $ec->capacity > 0 ? $ec->capacity : '∞' }}</td>
                         <td style="padding:0.6rem 0.75rem; text-align:center; font-weight:800; color:#00d2ff; font-size:1.05rem;">{{ $ec->current_occupancy }}</td>
@@ -910,137 +1046,7 @@
     </div>
 </div>
 
-{{-- Family Registration Modal (Already Updated) --}}
-<div class="modal fade" id="familyRegistrationModal" tabindex="-1" aria-labelledby="familyRegistrationModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <form method="POST" action="{{ route('typhoon.families.store') }}" id="familyRegistrationForm">
-            @csrf
-            <div class="modal-content">
-                <div class="modal-header" style="background-color: var(--bg-dark); color: var(--accent-blue); border-bottom: 1px solid var(--glass-border);">
-                    <h5 class="modal-title" id="familyRegistrationModalLabel">
-                        <i class="fas fa-people-arrows me-2"></i> Register Family Evacuee
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Evacuation Center / School <span class="text-danger">*</span></label>
-                        <div id="lockedCenterHint" class="small text-primary mb-1 d-none">
-                            <i class="fas fa-lock me-1"></i> Locked to selected evacuation center.
-                        </div>
-                        <select name="evacuation_center_id" id="modal_evacuation_center_id" class="form-select" required>
-                            <option value="">-- Select Evacuation Center --</option>
-                            @foreach($evacuationCenters ?? [] as $ec)
-                                <option value="{{ $ec->id }}">
-                                    {{ $ec->school->school_name ?? $ec->identification ?? ('Evacuation Center #' . $ec->id) }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold">Family Encoding Mode <span class="text-danger">*</span></label>
-                            <select name="registration_mode" id="familyRegistrationMode" class="form-select" required>
-                                <option value="new" selected>Encode new family</option>
-                                <option value="existing">Register existing</option>
-                            </select>
-                            <input type="hidden" name="existing_family_id" id="existingFamilyId" value="">
-                        </div>
-                        <div class="col-md-6 d-none" id="existingFamilySelectorWrap">
-                            <label class="form-label small fw-bold">Registered Family in This Center</label>
-                            <select id="existingFamilySelect" class="form-select">
-                                <option value="">-- Select existing family --</option>
-                            </select>
-                            <small class="text-muted">Only families previously registered in the selected evacuation center are listed.</small>
-                        </div>
-                    </div>
-
-                    {{-- Family-level fields --}}
-                    <div class="row mb-3">
-                        <div class="col-md-12">
-                            <h6 class="fw-bold text-primary"><i class="fas fa-user-tie"></i> Head of Family Details</h6>
-                        </div>
-                        <div class="col-md-6 mb-2">
-                            <label class="form-label small fw-bold">Full Name (Head) <span class="text-danger">*</span></label>
-                            <input type="text" name="head_family_name" id="input_head_name" class="form-control" placeholder="Full name of head" required
-                                oninput="document.getElementById('hidden_head_name').value = this.value">
-                            <input type="hidden" name="members[0][full_name]" id="hidden_head_name">
-                            <input type="hidden" name="members[0][is_head]" value="1">
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <label class="form-label small fw-bold">Age <span class="text-danger">*</span></label>
-                            <input type="number" name="members[0][age]" class="form-control" placeholder="Age" required min="0" max="150">
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <label class="form-label small fw-bold">Gender <span class="text-danger">*</span></label>
-                            <select name="members[0][gender]" class="form-select" required>
-                                <option value="">Select...</option>
-                                <option value="male">Male</option>
-                                <option value="female">Female</option>
-                            </select>
-                        </div>
-                        <div class="col-12 mt-2">
-                            <label class="form-label small fw-bold">Collective Family Needs <span class="text-danger">*</span></label>
-                            <div class="family-needs-builder" data-family-needs-builder="create" data-need-options='@json($familyNeedOptions ?? [])' data-existing-needs='[]'></div>
-                            <small class="text-muted d-block mt-2">Choose a need and quantity. Selecting <strong>Others Please Specify</strong> will reveal a custom need field.</small>
-                        </div>
-    
-                    </div>
-                    <div class="mb-3 p-2 bg-light rounded">
-                        <label class="form-label fw-bold small">Family Vulnerabilities / Special Concerns</label>
-                        <div class="d-flex flex-wrap gap-3">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="has_pregnant" value="1" id="flagPregnant">
-                                <label class="form-check-label" for="flagPregnant">Pregnant</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="has_pwd" value="1" id="flagPwd">
-                                <label class="form-check-label" for="flagPwd">PWD</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="has_senior" value="1" id="flagSenior">
-                                <label class="form-check-label" for="flagSenior">Senior Citizen</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="has_lactating" value="1" id="flagLactating">
-                                <label class="form-check-label" for="flagLactating">Lactating</label>
-                            </div>
-                        </div>
-                    </div>
-
-
-                    <hr>
-
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <label class="form-label fw-bold mb-0">Other Family Members</label>
-                        <button type="button" class="btn btn-sm btn-outline-primary" id="add-member-btn">
-                            <i class="fas fa-plus"></i> Add Member
-                        </button>
-                    </div>
-                    <div id="family-members-container">
-                    </div>
-
-                    <hr>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="confirm_check_in" id="confirmCheckIn" checked>
-                        <label class="form-check-label" for="confirmCheckIn">
-                            Check-in this family now (sets current date/time)
-                        </label>
-                    </div>
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn" style="background-color: #1B4C6D; color: white;">
-                        <i class="fas fa-save"></i> Register Family
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
-</div>
 
 @php
     $chartData = $evacuationCenters->map(function($ec) {
@@ -1209,6 +1215,8 @@
     const registrationModeSelect = document.getElementById('familyRegistrationMode');
     const existingFamilyWrap = document.getElementById('existingFamilySelectorWrap');
     const existingFamilySelect = document.getElementById('existingFamilySelect');
+    const firesafetyRoomsSelect = document.getElementById('firesafety_rooms');
+    const roomIdSelect = document.getElementById('room_id');
     const existingFamilyIdInput = document.getElementById('existingFamilyId');
     const membersContainer = document.getElementById('family-members-container');
     const addMemberBtn = document.getElementById('add-member-btn');
@@ -1374,8 +1382,13 @@
         update();
     }
 
+    // Add member function
     function addMemberRow(member = {}) {
         if (!membersContainer) return;
+
+        // Ensure vulnerability wrapper is visible when members are added
+        const wrapper = document.getElementById('familyVulnerabilitiesWrapper');
+        if (wrapper) wrapper.classList.remove('d-none');
 
         const row = document.createElement('div');
         row.className = 'row g-2 mb-2 member-row border-bottom pb-2';
@@ -1393,6 +1406,33 @@
                     <option value="female" ${member.gender === 'female' ? 'selected' : ''}>Female</option>
                 </select>
             </div>
+<!-- Family vulnerabilities section (checkboxes) -->
+<div id="familyVulnerabilitiesWrapper" class="mb-3 p-2 bg-light rounded">
+    <label class="form-label fw-bold small">Family Vulnerabilities / Special Concerns</label>
+    <div class="d-flex flex-wrap gap-3">
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="has_pregnant" value="1" id="flagPregnant">
+            <label class="form-check-label" for="flagPregnant">Pregnant</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="has_pwd" value="1" id="flagPwd">
+            <label class="form-check-label" for="flagPwd">PWD</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="has_senior" value="1" id="flagSenior">
+            <label class="form-check-label" for="flagSenior">Senior Citizen</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="has_lactating" value="1" id="flagLactating">
+            <label class="form-check-label" for="flagLactating">Lactating</label>
+        </div>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="has_child_under5" value="1" id="flagChild">
+            <label class="form-check-label" for="flagChild">Child Under 5</label>
+        </div>
+    </div>
+</div>
+
             <div class="col-md-4 d-flex align-items-center justify-content-end">
                 <button type="button" class="btn btn-outline-danger btn-sm remove-member">
                     <i class="fas fa-trash"></i>
@@ -1441,6 +1481,9 @@
         }
         memberIndex = 1;
         if (existingFamilyIdInput) existingFamilyIdInput.value = '';
+
+        const wrapper = document.getElementById('familyVulnerabilitiesWrapper');
+        if (wrapper) wrapper.classList.add('d-none');
 
         setNeedsBuilderExistingNeeds([]);
         refreshFamilyVulnerabilityFlags();
@@ -1544,13 +1587,65 @@
     }
 
     if (modalCenterSelect) {
-        modalCenterSelect.addEventListener('change', function () {
+        modalCenterSelect.addEventListener('change', async function () {
             if (this.dataset.lockedValue) {
                 this.value = this.dataset.lockedValue;
             }
+
+            // Auto-populate Fire Safety Buildings based on the selected School
+            const schoolId = this.value;
+            if (firesafetyRoomsSelect) {
+                firesafetyRoomsSelect.innerHTML = '<option value="">-- Loading Buildings --</option>';
+                if (roomIdSelect) roomIdSelect.innerHTML = '<option value="">-- Select Building First --</option>';
+                
+                if (schoolId) {
+                    try {
+                        const response = await fetch(`/fire-safety/buildings-list/${schoolId}`);
+                        const buildings = await response.json();
+                        firesafetyRoomsSelect.innerHTML = '<option value="">-- Select Building --</option>';
+                        buildings.forEach(b => {
+                            const opt = document.createElement('option');
+                            opt.value = b.id;
+                            opt.textContent = b.building_no + (b.building_name ? ` (${b.building_name})` : '');
+                            firesafetyRoomsSelect.appendChild(opt);
+                        });
+                    } catch (e) {
+                        firesafetyRoomsSelect.innerHTML = '<option value="">-- Error loading buildings --</option>';
+                    }
+                } else {
+                    firesafetyRoomsSelect.innerHTML = '<option value="">-- Select Building --</option>';
+                }
+            }
+
             if (registrationModeSelect && registrationModeSelect.value === 'existing') {
                 clearFamilyDetails();
                 refreshExistingFamilyChoices();
+            }
+        });
+    }
+
+    if (firesafetyRoomsSelect) {
+        firesafetyRoomsSelect.addEventListener('change', async function() {
+            const buildingId = this.value;
+            if (roomIdSelect) {
+                roomIdSelect.innerHTML = '<option value="">-- Loading Rooms --</option>';
+                if (buildingId) {
+                    try {
+                        const response = await fetch(`/fire-safety/rooms/${buildingId}`);
+                        const rooms = await response.json();
+                        roomIdSelect.innerHTML = '<option value="">-- Select Room --</option>';
+                        rooms.forEach(r => {
+                            const opt = document.createElement('option');
+                            opt.value = r.id;
+                            opt.textContent = r.room_code + (r.room_name ? ` - ${r.room_name}` : '');
+                            roomIdSelect.appendChild(opt);
+                        });
+                    } catch (e) {
+                        roomIdSelect.innerHTML = '<option value="">-- Error loading rooms --</option>';
+                    }
+                } else {
+                    roomIdSelect.innerHTML = '<option value="">-- Select Room --</option>';
+                }
             }
         });
     }
@@ -1655,6 +1750,20 @@
         printWin.document.open();
         printWin.document.write(html);
         printWin.document.close();
+    }
+
+    // Search function for the Evacuation Centers Table
+    const schoolSearchInput = document.getElementById('schoolSearchInput');
+    const tableBody = document.getElementById('evacuationCentersTableBody');
+    if (schoolSearchInput && tableBody) {
+        schoolSearchInput.addEventListener('keyup', function() {
+            const query = this.value.toLowerCase();
+            const rows = tableBody.querySelectorAll('tr.school-row');
+            rows.forEach(row => {
+                const text = row.querySelector('.school-name-text')?.textContent.toLowerCase() || '';
+                row.style.display = text.includes(query) ? '' : 'none';
+            });
+        });
     }
 </script>
 @endpush

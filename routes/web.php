@@ -97,6 +97,8 @@ Route::prefix('fire-safety')->middleware(['auth', 'module.access:fire_safety'])-
     Route::put('/facilities/{facilityId}', [FireSafetyController::class, 'updateSharedFacility'])->name('fire-safety.facilities.update');
     Route::delete('/facilities/{facilityId}', [FireSafetyController::class, 'deleteSharedFacility'])->name('fire-safety.facilities.delete');
 
+
+    
     // Drill routes
     Route::get('/drill-history/{schoolId}', [FireSafetyController::class, 'getDrillHistory']);
     Route::get('/drill-buildings/{schoolId}', [FireSafetyController::class, 'getDrillBuildings']);
@@ -333,9 +335,29 @@ Route::prefix('drill-monitoring')
     ->middleware(['auth', 'module.access:drill_monitoring'])
     ->group(function () {
         Route::get('/dashboard', [DrillMonitoringController::class, 'dashboard'])->name('dashboard');
+        Route::get('/notifications', [DrillMonitoringController::class, 'notifications'])->name('notifications');
         Route::get('/{id}', [DrillMonitoringController::class, 'show'])->name('show');
         Route::post('/store', [DrillMonitoringController::class, 'store'])->name('store');
+        Route::put('/update/{id}', [DrillMonitoringController::class, 'update'])->name('update');
         Route::delete('/{id}', [DrillMonitoringController::class, 'destroy'])->name('destroy');
+        Route::post('/drill-monitoring', [DrillMonitoringController::class, 'store'])->name('drill-monitoring.store');
+        Route::get('/drill-monitoring/inspection/checklist/{id}', [DrillMonitoringController::class, 'inspectionChecklist'])->name('DrillMonitoring.inspection.checklist');
+        Route::get('/inspection/checklist/{id}', [DrillMonitoringController::class, 'inspectionChecklist'])->name('inspection.checklist');
+
+
+        Route::get('/inspection/{id}', [FireSafetyController::class, 'getInspection'])->name('fire-safety.inspection.show');
+        Route::post('/inspection/store', [FireSafetyController::class, 'storeInspection'])->name('fire-safety.inspection.store');
+        Route::put('/inspection/{id}/update', [FireSafetyController::class, 'updateInspection'])->name('fire-safety.inspection.update');
+        Route::get('/inspection/{id}/checklist', [FireSafetyController::class, 'inspectionChecklist'])->name('fire-safety.inspection.checklist');
+
+
+// Clean explicit route for the report layout
+        Route::get('monitoring-tool/{id}', [DrillMonitoringController::class, 'printInspection'])->name('drill-monitoring.print.monitoring-tool');
+
+
+
+// This defines the route name that your form is looking for
+        Route::post('/drill-monitoring/auto-store', [DrillMonitoringController::class, 'autoStoreByDate'])->name('drill-monitoring.auto-store');
     });
 
 // Hazard Mapping Routes
@@ -347,4 +369,5 @@ Route::prefix('hazard-mapping')
         Route::get('/schools/{schoolId}/floor/{floorId}/edit', [HazardMappingController::class, 'editFloor'])->name('school.floor.edit');
         Route::put('/schools/{schoolId}/floor/{floorId}', [HazardMappingController::class, 'updateFloor'])->name('school.floor.update');
         Route::post('/schools/{schoolId}/floor/add', [HazardMappingController::class, 'addFloor'])->name('school.floor.add');
+        
     });
