@@ -303,7 +303,7 @@
                                 <i class="fas fa-times me-1"></i> Remove
                             </button>
                         @endif
-                        <img src="{{ asset('storage/' . $announcement->image_path) }}" class="d-block w-100" alt="Announcement Poster">
+                        <img src="{{ \Illuminate\Support\Facades\Storage::disk(config('filesystems.default'))->url($announcement->image_path) }}" class="d-block w-100" alt="Announcement Poster">
                         <div class="announcement-overlay">
                             <div class="announcement-content">
                                 <p class="announcement-meta">

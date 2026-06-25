@@ -388,5 +388,16 @@ Route::prefix('inventory-storage')
     ->group(function () {
         Route::get('/dashboard', [InventoryStorageController::class, 'dashboard'])->name('dashboard');
         Route::post('/store', [InventoryStorageController::class, 'store'])->name('store');
-    });
+        Route::put('/update/{id}', [InventoryStorageController::class, 'update'])->name('update');
+
+
+        Route::get('/default-list', [InventoryStorageController::class, 'defaultList'])->name('default-list');
+
     
+    Route::post('/default-list', [InventoryStorageController::class, 'storeDefaultList'])
+        ->name('default-list.store');
+
+        Route::get('/inventory-storage', [InventoryStorageController::class, 'dashboard'])
+    ->name('inventory-storage.dashboard');
+
+    });
