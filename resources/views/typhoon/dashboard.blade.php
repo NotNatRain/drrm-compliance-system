@@ -1699,14 +1699,28 @@
                         const rooms = await response.json();
                         roomIdSelect.innerHTML = '<option value="">-- Select Room --</option>';
                         if (rooms && rooms.length > 0) {
-                            roomIdSelect.disabled = false;
-                            rooms.forEach(r => {
-                                const opt = document.createElement('option');
-                                opt.value = r.id;
-                                const rName = r.room_name ? ` - ${r.room_name}` : '';
-                                opt.textContent = `${r.room_code || 'Room'}${rName}`;
-                                roomIdSelect.appendChild(opt);
-                            });
+                            // Filter for buffer or main evacuation rooms
+                            const evacRooms = rooms.filter(r => r.Main_evac || r.Buffer_evac || r.is_evacuation_room);
+                            
+                            if (evacRooms.length > 0) {
+                                roomIdSelect.disabled = false;
+                                evacRooms.forEach(r => {
+                                    const opt = document.createElement('option');
+                                    opt.value = r.id;
+                                    const rName = r.room_name ? ` - ${r.room_name}` : '';
+                                    
+                                    let typeText = '';
+                                    if (r.Main_evac && r.Buffer_evac) typeText = ' (Main & Buffer)';
+                                    else if (r.Main_evac) typeText = ' (Main)';
+                                    else if (r.Buffer_evac) typeText = ' (Buffer)';
+                                    else if (r.is_evacuation_room) typeText = ' (Evac)';
+                                    
+                                    opt.textContent = `${r.room_code || 'Room'}${rName}${typeText}`;
+                                    roomIdSelect.appendChild(opt);
+                                });
+                            } else {
+                                roomIdSelect.innerHTML = '<option value="">No evacuation rooms found in this building</option>';
+                            }
                         } else {
                             roomIdSelect.innerHTML = '<option value="">No rooms found</option>';
                         }
