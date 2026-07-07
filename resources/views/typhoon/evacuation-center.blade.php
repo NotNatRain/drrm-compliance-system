@@ -266,9 +266,9 @@
 
         {{-- Right Side --}}
         <div class="d-flex align-items-center gap-3 justify-content-end" style="width: 30%;">
-            <button class="btn btn-success px-3 fw-bold shadow-lg header-action-btn me-1" onclick="document.getElementById('evacPrintModal').style.display='flex'" title="Print Evacuation Center">
+            <a href="{{ route('typhoon.evacuation-center.print', $ec->id) }}" target="_blank" class="btn btn-success px-3 fw-bold shadow-lg header-action-btn me-1" style="display:inline-flex; align-items:center; color:white; text-decoration:none;" title="Print Evacuation Center">
                 <i class="fas fa-print me-2"></i>PRINT REPORT
-            </button>
+            </a>
             <button type="button" class="btn btn-primary px-3 fw-bold shadow-lg header-action-btn" data-bs-toggle="modal" data-bs-target="#updateCenterStatusModal">
                 <i class="fas fa-edit me-2"></i>UPDATE SITE
             </button>
@@ -564,123 +564,6 @@
     </div>
 </div>
 
-{{-- ===================== EVACUATION CENTER PRINT OVERLAY ===================== --}}
-<div id="evacPrintModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.92); z-index:9999; flex-direction:column; align-items:center; justify-content:flex-start; overflow-y:auto; padding: 1.5rem 0;">
-
-    {{-- ACTION BUTTONS --}}
-    <div id="printActionBar" style="display:flex; align-items:center; gap:1rem; margin-bottom:1.25rem; width:1100px; max-width:96vw; justify-content:flex-end;">
-        <span style="color:#8892b0; font-size:0.82rem; margin-right:auto; font-family:'Space Grotesk',sans-serif;">
-            <i class="fas fa-info-circle me-1"></i> Previewing Evacuation Center Report. Click <strong style="color:#00d2ff;">Print / Save as PDF</strong> to continue.
-        </span>
-        <button onclick="printEvacCard()" style="background:#00d2ff; border:none; color:#0a1128; border-radius:8px; padding:0.6rem 1.5rem; font-weight:800; font-size:0.95rem; cursor:pointer; letter-spacing:0.5px; display:flex; align-items:center; gap:0.5rem; box-shadow:0 0 20px rgba(0,210,255,0.4);">
-            <i class="fas fa-file-pdf"></i> Print / Save as PDF
-        </button>
-        <button onclick="document.getElementById('evacPrintModal').style.display='none'" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.25); color:#fff; border-radius:8px; padding:0.6rem 1.25rem; font-weight:700; font-size:0.95rem; cursor:pointer; display:flex; align-items:center; gap:0.5rem;">
-            <i class="fas fa-times"></i> Close
-        </button>
-    </div>
-
-    {{-- PRINT CARD --}}
-    <div id="printCard" style="background: linear-gradient(135deg, #0a1128 0%, #112240 55%, #0d2137 100%); color: #e2e8f0; width: 1100px; max-width: 96vw; border-radius: 16px; box-shadow: 0 0 80px rgba(0,210,255,0.15); border: 1px solid rgba(0,210,255,0.2); font-family: 'Rajdhani', 'Space Grotesk', sans-serif; padding: 2.5rem; margin-bottom: 2rem;">
-
-        {{-- Header with Logos --}}
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.8rem; padding-bottom:1.5rem; border-bottom:1px solid rgba(0,210,255,0.2);">
-            <div style="display:flex; align-items:center; gap:1.25rem;">
-                <img src="{{ asset('images/drrmis-logo-2.png') }}" alt="DRRMIS" style="height:65px; object-fit:contain;">
-                <img src="{{ asset('images/What-Is-the-Difference-Between-DepEd-Seal-and-DepEd-Logo.png') }}" alt="DepEd" style="height:65px; object-fit:contain;">
-                <img src="{{ asset('images/Layer-0-1.png') }}" alt="Logo" style="height:65px; object-fit:contain;">
-                <div style="margin-left:0.5rem; padding-left:1.25rem; border-left:2px solid rgba(0,210,255,0.3);">
-                    <div style="font-size:0.65rem; color:#8892b0; text-transform:uppercase; letter-spacing:2px;">Department of Education</div>
-                    <div style="font-size:0.85rem; color:#ffffff; font-weight:700; letter-spacing:1px;">EVACUATION CENTER INTELLIGENCE REPORT</div>
-                </div>
-            </div>
-            <div style="text-align:right;">
-                <div style="font-size:1.5rem; font-weight:800; color:#00d2ff; letter-spacing:1px; line-height:1;">{{ $ec->school_name ?? $ec->identification }}</div>
-                <div style="font-size:0.8rem; color:#8892b0; margin-top:0.35rem;">{{ $ec->location ?? $ec->school->address }}</div>
-                <div style="font-size:0.65rem; color:#00d2ff; margin-top:0.2rem; font-weight:700; letter-spacing:1px;">📅 {{ now()->format('F d, Y | h:i A') }}</div>
-            </div>
-        </div>
-
-        {{-- Site Profile Stats --}}
-        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:1.25rem; margin-bottom:2rem;">
-            <div style="background:rgba(0,210,255,0.08); border:1px solid rgba(0,210,255,0.2); border-radius:12px; padding:1.25rem; text-align:center;">
-                <div style="font-size:0.65rem; color:#8892b0; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:0.4rem;">Operational Status</div>
-                <div style="font-size:1.5rem; font-weight:800; color:#00d2ff; text-transform:uppercase;">{{ $ec->usage_status }}</div>
-            </div>
-            <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:1.25rem; text-align:center;">
-                <div style="font-size:0.65rem; color:#8892b0; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:0.4rem;">Max Capacity</div>
-                <div style="font-size:1.8rem; font-weight:800; color:#ffffff;">{{ $ec->capacity ?? '0' }}</div>
-            </div>
-            <div style="background:rgba(0,210,255,0.12); border:1px solid rgba(0,210,255,0.3); border-radius:12px; padding:1.25rem; text-align:center; box-shadow:0 0 15px rgba(0,210,255,0.1);">
-                <div style="font-size:0.65rem; color:#00d2ff; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:0.4rem; font-weight:700;">Current Load</div>
-                <div style="font-size:1.8rem; font-weight:800; color:#00d2ff;">{{ $currentOccupancy }}</div>
-            </div>
-            <div style="background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:1.25rem; text-align:center;">
-                <div style="font-size:0.65rem; color:#8892b0; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:0.4rem;">Registry Count</div>
-                <div style="font-size:1.8rem; font-weight:800; color:#ffffff;">{{ count($families) }}</div>
-            </div>
-        </div>
-
-        {{-- Situation Report & Resources --}}
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; margin-bottom:2rem;">
-            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:1.25rem;">
-                <div style="font-size:0.7rem; color:#00d2ff; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:0.8rem; font-weight:700;">📑 Latest Situation Narrative</div>
-                <div style="font-size:0.9rem; color:#e2e8f0; line-height:1.5; min-height:80px;">
-                    {{ $ec->reports_status ?: 'No situation report provided.' }}
-                </div>
-            </div>
-            <div style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:1.25rem;">
-                <div style="font-size:0.7rem; color:#00d2ff; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:0.8rem; font-weight:700;">📦 Resource Shortages / Needs</div>
-                <div style="font-size:0.9rem; color:#e2e8f0; line-height:1.5; min-height:80px;">
-                    {{ $ec->emergency_resources ?: 'No resource shortages reported.' }}
-                </div>
-            </div>
-        </div>
-
-        {{-- Registry Table --}}
-        <div>
-            <div style="font-size:0.75rem; color:#00d2ff; text-transform:uppercase; letter-spacing:2px; font-weight:700; margin-bottom:1rem; padding-bottom:0.5rem; border-bottom:1px solid rgba(0,210,255,0.2);">📋 Master Evacuation Registry (Recent)</div>
-            <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
-                <thead>
-                    <tr style="background:rgba(0,210,255,0.12);">
-                        <th style="padding:0.6rem 0.75rem; text-align:left; color:#00d2ff; text-transform:uppercase; font-size:0.65rem; letter-spacing:1px;">Head of Family</th>
-                        <th style="padding:0.6rem 0.75rem; text-align:center; color:#00d2ff; text-transform:uppercase; font-size:0.65rem; letter-spacing:1px;">Members</th>
-                        <th style="padding:0.6rem 0.75rem; text-align:left; color:#00d2ff; text-transform:uppercase; font-size:0.65rem; letter-spacing:1px;">Vulnerabilities</th>
-                        <th style="padding:0.6rem 0.75rem; text-align:left; color:#00d2ff; text-transform:uppercase; font-size:0.65rem; letter-spacing:1px;">Entry Date</th>
-                        <th style="padding:0.6rem 0.75rem; text-align:left; color:#00d2ff; text-transform:uppercase; font-size:0.65rem; letter-spacing:1px;">Needs</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse(collect($families)->take(12) as $family)
-                    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                        <td style="padding:0.7rem 0.75rem; font-weight:700; color:#e2e8f0;">{{ $family->head_family_name }}</td>
-                        <td style="padding:0.7rem 0.75rem; text-align:center; color:#ffffff;">{{ $family->members_count }}</td>
-                        <td style="padding:0.7rem 0.75rem; color:#f59e0b; font-size:0.75rem;">
-                            @php $v = []; 
-                                if($family->has_pregnant) $v[]='PRG'; if($family->has_pwd) $v[]='PWD'; 
-                                if($family->has_senior) $v[]='SNR'; if($family->has_lactating) $v[]='LAC';
-                                if($family->has_child_under5) $v[]='CHD'; 
-                            @endphp
-                            {{ implode(', ', $v) ?: '—' }}
-                        </td>
-                        <td style="padding:0.7rem 0.75rem; color:#8892b0;">{{ $family->created_at->format('M d, Y') }}</td>
-                        <td style="padding:0.7rem 0.75rem; color:#8892b0; font-size:0.75rem;">{{ Str::limit($family->needs_summary, 40) }}</td>
-                    </tr>
-                    @empty
-                    <tr><td colspan="5" style="text-align:center; color:#8892b0; padding:2rem;">No registered families in this center.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-
-        {{-- Footer --}}
-        <div style="margin-top:2rem; padding-top:1rem; border-top:1px solid rgba(0,210,255,0.12); display:flex; justify-content:space-between; align-items:center; font-size:0.7rem; color:#8892b0;">
-            <span>Validated by: ________________________ (DRRM Center Lead)</span>
-            <span>Electronic Copy • Printed: {{ now()->format('M d, Y h:i A') }}</span>
-        </div>
-    </div>
-</div>
-
 @push('scripts')
 <script>
     function initializeFamilyNeedsBuilder(builder) {
@@ -802,38 +685,6 @@
     }
 
     document.querySelectorAll('[data-family-needs-builder]').forEach(initializeFamilyNeedsBuilder);
-
-    function printEvacCard() {
-        const card = document.getElementById('printCard');
-        const html = `<html><head><title>Print Report</title>
-            <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-            <style>
-                body { margin: 0; padding: 20px; background: #fff !important; color: #000 !important; font-family: 'Rajdhani', sans-serif; }
-                #printCard { 
-                    width: 1000px; margin: 0 auto; padding: 20px; border: 2px solid #000; color: #000 !important; 
-                    background: none !important; box-shadow: none !important; 
-                }
-                div[style*="background:rgba"], div[style*="background:linear-gradient"] { 
-                    background: none !important; border: 1px solid #ddd !important; color: #000 !important; 
-                }
-                span[style*="color:#00d2ff"], div[style*="color:#00d2ff"] { color: #000 !important; }
-                table tr[style*="background:rgba"] { background: #f2f2f2 !important; }
-                th { background: #eee !important; color: #000 !important; border-bottom: 2px solid #000 !important; }
-                td, th { border-bottom: 1px solid #ccc !important; }
-                * { print-color-adjust: exact !important; -webkit-print-color-adjust: exact !important; }
-                @media print { @page { margin: 1cm; size: landscape; } .btn-group, #printActionBar { display:none; } }
-            </style>
-        </head><body><div id="printCard">${card.innerHTML}</div>
-        <script>window.onload=function(){window.print();setTimeout(function(){window.close();},500);};<\/script>
-        </body></html>`;
-
-        const printWin = window.open('', '_blank', 'width=1100,height=780');
-        if (!printWin) {
-            alert('Pop-up blocked! Please allow pop-ups for this page.');
-            return;
-        }
-        printWin.document.write(html);
-        printWin.document.close();
     }
 </script>
 @endpush

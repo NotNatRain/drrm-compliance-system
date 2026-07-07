@@ -58,7 +58,7 @@ class ActivityLogController extends Controller
             $query->where('activity', 'like', '%' . $request->activity . '%');
         }
 
-        $logs = $query->paginate(25)->withQueryString();
+        $logs = $query->paginate(10)->withQueryString();
 
         $users = User::orderBy('name')->get(['id', 'name']);
         $modules = [

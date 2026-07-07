@@ -703,6 +703,36 @@ class TyphoonController extends Controller
         ]);
     }
 
+    public function printEvacuationCenter($id)
+    {
+        $ec = School::findOrFail($id);
+        $user = Auth::user();
+        if ($user->role !== 'admin' && (int) $user->school_id !== (int) $ec->id && (int) $user->typhoon_school_id !== (int) $ec->id) {
+            abort(403, 'Unauthorized');
+        }
+
+        $families = TypFldFamily::with(['needs'])->withCount('members')
+            ->where('school_id', $ec->id)
+            ->latest()
+            ->get();
+
+        $currentOccupancy = TypFldFamilyMember::query()
+            ->join('typ_fld_families', 'typ_fld_families.id', '=', 'typ_fld_family_members.family_id')
+            ->where('typ_fld_families.school_id', $ec->id)
+            ->whereNull('typ_fld_families.checked_out_at')
+            ->count();
+            
+        ActivityLog::log('typhoon', 'Printed evacuation center report: ' . $ec->school_name, [
+            'school_id' => $ec->id,
+        ]);
+
+        return view('typhoon.reports.print-evacuation-center', [
+            'ec' => $ec,
+            'families' => $families,
+            'currentOccupancy' => $currentOccupancy,
+        ]);
+    }
+
     public function storeEvacuationCenter(Request $request)
     {
         $user = Auth::user();

@@ -6,173 +6,483 @@
 @php
     $isAdminView = $isAdmin ?? (auth()->check() && auth()->user()->role === 'admin');
 @endphp
-<div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col-12 d-flex justify-content-between align-items-center">
-            <h1 class="h3 mb-0 text-gray-800">
-                <i class="fas fa-users-cog text-primary"></i> User Management
-            </h1>
-            @if($isAdminView)
-                <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addUserModal">
-                    <i class="fas fa-user-plus fa-sm text-white-50"></i> Add New User
-                </button>
-            @endif
+<style>
+    /* User Management Redesign */
+    :root {
+        --um-navy: #0D1B36;
+        --um-blue: #1E3A5F;
+        --um-accent: #2563EB;
+        --um-bg: #F8FAFC;
+        --um-border: #E2E8F0;
+        --um-text: #374151;
+        --um-text-light: #6B7280;
+        --um-cyan: #06b6d4;
+        --um-cyan-hover: #0891b2;
+        --um-green: #10B981;
+        --um-green-hover: #059669;
+    }
+    
+    .um-page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+        gap: 1rem;
+        animation: fadeInDown 0.4s ease-out;
+    }
+    .um-title-section {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+    }
+    .um-title-icon {
+        width: 50px;
+        height: 50px;
+        background: #EFF6FF;
+        color: var(--um-accent);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+    }
+    .um-title h1 {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--um-navy);
+        margin: 0;
+        line-height: 1.2;
+    }
+    .um-title p {
+        margin: 0;
+        font-size: 0.9rem;
+        color: var(--um-text-light);
+    }
+    .btn-add-user {
+        background: var(--um-navy);
+        color: white;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+    }
+    .btn-add-user:hover {
+        background: var(--um-blue);
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    /* Filters Card */
+    .um-filters-card {
+        background: white;
+        border: 1px solid var(--um-border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        animation: fadeInUp 0.4s ease-out 0.1s both;
+    }
+    .um-filters-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--um-navy);
+        font-weight: 800;
+        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+    }
+    .um-filters-header i {
+        color: #EA580C;
+    }
+    .um-filter-label {
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--um-text);
+        margin-bottom: 0.5rem;
+    }
+    .um-form-select {
+        border-radius: 8px;
+        border: 1px solid var(--um-border);
+        padding: 0.6rem 2.5rem 0.6rem 1rem;
+        font-size: 0.9rem;
+        color: var(--um-text);
+        box-shadow: none;
+    }
+    .um-form-select:focus {
+        border-color: var(--um-accent);
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+    .btn-apply-filter {
+        background: var(--um-navy);
+        color: white;
+        border: none;
+        padding: 0.6rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 700;
+        transition: all 0.2s;
+        height: 42px;
+    }
+    .btn-apply-filter:hover {
+        background: var(--um-blue);
+    }
+    .btn-reset-filter {
+        background: white;
+        color: var(--um-text);
+        border: 1px solid var(--um-border);
+        padding: 0.6rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 700;
+        transition: all 0.2s;
+        height: 42px;
+    }
+    .btn-reset-filter:hover {
+        background: var(--um-bg);
+    }
+
+    /* Table */
+    .um-table-card {
+        background: white;
+        border: 1px solid var(--um-border);
+        border-radius: 12px;
+        overflow: hidden;
+        animation: fadeInUp 0.4s ease-out 0.2s both;
+    }
+    .um-table {
+        margin: 0;
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .um-table th {
+        background: transparent;
+        color: var(--um-text-light);
+        font-size: 0.75rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 1.25rem 1rem;
+        border-bottom: 1px solid var(--um-border);
+    }
+    .um-table td {
+        padding: 1.25rem 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--um-border);
+        color: var(--um-text);
+        font-size: 0.9rem;
+        transition: background 0.2s;
+    }
+    .um-table tbody tr:hover td {
+        background: #F8FAFC;
+    }
+    .um-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* User Avatar/Info */
+    .um-user-cell {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .um-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--um-navy);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+    .um-username {
+        font-weight: 800;
+        color: var(--um-navy);
+    }
+
+    /* Pills */
+    .um-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0.35rem 0.85rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+    }
+    .um-pill-admin { background: #FEE2E2; color: #DC2626; }
+    .um-pill-contrib { background: #DCFCE7; color: #16A34A; }
+    .um-pill-viewer { background: #E0F2FE; color: #0284C7; }
+
+    .um-pill-school { background: #F1F5F9; color: var(--um-navy); border: 1px solid var(--um-border); }
+    .um-pill-school i { color: #64748B; }
+
+    .um-pill-status-active { background: #DCFCE7; color: #16A34A; }
+    .um-pill-status-inactive { background: #F1F5F9; color: #64748B; }
+    .um-status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    /* Action Buttons */
+    .um-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+    .um-btn-action {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        border: 1px solid var(--um-border);
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--um-text-light);
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    .um-btn-action:hover {
+        background: var(--um-bg);
+        transform: translateY(-2px);
+    }
+    .um-btn-edit:hover { color: var(--um-accent); border-color: var(--um-accent); }
+    .um-btn-assign:hover { color: #10B981; border-color: #10B981; }
+    .um-btn-toggle:hover { color: #F59E0B; border-color: #F59E0B; }
+
+    /* Modals Redesign */
+    .modal-cyan-header {
+        background: var(--um-cyan);
+        color: white;
+        border-bottom: none;
+        border-radius: 12px 12px 0 0;
+    }
+    .modal-green-header {
+        background: var(--um-green);
+        color: white;
+        border-bottom: none;
+        border-radius: 12px 12px 0 0;
+    }
+    .modal-header .btn-close-white {
+        filter: invert(1) grayscale(100%) brightness(200%);
+        opacity: 0.8;
+    }
+    .modal-header .btn-close-white:hover {
+        opacity: 1;
+    }
+    .modal-content.border-0 {
+        border-radius: 12px;
+    }
+    .btn-cyan {
+        background: var(--um-cyan);
+        color: white;
+        border: none;
+    }
+    .btn-cyan:hover {
+        background: var(--um-cyan-hover);
+        color: white;
+    }
+    .btn-green {
+        background: var(--um-green);
+        color: white;
+        border: none;
+    }
+    .btn-green:hover {
+        background: var(--um-green-hover);
+        color: white;
+    }
+
+    /* Animations */
+    @keyframes fadeInDown {
+        from { opacity: 0; transform: translateY(-15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(15px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<div class="container-fluid px-4 px-lg-5 py-4">
+    <!-- Header -->
+    <div class="um-page-header">
+        <div class="um-title-section">
+            <div class="um-title-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="um-title">
+                <h1>User Management</h1>
+                <p>Manage accounts, roles, and module access across the DRRM system.</p>
+            </div>
         </div>
+        @if($isAdminView)
+            <button class="btn-add-user" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                <i class="fas fa-user-plus"></i> Add New User
+            </button>
+        @endif
     </div>
 
     <!-- Filters -->
     @if($isAdminView)
-        <div class="card shadow mb-4">
-            <div class="card-header py-3 bg-light">
-                <h6 class="m-0 font-weight-bold text-primary">Filters</h6>
+        <div class="um-filters-card">
+            <div class="um-filters-header">
+                <i class="fas fa-filter"></i> Filters
             </div>
-            <div class="card-body">
-                <form id="filterForm" class="row g-3">
+            <form id="filterForm">
+                <div class="row g-4 align-items-end">
                     <div class="col-md-3">
-                        <label class="form-label small fw-bold">Role</label>
-                        <select class="form-select form-select-sm" name="role" id="filterRole">
+                        <div class="um-filter-label">Role</div>
+                        <select class="form-select um-form-select" name="role" id="filterRole">
                             <option value="">All Roles</option>
                             <option value="admin">Admin</option>
                             <option value="contributor">Contributor</option>
                             <option value="viewer">Viewer</option>
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label small fw-bold">Sort By</label>
-                        <select class="form-select form-select-sm" name="sort" id="filterSort">
+                    <div class="col-md-3">
+                        <div class="um-filter-label">Sort By</div>
+                        <select class="form-select um-form-select" name="sort" id="filterSort">
                             <option value="name">Name</option>
                             <option value="created_at">Date Created</option>
                         </select>
                     </div>
-                    <div class="col-md-2">
-                        <label class="form-label small fw-bold">Order</label>
-                        <select class="form-select form-select-sm" name="order" id="filterOrder">
+                    <div class="col-md-3">
+                        <div class="um-filter-label">Order</div>
+                        <select class="form-select um-form-select" name="order" id="filterOrder">
                             <option value="asc">Ascending</option>
                             <option value="desc">Descending</option>
                         </select>
                     </div>
-                    <div class="col-md-4 d-flex align-items-end">
-                        <button type="submit" class="btn btn-sm btn-primary me-2">Apply Filters</button>
-                        <button type="reset" class="btn btn-sm btn-outline-secondary">Reset</button>
+                    <div class="col-md-3 d-flex gap-2">
+                        <button type="submit" class="btn-apply-filter flex-grow-1"><i class="fas fa-check me-2"></i> Apply Filters</button>
+                        <button type="reset" class="btn-reset-filter">Reset</button>
                     </div>
-                </form>
-            </div>
+                </div>
+            </form>
         </div>
     @else
-        <div class="alert alert-info shadow-sm">
-            <div class="fw-bold mb-1">Manage your account</div>
+        <div class="alert alert-info shadow-sm rounded-3 mb-4">
+            <div class="fw-bold mb-1"><i class="fas fa-info-circle me-2"></i> Manage your account</div>
             You can update your name, email address, and password here. Role and permissions are managed by the administrator.
         </div>
     @endif
 
     <!-- User List Table -->
-    <div class="card shadow mb-4">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover mb-0 align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="ps-4">Username</th>
-                            <th>Email Address</th>
-                            <th>Role</th>
-                            <th>Module Access</th>
-                            <th>Assigned School</th>
-                            <th>Status</th>
-                            <th class="text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="userTableBody">
-                        @foreach($users as $user)
-                        <tr>
-                            <td class="ps-4 fw-bold">{{ $user->name }}</td>
-                            <td>{{ $user->email }}</td>
-                            <td>
+    <div class="um-table-card">
+        <div class="table-responsive">
+            <table class="um-table">
+                <thead>
+                    <tr>
+                        <th class="ps-4">Username</th>
+                        <th>Email Address</th>
+                        <th>Role</th>
+                        <th>Module Access</th>
+                        <th>Assigned School</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody">
+                    @foreach($users as $user)
+                    <tr>
+                        <td class="ps-4">
+                            <div class="um-user-cell">
                                 @php
-                                    $roleLabel = ucfirst($user->role ?? 'user');
+                                    $initials = strtoupper(substr(preg_replace('/[^a-zA-Z]/', '', $user->name), 0, 2));
+                                    if (empty($initials)) $initials = 'U';
                                 @endphp
-                                <span class="badge {{ $user->role === 'admin' ? 'bg-danger' : ($user->role === 'contributor' ? 'bg-success' : 'bg-info text-dark') }}">
-                                    {{ $roleLabel }}
-                                </span>
-                            </td>
-                            <td>
+                                <div class="um-avatar">{{ $initials }}</div>
+                                <div class="um-username">{{ $user->name }}</div>
+                            </div>
+                        </td>
+                        <td class="text-muted">{{ $user->email }}</td>
+                        <td>
+                            @if($user->role === 'admin')
+                                <span class="um-pill um-pill-admin">Admin</span>
+                            @elseif($user->role === 'contributor')
+                                <span class="um-pill um-pill-contrib">Contributor</span>
+                            @else
+                                <span class="um-pill um-pill-viewer">Viewer</span>
+                            @endif
+                        </td>
+                        <td>
+                            <span class="text-muted" style="font-style: italic;">
                                 @if($user->role === 'admin')
-                                    <span class="text-muted small">All Modules</span>
+                                    All Modules
                                 @elseif($user->role === 'contributor')
-                                    <span class="text-muted small">All Modules excluding Comprehensive Safety</span>
+                                    All Modules (Exc. CSS)
                                 @else
                                     @php
                                         $modules = $user->module_access ?? [];
-                                        $coreComplianceModules = [
-                                            'fire_safety',
-                                            'typhoon_flood',
-                                            'incident_checklist',
-                                            'comprehensive_school_safety',
-                                            'hazard_mapping',
-                                        ];
+                                        $coreComplianceModules = ['fire_safety','typhoon_flood','incident_checklist','comprehensive_school_safety','hazard_mapping'];
                                         $hasAllModules = empty(array_diff($coreComplianceModules, $modules));
                                     @endphp
-
                                     @if($hasAllModules)
-                                        <span class="text-muted small">All Modules</span>
+                                        All Modules
+                                    @elseif(empty($modules))
+                                        No access
                                     @else
-                                        @foreach($modules as $mod)
-                                            <span class="badge bg-secondary small mb-1">{{ str_replace('_', ' ', $mod) }}</span>
-                                        @endforeach
-                                    @endif
-
-                                    @if(empty($modules))
-                                        <span class="text-muted italic small">No access</span>
+                                        Partial Access
                                     @endif
                                 @endif
-                            </td>
-                            <td>
-                                @if($user->role === 'admin')
-                                    <span class="badge bg-light text-dark border"><i class="fas fa-globe me-1"></i> Full Access</span>
+                            </span>
+                        </td>
+                        <td>
+                            @if($user->role === 'admin')
+                                <span class="um-pill um-pill-school"><i class="fas fa-globe"></i> Full Access</span>
+                            @else
+                                @if($user->school)
+                                    <span class="fw-semibold text-dark">{{ $user->school->school_name }}</span>
+                                @elseif($user->typhoonSchool)
+                                    <span class="fw-semibold text-dark">{{ $user->typhoonSchool->school_name }}</span>
+                                @elseif($user->incidentSchool)
+                                    <span class="fw-semibold text-dark">{{ $user->incidentSchool->school_name ?? $user->incidentSchool->name }}</span>
+                                @elseif($user->needs_fs_registration || $user->needs_tf_registration)
+                                    <span class="text-warning fw-bold small"><i class="fas fa-exclamation-circle me-1"></i> To be encoded</span>
                                 @else
-                                    @if($user->school)
-                                        <span class="fw-semibold">{{ $user->school->school_name }}</span>
-                                    @elseif($user->typhoonSchool)
-                                        <span class="fw-semibold">{{ $user->typhoonSchool->school_name }}</span>
-                                    @elseif($user->incidentSchool)
-                                        <span class="fw-semibold">{{ $user->incidentSchool->school_name ?? $user->incidentSchool->name }}</span>
-                                    @elseif($user->needs_fs_registration || $user->needs_tf_registration)
-                                        <span class="badge bg-warning text-dark" style="font-size: 0.65rem;"><i class="fas fa-keyboard me-1"></i> To be encoded</span>
-                                    @else
-                                        <span class="text-muted small italic">Unassigned</span>
-                                    @endif
+                                    <span class="text-muted small" style="font-style: italic;">Unassigned</span>
                                 @endif
-                            </td>
-                            <td>
-                                @if($user->is_active)
-                                    <span class="badge bg-success shadow-sm"><i class="fas fa-check-circle me-1"></i> Active</span>
-                                @else
-                                    <span class="badge bg-secondary shadow-sm"><i class="fas fa-times-circle me-1"></i> Deactivated</span>
-                                @endif
-                            </td>
-                            <td class="text-center">
-                                <button class="btn btn-sm btn-outline-primary me-1" onclick="editUser({{ $user->id }})">
-                                    <i class="fas fa-edit"></i> Edit
+                            @endif
+                        </td>
+                        <td>
+                            @if($user->is_active)
+                                <span class="um-pill um-pill-status-active"><div class="um-status-dot"></div> Active</span>
+                            @else
+                                <span class="um-pill um-pill-status-inactive"><div class="um-status-dot"></div> Deactivated</span>
+                            @endif
+                        </td>
+                        <td>
+                            <div class="um-actions">
+                                <button class="um-btn-action um-btn-edit" onclick="editUser({{ $user->id }})" title="Edit User">
+                                    <i class="fas fa-edit"></i>
                                 </button>
                                 @if($isAdminView)
                                     @if($user->role !== 'admin')
-                                        <button class="btn btn-sm btn-outline-success me-1" onclick="assignAccess({{ $user->id }})" title="Assign Access">
-                                            <i class="fas fa-tasks"></i>
+                                        <button class="um-btn-action um-btn-assign" onclick="assignAccess({{ $user->id }})" title="Assign Access">
+                                            <i class="fas fa-user-tag"></i>
                                         </button>
                                     @endif
                                     @if($user->id !== auth()->id())
-                                    <button class="btn btn-sm {{ $user->is_active ? 'btn-outline-warning' : 'btn-outline-info' }}" 
-                                            onclick="toggleUserStatus({{ $user->id }}, {{ $user->is_active ? 'true' : 'false' }})" 
-                                            title="{{ $user->is_active ? 'Deactivate' : 'Activate' }}">
-                                        <i class="fas {{ $user->is_active ? 'fa-user-slash' : 'fa-user-check' }}"></i>
-                                    </button>
+                                        <button class="um-btn-action um-btn-toggle" onclick="toggleUserStatus({{ $user->id }}, {{ $user->is_active ? 'true' : 'false' }})" title="{{ $user->is_active ? 'Deactivate' : 'Activate' }}">
+                                            <i class="fas {{ $user->is_active ? 'fa-user-slash' : 'fa-user-check' }}"></i>
+                                        </button>
                                     @endif
                                 @endif
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
@@ -238,33 +548,33 @@
 
 <!-- Edit User Modal -->
 <div class="modal fade" id="editUserModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-info text-white">
-                <h5 class="modal-title"><i class="fas fa-user-edit me-2"></i>Edit User Info</h5>
+            <div class="modal-header modal-cyan-header">
+                <h5 class="modal-title fw-bold"><i class="fas fa-user-edit me-2"></i>Edit User Info</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="editUserForm">
                 @csrf
                 @method('PUT')
                 <input type="hidden" name="id" id="editUserId">
-                <div class="modal-body">
+                <div class="modal-body p-4">
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Username</label>
-                        <input type="text" name="name" id="editUserName" class="form-control" required>
+                        <label class="form-label fw-bold small text-dark">Username</label>
+                        <input type="text" name="name" id="editUserName" class="form-control rounded-3" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Email Address</label>
-                        <input type="email" name="email" id="editUserEmail" class="form-control" required>
+                        <label class="form-label fw-bold small text-dark">Email Address</label>
+                        <input type="email" name="email" id="editUserEmail" class="form-control rounded-3" required>
                     </div>
                     <div class="mb-3 border-top pt-3">
-                        <label class="form-label fw-bold">New Password (leave blank to keep current)</label>
-                        <input type="password" name="password" class="form-control">
+                        <label class="form-label fw-bold small text-dark">New Password (leave blank to keep current)</label>
+                        <input type="password" name="password" class="form-control rounded-3">
                     </div>
                     @if($isAdminView)
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Role</label>
-                            <select name="role" id="editUserRole" class="form-select" required>
+                        <div class="mb-2">
+                            <label class="form-label fw-bold small text-dark">Role</label>
+                            <select name="role" id="editUserRole" class="form-select rounded-3" required>
                                 <option value="contributor">Contributor</option>
                                 <option value="viewer">Viewer</option>
                                 <option value="admin">Admin</option>
@@ -272,9 +582,9 @@
                         </div>
                     @endif
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-info text-white">Update User</button>
+                <div class="modal-footer bg-white border-top-0 px-4 pb-4 pt-0">
+                    <button type="button" class="btn btn-secondary rounded-3 px-4 fw-bold" style="background: #6B7280; border: none;" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-cyan rounded-3 px-4 fw-bold">Update User</button>
                 </div>
             </form>
         </div>
@@ -284,24 +594,25 @@
 @if($isAdminView)
 <!-- Assign Access Modal -->
 <div class="modal fade" id="assignModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title"><i class="fas fa-shield-alt me-2"></i>Assign Module Access & Schools</h5>
+            <div class="modal-header modal-green-header">
+                <h5 class="modal-title fw-bold"><i class="fas fa-shield-alt me-2"></i>Assign Module Access & Schools</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <form id="assignForm">
                 @csrf
                 <input type="hidden" name="user_id" id="assignUserId">
-                <div class="modal-body">
-                    <p class="mb-3">Select WHICH compliance systems <strong id="assignUserName"></strong> can see and assign a school if applicable.</p>
-                    <div id="contributorModuleNotice" class="alert alert-info small d-none">
+                <div class="modal-body p-4">
+                    <p class="mb-3 text-dark">Select WHICH compliance systems <strong id="assignUserName"></strong> can see and assign a school if applicable.</p>
+                    
+                    <div id="contributorModuleNotice" class="alert alert-info small d-none border-0" style="background-color: #E0F2FE; color: #0369A1; border-radius: 8px;">
                         Contributor accounts automatically include Fire Safety, Typhoon/Flood, Incident Checklist, and Hazard Mapping. You can only toggle Comprehensive School Safety.
                     </div>
 
-                    <div class="border rounded p-3 mb-3 bg-light">
-                        <label class="small fw-bold mb-2 d-block">Select School</label>
-                        <select name="universal_school_id" id="universalSchoolSelect" class="form-select form-select-sm">
+                    <div class="border rounded-3 p-3 mb-4 bg-white shadow-sm">
+                        <label class="small fw-bold mb-2 d-block text-dark">Select School</label>
+                        <select name="universal_school_id" id="universalSchoolSelect" class="form-select form-select-sm rounded-2">
                             <option value="">-- Select School --</option>
                             @if($schools->isEmpty())
                                 <option value="" disabled>-- No existing schools --</option>
@@ -311,75 +622,92 @@
                                 @endforeach
                             @endif
                         </select>
-                        <small class="text-muted d-block mt-1">This sets one school assignment across contributor/viewer access.</small>
+                        <small class="text-muted d-block mt-2">This sets one school assignment across contributor/viewer access.</small>
                     </div>
                     
-                    <div class="list-group">
+                    <div class="list-group border-0 shadow-sm rounded-3">
                         <!-- Fire Safety -->
-                        <div class="list-group-item module-row" data-module-row="fire_safety">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="form-check">
-                                    <input class="form-check-input module-check" type="checkbox" name="modules[]" value="fire_safety" id="checkFS">
-                                    <label class="form-check-label fw-bold" for="checkFS">Fire Safety Compliance</label>
+                        <div class="list-group-item border-start-0 border-end-0 border-top-0 px-4 py-3 module-row" data-module-row="fire_safety">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="form-check m-0">
+                                    <input class="form-check-input module-check mt-1" type="checkbox" name="modules[]" value="fire_safety" id="checkFS">
+                                    <label class="form-check-label fw-bold text-dark ms-2" for="checkFS">Fire Safety Compliance</label>
                                 </div>
-                                <span class="badge bg-success text-white">Completed</span>
                             </div>
                         </div>
 
                         <!-- Typhoon/Flooding -->
-                        <div class="list-group-item module-row" data-module-row="typhoon_flood">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="form-check">
-                                    <input class="form-check-input module-check" type="checkbox" name="modules[]" value="typhoon_flood" id="checkTF">
-                                    <label class="form-check-label fw-bold" for="checkTF">Typhoon/Flooding Monitoring</label>
+                        <div class="list-group-item border-start-0 border-end-0 px-4 py-3 module-row" data-module-row="typhoon_flood">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="form-check m-0">
+                                    <input class="form-check-input module-check mt-1" type="checkbox" name="modules[]" value="typhoon_flood" id="checkTF">
+                                    <label class="form-check-label fw-bold text-dark ms-2" for="checkTF">Typhoon/Flooding Monitoring</label>
                                 </div>
-                                <span class="badge bg-primary text-white">Pending Validation</span>
                             </div>
                         </div>
 
                         <!-- Incident Checklist -->
-                        <div class="list-group-item module-row" data-module-row="incident_checklist">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="form-check">
-                                    <input class="form-check-input module-check" type="checkbox" name="modules[]" value="incident_checklist" id="checkIC">
-                                    <label class="form-check-label fw-bold" for="checkIC">Incident Checklist</label>
+                        <div class="list-group-item border-start-0 border-end-0 px-4 py-3 module-row" data-module-row="incident_checklist">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="form-check m-0">
+                                    <input class="form-check-input module-check mt-1" type="checkbox" name="modules[]" value="incident_checklist" id="checkIC">
+                                    <label class="form-check-label fw-bold text-dark ms-2" for="checkIC">Incident Checklist</label>
                                 </div>
-                                <span class="badge bg-success text-white">Completed</span>
                             </div>
                         </div>
 
                         <!-- School Safety -->
-                        <div class="list-group-item module-row" data-module-row="comprehensive_school_safety">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <div class="form-check">
-                                    <input class="form-check-input module-check" type="checkbox" name="modules[]" value="comprehensive_school_safety" id="checkSS">
-                                    <label class="form-check-label fw-bold" for="checkSS">Comprehensive School Safety</label>
+                        <div class="list-group-item border-start-0 border-end-0 px-4 py-3 module-row" data-module-row="comprehensive_school_safety">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="form-check m-0">
+                                    <input class="form-check-input module-check mt-1" type="checkbox" name="modules[]" value="comprehensive_school_safety" id="checkSS">
+                                    <label class="form-check-label fw-bold text-dark ms-2" for="checkSS">Comprehensive School Safety</label>
                                 </div>
-                                <span class="badge bg-info text-dark">In Development</span>
+                                <span class="badge rounded-pill px-3 py-2" style="background: #06b6d4; color: white;">In Development</span>
                             </div>
                         </div>
 
                         <!-- Hazard Mapping -->
-                        <div class="list-group-item module-row" data-module-row="hazard_mapping">
+                        <div class="list-group-item border-start-0 border-end-0 border-bottom-0 px-4 py-3 module-row" data-module-row="hazard_mapping">
                             <div class="d-flex justify-content-between align-items-center">
-                                <div class="form-check">
-                                    <input class="form-check-input module-check" type="checkbox" name="modules[]" value="hazard_mapping" id="checkHM">
-                                    <label class="form-check-label fw-bold" for="checkHM">Hazard Mapping</label>
+                                <div class="form-check m-0">
+                                    <input class="form-check-input module-check mt-1" type="checkbox" name="modules[]" value="hazard_mapping" id="checkHM">
+                                    <label class="form-check-label fw-bold text-dark ms-2" for="checkHM">Hazard Mapping</label>
                                 </div>
-                                <span class="badge bg-secondary text-white">To be Developed</span>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer bg-light">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-success">Save Assignments</button>
+                <div class="modal-footer bg-white border-top-0 px-4 pb-4 pt-0">
+                    <button type="button" class="btn btn-secondary rounded-3 px-4 fw-bold" style="background: #6B7280; border: none;" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-green rounded-3 px-4 fw-bold">Save Assignments</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 @endif
+
+<!-- Confirm Deactivate/Activate Modal -->
+<div class="modal fade" id="toggleStatusModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-dark text-white border-bottom-0" style="border-radius: 12px 12px 0 0;">
+                <h5 class="modal-title fw-bold" id="toggleStatusTitle">Confirm Action</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <i class="fas fa-exclamation-triangle text-warning mb-3" style="font-size: 3rem;"></i>
+                <h5 class="fw-bold mb-3" id="toggleStatusMessage">Are you sure you want to toggle this user's account?</h5>
+                <p class="text-muted mb-0">This action will immediately change their access to the system.</p>
+            </div>
+            <div class="modal-footer bg-white border-top-0 px-4 pb-4 pt-0 justify-content-center">
+                <button type="button" class="btn btn-secondary rounded-3 px-4 fw-bold" style="background: #6B7280; border: none;" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-dark rounded-3 px-4 fw-bold" id="confirmToggleStatusBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @if($isAdminView)
 <div class="modal fade" id="csssSecurityRestrictionModal" tabindex="-1" aria-labelledby="csssSecurityRestrictionLabel" aria-hidden="true">
@@ -808,29 +1136,58 @@ function assignAccess(userId) {
         });
 }
 
+let currentToggleUserId = null;
+
 function toggleUserStatus(userId, currentState) {
     const isAdminView = {{ $isAdminView ? 'true' : 'false' }};
     if (!isAdminView) return;
+    
+    currentToggleUserId = userId;
     const action = currentState ? 'deactivate' : 'activate';
-    if (confirm(`Are you sure you want to ${action} this user account?`)) {
-        fetch("{{ route('users.index') }}/" + userId + "/toggle-status", {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        }).then(res => res.json()).then(res => {
-            if (res.success) {
-                location.reload();
-            } else {
-                alert(res.message);
-            }
-        }).catch(err => {
-            console.error('Error:', err);
-            alert('Error toggling user status: ' + err.message);
+    
+    const titleEl = document.getElementById('toggleStatusTitle');
+    const msgEl = document.getElementById('toggleStatusMessage');
+    
+    if (titleEl) titleEl.innerText = action === 'deactivate' ? 'Deactivate User' : 'Activate User';
+    if (msgEl) msgEl.innerText = `Are you sure you want to ${action} this user account?`;
+
+    const toggleModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('toggleStatusModal'));
+    toggleModal.show();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmToggleStatusBtn = document.getElementById('confirmToggleStatusBtn');
+    if (confirmToggleStatusBtn) {
+        confirmToggleStatusBtn.addEventListener('click', function() {
+            if (!currentToggleUserId) return;
+            
+            // disable button to prevent double submit
+            confirmToggleStatusBtn.disabled = true;
+            confirmToggleStatusBtn.innerText = 'Processing...';
+
+            fetch("{{ route('users.index') }}/" + currentToggleUserId + "/toggle-status", {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            }).then(res => res.json()).then(res => {
+                if (res.success) {
+                    location.reload();
+                } else {
+                    alert(res.message);
+                    confirmToggleStatusBtn.disabled = false;
+                    confirmToggleStatusBtn.innerText = 'Confirm';
+                }
+            }).catch(err => {
+                console.error('Error:', err);
+                alert('Error toggling user status: ' + err.message);
+                confirmToggleStatusBtn.disabled = false;
+                confirmToggleStatusBtn.innerText = 'Confirm';
+            });
         });
     }
-}
+});
 </script>
 @endpush

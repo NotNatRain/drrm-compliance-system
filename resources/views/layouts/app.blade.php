@@ -2,7 +2,6 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
-    <!-- 70/30 Hybrid: Default to desktop view; prevent full mobile collapse -->
     <meta name="viewport" content="width=1024">
 
     <!-- CSRF Token -->
@@ -21,6 +20,9 @@
     @endif
 
     <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="dns-prefetch" href="//fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
 
@@ -29,157 +31,272 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     @stack('styles')
+    
     <style>
-        /* ====================================================
-         * 70/30 HYBRID MOBILE APPROACH — app.blade.php scope
-         * Desktop structure stays intact. Only minimal tweaks
-         * for mobile usability without layout collapse.
-         * ==================================================== */
-
-        /* Make all Bootstrap tables horizontally scrollable on mobile (triggered by 1024px viewport lock) */
-        @media (max-width: 1024.1px) {
-            .table-responsive,
-            .table-responsive-md,
-            .table-responsive-sm {
-                overflow-x: auto !important;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            /* Auto-wrap non-.table-responsive tables */
-            .card-body table:not(.calendar-grid),
-            .card table {
-                display: block;
-                overflow-x: auto;
-                -webkit-overflow-scrolling: touch;
-                max-width: 100%;
-            }
-
-            /* Increase button tap targets slightly for mobile */
-            .btn:not(.btn-sm):not(.btn-xs) {
-                min-height: 40px;
-                padding-top: 0.45rem !important;
-                padding-bottom: 0.45rem !important;
-            }
-
-            /* Stack form rows on mobile (col-md-* inside forms only) */
-            form .row > [class*="col-md-"],
-            form .row > [class*="col-sm-"] {
-                flex: 0 0 100% !important;
-                max-width: 100% !important;
-            }
-
-            /* Dashboard module cards: stack to 2 columns not 1 */
-            .col-md-4.mb-4 {
-                flex: 0 0 50%;
-                max-width: 50%;
-            }
+        /* Base resets matching wireframe */
+        :root {
+            --app-bg: #F8FAFC;
+            --navy: #0D1B36;
+            --orange: #E05C2E;
         }
 
-        @media (max-width: 575.98px) {
-            /* Full stack only on very small screens */
-            .col-md-4.mb-4 {
-                flex: 0 0 100%;
-                max-width: 100%;
-            }
+        body {
+            background-color: var(--app-bg);
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Navbar Styling */
+        .app-navbar {
+            background-color: #FFFFFF;
+            border-bottom: 1px solid #E2E8F0;
+            padding: 12px 0;
+            box-shadow: none;
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+        }
+
+        .navbar-brand img {
+            height: 32px;
+            width: auto;
+            margin-right: 12px;
+        }
+
+        .navbar-brand-text {
+            font-weight: 800;
+            color: var(--navy);
+            font-size: 1.1rem;
+        }
+
+        /* User Profile Toggle */
+        .user-toggle {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .user-toggle:hover, .show > .user-toggle {
+            background: #F1F5F9;
+        }
+
+        .user-info {
+            text-align: right;
+            display: none;
+        }
+        @media (min-width: 576px) { .user-info { display: block; } }
+
+        .user-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--navy);
+            line-height: 1.2;
+        }
+
+        .user-role-badge {
+            font-size: 0.7rem;
+            color: #64748B;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 6px;
+        }
+
+        .role-text-admin { color: #EF4444; font-weight: 700; }
+        .role-text-user { color: #3B82F6; font-weight: 700; }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--navy);
+            color: #FFFFFF;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        /* Custom Dropdown Menu */
+        .custom-dropdown-menu {
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(13,27,54,0.08);
+            padding: 16px;
+            min-width: 260px;
+            margin-top: 12px;
+            animation: dropdownFade 0.2s ease;
+        }
+
+        @keyframes dropdownFade {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .dropdown-section-title {
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: #94A3B8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+            padding: 0 12px;
+        }
+
+        .dropdown-item-custom {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            color: var(--navy);
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .dropdown-item-custom:hover {
+            background-color: #F1F5F9;
+            color: var(--navy);
+        }
+
+        .dropdown-item-custom .icon-wrapper {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #E2E8F0;
+            color: #64748B;
+            flex-shrink: 0;
+        }
+
+        /* Specific Icon Colors based on wireframe */
+        .item-users .icon-wrapper { background: #E0E7FF; color: #4F46E5; }
+        .item-logs .icon-wrapper { background: #E0F2FE; color: #0284C7; }
+        .item-announce .icon-wrapper { background: #FEF3C7; color: #D97706; }
+        .item-download .icon-wrapper { background: #DCFCE7; color: #16A34A; }
+        
+        .item-logout { color: #EF4444; }
+        .item-logout .icon-wrapper { background: #FEE2E2; color: #EF4444; }
+        .item-logout:hover { background-color: #FEF2F2; color: #DC2626; }
+
+        .dropdown-divider-custom {
+            height: 1px;
+            background-color: #E2E8F0;
+            margin: 12px 0;
+        }
+
+        /* Hide default caret */
+        .dropdown-toggle::after { display: none; }
+        .caret-icon { color: #94A3B8; font-size: 0.8rem; margin-left: 4px; transition: transform 0.2s; }
+        .show > .user-toggle .caret-icon { transform: rotate(180deg); }
+
+        /* Mobile tweaks */
+        @media (max-width: 1024.1px) {
+            .table-responsive { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+            .card table { display: block; overflow-x: auto; max-width: 100%; }
         }
     </style>
 </head>
 <body>
     <div id="app">
         @unless(View::hasSection('hide_main_nav'))
-            <nav class="navbar navbar-expand-md navbar-light bg-white shadow-sm">
-                <div class="container">
-                    <a class="navbar-brand fw-bold text-primary" href="{{ route('dashboard') }}">
+            <nav class="navbar navbar-expand-md app-navbar">
+                <div class="container-fluid px-4 px-lg-5">
+                    <a class="navbar-brand d-flex align-items-center" href="{{ route('dashboard') }}">
                         @if(Route::is('typhoon.*'))
-                            <img src="{{ asset('images/typhoon-flood-logo.png') }}" alt="Typhoon/Flood" style="height: 28px; width: auto; margin-right: 8px;">
-                            Typhoon/Flood Monitoring
+                            <img src="{{ asset('images/typhoon-flood-logo.png') }}" alt="Typhoon/Flood">
+                            <span class="navbar-brand-text">Typhoon/Flood Monitoring</span>
                         @elseif(Route::is('incidents.*'))
-                            <img src="{{ asset('images/incident-checklist-logo.png') }}" alt="Incident Checklist" style="height: 28px; width: auto; margin-right: 8px;">
-                            Incident Checklist
+                            <img src="{{ asset('images/incident-checklist-logo.png') }}" alt="Incident Checklist">
+                            <span class="navbar-brand-text">Incident Checklist</span>
                         @else
-                            <img src="{{ asset('images/drrmis-logo-2.png') }}" alt="DRRM" style="height: 28px; width: auto; margin-right: 8px;">
-                            DRRM Compliance Dashboard
+                            <img src="{{ asset('images/drrmis-logo-2.png') }}" alt="DRRM">
+                            <span class="navbar-brand-text">DRRM Compliance Dashboard</span>
                         @endif
                     </a>
-                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="{{ __('Toggle navigation') }}">
-                        <span class="navbar-toggler-icon"></span>
-                    </button>
 
-                    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                        <!-- Left Side Of Navbar -->
-                        <ul class="navbar-nav me-auto">
-                            <!-- Left side navigation reserved for future links -->
-                        </ul>
-
-                        <!-- Right Side Of Navbar -->
-                        <ul class="navbar-nav ms-auto">
-                            <!-- Authentication Links -->
-                            @guest
-                                @if (Route::has('login'))
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{{ route('login') }}">{{ __('Login') }}</a>
-                                    </li>
-                                @endif
-
-                                @if (Route::has('register'))
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{{ route('register') }}">{{ __('Register') }}</a>
-                                    </li>
-                                @endif
-                            @else
-                                <li class="nav-item dropdown">
-                                    <a id="navbarDropdown" class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
-                                        <div class="text-end me-2 d-none d-sm-block">
-                                            <div class="fw-bold lh-1" style="font-size: 0.9rem;">{{ Auth::user()->name }}</div>
-                                            @if(Auth::user()->school)
-                                                <div class="text-muted small" style="font-size: 0.7rem;">
-                                                    <i class="fas fa-school me-1"></i>{{ Auth::user()->school->school_name }}
-                                                </div>
-                                            @else
-                                                <div class="text-muted small" style="font-size: 0.7rem;">
-                                                    Global Access
-                                                </div>
-                                            @endif
+                    <ul class="navbar-nav ms-auto flex-row">
+                        @guest
+                            @if (Route::has('login'))
+                                <li class="nav-item me-3"><a class="nav-link" href="{{ route('login') }}">{{ __('Login') }}</a></li>
+                            @endif
+                            @if (Route::has('register'))
+                                <li class="nav-item"><a class="nav-link" href="{{ route('register') }}">{{ __('Register') }}</a></li>
+                            @endif
+                        @else
+                            @php
+                                $names = explode(' ', Auth::user()->name);
+                                $initials = substr($names[0], 0, 1) . (isset($names[1]) ? substr($names[1], 0, 1) : '');
+                            @endphp
+                            <li class="nav-item dropdown">
+                                <a id="navbarDropdown" class="nav-link p-0 text-decoration-none dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
+                                    <div class="user-toggle">
+                                        <div class="user-info">
+                                            <div class="user-name">{{ Auth::user()->name }}</div>
+                                            <div class="user-role-badge">
+                                                @if(Auth::user()->school)
+                                                    <span>{{ Str::limit(Auth::user()->school->school_name, 20) }}</span>
+                                                @else
+                                                    <span>Global Access</span>
+                                                @endif
+                                                <span class="role-text-{{ Auth::user()->role === 'admin' ? 'admin' : 'user' }}">{{ ucfirst(Auth::user()->role ?? 'User') }}</span>
+                                            </div>
                                         </div>
-                                        <span class="badge {{ Auth::user()->role === 'admin' ? 'bg-danger' : 'bg-info text-dark' }}" style="font-size: 0.7rem;">
-                                            {{ ucfirst(Auth::user()->role ?? 'User') }}
-                                        </span>
+                                        <div class="user-avatar">{{ strtoupper($initials) }}</div>
+                                        <i class="fas fa-chevron-down caret-icon"></i>
+                                    </div>
+                                </a>
+
+                                <div class="dropdown-menu dropdown-menu-end custom-dropdown-menu" aria-labelledby="navbarDropdown">
+                                    <div class="dropdown-section-title">Administration</div>
+                                    <a class="dropdown-item-custom item-users" href="{{ route('users.index') }}">
+                                        <div class="icon-wrapper"><i class="fas fa-user-friends"></i></div>
+                                        {{ Auth::user()->role === 'admin' ? 'User Accounts' : 'User Account' }}
+                                    </a>
+                                    
+                                    @if(Auth::user()->role === 'admin')
+                                        <a class="dropdown-item-custom item-logs" href="{{ route('activity-logs.index') }}">
+                                            <div class="icon-wrapper"><i class="fas fa-file-alt"></i></div>
+                                            Logs
+                                        </a>
+                                        
+                                        <div class="dropdown-divider-custom"></div>
+                                        
+                                        <div class="dropdown-section-title">Actions</div>
+                                        <a class="dropdown-item-custom item-announce" href="#" data-bs-toggle="modal" data-bs-target="#announceModal">
+                                            <div class="icon-wrapper"><i class="fas fa-bullhorn"></i></div>
+                                            Announce
+                                        </a>
+                                        <a class="dropdown-item-custom item-download" href="{{ route('admin.database.download') }}">
+                                            <div class="icon-wrapper"><i class="fas fa-download"></i></div>
+                                            Download Database
+                                        </a>
+                                    @endif
+
+                                    <div class="dropdown-divider-custom"></div>
+                                    
+                                    <a class="dropdown-item-custom item-logout" href="{{ route('logout') }}"
+                                       onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                        <div class="icon-wrapper"><i class="fas fa-sign-out-alt"></i></div>
+                                        Logout
                                     </a>
 
-                                    <div class="dropdown-menu dropdown-menu-end shadow border-0" aria-labelledby="navbarDropdown">
-                                        <a class="dropdown-item py-2" href="{{ route('users.index') }}">
-                                            <i class="fas fa-user-circle text-primary me-2"></i>
-                                            {{ Auth::user()->role === 'admin' ? 'User Accounts' : 'User Account' }}
-                                        </a>
-                                        @if(Auth::user()->role === 'admin')
-                                            <a class="dropdown-item py-2" href="{{ route('activity-logs.index') }}">
-                                                <i class="fas fa-clipboard-list text-info me-2"></i> Logs
-                                            </a>
-                                        @endif
-                                        <div class="dropdown-divider"></div>
-                                        @if(Auth::user()->role === 'admin')
-                                            <a class="dropdown-item py-2" href="#" data-bs-toggle="modal" data-bs-target="#announceModal">
-                                                <i class="fas fa-bullhorn text-warning me-2"></i> Announce
-                                            </a>
-                                            <a class="dropdown-item py-2" href="{{ route('admin.database.download') }}">
-                                                <i class="fas fa-database text-success me-2"></i> Download Database
-                                            </a>
-                                            <div class="dropdown-divider"></div>
-                                        @endif
-                                        <a class="dropdown-item py-2" href="{{ route('logout') }}"
-                                           onclick="event.preventDefault();
-                                                         document.getElementById('logout-form').submit();">
-                                            <i class="fas fa-sign-out-alt text-danger me-2"></i> {{ __('Logout') }}
-                                        </a>
-
-                                        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                                            @csrf
-                                        </form>
-                                    </div>
-                                </li>
-                            @endguest
-                        </ul>
-                    </div>
+                                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                                        @csrf
+                                    </form>
+                                </div>
+                            </li>
+                        @endguest
+                    </ul>
                 </div>
             </nav>
         @endunless

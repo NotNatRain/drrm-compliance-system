@@ -5,258 +5,229 @@
 
 @push('styles')
 <style>
-    .announcement-banner {
-        position: relative;
-        width: 100%;
-        padding-top: 25%; /* Reduced height */
+    /* Dashboard Wireframe Styles */
+    .dashboard-welcome {
+        font-size: 1rem;
+        color: #64748B;
+        margin-bottom: 1.5rem;
+    }
+    .dashboard-welcome strong { color: var(--navy); }
+
+    /* System Overview Card */
+    .overview-card {
+        background: #FFFFFF;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        border: 1px solid #E2E8F0;
+        margin-bottom: 2rem;
         overflow: hidden;
-        border-radius: 15px;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-        margin-bottom: 2.5rem;
-        background-color: #ffffff;
     }
+    .overview-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #E2E8F0;
+        font-weight: 700;
+        color: var(--navy);
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .overview-stats-grid {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .stat-item {
+        flex: 1 1 25%;
+        padding: 2rem 1rem;
+        text-align: center;
+        border-right: 1px solid #E2E8F0;
+    }
+    .stat-item:last-child { border-right: none; }
     @media (max-width: 768px) {
-        .announcement-banner {
-            padding-top: 56.25%; /* 16:9 on mobile */
-        }
+        .stat-item { flex: 1 1 50%; border-bottom: 1px solid #E2E8F0; }
+        .stat-item:nth-child(2n) { border-right: none; }
     }
-    .announcement-banner .carousel-inner {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+    .stat-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.25rem;
     }
-    .announcement-banner img {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: contain; /* Shows white spaces at sides if not landscape */
-        transition: transform 0.5s ease;
-    }
-    .announcement-banner:hover img {
-        transform: scale(1.02);
-    }
-    .announcement-overlay {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: linear-gradient(transparent, rgba(0,0,0,0.85));
-        color: white;
-        padding: 40px;
-        z-index: 2;
-    }
-    .announcement-content {
-        max-width: 80% ;
-    }
-    .announcement-meta {
-        font-size: 0.9rem;
-        opacity: 0.9;
-        margin-bottom: 10px;
-    }
-    .announcement-title {
-        font-size: 2.5rem;
+    /* Stat Colors */
+    .stat-schools { background: #E0E7FF; color: #4F46E5; }
+    .stat-users { background: #DCFCE7; color: #16A34A; }
+    .stat-compliance { background: #FEF3C7; color: #D97706; }
+    .stat-population { background: #E0F2FE; color: #0284C7; }
+
+    .stat-value {
+        font-size: 2rem;
         font-weight: 800;
-        margin-bottom: 10px;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        color: var(--navy);
+        line-height: 1;
+        margin-bottom: 0.5rem;
     }
-    .announcement-why {
-        font-size: 1.1rem;
-        line-height: 1.4;
-        opacity: 0.95;
+    .stat-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #64748B;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
     }
-    .delete-announcement-btn {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        z-index: 10;
-        background: rgba(220, 53, 69, 0.8);
-        border: none;
-        color: white;
-        padding: 5px 12px;
-        border-radius: 5px;
-        backdrop-filter: blur(5px);
-    }
-    .delete-announcement-btn:hover {
-        background: #dc3545;
-    }
-    .carousel-indicators {
+
+    /* Tabs (Pill style) */
+    .dashboard-tabs-wrapper {
         margin-bottom: 2rem;
     }
-    .carousel-indicators [data-bs-target] {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background-color: rgba(255,255,255,0.5);
-        border: 2px solid transparent;
-        transition: all 0.3s ease;
-    }
-    .carousel-indicators .active {
-        background-color: #fff;
-        transform: scale(1.2);
-    }
-    .carousel-control-prev, .carousel-control-next {
-        width: 5%;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-    .announcement-banner:hover .carousel-control-prev,
-    .announcement-banner:hover .carousel-control-next {
-        opacity: 0.8;
-    }
-    .carousel-control-prev-icon, .carousel-control-next-icon {
-        background-color: rgba(0,0,0,0.3);
-        padding: 20px;
-        border-radius: 50%;
-        background-size: 50% 50%;
-    }
-
-    /* Remove gap between header and announcement */
-    .dashboard-container {
-        margin-top: -24px; /* Offsets the main py-4 padding-top */
-    }
-    .announcement-banner {
-        border-top-left-radius: 0;
-        border-top-right-radius: 0;
-    }
-    /* Tab System Styling */
-    .dashboard-tabs-wrapper {
-        margin: 2rem 0;
-        width: 100%;
-    }
     .custom-tabs-container {
-        display: flex;
-        justify-content: center;
-        background-color: transparent;
-        padding: 0;
-        border-radius: 8px;
-        overflow: hidden;
-        width: 100%;
+        display: inline-flex;
+        background: #FFFFFF;
+        border-radius: 12px;
+        padding: 6px;
+        border: 1px solid #E2E8F0;
+        gap: 8px;
     }
     .nav-tab-item {
-        flex: 1;
-        text-align: center;
-        padding: 15px 30px;
-        font-weight: 700;
+        padding: 10px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
         cursor: pointer;
-        transition: all 0.3s ease;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        border: none;
-        outline: none;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
     .nav-tab-item.active {
-        background-color: #212529 !important;
-        color: #ffffff !important;
+        background: var(--navy);
+        color: #FFFFFF;
     }
     .nav-tab-item:not(.active) {
-        background-color: #ffffff !important;
-        color: #212529 !important;
-        border: 1px solid #dee2e6;
+        color: #64748B;
     }
     .nav-tab-item:hover:not(.active) {
-        background-color: #f8f9fa;
-        color: #000;
+        background: #F1F5F9;
+        color: var(--navy);
     }
 
-    /* Card Hover Animations (requested) */
+    /* Module Cards */
+    .modules-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
     .module-card-link {
+        text-decoration: none;
         display: block;
-        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    .module-card-link:hover {
-        transform: translateY(-12px) scale(1.02);
+    .module-card {
+        background: #FFFFFF;
+        border-radius: 16px;
+        padding: 2.5rem 2rem;
+        text-align: center;
+        border: 1px solid #E2E8F0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        height: 100%;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
     }
-    .module-card-link .card {
-        transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    .module-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     }
-    .module-card-link:hover .card {
-        box-shadow: 0 25px 50px rgba(0,0,0,0.15) !important;
+    .module-icon-wrap {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 1.75rem;
     }
-    .module-card-link:hover .card-body i {
-        animation: card-icon-float 2s ease-in-out infinite;
+    .module-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
     }
-
-    @keyframes card-icon-float {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-8px); }
+    .module-desc {
+        font-size: 0.9rem;
+        color: #64748B;
+        line-height: 1.6;
+        margin-bottom: 2rem;
+        flex-grow: 1;
     }
-
-    /* Modal Styling Adjustments */
-    .modal-header.bg-dark {
-        background-color: #212529 !important;
-    }
-    .school-detail-label {
-        color: #6c757d;
-        font-size: 0.75rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 2px;
-    }
-    .school-detail-value {
-        font-weight: 600;
-        color: #212529;
-        margin-bottom: 12px;
-    }
-    .btn-module {
-        transition: all 0.3s ease;
-        text-transform: uppercase;
-        font-weight: 700;
-        font-size: 0.75rem;
-        padding: 10px;
+    .module-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 24px;
         border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #FFFFFF;
+        text-decoration: none;
+        margin: 0 auto;
+        transition: filter 0.2s;
     }
-    .btn-module i {
-        font-size: 1.1rem;
-        margin-bottom: 5px;
-        display: block;
-    }
-    .btn-module.disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-    }
-    .school-info-modal-dialog {
-        max-width: 980px;
-    }
-    #btn_fire_safety:hover { background-color: #D12428; border-color: #D12428; color: #fff; }
-    #btn_typhoon:hover { background-color: #1B4C6D; border-color: #1B4C6D; color: #fff; }
-    #btn_incident:hover { background-color: #F2C94C; border-color: #F2C94C; color: #212529; }
-    #btn_comprehensive:hover { background-color: #5C4033; border-color: #5C4033; color: #fff; }
-    #btn_hazard:hover { background-color: #0D7377; border-color: #0D7377; color: #fff; }
-    #btn_inventory:hover { background-color: #17a2b8; border-color: #17a2b8; color: #fff; }
-    #btn_damage_assessment:hover { background-color: #6f42c1; border-color: #6f42c1; color: #fff; }
+    .module-card:hover .module-btn { filter: brightness(1.1); }
 
-    /* Margins for the layout as requested */
-    .schools-tab-container {
-        margin-left: 20px;
-        margin-right: 20px;
-    }
-    @media (min-width: 1200px) {
-        .schools-tab-container {
-            margin-left: 60px;
-            margin-right: 60px;
-        }
-    }
+    /* Module specific colors */
+    .mod-fire { --mc: #D12428; --mbg: #FEE2E2; }
+    .mod-evac { --mc: #1B4C6D; --mbg: #E0F2FE; }
+    .mod-inc { --mc: #D97706; --mbg: #FEF3C7; } /* Wireframe is gold */
+    .mod-css { --mc: #5C4033; --mbg: #F5EAE6; } /* Brown */
+    .mod-drill { --mc: #EA580C; --mbg: #FFEDD5; } /* Orange */
+    .mod-haz { --mc: #0D7377; --mbg: #CCFBF1; } /* Teal */
+    .mod-dam { --mc: #8B5CF6; --mbg: #EDE9FE; } /* Purple */
+    .mod-inv { --mc: #0891B2; --mbg: #CFFAFE; } /* Cyan */
 
-    /* Tab Content Transitions */
-    .tab-content-active {
-        animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
+    .mod-fire .module-icon-wrap { background: var(--mbg); color: var(--mc); }
+    .mod-fire .module-title { color: var(--mc); }
+    .mod-fire .module-btn { background: var(--mc); }
+
+    .mod-evac .module-icon-wrap { background: var(--mbg); color: var(--mc); }
+    .mod-evac .module-title { color: var(--mc); }
+    .mod-evac .module-btn { background: var(--mc); }
+
+    .mod-inc .module-icon-wrap { background: var(--mbg); color: var(--mc); }
+    .mod-inc .module-title { color: var(--mc); }
+    .mod-inc .module-btn { background: var(--mc); }
+
+    .mod-css .module-icon-wrap { background: var(--mbg); color: var(--mc); }
+    .mod-css .module-title { color: var(--mc); }
+    .mod-css .module-btn { background: var(--mc); }
+
+    .mod-drill .module-icon-wrap { background: var(--mbg); color: var(--mc); }
+    .mod-drill .module-title { color: var(--mc); }
+    .mod-drill .module-btn { background: var(--mc); }
+
+    .mod-haz .module-icon-wrap { background: var(--mbg); color: var(--mc); }
+    .mod-haz .module-title { color: var(--mc); }
+    .mod-haz .module-btn { background: var(--mc); }
+
+    .mod-dam .module-icon-wrap { background: var(--mbg); color: var(--mc); }
+    .mod-dam .module-title { color: var(--mc); }
+    .mod-dam .module-btn { background: var(--mc); }
+
+    .mod-inv .module-icon-wrap { background: var(--mbg); color: var(--mc); }
+    .mod-inv .module-title { color: var(--mc); }
+    .mod-inv .module-btn { background: var(--mc); }
+
+    .btn-disabled { opacity: 0.6; cursor: not-allowed; }
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @endpush
 
 @section('content')
-<div class="container-fluid dashboard-container">
+<div class="container-fluid px-4 px-lg-5">
     @php
         $user = auth()->user();
         $modules = $user?->module_access ?? [];
@@ -264,11 +235,10 @@
         $isContributor = $user && $user->role === 'contributor';
         $canShowSchoolTab = $isAdmin || $isContributor;
     @endphp
-    @if($announcements->count() == 0)
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <p class="text-muted mb-0">Welcome back, <strong>{{ Auth::user()->name }}</strong>! Select a compliance system to manage.</p>
-        </div>
-    @endif
+    
+    <div class="dashboard-welcome">
+        Welcome back, <strong>{{ Auth::user()->name }}</strong>! Select a compliance system to manage.
+    </div>
 
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
@@ -284,63 +254,51 @@
         </div>
     @endif
 
-    @if($announcements->count() > 0)
-        {{-- ... (Rest of Carousel remains same) --}}
-        <div id="announcementCarousel" class="carousel slide announcement-banner mb-5" data-bs-ride="carousel" data-bs-interval="5000">
-            @if($announcements->count() > 1)
-                <div class="carousel-indicators">
-                    @foreach($announcements as $index => $announcement)
-                        <button type="button" data-bs-target="#announcementCarousel" data-bs-slide-to="{{ $index }}" class="{{ $index === 0 ? 'active' : '' }}" aria-label="Slide {{ $index + 1 }}"></button>
-                    @endforeach
-                </div>
-            @endif
-
-            <div class="carousel-inner h-100">
-                @foreach($announcements as $index => $announcement)
-                    <div class="carousel-item h-100 {{ $index === 0 ? 'active' : '' }}">
-                        @if(Auth::user()->role === 'admin')
-                            <button class="delete-announcement-btn" onclick="deleteAnnouncement({{ $announcement->id }})" title="Remove Announcement">
-                                <i class="fas fa-times me-1"></i> Remove
-                            </button>
-                        @endif
-                        <img src="{{ \Illuminate\Support\Facades\Storage::disk(config('filesystems.default'))->url($announcement->image_path) }}" class="d-block w-100" alt="Announcement Poster">
-                        <div class="announcement-overlay">
-                            <div class="announcement-content">
-                                <p class="announcement-meta">
-                                    <i class="far fa-calendar-alt me-1"></i> {{ \Carbon\Carbon::parse($announcement->when)->format('F j, Y \a\t h:i A') }}
-                                    <span class="mx-2">|</span>
-                                    <i class="fas fa-map-marker-alt me-1"></i> {{ $announcement->where }}
-                                </p>
-                                <h2 class="announcement-title">{{ $announcement->what }}</h2>
-                                <p class="announcement-why mb-0">{{ $announcement->why }}</p>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
-            </div>
-
-            @if($announcements->count() > 1)
-                <button class="carousel-control-prev" type="button" data-bs-target="#announcementCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Previous</span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#announcementCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Next</span>
-                </button>
-            @endif
+    <!-- System Overview -->
+    <div class="overview-card">
+        <div class="overview-header">
+            <i class="fas fa-chart-line"></i> System Overview
         </div>
-    @endif
+        <div class="overview-stats-grid">
+            <div class="stat-item">
+                <div class="stat-icon-wrapper stat-schools">
+                    <i class="fas fa-school"></i>
+                </div>
+                <div class="stat-value">{{ $totalSchoolsCount }}</div>
+                <div class="stat-label">Total Schools</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon-wrapper stat-users">
+                    <i class="fas fa-user-friends"></i>
+                </div>
+                <div class="stat-value">{{ $totalUsersCount }}</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon-wrapper stat-compliance">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <div class="stat-value">{{ $overallComplianceRate }}%</div>
+                <div class="stat-label">Compliance Rate</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon-wrapper stat-population">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-value">{{ number_format($totalPopulationCount) }}</div>
+                <div class="stat-label">Population</div>
+            </div>
+        </div>
+    </div>
 
     @if($canShowSchoolTab)
-        <!-- Dashboard Tabs Wrapper (Centered and covering full row) -->
-        <div class="dashboard-tabs-wrapper mb-5 px-lg-5">
-            <div class="custom-tabs-container shadow-sm border">
+        <div class="dashboard-tabs-wrapper">
+            <div class="custom-tabs-container">
                 <div id="complianceTabBtn" class="nav-tab-item active" onclick="switchDashboardTab('compliance')">
-                    <i class="fas fa-th-large me-2"></i> Compliance
+                    <i class="fas fa-th-large"></i> Compliance
                 </div>
                 <div id="schoolsTabBtn" class="nav-tab-item" onclick="switchDashboardTab('schools')">
-                    <i class="fas fa-university me-2"></i> {{ $isAdmin ? 'Schools' : 'School' }}
+                    <i class="fas fa-university"></i> {{ $isAdmin ? 'Schools' : 'School' }}
                 </div>
             </div>
         </div>
@@ -348,246 +306,126 @@
 
     <!-- Compliance Content Division -->
     <div id="complianceTabContent" class="tab-content-active">
-        <div class="row justify-content-center">
-            <!-- Fire Safety Compliance -->
-            <div class="col-md-4 mb-4">
-                @php $canAccessFire = $isAdmin || in_array('fire_safety', $modules); @endphp
-                <a href="{{ route('fire-safety.dashboard') }}" class="text-decoration-none module-card-link"
-                   data-module="fire_safety" data-can-access="{{ $canAccessFire ? '1' : '0' }}" data-theme-color="#D12428">
-                    <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #D12428;">
-                        <div class="card-body text-center p-5">
-                            <div class="mb-4">
-                                <i class="fas fa-fire fa-4x" style="color: #D12428;"></i>
-                            </div>
-                            <h3 class="card-title fw-bold" style="color: #D12428;">Fire Safety</h3>
-                            <p class="card-text text-muted">
-                                Fire extinguishers, building inspections, and evacuation plans management
-                            </p>
-                        </div>
-                        <div class="card-footer bg-transparent text-center border-0">
-                            <span class="btn" style="background-color: #D12428; color: white;">
-                                <i class="fas fa-arrow-right"></i> Enter
-                            </span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <!-- Typhoon/Flooding Monitoring -->
-            <div class="col-md-4 mb-4">
-                @php $canAccessTyphoon = $isAdmin || in_array('typhoon_flood', $modules); @endphp
-                <a href="{{ route('typhoon.dashboard') }}" class="text-decoration-none module-card-link"
-                   data-module="typhoon_flood" data-can-access="{{ $canAccessTyphoon ? '1' : '0' }}" data-theme-color="#1B4C6D">
-                    <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #1B4C6D;">
-                        <div class="card-body text-center p-5">
-                            <div class="mb-4">
-                                <i class="fas fa-umbrella fa-4x" style="color: #1B4C6D;"></i>
-                            </div>
-                            <h3 class="card-title fw-bold" style="color: #1B4C6D;">Evacuation Monitoring</h3>
-                            <p class="card-text text-muted">
-                                Evacuation centers, evacuee management, and monitoring Evacuation centers.
-                            </p>
-                        </div>
-                        <div class="card-footer bg-transparent text-center border-0">
-                            <span class="btn" style="background-color: #1B4C6D; color: white;">
-                                <i class="fas fa-arrow-right"></i> Enter
-                            </span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <!-- Incidents Compliance -->
-            <div class="col-md-4 mb-4">
-                @php $canAccessIncidents = $isAdmin || in_array('incident_checklist', $modules); @endphp
-                <a href="{{ route('incidents.dashboard') }}" class="text-decoration-none module-card-link"
-                   data-module="incident_checklist" data-can-access="{{ $canAccessIncidents ? '1' : '0' }}" data-theme-color="#F2C94C">
-                    <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #F2C94C;">
-                        <div class="card-body text-center p-5">
-                            <div class="mb-4">
-                                <i class="fas fa-clipboard-list fa-4x" style="color: #F2C94C;"></i>
-                            </div>
-                            <h3 class="card-title fw-bold" style="color: #F2C94C;">Incident Checklist</h3>
-                            <p class="card-text text-muted">
-                                Incident recording, victim management, compliance checklists, and remarks tracking
-                            </p>
-                        </div>
-                        <div class="card-footer bg-transparent text-center border-0">
-                            <span class="btn" style="background-color: #F2C94C; color: #333; {{ $canAccessIncidents ? '' : 'opacity: 0.7; cursor: not-allowed;' }}">
-                                <i class="fas fa-arrow-right"></i> {{ $canAccessIncidents ? 'Enter' : 'Admin Only' }}
-                            </span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <!-- Comprehensive School Safety -->
-            <div class="col-md-4 mb-4">
-                @php $canAccessSchoolSafety = $isAdmin || in_array('comprehensive_school_safety', $modules); @endphp
-                <a href="{{ route('comprehensive-school-safety.dashboard') }}" class="text-decoration-none module-card-link"
-                   data-module="comprehensive_school_safety" data-can-access="{{ $canAccessSchoolSafety ? '1' : '0' }}" data-theme-color="#5C4033">
-                    <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #5C4033;">
-                        <div class="card-body text-center p-5">
-                            <div class="mb-4">
-                                <i class="fas fa-school fa-4x" style="color: #5C4033;"></i>
-                            </div>
-                            <h3 class="card-title fw-bold" style="color: #5C4033;">Comprehensive School Safety</h3>
-                            <p class="card-text text-muted">
-                                Evaluation compliance system assessing tools, disaster risk management, DRR in education, and safe learning facilities.
-                            </p>
-                        </div>
-                        <div class="card-footer bg-transparent text-center border-0">
-                            <span class="btn" style="background-color: #5C4033; color: white;">
-                                <i class="fas fa-arrow-right"></i> Enter
-                            </span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-                        <!--Drill Monitoring -->
-            <div class="col-md-4 mb-4">
-                @php $canAccessDrillMonitoring = $isAdmin || in_array('drill_monitoring', $modules); @endphp
-                <a href="{{ route('drill-monitoring.dashboard') }}" class="text-decoration-none module-card-link"
-                   data-module="drill_monitoring" data-can-access="{{ $canAccessDrillMonitoring ? '1' : '0' }}" data-theme-color="#FF6F00">
-                    <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #FF6F00;">
-                        <div class="card-body text-center p-5">
-                            <div class="mb-4">
-                                <i class="fas fa-bell fa-4x" style="color: #FF6F00;"></i>
-                            </div>
-                            <h3 class="card-title fw-bold" style="color: #FF6F00;">Drill Monitoring</h3>
-                            <p class="card-text text-muted">
-                                Track, log, and evaluate emergency evacuation drills, response times, and compliance metrics.
-                            </p>
-                        </div>
-                        <div class="card-footer bg-transparent text-center border-0">
-                            <span class="btn" style="background-color: #FF6F00; color: white;">
-                                <i class="fas fa-arrow-right"></i> Enter
-                            </span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-
-            <!-- Hazard Mapping -->
-            <div class="col-md-4 mb-4">
-                @php $canAccessHazard = $isAdmin || in_array('hazard_mapping', $modules); @endphp
-                     <a href="{{ route('hazard-mapping.dashboard') }}" class="text-decoration-none module-card-link"
-                         data-module="hazard_mapping" data-can-access="{{ $canAccessHazard ? '1' : '0' }}" data-theme-color="#0D7377">
-                    <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #0D7377;">
-                        <div class="card-body text-center p-5">
-                            <div class="mb-4">
-                                <i class="fas fa-map-marked-alt fa-4x" style="color: #0D7377;"></i>
-                            </div>
-                            <h3 class="card-title fw-bold" style="color: #0D7377;">Hazard Mapping</h3>
-                            <p class="card-text text-muted">
-                                Identify, assess, and map hazards affecting school sites and areas for risk reduction and preparedness planning.
-                            </p>
-                        </div>
-                        <div class="card-footer bg-transparent text-center border-0">
-                            <span class="btn" style="background-color: #0D7377; color: white;">
-                                <i class="fas fa-arrow-right"></i> Enter
-                            </span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-        </div>
-
-                <!-- Second Row For Alignment -->
-         <div class="row">
-            <!-- Damage Report Module --> 
-            <div class="col-md-6 col-lg-4 offset-lg-2 mb-4">
-                @php $canAccessDamageReport = $isAdmin || in_array('damage_reports', $modules); @endphp
-                <a href="#" class="text-decoration-none module-card-link" data-module="damage_reports" data-can-access="{{ $canAccessDamageReport ? '1' : '0' }}" data-theme-color="#6f42c1">
-                    <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #6f42c1;">
-                        <div class="card-body text-center p-5">
-                            <div class="mb-4">
-                                <i class="fas fa-user-injured fa-4x" style="color: #6f42c1;"></i>
-                            </div>
-                            <h3 class="card-title fw-bold" style="color: #6f42c1;">Damage Reports</h3>
-                            <p class="card-text text-muted">
-                                Track damages of facilities and resources. Assess the severity of damage and make decisions for recovery and rehabilitation.
-                            </p>
-                        </div>
-                        <div class="card-footer bg-transparent text-center border-0">
-                            <span class="btn" style="background-color: #6f42c1; color: white;">
-                                <i class="fas fa-arrow-right"></i> Enter
-                            </span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <!-- Inventory Module --> 
-            <div class="col-md-6 col-lg-4 mb-4">
-                @php $canAccessInventory = $isAdmin || in_array('inventory_storage', $modules); @endphp
-                <a href="{{ route('inventory-storage.dashboard') }}" class="text-decoration-none module-card-link" data-module="inventory_storage" data-can-access="{{ $canAccessInventory ? '1' : '0' }}" data-theme-color="#17a2b8">
-                    <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #17a2b8;">
-                        <div class="card-body text-center p-5">
-                            <div class="mb-4">
-                                <i class="fas fa-boxes fa-4x" style="color: #17a2b8;"></i>
-                            </div>
-                            <h3 class="card-title fw-bold" style="color: #17a2b8;">Inventory</h3>
-                            <p class="card-text text-muted">
-                                Manage and track sources, gears and equipment inventory for disaster preparedness, response, and recovery operations.
-                            </p>
-                        </div>
-                        <div class="card-footer bg-transparent text-center border-0">
-                            <span class="btn" style="background-color: #17a2b8; color: white;">
-                                <i class="fas fa-arrow-right"></i> Enter
-                            </span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-        </div>
-
-
-        <!-- Quick Stats -->
-        <div class="row mt-5 mx-lg-5">
-            <div class="col-12">
-                <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
-                    <div class="card-header bg-light p-3">
-                        <h5 class="mb-0 fw-bold"><i class="fas fa-chart-line me-2"></i> System Overview</h5>
-                    </div>
-                    <div class="card-body p-4">
-                        <div class="row text-center">
-                            <div class="col-md-3">
-                                <div class="p-3 border-end">
-                                    <h2 class="text-primary fw-bold">{{ $totalSchoolsCount }}</h2>
-                                    <p class="text-muted mb-0 small uppercase fw-bold">Total Schools</p>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="p-3 border-end">
-                                    <h2 class="text-success fw-bold">{{ $totalUsersCount }}</h2>
-                                    <p class="text-muted mb-0 small uppercase fw-bold">Total Users</p>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="p-3 border-end">
-                                    <h2 class="text-warning fw-bold">{{ $overallComplianceRate }}%</h2>
-                                    <p class="text-muted mb-0 small uppercase fw-bold">Compliance Rate</p>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="p-3">
-                                    <h2 class="text-info fw-bold">{{ number_format($totalPopulationCount) }}</h2>
-                                    <p class="text-muted mb-0 small uppercase fw-bold">Population Covered</p>
-                                </div>
-                            </div>
-                        </div>
+        <div class="modules-grid">
+            
+            <!-- Fire Safety -->
+            @php $canAccessFire = $isAdmin || in_array('fire_safety', $modules); @endphp
+            <a href="{{ route('fire-safety.dashboard') }}" class="module-card-link"
+               data-module="fire_safety" data-can-access="{{ $canAccessFire ? '1' : '0' }}">
+                <div class="module-card mod-fire">
+                    <div class="module-icon-wrap"><i class="fas fa-fire"></i></div>
+                    <div class="module-title">Fire Safety</div>
+                    <div class="module-desc">Fire extinguishers, building inspections, and evacuation plans management</div>
+                    <div class="module-btn {{ !$canAccessFire ? 'btn-disabled' : '' }}">
+                        <i class="fas fa-arrow-right"></i> {{ $canAccessFire ? 'Enter' : 'Admin Only' }}
                     </div>
                 </div>
-            </div>
+            </a>
+
+            <!-- Evacuation Monitoring -->
+            @php $canAccessTyphoon = $isAdmin || in_array('typhoon_flood', $modules); @endphp
+            <a href="{{ route('typhoon.dashboard') }}" class="module-card-link"
+               data-module="typhoon_flood" data-can-access="{{ $canAccessTyphoon ? '1' : '0' }}">
+                <div class="module-card mod-evac">
+                    <div class="module-icon-wrap"><i class="fas fa-route"></i></div>
+                    <div class="module-title">Evacuation Monitoring</div>
+                    <div class="module-desc">Evacuation centers, evacuee management, and monitoring Evacuation centers.</div>
+                    <div class="module-btn {{ !$canAccessTyphoon ? 'btn-disabled' : '' }}">
+                        <i class="fas fa-arrow-right"></i> {{ $canAccessTyphoon ? 'Enter' : 'Admin Only' }}
+                    </div>
+                </div>
+            </a>
+
+            <!-- Incident Checklist -->
+            @php $canAccessIncidents = $isAdmin || in_array('incident_checklist', $modules); @endphp
+            <a href="{{ route('incidents.dashboard') }}" class="module-card-link"
+               data-module="incident_checklist" data-can-access="{{ $canAccessIncidents ? '1' : '0' }}">
+                <div class="module-card mod-inc">
+                    <div class="module-icon-wrap"><i class="fas fa-clipboard-check"></i></div>
+                    <div class="module-title">Incident Checklist</div>
+                    <div class="module-desc">Incident recording, victim management, compliance checklists, and remarks tracking</div>
+                    <div class="module-btn {{ !$canAccessIncidents ? 'btn-disabled' : '' }}">
+                        <i class="fas fa-arrow-right"></i> {{ $canAccessIncidents ? 'Enter' : 'Admin Only' }}
+                    </div>
+                </div>
+            </a>
+
+            <!-- Comprehensive School Safety -->
+            @php $canAccessSchoolSafety = $isAdmin || in_array('comprehensive_school_safety', $modules); @endphp
+            <a href="{{ route('comprehensive-school-safety.dashboard') }}" class="module-card-link"
+               data-module="comprehensive_school_safety" data-can-access="{{ $canAccessSchoolSafety ? '1' : '0' }}">
+                <div class="module-card mod-css">
+                    <div class="module-icon-wrap"><i class="fas fa-school"></i></div>
+                    <div class="module-title">Comprehensive School Safety</div>
+                    <div class="module-desc">Centralized overview of every safety category, helping schools stay compliant and maintain safe learning facilities.</div>
+                    <div class="module-btn {{ !$canAccessSchoolSafety ? 'btn-disabled' : '' }}">
+                        <i class="fas fa-arrow-right"></i> {{ $canAccessSchoolSafety ? 'Enter' : 'Admin Only' }}
+                    </div>
+                </div>
+            </a>
+
+            <!-- Drill Monitoring -->
+            @php $canAccessDrillMonitoring = $isAdmin || in_array('drill_monitoring', $modules); @endphp
+            <a href="{{ route('drill-monitoring.dashboard') }}" class="module-card-link"
+               data-module="drill_monitoring" data-can-access="{{ $canAccessDrillMonitoring ? '1' : '0' }}">
+                <div class="module-card mod-drill">
+                    <div class="module-icon-wrap"><i class="fas fa-bell"></i></div>
+                    <div class="module-title">Drill Monitoring</div>
+                    <div class="module-desc">Track, log, and evaluate emergency evacuation drills, response times, and compliance metrics.</div>
+                    <div class="module-btn {{ !$canAccessDrillMonitoring ? 'btn-disabled' : '' }}">
+                        <i class="fas fa-arrow-right"></i> {{ $canAccessDrillMonitoring ? 'Enter' : 'Admin Only' }}
+                    </div>
+                </div>
+            </a>
+
+            <!-- Hazard Mapping -->
+            @php $canAccessHazard = $isAdmin || in_array('hazard_mapping', $modules); @endphp
+            <a href="{{ route('hazard-mapping.dashboard') }}" class="module-card-link"
+                data-module="hazard_mapping" data-can-access="{{ $canAccessHazard ? '1' : '0' }}">
+                <div class="module-card mod-haz">
+                    <div class="module-icon-wrap"><i class="fas fa-map"></i></div>
+                    <div class="module-title">Hazard Mapping</div>
+                    <div class="module-desc">Identify, assess, and map hazards affecting school sites and areas for risk reduction and preparedness.</div>
+                    <div class="module-btn {{ !$canAccessHazard ? 'btn-disabled' : '' }}">
+                        <i class="fas fa-arrow-right"></i> {{ $canAccessHazard ? 'Enter' : 'Admin Only' }}
+                    </div>
+                </div>
+            </a>
+
+            <!-- Damage Reports -->
+            @php $canAccessDamageReport = $isAdmin || in_array('damage_reports', $modules); @endphp
+            <a href="#" class="module-card-link" 
+               data-module="damage_reports" data-can-access="{{ $canAccessDamageReport ? '1' : '0' }}">
+                <div class="module-card mod-dam">
+                    <div class="module-icon-wrap"><i class="fas fa-user-injured"></i></div>
+                    <div class="module-title">Damage Reports</div>
+                    <div class="module-desc">Track damages of facilities and resources. Assess the severity of damage and make decisions for recovery and rehabilitation.</div>
+                    <div class="module-btn {{ !$canAccessDamageReport ? 'btn-disabled' : '' }}">
+                        <i class="fas fa-arrow-right"></i> {{ $canAccessDamageReport ? 'Enter' : 'Admin Only' }}
+                    </div>
+                </div>
+            </a>
+
+            <!-- Inventory -->
+            @php $canAccessInventory = $isAdmin || in_array('inventory_storage', $modules); @endphp
+            <a href="{{ route('inventory-storage.dashboard') }}" class="module-card-link" 
+               data-module="inventory_storage" data-can-access="{{ $canAccessInventory ? '1' : '0' }}">
+                <div class="module-card mod-inv">
+                    <div class="module-icon-wrap"><i class="fas fa-boxes"></i></div>
+                    <div class="module-title">Inventory</div>
+                    <div class="module-desc">Manage and track sources, gears and equipment inventory for disaster preparedness, response, and recovery operations.</div>
+                    <div class="module-btn {{ !$canAccessInventory ? 'btn-disabled' : '' }}">
+                        <i class="fas fa-arrow-right"></i> {{ $canAccessInventory ? 'Enter' : 'Admin Only' }}
+                    </div>
+                </div>
+            </a>
+
         </div>
     </div>
 
     @if($canShowSchoolTab)
         <!-- Schools Content Division -->
-        <div id="schoolsTabContent" class="d-none">
+        <div id="schoolsTabContent" style="display:none;">
             @if($isAdmin)
                 @include('schools-tab')
             @else
@@ -731,146 +569,176 @@
     @if($isAdmin)
 
         <!-- View School Details Modal -->
-        <div class="modal fade" id="viewSchoolModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-lg school-info-modal-dialog modal-dialog-centered">
-                <div class="modal-content border-0 shadow-lg rounded-4">
-                    <div class="modal-header bg-dark text-white p-4">
-                        <h5 class="modal-title fw-bold">
-                            <i class="fas fa-university me-2"></i> <span id="schoolDetailName">School Details</span>
+        <div class="modal fade modal-add-school" id="viewSchoolModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered" style="max-width: 900px;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <span class="title-icon"><i class="fas fa-university"></i></span>
+                            <span id="schoolDetailName">School Details</span>
                         </h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body p-4">
                         <div class="row g-4">
                             <!-- Core Info -->
-                            <div class="col-md-7">
+                            <div class="col-md-6 pe-md-4 border-md-end">
                                 <div class="mb-4">
-                                    <h6 class="fw-bold border-bottom pb-2 mb-3">Core Information</h6>
-                                    <div class="row">
+                                    <div class="form-section-label">Core Information</div>
+                                    <div class="row g-3">
                                         <div class="col-6">
-                                            <div class="school-detail-label">School ID</div>
-                                            <div class="school-detail-value text-break" id="detail_id">-</div>
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small" style="font-size: 0.7rem;">School ID</div>
+                                            <div class="school-detail-value text-break fw-semibold" id="detail_id">-</div>
                                         </div>
                                         <div class="col-6">
-                                            <div class="school-detail-label">Name</div>
-                                            <div class="school-detail-value" id="detail_name">-</div>
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small" style="font-size: 0.7rem;">Name</div>
+                                            <div class="school-detail-value fw-semibold" id="detail_name">-</div>
                                         </div>
                                         <div class="col-12">
-                                            <div class="school-detail-label">School Address</div>
-                                            <div class="school-detail-value" id="detail_address">-</div>
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small" style="font-size: 0.7rem;">School Address</div>
+                                            <div class="school-detail-value fw-semibold" id="detail_address">-</div>
                                         </div>
                                         <div class="col-6">
-                                            <div class="school-detail-label">School Head</div>
-                                            <div class="school-detail-value" id="detail_head">-</div>
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small" style="font-size: 0.7rem;">School Head</div>
+                                            <div class="school-detail-value text-muted" id="detail_head" style="font-style: italic;">-</div>
                                         </div>
                                         <div class="col-6">
-                                            <div class="school-detail-label">DRRM Coordinator</div>
-                                            <div class="school-detail-value" id="detail_coordinator">-</div>
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small" style="font-size: 0.7rem;">DRRM Coordinator</div>
+                                            <div class="school-detail-value text-muted" id="detail_coordinator" style="font-style: italic;">-</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <div class="form-section-label">Additional & Module Info</div>
+                                    <div class="row g-3">
+                                        <div class="col-6">
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small" style="font-size: 0.7rem;">Head Contact</div>
+                                            <div class="school-detail-value text-muted" id="detail_head_contact" style="font-style: italic;">-</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small" style="font-size: 0.7rem;">Coord. Contact</div>
+                                            <div class="school-detail-value text-muted" id="detail_coord_contact" style="font-style: italic;">-</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small" style="font-size: 0.7rem;">District</div>
+                                            <div class="school-detail-value text-muted" id="detail_district" style="font-style: italic;">-</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small" style="font-size: 0.7rem;">Division</div>
+                                            <div class="school-detail-value text-muted" id="detail_division" style="font-style: italic;">-</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small" style="font-size: 0.7rem;">Region</div>
+                                            <div class="school-detail-value text-muted" id="detail_region" style="font-style: italic;">-</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.7rem;">Number of Students</div>
+                                            <div class="school-detail-value badge bg-light text-dark border px-3 py-2 rounded-pill fw-semibold" id="detail_students" style="font-size: 0.9rem;">0</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.7rem;">Number of Personnel</div>
+                                            <div class="school-detail-value badge bg-light text-dark border px-3 py-2 rounded-pill fw-semibold" id="detail_personnel" style="font-size: 0.9rem;">0</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.7rem;">Number of Gates</div>
+                                            <div class="school-detail-value badge bg-light text-dark border px-3 py-2 rounded-pill fw-semibold" id="detail_gates" style="font-size: 0.9rem;">0</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.7rem;">Engineer Last Inspection Date</div>
+                                            <div class="school-detail-value badge bg-light text-dark border px-3 py-2 rounded-pill fw-semibold" id="detail_engineer_last_inspection_date" style="font-size: 0.9rem;">N/A</div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <h6 class="fw-bold border-bottom pb-2 mb-3">Additional & Module Info</h6>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="school-detail-label">Head Contact</div>
-                                            <div class="school-detail-value" id="detail_head_contact">-</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="school-detail-label">Coord. Contact</div>
-                                            <div class="school-detail-value" id="detail_coord_contact">-</div>
-                                        </div>
-                                        <div class="col-4">
-                                            <div class="school-detail-label">District</div>
-                                            <div class="school-detail-value" id="detail_district">-</div>
-                                        </div>
-                                        <div class="col-4">
-                                            <div class="school-detail-label">Division</div>
-                                            <div class="school-detail-value" id="detail_division">-</div>
-                                        </div>
-                                        <div class="col-4">
-                                            <div class="school-detail-label">Region</div>
-                                            <div class="school-detail-value" id="detail_region">-</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="school-detail-label">Number of Students</div>
-                                            <div class="school-detail-value badge bg-light text-dark border p-2" id="detail_students">0</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="school-detail-label">Number of Personnel</div>
-                                            <div class="school-detail-value badge bg-light text-dark border p-2" id="detail_personnel">0</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="school-detail-label">Number of Gates</div>
-                                            <div class="school-detail-value badge bg-light text-dark border p-2" id="detail_gates">0</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="school-detail-label">Engineer Last Inspection Date</div>
-                                            <div class="school-detail-value badge bg-light text-dark border p-2" id="detail_engineer_last_inspection_date">N/A</div>
-                                        </div>
-                                        <div class="col-12 mt-3">
-                                            <div class="school-detail-label">Emergency Resources</div>
-                                            <div class="school-detail-value bg-light p-2 rounded small border" id="detail_resources">None specified</div>
-                                        </div>
-                                    </div>
+                                    <div class="form-section-label">Emergency Resources</div>
+                                    <div class="school-detail-value text-muted" id="detail_resources" style="font-style: italic;">None specified</div>
                                 </div>
                             </div>
 
-                            <!-- Module Shortcuts -->
-                            <div class="col-md-5 border-start">
-                                <h6 class="fw-bold border-bottom pb-2 mb-3">Module Connections</h6>
-                                <p class="small text-muted mb-4">Redirection depends on registration status.</p>
+                            <!-- Module Shortcuts & Users -->
+                            <div class="col-md-6 ps-md-4">
+                                <div class="form-section-label mb-1">Module Connections</div>
+                                <p class="small text-muted mb-3">Redirection depends on registration status.</p>
 
-                                <div class="d-grid gap-2">
-                                    <button id="btn_fire_safety" class="btn btn-module text-start mb-2 py-3 border">
-                                        <i class="fas fa-fire me-2 d-inline"></i> Fire Safety
+                                <div class="d-grid gap-2 mb-4">
+                                    <button id="btn_fire_safety" class="btn bg-white border d-flex align-items-center justify-content-between p-3 rounded-3 text-start w-100 module-btn-link" style="transition: all 0.2s;">
+                                        <div class="d-flex align-items-center fw-semibold text-dark">
+                                            <div class="d-flex align-items-center justify-content-center rounded-3 me-3" style="width: 32px; height: 32px; background: #FEE2E2; color: #D12428;">
+                                                <i class="fas fa-fire"></i>
+                                            </div>
+                                            Fire Safety
+                                        </div>
+                                        <i class="fas fa-chevron-right text-muted small"></i>
                                     </button>
-                                    <button id="btn_typhoon" class="btn btn-module text-start mb-2 py-3 border">
-                                        <i class="fas fa-cloud-showers-heavy me-2 d-inline"></i> Typhoon/Flood
+                                    <button id="btn_typhoon" class="btn bg-white border d-flex align-items-center justify-content-between p-3 rounded-3 text-start w-100 module-btn-link" style="transition: all 0.2s;">
+                                        <div class="d-flex align-items-center fw-semibold text-dark">
+                                            <div class="d-flex align-items-center justify-content-center rounded-3 me-3" style="width: 32px; height: 32px; background: #E0F2FE; color: #1B4C6D;">
+                                                <i class="fas fa-cloud-showers-heavy"></i>
+                                            </div>
+                                            Typhoon/Flood
+                                        </div>
+                                        <i class="fas fa-chevron-right text-muted small"></i>
                                     </button>
-                                    <button id="btn_incident" class="btn btn-module text-start mb-2 py-3 border">
-                                        <i class="fas fa-clipboard-list me-2 d-inline"></i> Incidents
+                                    <button id="btn_incident" class="btn bg-white border d-flex align-items-center justify-content-between p-3 rounded-3 text-start w-100 module-btn-link" style="transition: all 0.2s;">
+                                        <div class="d-flex align-items-center fw-semibold text-dark">
+                                            <div class="d-flex align-items-center justify-content-center rounded-3 me-3" style="width: 32px; height: 32px; background: #FEF3C7; color: #D97706;">
+                                                <i class="fas fa-clipboard-list"></i>
+                                            </div>
+                                            Incidents
+                                        </div>
+                                        <i class="fas fa-chevron-right text-muted small"></i>
                                     </button>
-                                    <button id="btn_comprehensive" class="btn btn-module text-start mb-2 py-3 border">
-                                        <i class="fas fa-school me-2 d-inline"></i> CSS Assessment
+                                    <button id="btn_comprehensive" class="btn bg-white border d-flex align-items-center justify-content-between p-3 rounded-3 text-start w-100 module-btn-link" style="transition: all 0.2s;">
+                                        <div class="d-flex align-items-center fw-semibold text-dark">
+                                            <div class="d-flex align-items-center justify-content-center rounded-3 me-3" style="width: 32px; height: 32px; background: #F5EAE6; color: #5C4033;">
+                                                <i class="fas fa-school"></i>
+                                            </div>
+                                            CSS Assessment
+                                        </div>
+                                        <i class="fas fa-chevron-right text-muted small"></i>
                                     </button>
-                                    <button id="btn_damage_assessment" class="btn btn-module text-start mb-2 py-3 border">
-                                        <i class="fas fa-user-injured me-2 d-inline"></i> Damage Assessment
+                                    <button id="btn_damage_assessment" class="btn bg-white border d-flex align-items-center justify-content-between p-3 rounded-3 text-start w-100 module-btn-link opacity-50 disabled" style="transition: all 0.2s;">
+                                        <div class="d-flex align-items-center fw-semibold text-muted">
+                                            <div class="d-flex align-items-center justify-content-center rounded-3 me-3" style="width: 32px; height: 32px; background: #EDE9FE; color: #8B5CF6;">
+                                                <i class="fas fa-user-injured"></i>
+                                            </div>
+                                            Damage Assessment
+                                        </div>
                                     </button>
-                                    <button id="btn_hazard" class="btn btn-module text-start py-3 border">
-                                        <i class="fas fa-map-marked-alt me-2 d-inline"></i> Hazard (Dev)
+                                    <button id="btn_hazard" class="btn bg-white border d-flex align-items-center justify-content-between p-3 rounded-3 text-start w-100 module-btn-link opacity-50 disabled" style="transition: all 0.2s;">
+                                        <div class="d-flex align-items-center fw-semibold text-muted">
+                                            <div class="d-flex align-items-center justify-content-center rounded-3 me-3" style="width: 32px; height: 32px; background: #CCFBF1; color: #0D7377;">
+                                                <i class="fas fa-map-marked-alt"></i>
+                                            </div>
+                                            Hazard (Dev)
+                                        </div>
                                     </button>
                                 </div>
 
-                                <div class="mt-4 pt-3 border-top">
-                                    <h6 class="fw-bold mb-2">Unassigned Contributors/Viewers</h6>
-                                    <div id="availableSchoolUsersMenu" class="d-grid gap-2 small">
-                                        <div class="text-muted small">No available users.</div>
+                                <div class="mb-4">
+                                    <div class="form-section-label">Unassigned Contributors/Viewers</div>
+                                    <div id="availableSchoolUsersMenu" class="d-grid gap-2 mb-2">
+                                        <div class="text-muted small" style="font-style: italic;">No available users.</div>
                                     </div>
-
-                                    <div class="small text-muted mt-2" id="schoolAssignmentHint">Only unassigned contributors/viewers are listed here.</div>
+                                    <div class="small text-muted" id="schoolAssignmentHint" style="font-size: 0.75rem;">Only unassigned contributors/viewers are listed here.</div>
                                 </div>
 
-                                <div class="mt-3">
-                                    <h6 class="fw-bold mb-2">School Account Users</h6>
-                                    <div id="schoolAccountUsersList" class="small text-muted">No assigned school account users.</div>
+                                <div>
+                                    <div class="form-section-label">School Account Users</div>
+                                    <div id="schoolAccountUsersList" class="small text-muted" style="font-style: italic;">No assigned school account users.</div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer bg-light border-0 p-4 rounded-bottom-4">
+                    <div class="modal-footer d-flex justify-content-end align-items-center p-3 border-top bg-white">
+                        <button type="button" class="btn-cancel-school me-2" data-bs-dismiss="modal">Close</button>
                         @if(Auth::user()->role !== 'viewer')
-                        <button type="button" class="btn btn-dark px-4" id="editSchoolBtn">
+                        <button type="button" class="btn-save-school" id="editSchoolBtn">
                             <i class="fas fa-edit me-2"></i> Update Details
                         </button>
                         @endif
-                        {{--
-                        <button type="button" class="btn btn-outline-danger px-4" id="deleteSchoolBtn" style="display:none;">
-                            <i class="fas fa-trash me-2"></i> Delete
-                        </button>
-                        --}}
-                        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Close</button>
                     </div>
                 </div>
             </div>
@@ -922,156 +790,207 @@
             </div>
         </div>
 
-        <!-- Add School Modal -->
-        <div class="modal fade" id="addSchoolModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                    <div class="modal-header bg-dark text-white p-4">
-                        <h5 class="modal-title fw-bold"><i class="fas fa-plus-circle me-2 text-warning"></i> Add New School</h5>
+        <!-- Add School Modal (Wireframe Redesign) -->
+        <div class="modal fade modal-add-school" id="addSchoolModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <span class="title-icon"><i class="fas fa-plus"></i></span>
+                            Add New School
+                        </h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <form id="addSchoolForm">
                         @csrf
-                        <div class="modal-body p-4">
+                        <div class="modal-body">
+
+                            {{-- School Identification --}}
+                            <div class="form-section-label">School Identification</div>
                             <div class="mb-3">
-                                <label class="form-label fw-bold small text-uppercase">School Identification</label>
-                                <input type="text" name="school_name" class="form-control mb-2 p-3" required placeholder="Official School Name">
-                                <input type="text" name="school_id" class="form-control p-3" placeholder="DepEd School ID (Optional)">
+                                <label class="form-label">Official School Name</label>
+                                <input type="text" name="school_name" class="form-control" required placeholder="e.g. Abayuan Senior High School">
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label fw-bold small text-uppercase">School's Address</label>
-                                <textarea name="address" class="form-control p-3" rows="2" required placeholder="Complete School Address"></textarea>
+                            <div class="mb-4">
+                                <label class="form-label">DepEd School ID (Optional)</label>
+                                <input type="text" name="school_id" class="form-control" placeholder="e.g. 107119">
                             </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold small text-uppercase">School Head</label>
-                                    <input type="text" name="school_head" class="form-control p-3" placeholder="Enter School Head Name">
+
+                            {{-- Address --}}
+                            <div class="form-section-label">School's Address</div>
+                            <div class="mb-4">
+                                <textarea name="address" class="form-control" rows="3" placeholder="Complete school address"></textarea>
+                            </div>
+
+                            {{-- Personnel --}}
+                            <div class="form-section-label">Personnel</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-6">
+                                    <label class="form-label">School Head</label>
+                                    <input type="text" name="school_head" class="form-control" placeholder="Enter school head name">
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold small text-uppercase">DRRM Coordinator</label>
-                                    <input type="text" name="drrm_coordinator" class="form-control p-3" placeholder="Enter DRRM Coordinator Name">
+                                <div class="col-6">
+                                    <label class="form-label">DRRM Coordinator</label>
+                                    <input type="text" name="drrm_coordinator" class="form-control" placeholder="Enter DRRM coordinator name">
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label fw-bold small text-uppercase">District</label>
+
+                            {{-- Location --}}
+                            <div class="form-section-label">Location Details</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-4">
+                                    <label class="form-label">District</label>
                                     <input type="text" name="district" class="form-control" placeholder="Dist.">
                                 </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label fw-bold small text-uppercase">Division</label>
+                                <div class="col-4">
+                                    <label class="form-label">Division</label>
                                     <input type="text" name="division" class="form-control" placeholder="Div.">
                                 </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label fw-bold small text-uppercase">Region</label>
+                                <div class="col-4">
+                                    <label class="form-label">Region</label>
                                     <input type="text" name="region" class="form-control" placeholder="Reg.">
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label fw-bold small text-uppercase">Number of Students</label>
+
+                            {{-- Site Details --}}
+                            <div class="form-section-label">Site Details</div>
+                            <div class="row g-3">
+                                <div class="col-3">
+                                    <label class="form-label">No. of Students</label>
                                     <input type="number" name="number_students" class="form-control" min="0" value="0">
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label fw-bold small text-uppercase">Number of Personnel</label>
+                                <div class="col-3">
+                                    <label class="form-label">No. of Personnel</label>
                                     <input type="number" name="number_personnel" class="form-control" min="0" value="0">
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label fw-bold small text-uppercase">Number of Gates</label>
+                                <div class="col-3">
+                                    <label class="form-label">No. of Gates</label>
                                     <input type="number" name="number_gates" class="form-control" min="0" value="0">
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label fw-bold small text-uppercase">Engineer Last Inspection Date</label>
+                                <div class="col-3">
+                                    <label class="form-label">Last Inspection</label>
                                     <input type="date" name="engineer_last_inspection_date" class="form-control">
                                 </div>
                             </div>
+
                         </div>
-                        <div class="modal-footer border-0 p-4 pt-0">
-                            <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-dark px-5 py-2 fw-bold rounded-pill">Save School</button>
+                        <div class="modal-footer">
+                            <button type="button" class="btn-cancel-school" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn-save-school">
+                                <i class="fas fa-save"></i> Save School
+                            </button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
 
-        <!-- Edit School Modal -->
-        <div class="modal fade" id="editSchoolModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content border-0 shadow-lg rounded-4">
-                    <div class="modal-header bg-dark text-white p-4">
-                        <h5 class="modal-title fw-bold"><i class="fas fa-edit me-2"></i> Update Information</h5>
+        <!-- Edit School Modal (Redesigned to match Add School) -->
+        <div class="modal fade modal-add-school" id="editSchoolModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" style="max-width:540px;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <span class="title-icon"><i class="fas fa-pen"></i></span>
+                            Update School Information
+                        </h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <form id="editSchoolForm" method="POST">
                         @csrf
                         @method('PUT')
-                        <div class="modal-body p-4">
-                            <div class="row g-3">
-                                <div class="col-md-9 mb-2">
-                                    <label class="form-label fw-bold small">Official School Name</label>
-                                    <input type="text" name="school_name" class="form-control" required>
+                        <div class="modal-body">
+
+                            {{-- School Identification --}}
+                            <div class="form-section-label">School Identification</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-8">
+                                    <label class="form-label">Official School Name</label>
+                                    <input type="text" name="school_name" class="form-control" required placeholder="e.g. Abayuan Senior High School">
                                 </div>
-                                <div class="col-md-3 mb-2">
-                                    <label class="form-label fw-bold small">School ID</label>
-                                    <input type="text" name="school_id" class="form-control">
-                                </div>
-                                <div class="col-md-12 mb-2">
-                                    <label class="form-label fw-bold small">School Address</label>
-                                    <textarea name="address" class="form-control" rows="2" required></textarea>
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label fw-bold small">School Head</label>
-                                    <input type="text" name="school_head" class="form-control" placeholder="Enter School Head Name">
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label fw-bold small">Head Contact No.</label>
-                                    <input type="text" name="contact_number" class="form-control">
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label fw-bold small">DRRM Coordinator</label>
-                                    <input type="text" name="drrm_coordinator" class="form-control" placeholder="Enter DRRM Coordinator Name">
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label fw-bold small">Coord. Contact No.</label>
-                                    <input type="text" name="contact_number_2" class="form-control">
-                                </div>
-                                <div class="col-md-4 mb-2">
-                                    <label class="form-label fw-bold small">District</label>
-                                    <input type="text" name="district" class="form-control">
-                                </div>
-                                <div class="col-md-4 mb-2">
-                                    <label class="form-label fw-bold small">Division</label>
-                                    <input type="text" name="division" class="form-control">
-                                </div>
-                                <div class="col-md-4 mb-2">
-                                    <label class="form-label fw-bold small">Region</label>
-                                    <input type="text" name="region" class="form-control">
-                                </div>
-                                <div class="col-md-3 mb-2">
-                                    <label class="form-label fw-bold small">Number of Students</label>
-                                    <input type="number" name="number_students" class="form-control" min="0">
-                                </div>
-                                <div class="col-md-3 mb-2">
-                                    <label class="form-label fw-bold small">Number of Personnel</label>
-                                    <input type="number" name="number_personnel" class="form-control" min="0">
-                                </div>
-                                <div class="col-md-3 mb-2">
-                                    <label class="form-label fw-bold small">Number of Gates</label>
-                                    <input type="number" name="number_gates" class="form-control" min="0">
-                                </div>
-                                <div class="col-md-3 mb-2">
-                                    <label class="form-label fw-bold small">Engineer Last Inspection Date</label>
-                                    <input type="date" name="engineer_last_inspection_date" class="form-control">
-                                </div>
-                                <div class="col-md-12">
-                                    <label class="form-label fw-bold small">Emergency Resources</label>
-                                    <textarea name="emergency_resources" class="form-control" rows="2"></textarea>
+                                <div class="col-4">
+                                    <label class="form-label">School ID</label>
+                                    <input type="text" name="school_id" class="form-control" placeholder="e.g. 107119">
                                 </div>
                             </div>
+
+                            {{-- Address --}}
+                            <div class="form-section-label">School's Address</div>
+                            <div class="mb-4">
+                                <textarea name="address" class="form-control" rows="3" placeholder="Complete school address" required></textarea>
+                            </div>
+
+                            {{-- Personnel --}}
+                            <div class="form-section-label">Personnel</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-6">
+                                    <label class="form-label">School Head</label>
+                                    <input type="text" name="school_head" class="form-control" placeholder="Enter school head name">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Head Contact No.</label>
+                                    <input type="text" name="contact_number" class="form-control" placeholder="e.g. 09xxxxxxxxx">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">DRRM Coordinator</label>
+                                    <input type="text" name="drrm_coordinator" class="form-control" placeholder="Enter DRRM coordinator name">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Coord. Contact No.</label>
+                                    <input type="text" name="contact_number_2" class="form-control" placeholder="e.g. 09xxxxxxxxx">
+                                </div>
+                            </div>
+
+                            {{-- Location --}}
+                            <div class="form-section-label">Location Details</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-4">
+                                    <label class="form-label">District</label>
+                                    <input type="text" name="district" class="form-control" placeholder="Dist.">
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label">Division</label>
+                                    <input type="text" name="division" class="form-control" placeholder="Div.">
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label">Region</label>
+                                    <input type="text" name="region" class="form-control" placeholder="Reg.">
+                                </div>
+                            </div>
+
+                            {{-- Site Details --}}
+                            <div class="form-section-label">Site Details</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-3">
+                                    <label class="form-label">No. of Students</label>
+                                    <input type="number" name="number_students" class="form-control" min="0">
+                                </div>
+                                <div class="col-3">
+                                    <label class="form-label">No. of Personnel</label>
+                                    <input type="number" name="number_personnel" class="form-control" min="0">
+                                </div>
+                                <div class="col-3">
+                                    <label class="form-label">No. of Gates</label>
+                                    <input type="number" name="number_gates" class="form-control" min="0">
+                                </div>
+                                <div class="col-3">
+                                    <label class="form-label">Last Inspection</label>
+                                    <input type="date" name="engineer_last_inspection_date" class="form-control">
+                                </div>
+                            </div>
+
+                            {{-- Emergency Resources --}}
+                            <div class="form-section-label">Emergency Resources</div>
+                            <div class="mb-2">
+                                <textarea name="emergency_resources" class="form-control" rows="2" placeholder="List available emergency resources..."></textarea>
+                            </div>
+
                         </div>
-                        <div class="modal-footer bg-light border-0 p-4 rounded-bottom-4">
-                            <button type="button" class="btn btn-outline-secondary px-4 text-uppercase fw-bold small" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-dark px-5 text-uppercase fw-bold small">Update School</button>
+                        <div class="modal-footer">
+                            <button type="button" class="btn-cancel-school" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn-save-school">
+                                <i class="fas fa-save"></i> Update School
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -1326,15 +1245,26 @@
         const schoolAccountUsers = Array.isArray(data.school_account_users) ? data.school_account_users : [];
 
         if (!availableUsers.length) {
-            availableMenu.innerHTML = '<div class="text-muted small px-2 py-1">No available users.</div>';
+            availableMenu.innerHTML = '<div class="text-muted small" style="font-style: italic;">No available users.</div>';
         } else {
             availableMenu.innerHTML = availableUsers.map((u) => {
                 const roleLabel = u.role === 'viewer' ? 'Viewer' : 'Contributor';
+                const nameStr = u.name || '';
+                const initials = nameStr.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
                 return `
-                    <div class="border rounded p-2">
-                        <div class="fw-semibold">${escapeHtml(u.name)} <span class="text-muted">(${escapeHtml(roleLabel)})</span></div>
-                        <div class="text-muted mb-2">${escapeHtml(u.email)}</div>
-                        <button type="button" class="btn btn-sm btn-dark assign-school-user-btn" data-user-id="${u.id}">Assign</button>
+                    <div class="d-flex align-items-center justify-content-between p-3 border rounded-3 mb-2 bg-white shadow-sm">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center me-3 fw-bold" style="width: 40px; height: 40px; font-size: 0.9rem;">
+                                ${escapeHtml(initials)}
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark" style="font-size: 0.9rem; line-height: 1.2;">
+                                    ${escapeHtml(u.name)} <span class="fw-normal text-muted" style="font-size: 0.85rem;">(${escapeHtml(roleLabel)})</span>
+                                </div>
+                                <div class="text-muted small mt-1" style="line-height: 1.2;">${escapeHtml(u.email)}</div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-dark btn-sm px-4 fw-semibold rounded-2 assign-school-user-btn" style="padding-top: 6px; padding-bottom: 6px;" data-user-id="${u.id}">Assign</button>
                     </div>
                 `;
             }).join('');
@@ -1504,35 +1434,50 @@
         });
     }
 
-    /* Tab Switching Logic (Phase 2) */
+    /* Tab Switching Logic — with smooth fade+slide animation */
     function switchDashboardTab(tabName) {
         const complianceBtn = document.getElementById('complianceTabBtn');
-        const schoolsBtn = document.getElementById('schoolsTabBtn');
+        const schoolsBtn    = document.getElementById('schoolsTabBtn');
         const complianceContent = document.getElementById('complianceTabContent');
-        const schoolsContent = document.getElementById('schoolsTabContent');
+        const schoolsContent    = document.getElementById('schoolsTabContent');
+        if (!complianceContent || !schoolsContent) return;
+
+        const DURATION = 220; // ms for fade-out before swap
+
+        function fadeOut(el, cb) {
+            el.style.transition = 'opacity ' + DURATION + 'ms ease, transform ' + DURATION + 'ms ease';
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(12px)';
+            setTimeout(() => { el.style.display = 'none'; el.style.transition = ''; el.style.opacity = ''; el.style.transform = ''; cb(); }, DURATION);
+        }
+
+        function fadeIn(el) {
+            el.style.display = 'block';
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(12px)';
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    el.style.transition = 'opacity ' + DURATION + 'ms ease, transform ' + DURATION + 'ms ease';
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                    setTimeout(() => { el.style.transition = ''; el.style.opacity = ''; el.style.transform = ''; }, DURATION);
+                });
+            });
+        }
 
         if (tabName === 'schools') {
             complianceBtn.classList.remove('active');
             schoolsBtn.classList.add('active');
-            complianceContent.classList.add('d-none');
-            complianceContent.classList.remove('tab-content-active');
-            schoolsContent.classList.remove('d-none');
-            schoolsContent.classList.add('tab-content-active');
-
-            const schoolSearchInput = document.getElementById('schoolSearchInput');
-            if (schoolSearchInput) {
-                schoolSearchInput.value = '';
-                schoolSearchInput.dispatchEvent(new Event('input', { bubbles: true }));
-            }
-
+            fadeOut(complianceContent, () => {
+                fadeIn(schoolsContent);
+                const si = document.getElementById('schoolSearchInput');
+                if (si) { si.value = ''; si.dispatchEvent(new Event('input', { bubbles: true })); }
+            });
             localStorage.setItem('activeDashboardTab', 'schools');
         } else {
             schoolsBtn.classList.remove('active');
             complianceBtn.classList.add('active');
-            schoolsContent.classList.add('d-none');
-            schoolsContent.classList.remove('tab-content-active');
-            complianceContent.classList.remove('d-none');
-            complianceContent.classList.add('tab-content-active');
+            fadeOut(schoolsContent, () => fadeIn(complianceContent));
             localStorage.setItem('activeDashboardTab', 'compliance');
         }
     }
@@ -1896,7 +1841,7 @@
             const errEl = document.getElementById('deleteSchoolPasswordError');
             const confirmBtn = document.getElementById('deleteSchoolConfirmBtn');
 
-            if (nameEl) nameEl.textContent = school.school_name || '—';
+            if (nameEl) nameEl.textContent = school.school_name || 'â€”';
             if (idEl) idEl.value = school.id;
             if (pwdEl) pwdEl.value = '';
             if (errEl) errEl.style.display = 'none';

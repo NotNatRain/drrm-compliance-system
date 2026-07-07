@@ -21,7 +21,6 @@ Auth::routes();
 Route::get('password/verify', [\App\Http\Controllers\Auth\PasswordResetCodeController::class, 'showVerifyForm'])->name('password.verify-form');
 Route::post('password/verify', [\App\Http\Controllers\Auth\PasswordResetCodeController::class, 'verifyCode'])->name('password.verify-code');
 
-Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
 // Main dashboard
 Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
@@ -244,6 +243,7 @@ Route::prefix('typhoon')->middleware(['auth', 'module.access:typhoon_flood'])->g
     Route::put('/families/{id}', [TyphoonController::class, 'updateFamily'])->name('typhoon.families.update');
     Route::post('/families/{id}/decamp', [TyphoonController::class, 'decampFamily'])->name('typhoon.families.decamp');
     Route::get('/evacuation-center/{id}', [TyphoonController::class, 'showEvacuationCenter'])->name('typhoon.evacuation-center.show');
+    Route::get('/evacuation-center/{id}/print', [TyphoonController::class, 'printEvacuationCenter'])->name('typhoon.evacuation-center.print');
     Route::post('/evacuation-center', [TyphoonController::class, 'storeEvacuationCenter'])->name('typhoon.evacuation-center.store');
     Route::put('/evacuation-center/{id}', [TyphoonController::class, 'updateEvacuationCenter'])->name('typhoon.evacuation-center.update');
     Route::get('/realtime', [TyphoonController::class, 'realtime'])->name('typhoon.realtime');
