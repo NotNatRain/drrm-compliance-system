@@ -120,11 +120,6 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">
-                            <i class="fa-solid fa-truck-ramp-box me-2"></i> Distributions
-                        </a>
-                    </li>
-                    <li class="nav-item">
                         <a class="nav-link" href="{{ route('inventory-storage.default-list') }}">
                             <i class="fa-solid fa-list me-2"></i> Default List
                         </a>

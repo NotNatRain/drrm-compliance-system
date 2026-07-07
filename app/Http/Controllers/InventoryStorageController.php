@@ -27,8 +27,9 @@ class InventoryStorageController extends Controller
     public function store(Request $request) 
     { 
         $validated = $request->validate([ 
-            'item_name' => 'required|string|max:255', 
-            'unit' => 'nullable|string|max:50', 
+            'id' => 'required|integer|unique:inventory_storages',
+            'emergecnySupplies' => 'required|integer|min:0',
+            'rescueSupplies' => 'required|integer|min:0',
             'quantity' => 'required|integer|min:0', 
             'status' => 'required|string', 
             'location' => 'nullable|string|max:255', 
