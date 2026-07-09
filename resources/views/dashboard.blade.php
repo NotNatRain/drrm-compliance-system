@@ -5,6 +5,84 @@
 
 @push('styles')
 <style>
+        .announcement-banner {
+        position: relative;
+        width: 100%;
+        padding-top: 25%; /* Reduced height */
+        overflow: hidden;
+        border-radius: 15px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        margin-bottom: 2.5rem;
+        background-color: #ffffff;
+    }
+    @media (max-width: 768px) {
+        .announcement-banner {
+            padding-top: 56.25%; /* 16:9 on mobile */
+        }
+    }
+    .announcement-banner .carousel-inner {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+    .announcement-banner img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: contain; /* Shows white spaces at sides if not landscape */
+        transition: transform 0.5s ease;
+    }
+    .announcement-banner:hover img {
+        transform: scale(1.02);
+    }
+    .announcement-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(transparent, rgba(0,0,0,0.85));
+        color: white;
+        padding: 40px;
+        z-index: 2;
+    }
+    .announcement-content {
+        max-width: 80% ;
+    }
+    .announcement-meta {
+        font-size: 0.9rem;
+        opacity: 0.9;
+        margin-bottom: 10px;
+    }
+    .announcement-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    .announcement-why {
+        font-size: 1.1rem;
+        line-height: 1.4;
+        opacity: 0.95;
+    }
+    .delete-announcement-btn {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 10;
+        background: rgba(220, 53, 69, 0.8);
+        border: none;
+        color: white;
+        padding: 5px 12px;
+        border-radius: 5px;
+        backdrop-filter: blur(5px);
+    }
+    .delete-announcement-btn:hover {
+        background: #dc3545;
+    }
     /* Dashboard Wireframe Styles */
     .dashboard-welcome {
         font-size: 1rem;
@@ -226,7 +304,84 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @endpush
 
-@section('content')
+    @section('content')
+<div class="container-fluid dashboard-container">
+    @php
+        $user = auth()->user();
+        $modules = $user?->module_access ?? [];
+        $isAdmin = $user && $user->role === 'admin';
+        $isContributor = $user && $user->role === 'contributor';
+        $canShowSchoolTab = $isAdmin || $isContributor;
+    @endphp
+    @if($announcements->count() == 0)
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <p class="text-muted mb-0">Welcome back, <strong>{{ Auth::user()->name }}</strong>! Select a compliance system to manage.</p>
+        </div>
+    @endif
+
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+            <i class="fas fa-check-circle me-1"></i> {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            <i class="fas fa-triangle-exclamation me-1"></i> {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+        @if($announcements->count() > 0)
+        {{-- ... (Rest of Carousel remains same) --}}
+        <div id="announcementCarousel" class="carousel slide announcement-banner mb-5" data-bs-ride="carousel" data-bs-interval="5000">
+            @if($announcements->count() > 1)
+                <div class="carousel-indicators">
+                    @foreach($announcements as $index => $announcement)
+                        <button type="button" data-bs-target="#announcementCarousel" data-bs-slide-to="{{ $index }}" class="{{ $index === 0 ? 'active' : '' }}" aria-label="Slide {{ $index + 1 }}"></button>
+                    @endforeach
+                </div>
+            @endif
+
+            <div class="carousel-inner h-100">
+                @foreach($announcements as $index => $announcement)
+                    <div class="carousel-item h-100 {{ $index === 0 ? 'active' : '' }}">
+                        @if(Auth::user()->role === 'admin')
+                            <button class="delete-announcement-btn" onclick="deleteAnnouncement({{ $announcement->id }})" title="Remove Announcement">
+                                <i class="fas fa-times me-1"></i> Remove
+                            </button>
+                        @endif
+                        <img src="{{ \Illuminate\Support\Facades\Storage::disk(config('filesystems.default'))->url($announcement->image_path) }}" class="d-block w-100" alt="Announcement Poster">
+                        <div class="announcement-overlay">
+                            <div class="announcement-content">
+                                <p class="announcement-meta">
+                                    <i class="far fa-calendar-alt me-1"></i> {{ \Carbon\Carbon::parse($announcement->when)->format('F j, Y \a\t h:i A') }}
+                                    <span class="mx-2">|</span>
+                                    <i class="fas fa-map-marker-alt me-1"></i> {{ $announcement->where }}
+                                </p>
+                                <h2 class="announcement-title">{{ $announcement->what }}</h2>
+                                <p class="announcement-why mb-0">{{ $announcement->why }}</p>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            @if($announcements->count() > 1)
+                <button class="carousel-control-prev" type="button" data-bs-target="#announcementCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#announcementCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+            @endif
+        </div>
+    @endif
+
+    @section('content')
 <div class="container-fluid px-4 px-lg-5">
     @php
         $user = auth()->user();
