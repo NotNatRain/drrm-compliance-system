@@ -1,4 +1,4 @@
-{{-- Family Registration Modal (Already Updated) --}}
+
 <div class="modal fade" id="familyRegistrationModal" tabindex="-1" aria-labelledby="familyRegistrationModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <form method="POST" action="{{ route('typhoon.families.store') }}" id="familyRegistrationForm">

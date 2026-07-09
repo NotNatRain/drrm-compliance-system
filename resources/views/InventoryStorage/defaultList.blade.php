@@ -213,31 +213,31 @@ body{
                         </td>
                         <td class="text-center">
 
-    <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-        <option value="">Select Source</option>
-        <option value="deped">DepEd</option>
-        <option value="partner">Partner</option>
-    </select>
+                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
+                            <option value="">Select Source</option>
+                            <option value="deped">DepEd</option>
+                            <option value="partner">Partner</option>
+                        </select>
 
-    <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-        <option value="">Select DepEd Source</option>
-        <option value="GAA">GAA</option>
-        <option value="Special Purpose Fund">Special Purpose Fund</option>
-        <option value="Other DepEd Sources">Other DepEd Sources</option>
-        <option value="Others">Others</option>
-    </select>
+                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
+                            <option value="">Select DepEd Source</option>
+                            <option value="GAA">GAA</option>
+                            <option value="Special Purpose Fund">Special Purpose Fund</option>
+                            <option value="Other DepEd Sources">Other DepEd Sources</option>
+                            <option value="Others">Others</option>
+                        </select>
 
-    <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-        <option value="">Select Partner Source</option>
-        <option value="NGO">NGO</option>
-        <option value="LGU">LGU</option>
-        <option value="Private Sector">Private Sector</option>
-        <option value="Others">Others</option>
-    </select>
+                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
+                            <option value="">Select Partner Source</option>
+                            <option value="NGO">NGO</option>
+                            <option value="LGU">LGU</option>
+                            <option value="Private Sector">Private Sector</option>
+                            <option value="Others">Others</option>
+                        </select>
 
-</td>
+                    </td>
                         <td class="text-center">
-                            <input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0">
+                            <input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required>
                         </td>
                     </tr>
 
@@ -266,7 +266,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -294,7 +294,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -322,7 +322,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -350,7 +350,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -378,7 +378,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
