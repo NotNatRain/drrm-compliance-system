@@ -234,7 +234,7 @@ Route::get('/firesafety-buildings/{building_id}/rooms', [FireSafetyController::c
 
 
 
-//Typhoon/Flood Routes
+//Evacuation Management Routes
 Route::prefix('typhoon')->middleware(['auth', 'module.access:typhoon_flood'])->group(function () {
     Route::get('/dashboard', [TyphoonController::class, 'dashboard'])->name('typhoon.dashboard');
     Route::get('/choose-school', [TyphoonController::class, 'chooseSchool'])->name('typhoon.choose-school');

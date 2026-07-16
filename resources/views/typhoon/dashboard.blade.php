@@ -304,7 +304,7 @@
             <div>
                 <h1 class="h3 mb-0 fw-bold text-white">
                     <i class="fas fa-satellite-dish me-2" style="color: var(--accent-blue);"></i>
-                    Typhoon & Flood Monitoring System
+                    Evacuation Management System
                 </h1>
             </div>
         </div>
@@ -349,164 +349,89 @@
         </div>
     </div>
 
-    {{-- Main Layout Grid --}}
-    <div class="row g-4 mb-4">
-        {{-- Left Section (65%) --}}
-        <div class="col-lg-8">
-            <div class="row g-4">
-                {{-- 1st Row: Estimated Affected Population & Incident Monitoring --}}
-                <div class="col-md-6">
-                    <div class="dashboard-card">
-                        <div class="card-header-custom"><i class="fas fa-users"></i>Estimated Affected Population</div>
-                        <div class="p-4">
-                            <div class="row g-0 align-items-center">
-                                <div class="col-6 mb-4">
-                                    <div class="stat-label">Total Families</div>
-                                    <div class="stat-value text-primary">{{ $totalFamilies ?? 0 }}</div>
-                                </div>
-                                <div class="col-6 mb-4">
-                                    <div class="stat-label">Total Individuals</div>
-                                    <div class="stat-value">{{ $totalEvacuees ?? 0 }}</div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="d-flex align-items-center justify-content-between p-3 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-                                        <div class="stat-label mb-0">Active Evacuation Centers</div>
-                                        <div class="h4 mb-0 fw-bold text-primary">{{ $openEvacuationCentersCount ?? 0 }}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+{{-- Main Row spanning 100% width --}}
+<div class="row g-4 mb-4 mx-0 w-100">
 
-                <div class="col-md-6">
-                    <div class="dashboard-card">
-                        <div class="card-header-custom"><i class="fas fa-exclamation-triangle"></i>Incident Monitoring</div>
-                        <div class="p-4">
-                            <div class="d-flex flex-column gap-3">
-                                <div class="d-flex justify-content-between align-items-center p-3 rounded" style="background: #fff5f5; border-left: 4px solid #dc3545;">
-                                    <div>
-                                        <div class="fw-bold" style="color: #991b1b;">Major Incidents</div>
-                                        <small class="text-muted">High priority response</small>
-                                    </div>
-                                    <div class="stat-value" style="color: #dc3545;">{{ $incidentMonitoring['major'] ?? 0 }}</div>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center p-3 rounded" style="background: #f0fdf4; border-left: 4px solid #198754;">
-                                    <div>
-                                        <div class="fw-bold" style="color: #166534;">Minor Incidents</div>
-                                        <small class="text-muted">Managed/Under control</small>
-                                    </div>
-                                    <div class="stat-value" style="color: #198754;">{{ $incidentMonitoring['minor'] ?? 0 }}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    {{-- Left Card: Estimated Affected Population --}} 
+    <div class="col-md-6"> 
+        <div class="dashboard-card h-100"> 
+            <div class="card-header-custom"><i class="fas fa-users"></i>Estimated Affected Population</div> 
+            <div class="p-4"> 
+                <div class="row g-0 align-items-center"> 
+                    <div class="col-6 mb-4"> 
+                        <div class="stat-label">Total Families</div> 
+                        <div class="stat-value text-primary">{{ $totalFamilies ?? 0 }}</div> 
+                    </div> 
+                    <div class="col-6 mb-4"> 
+                        <div class="stat-label">Total Individuals</div> 
+                        <div class="stat-value">{{ $totalEvacuees ?? 0 }}</div> 
+                    </div> 
+                    <div class="col-12"> 
+                        <div class="d-flex align-items-center justify-content-between p-3 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0;"> 
+                            <div class="stat-label mb-0">Active Evacuation Centers</div> 
+                            <div class="h4 mb-0 fw-bold text-primary">{{ $openEvacuationCentersCount ?? 0 }}</div> 
+                        </div> 
+                    </div> 
+                </div> 
+            </div> 
+        </div> 
+    </div> 
 
-                {{-- 2nd Row: Daily Rainfall (MM) & Weather Forecast --}}
-                <div class="col-md-6">
-                    <div class="dashboard-card">
-                        <div class="card-header-custom"><i class="fas fa-cloud-showers-heavy"></i>Daily Rainfall (MM)</div>
-                        <div class="p-4">
-                            <div class="row">
-                                <div class="col-6">
-                                    <div class="p-3 text-center rounded" style="background: #f0f9ff;">
-                                        <div class="stat-label">Bangal Station</div>
-                                        <div class="h3 mb-0 fw-bold text-primary">{{ $rainfall['bangal'] ?? '0.0' }} <small>mm</small></div>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="p-3 text-center rounded" style="background: #f0f9ff;">
-                                        <div class="stat-label">Kalaklan Station</div>
-                                        <div class="h3 mb-0 fw-bold text-primary">{{ $rainfall['kalaklan'] ?? '0.0' }} <small>mm</small></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mt-4">
-                                <div class="progress" style="height: 6px; background: #f1f5f9;">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 45%;"></div>
-                                </div>
-                                <small class="text-muted mt-2 d-block">Accumulated precipitation last 24h</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    {{-- Right Card: Occupancy Overview --}} 
+    <div class="col-md-6"> 
+        <div class="dashboard-card d-flex flex-column h-100"> 
+            <div class="card-header-custom justify-content-between"> 
+                <div class="d-flex align-items-center"> 
+                    <i class="fas fa-chart-pie"></i>Occupancy Overview 
+                </div> 
+                <div class="dropdown"> 
+                    <button class="btn btn-sm occupancy-filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"> 
+                        <i class="fas fa-filter"></i> Filter 
+                    </button> 
+                    <div class="dropdown-menu occupancy-filter-menu"> 
+                        <div class="mb-2"> 
+                            <label for="occupancySortOrder" class="form-label mb-1 small text-uppercase text-muted fw-semibold">Sort By</label> 
+                            <select id="occupancySortOrder" class="form-select form-select-sm"> 
+                                <option value="alphabetical">Alphabetical</option> 
+                                <option value="highest">Highest to Lowest</option> 
+                                <option value="newest">Newest to Lowest</option> 
+                            </select> 
+                        </div> 
+                        <div> 
+                            <div class="small text-uppercase text-muted fw-semibold mb-1">Direction</div> 
+                            <div class="form-check"> 
+                                <input class="form-check-input" type="radio" name="occupancyDirection" id="occupancyDirectionLtr" value="ltr" checked> 
+                                <label class="form-check-label small" for="occupancyDirectionLtr">Left to Right</label> 
+                            </div> 
+                            <div class="form-check"> 
+                                <input class="form-check-input" type="radio" name="occupancyDirection" id="occupancyDirectionRtl" value="rtl"> 
+                                <label class="form-check-label small" for="occupancyDirectionRtl">Right to Left</label> 
+                            </div> 
+                        </div> 
+                    </div> 
+                </div> 
+            </div> 
+            <div class="p-2 flex-grow-1 d-flex flex-column justify-content-between"> 
+                <div class="occupancy-chart-panel" style="position: relative; overflow-x: auto; width: 100%;"> 
+                    <div id="occupancyChartScroll" class="occupancy-chart-scroll" style="width: 100%;"> 
+                        <canvas id="occupancyChart" style="width: 100%; min-height: 200px;"></canvas> 
+                    </div> 
+                </div> 
+                <div class="occupancy-summary"> 
+                    <div class="d-flex justify-content-between small mb-1"> 
+                        <span class="text-muted">Total System Capacity</span> 
+                        <span class="fw-bold">{{ $totalSystemCapacity ?? 0 }}</span> 
+                    </div> 
+                    <div class="progress" style="height: 8px; background: #f1f5f9;"> 
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: 100%;"></div> 
+                    </div> 
+                </div> 
+            </div> 
+        </div> 
+    </div> 
 
-                <div class="col-md-6">
-                    <div class="dashboard-card">
-                        <div class="card-header-custom"><i class="fas fa-cloud-sun-rain"></i>Weather Forecast</div>
-                        <div class="p-4">
-                            <div class="d-flex align-items-center mb-4">
-                                <div class="me-4">
-                                    <i class="fas fa-cloud-showers-water fa-3x text-primary"></i>
-                                </div>
-                                <div>
-                                    <div class="h3 mb-0 fw-bold">{{ $typhoonData->name ?? 'Moderate Rain' }}</div>
-                                    <div class="text-muted">{{ $typhoonData->temp ?? '28' }}°C | {{ $typhoonData->wind ?? '15' }} km/h Wind</div>
-                                </div>
-                            </div>
-                            <div class="small p-2 rounded bg-light border text-center">
-                                <i class="fas fa-info-circle me-1 text-primary"></i> Public Storm Warning Signal #1 Active
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+</div>
 
-        {{-- Right Section: Occupancy Overview (35%) --}}
-        <div class="col-lg-4">
-            <div class="dashboard-card d-flex flex-column">
-                <div class="card-header-custom justify-content-between">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-chart-pie"></i>Occupancy Overview
-                    </div>
-                    <div class="dropdown">
-                        <button class="btn btn-sm occupancy-filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-filter"></i> Filter
-                        </button>
-                        <div class="dropdown-menu occupancy-filter-menu">
-                            <div class="mb-2">
-                                <label for="occupancySortOrder" class="form-label mb-1 small text-uppercase text-muted fw-semibold">Sort By</label>
-                                <select id="occupancySortOrder" class="form-select form-select-sm">
-                                    <option value="alphabetical">Alphabetical</option>
-                                    <option value="highest">Highest to Lowest</option>
-                                    <option value="newest">Newest to Lowest</option>
-                                </select>
-                            </div>
-                            <div>
-                                <div class="small text-uppercase text-muted fw-semibold mb-1">Direction</div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="occupancyDirection" id="occupancyDirectionLtr" value="ltr" checked>
-                                    <label class="form-check-label small" for="occupancyDirectionLtr">Left to Right</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="occupancyDirection" id="occupancyDirectionRtl" value="rtl">
-                                    <label class="form-check-label small" for="occupancyDirectionRtl">Right to Left</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="p-2 flex-grow-1 d-flex flex-column">
-                    <div class="occupancy-chart-panel" style="position: relative; overflow-x: auto;">
-                        <div id="occupancyChartScroll" class="occupancy-chart-scroll">
-                            <canvas id="occupancyChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="occupancy-summary">
-                        <div class="d-flex justify-content-between small mb-1">
-                            <span class="text-muted">Total System Capacity</span>
-                            <span class="fw-bold">{{ $totalSystemCapacity ?? 0 }}</span>
-                        </div>
-                        <div class="progress" style="height: 8px; background: #f1f5f9;">
-                            <div class="progress-bar bg-warning" role="progressbar" style="width: 100%;"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     {{-- ═══ Active Typhoon Alert Banner (only shown when a TC is near Philippines) ═══ --}}
     @if(!empty($activeTyphoon))
