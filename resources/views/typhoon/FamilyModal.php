@@ -1,3 +1,5 @@
+import { io } from "socket.io-client";
+
 
 <div class="modal fade" id="familyRegistrationModal" tabindex="-1" aria-labelledby="familyRegistrationModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
