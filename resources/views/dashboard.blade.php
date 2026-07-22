@@ -313,11 +313,11 @@
         $isContributor = $user && $user->role === 'contributor';
         $canShowSchoolTab = $isAdmin || $isContributor;
     @endphp
-    @if($announcements->count() == 0)
+    <!-- @if($announcements->count() == 0)
         <div class="d-flex justify-content-between align-items-center mb-4">
             <p class="text-muted mb-0">Welcome back, <strong>{{ Auth::user()->name }}</strong>! Select a compliance system to manage.</p>
         </div>
-    @endif
+    @endif -->
 
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">

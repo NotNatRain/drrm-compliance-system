@@ -530,23 +530,36 @@ class TyphoonController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'evacuation_center_id' => 'required|integer|exists:schools,id',
-            'registration_mode' => 'required|string|in:new,existing',
-            'existing_family_id' => 'nullable|integer|exists:typ_fld_families,id|required_if:registration_mode,existing',
-            'head_family_name' => 'required|string|max:255',
-            'needs' => 'required|array|min:1',
-            'needs.*.need_name' => 'required|string|max:255',
-            'needs.*.custom_need' => 'nullable|string|max:255',
-            'needs.*.quantity' => 'required|integer|min:1|max:999',
-            'has_pregnant' => 'nullable|boolean',
-            'has_pwd' => 'nullable|boolean',
-            'has_senior' => 'nullable|boolean',
-            'has_lactating' => 'nullable|boolean',
-            'has_child_under5' => 'nullable|boolean',
-            'confirm_check_in' => 'nullable|in:on,1,true',
-            'members' => 'required|array|min:1',
-            'members.*.full_name' => 'required|string|max:255',
-            'members.*.age' => 'required|integer|min:0|max:120',
-            'members.*.gender' => 'required|in:male,female',
+            'registration_mode'    => 'required|string|in:new,existing',
+            'existing_family_id'   => 'nullable|integer|exists:typ_fld_families,id|required_if:registration_mode,existing',
+            'head_family_name'     => 'required|string|max:255',
+            'street'               => 'nullable|string|max:255',
+            'barangay'             => 'nullable|string|max:255',
+            'city'                 => 'nullable|string|max:255',
+            'contact_number'       => 'nullable|string|max:20',
+            'needs'                => 'required|array|min:1',
+            'needs.*.need_name'    => 'required|string|max:255',
+            'needs.*.custom_need'  => 'nullable|string|max:255',
+            'needs.*.quantity'     => 'required|integer|min:1|max:999',
+            'has_pregnant'         => 'nullable|boolean',
+            'has_pwd'              => 'nullable|boolean',
+            'has_senior'           => 'nullable|boolean',
+            'has_lactating'        => 'nullable|boolean',
+            'has_child_under5'     => 'nullable|boolean',
+            'has_other_needs'      => 'nullable|boolean',
+            'other_needs_details'  => 'nullable|string|max:500',
+            'confirm_check_in'     => 'nullable|in:on,1,true',
+            'members'              => 'required|array|min:1',
+            'members.*.full_name'  => 'required|string|max:255',
+            'members.*.age'        => 'required|integer|min:0|max:120',
+            'members.*.gender'     => 'required|in:male,female',
+            'members.*.family_role'=> 'nullable|string|max:100',
+            'belongings'           => 'nullable|array',
+            'belongings.*.name'    => 'nullable|string|max:255',
+            'belongings.*.qty'     => 'nullable|integer|min:1|max:999',
+            'pets'                 => 'nullable|array',
+            'pets.*.name'          => 'nullable|string|max:255',
+            'pets.*.qty'           => 'nullable|integer|min:1|max:999',
         ]);
 
         if ($validator->fails()) {
@@ -579,7 +592,21 @@ class TyphoonController extends Controller
             }
         }
 
-        DB::transaction(function () use ($request, $ec, $existingFamilyTemplate) {
+        // Parse belongings: filter out empty rows
+        $belongingsInput = collect($request->input('belongings', []))
+            ->filter(fn($b) => !empty($b['name']))
+            ->map(fn($b) => ['name' => trim($b['name']), 'qty' => (int) ($b['qty'] ?? 1)])
+            ->values()
+            ->toArray();
+
+        // Parse pets: filter out empty rows
+        $petsInput = collect($request->input('pets', []))
+            ->filter(fn($p) => !empty($p['name']))
+            ->map(fn($p) => ['name' => trim($p['name']), 'qty' => (int) ($p['qty'] ?? 1)])
+            ->values()
+            ->toArray();
+
+        DB::transaction(function () use ($request, $ec, $existingFamilyTemplate, $user, $belongingsInput, $petsInput) {
             $existingFamily = $existingFamilyTemplate;
 
             $members = (array) $request->input('members', []);
@@ -587,10 +614,11 @@ class TyphoonController extends Controller
                 $members = $existingFamily->members
                     ->map(function ($member) {
                         return [
-                            'full_name' => $member->full_name,
-                            'age' => (int) $member->age,
-                            'gender' => $member->gender,
-                            'is_head' => (bool) $member->is_head,
+                            'full_name'   => $member->full_name,
+                            'age'         => (int) $member->age,
+                            'gender'      => $member->gender,
+                            'family_role' => $member->family_role,
+                            'is_head'     => (bool) $member->is_head,
                         ];
                     })
                     ->values()
@@ -600,24 +628,34 @@ class TyphoonController extends Controller
             $ageFlags = $this->deriveAgeFlags($members);
 
             $family = TypFldFamily::create([
-                'school_id' => $ec->id,
-                'head_family_name' => $request->head_family_name ?: ($existingFamily?->head_family_name ?? ''),
-                'has_pregnant' => (bool) $request->has_pregnant || (bool) ($existingFamily?->has_pregnant ?? false),
-                'has_pwd' => (bool) $request->has_pwd || (bool) ($existingFamily?->has_pwd ?? false),
-                'has_senior' => (bool) $request->has_senior || $ageFlags['has_senior'] || (bool) ($existingFamily?->has_senior ?? false),
-                'has_lactating' => (bool) $request->has_lactating || (bool) ($existingFamily?->has_lactating ?? false),
-                'has_child_under5' => (bool) $request->has_child_under5 || $ageFlags['has_child_under5'] || (bool) ($existingFamily?->has_child_under5 ?? false),
-                'checked_in_at' => $request->confirm_check_in ? now() : null,
+                'school_id'           => $ec->id,
+                'head_family_name'    => $request->head_family_name ?: ($existingFamily?->head_family_name ?? ''),
+                'street'              => $request->street,
+                'barangay'            => $request->barangay,
+                'city'                => $request->city,
+                'contact_number'      => $request->contact_number,
+                'has_pregnant'        => (bool) $request->has_pregnant || (bool) ($existingFamily?->has_pregnant ?? false),
+                'has_pwd'             => (bool) $request->has_pwd || (bool) ($existingFamily?->has_pwd ?? false),
+                'has_senior'          => (bool) $request->has_senior || $ageFlags['has_senior'] || (bool) ($existingFamily?->has_senior ?? false),
+                'has_lactating'       => (bool) $request->has_lactating || (bool) ($existingFamily?->has_lactating ?? false),
+                'has_child_under5'    => (bool) $request->has_child_under5 || $ageFlags['has_child_under5'] || (bool) ($existingFamily?->has_child_under5 ?? false),
+                'has_other_needs'     => (bool) $request->has_other_needs,
+                'other_needs_details' => $request->has_other_needs ? $request->other_needs_details : null,
+                'personal_belongings' => count($belongingsInput) > 0 ? $belongingsInput : null,
+                'personal_pets'       => count($petsInput) > 0 ? $petsInput : null,
+                'registered_by'       => $user->id,
+                'checked_in_at'       => $request->confirm_check_in ? now() : null,
             ]);
 
             foreach ($members as $idx => $m) {
                 TypFldFamilyMember::create([
-                    'family_id' => $family->id,
-                    'full_name' => $m['full_name'],
-                    'age' => (int) $m['age'],
-                    'gender' => $m['gender'],
-                    'is_head' => $idx === 0,
-                    'status' => 'normal',
+                    'family_id'   => $family->id,
+                    'full_name'   => $m['full_name'],
+                    'age'         => (int) $m['age'],
+                    'gender'      => $m['gender'],
+                    'family_role' => $m['family_role'] ?? null,
+                    'is_head'     => $idx === 0,
+                    'status'      => 'normal',
                 ]);
             }
 
@@ -626,9 +664,9 @@ class TyphoonController extends Controller
                 $needsRows = $existingFamily->needs
                     ->map(function ($need) {
                         return [
-                            'need_name' => $need->is_custom ? 'Others Please Specify' : $need->need_name,
+                            'need_name'   => $need->is_custom ? 'Others Please Specify' : $need->need_name,
                             'custom_need' => $need->is_custom ? $need->need_name : null,
-                            'quantity' => (int) $need->quantity,
+                            'quantity'    => (int) $need->quantity,
                         ];
                     })
                     ->values()
@@ -646,7 +684,7 @@ class TyphoonController extends Controller
 
         ActivityLog::log('typhoon_flood', 'Registered family: ' . $request->head_family_name, [
             'school_id' => $ec->id,
-            'notes' => collect($this->normalizeFamilyNeeds((array) $request->input('needs', [])))
+            'notes'     => collect($this->normalizeFamilyNeeds((array) $request->input('needs', [])))
                 ->pluck('need_name')
                 ->implode(', '),
         ]);

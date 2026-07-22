@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Drill Monitoring Dashboard')
+@section('hide_main_nav', '1')
+
 @push('styles')
 <style>
     :root {
@@ -29,11 +32,237 @@
     .card-drill-header {
         border-bottom: 2px solid var(--drill-orange-light);
     }
+
+    /* Premium Header */
+    .header-section {
+        background: linear-gradient(135deg, var(--drill-orange) 0%, #D84315 100%);
+        padding: 30px 40px;
+        border-bottom-left-radius: 40px;
+        border-bottom-right-radius: 40px;
+        box-shadow: 0 10px 30px rgba(255, 111, 0, 0.3);
+        margin-bottom: 40px;
+        position: relative;
+        margin-top: -1.5rem; /* offset the layout's py-4 */
+    }
+
+    .header-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: #fff;
+    }
+
+    .header-title h1 {
+        font-weight: 700;
+        font-size: 2.5rem;
+        margin-bottom: 5px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        color: #fff;
+    }
+
+    .header-title p {
+        opacity: 0.9;
+        font-size: 1.1rem;
+        margin-bottom: 0;
+        color: #fff;
+    }
+
+    .back-btn {
+        color: rgba(255,255,255,0.8);
+        text-decoration: none;
+        font-weight: 600;
+        transition: color 0.2s;
+    }
+    
+    .back-btn:hover {
+        color: #fff;
+    }
+
+    /* ── School Search Picker ─────────────────────────────── */
+    .school-picker {
+        position: relative;
+        width: 280px;
+    }
+    .school-picker-trigger {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        background: #fff;
+        border: 1.5px solid #dee2e6;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        transition: border-color .18s, box-shadow .18s;
+        user-select: none;
+        min-width: 220px;
+    }
+    .school-picker-trigger:hover,
+    .school-picker.open .school-picker-trigger {
+        border-color: var(--drill-orange);
+        box-shadow: 0 0 0 3px rgba(255,111,0,.12);
+    }
+    .school-picker-trigger .trigger-label {
+        flex: 1;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        color: #212529;
+        font-weight: 500;
+    }
+    .school-picker-trigger .trigger-icon {
+        color: var(--drill-orange);
+        transition: transform .2s;
+        flex-shrink: 0;
+    }
+    .school-picker.open .school-picker-trigger .trigger-icon {
+        transform: rotate(180deg);
+    }
+
+    .school-picker-panel {
+        display: none;
+        position: absolute;
+        top: calc(100% + 6px);
+        right: 0;
+        width: 340px;
+        background: #fff;
+        border: 1.5px solid #dee2e6;
+        border-radius: 10px;
+        box-shadow: 0 8px 32px rgba(0,0,0,.13);
+        z-index: 9999;
+        overflow: hidden;
+        animation: pickerFadeIn .15s ease;
+    }
+    @keyframes pickerFadeIn {
+        from { opacity: 0; transform: translateY(-6px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    .school-picker.open .school-picker-panel {
+        display: block;
+    }
+
+    .school-picker-search-wrap {
+        padding: 10px 12px 8px;
+        border-bottom: 1px solid #f0f0f0;
+        background: #fafafa;
+    }
+    .school-picker-search-input {
+        width: 100%;
+        padding: 7px 10px 7px 34px;
+        border: 1.5px solid #dee2e6;
+        border-radius: 6px;
+        font-size: 0.82rem;
+        outline: none;
+        background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23aaa' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 10px center;
+        transition: border-color .15s;
+    }
+    .school-picker-search-input:focus {
+        border-color: var(--drill-orange);
+        box-shadow: 0 0 0 2px rgba(255,111,0,.1);
+    }
+    .school-picker-search-hint {
+        font-size: 0.7rem;
+        color: #aaa;
+        margin-top: 4px;
+        padding-left: 2px;
+    }
+
+    .school-picker-list {
+        max-height: 240px;
+        overflow-y: auto;
+        padding: 6px 0;
+    }
+    .school-picker-list::-webkit-scrollbar { width: 5px; }
+    .school-picker-list::-webkit-scrollbar-thumb { background: #e0e0e0; border-radius: 3px; }
+
+    .school-picker-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 14px;
+        font-size: 0.83rem;
+        cursor: pointer;
+        color: #333;
+        transition: background .12s;
+        border-left: 3px solid transparent;
+    }
+    .school-picker-item:hover,
+    .school-picker-item.focused {
+        background: var(--drill-orange-light);
+        border-left-color: var(--drill-orange);
+        color: var(--drill-orange-hover);
+    }
+    .school-picker-item.active {
+        background: #fff3e0;
+        border-left-color: var(--drill-orange);
+        font-weight: 600;
+        color: var(--drill-orange-hover);
+    }
+    .school-picker-item .item-icon {
+        font-size: 0.75rem;
+        color: #bbb;
+        flex-shrink: 0;
+    }
+    .school-picker-item.active .item-icon { color: var(--drill-orange); }
+    .school-picker-item .item-name {
+        flex: 1;
+        line-height: 1.3;
+    }
+    .school-picker-item mark {
+        background: rgba(255,111,0,.2);
+        color: var(--drill-orange-hover);
+        padding: 0 1px;
+        border-radius: 2px;
+    }
+    .school-picker-empty {
+        padding: 18px 14px;
+        text-align: center;
+        color: #aaa;
+        font-size: 0.82rem;
+    }
+    .school-picker-count {
+        padding: 6px 14px;
+        font-size: 0.7rem;
+        color: #aaa;
+        border-top: 1px solid #f0f0f0;
+        background: #fafafa;
+        text-align: right;
+    }
 </style>
 @endpush
 
 @section('content')
-<div class="container-fluid py-4">
+
+<div class="header-section mx-3">
+    <div class="header-content container-fluid px-0">
+        <div class="header-title">
+            <a href="{{ route('dashboard') }}" class="back-btn mb-3 d-inline-block">
+                <i class="fas fa-arrow-left me-2"></i> Back to Main
+            </a>
+            <div class="d-flex align-items-center mb-2">
+                <img src="{{ asset('images/drrmis-logo-2.png') }}" alt="DRRM" style="height: 40px; width: auto; margin-right: 15px;">
+                <h1 class="mb-0">Drill Monitoring Dashboard</h1>
+            </div>
+            <p>Monitor and track school compliance with disaster drills</p>
+        </div>
+        <div class="header-actions">
+            <div class="d-flex align-items-center bg-white bg-opacity-25 rounded-pill px-4 py-2">
+                <div class="me-3 text-end">
+                    <div class="text-white fw-bold">{{ Auth::user()->name }}</div>
+                    <div class="text-white-50 small">{{ ucfirst(Auth::user()->role ?? 'User') }}</div>
+                </div>
+                <div class="bg-white text-drill-orange rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; font-weight: bold;">
+                    @php
+                        $names = explode(' ', Auth::user()->name);
+                        echo substr($names[0], 0, 1) . (isset($names[1]) ? substr($names[1], 0, 1) : '');
+                    @endphp
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid py-2">
     @if(session('success'))
         <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
             <i class="fas fa-check-circle me-1"></i> {{ session('success') }}
@@ -50,16 +279,48 @@
 
     <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
         <h2 class="h4 mb-0 text-gray-800"><i class="fas fa-bell text-drill-orange me-2"></i>Drill Monitoring Dashboard: {{ $activeSchool->school_name }}</h2>
-        <div class="d-flex gap-2">
-            <form action="{{ route('drill-monitoring.dashboard') }}" method="GET" class="d-flex gap-2">
-                <select name="school_id" class="form-select form-select-sm" onchange="this.form.submit()">
-                    @foreach($schools as $school)
-                        <option value="{{ $school->id }}" {{ $activeSchool->id == $school->id ? 'selected' : '' }}>
-                            {{ $school->school_name }}
-                        </option>
-                    @endforeach
-                </select>
-            </form>
+        <div class="d-flex gap-2 align-items-center">
+
+            {{-- Searchable School Picker --}}
+            <div class="school-picker" id="schoolPicker">
+                <div class="school-picker-trigger" id="schoolPickerTrigger" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-label="Select school" tabindex="0">
+                    <i class="fas fa-school text-drill-orange" style="font-size:0.8rem;flex-shrink:0;"></i>
+                    <span class="trigger-label" id="schoolPickerLabel">{{ $activeSchool->school_name }}</span>
+                    <i class="fas fa-chevron-down trigger-icon" style="font-size:0.7rem;"></i>
+                </div>
+                <div class="school-picker-panel" id="schoolPickerPanel" role="listbox">
+                    <div class="school-picker-search-wrap">
+                        <input
+                            type="text"
+                            class="school-picker-search-input"
+                            id="schoolPickerSearch"
+                            placeholder="Search school name…"
+                            autocomplete="off"
+                            aria-label="Search schools"
+                        >
+                        <div class="school-picker-search-hint">Type to filter • ↑↓ to navigate • Enter to select</div>
+                    </div>
+                    <div class="school-picker-list" id="schoolPickerList" role="listbox">
+                        @foreach($schools as $school)
+                        <div
+                            class="school-picker-item {{ $activeSchool->id == $school->id ? 'active' : '' }}"
+                            data-value="{{ $school->id }}"
+                            data-label="{{ $school->school_name }}"
+                            data-url="{{ route('drill-monitoring.dashboard', ['school_id' => $school->id]) }}"
+                            role="option"
+                            aria-selected="{{ $activeSchool->id == $school->id ? 'true' : 'false' }}"
+                        >
+                            <i class="fas fa-{{ $activeSchool->id == $school->id ? 'check-circle text-drill-orange' : 'circle item-icon' }}"></i>
+                            <span class="item-name">{{ $school->school_name }}</span>
+                        </div>
+                        @endforeach
+                    </div>
+                    <div class="school-picker-count" id="schoolPickerCount">
+                        {{ $schools->count() }} school{{ $schools->count() !== 1 ? 's' : '' }}
+                    </div>
+                </div>
+            </div>
+
             <button class="btn btn-drill-orange btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#logMonitoringModal">
                 <i class="fas fa-plus"></i> Log New Drill Monitoring
             </button>
@@ -101,15 +362,18 @@
                                 <div class="row mb-4">
                                     <div class="col-md-4">
                                         <label class="form-label small fw-bold">Time Started</label>
-                                        <input type="time" class="form-control" name="time_started">
+                                        <input type="time" class="form-control" name="time_started" id="add_time_started" oninput="calcElapsed('add_time_started','add_time_finished','add_elapsed_time')">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label small fw-bold">Time Finished</label>
-                                        <input type="time" class="form-control" name="time_finished">
+                                        <input type="time" class="form-control" name="time_finished" id="add_time_finished" oninput="calcElapsed('add_time_started','add_time_finished','add_elapsed_time')">
                                     </div>
                                     <div class="col-md-4">
                                         <label class="form-label small fw-bold">Elapsed Time (mm:ss)</label>
-                                        <input type="text" class="form-control" name="elapsed_time" placeholder="e.g. 05:30">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control bg-light" name="elapsed_time" id="add_elapsed_time" placeholder="Auto-calculated" readonly>
+                                            <span class="input-group-text" title="Auto-calculated from Time Started and Time Finished"><i class="fas fa-clock text-muted"></i></span>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -162,6 +426,20 @@
                         </tr>
                     </thead>
                     <tbody>
+                        <!-- Item 4 -->
+                        <tr>
+                            <td class="text-start ps-3">First Aid Kit</td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[first_aid_kit]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[first_aid_kit]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[first_aid_kit]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                        </tr>
+                        <!-- Item 5 -->
+                        <tr>
+                            <td class="text-start ps-3">Actual Headcount</td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[actual_headcount]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[actual_headcount]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[actual_headcount]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                        </tr>                        
                         <!-- Item 1 -->
                         <tr>
                             <td class="text-start ps-3">Alarm</td>
@@ -171,74 +449,74 @@
                         </tr>
                         <!-- Item 2 -->
                         <tr>
-                            <td class="text-start ps-3">Evacuation plan(updated)</td>
+                            <td class="text-start ps-3">Evacuation Plan (Updated)</td>
                             <td><input class="form-check-input" type="radio" name="checklist_data[routes_clear]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                             <td><input class="form-check-input" type="radio" name="checklist_data[routes_clear]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                             <td><input class="form-check-input" type="radio" name="checklist_data[routes_clear]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                         </tr>
                         <!-- Item 3 -->
                         <tr>
-                            <td class="text-start ps-3">DRRM team</td>
+                            <td class="text-start ps-3">DRRM Team</td>
                             <td><input class="form-check-input" type="radio" name="checklist_data[participants_calm]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                             <td><input class="form-check-input" type="radio" name="checklist_data[participants_calm]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                             <td><input class="form-check-input" type="radio" name="checklist_data[participants_calm]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                         </tr>
-                    <!-- Item 7 -->
-                    <tr>
-                        <td class="text-start ps-3">Hotline Numbers</td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[hotline_numbers]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[hotline_numbers]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[hotline_numbers]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                    </tr>
-                    <!-- Item 8 -->
-                    <tr>
-                        <td class="text-start ps-3">Duck Cover and Hold (ER)</td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[duck_cover_and_hold]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[duck_cover_and_hold]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[duck_cover_and_hold]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                    </tr>
-                    <!-- Item 9 -->
-                    <tr>
-                        <td class="text-start ps-3">Command Center</td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[command_center]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[command_center]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[command_center]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                    </tr>
-                    <!-- Item 10 -->
-                    <tr>
-                        <td class="text-start ps-3">Student Release Form</td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[student_release_form]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[student_release_form]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[student_release_form]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                    </tr>
-                    <!-- Item 14 -->
-                    <tr>
-                        <td class="text-start ps-3">Exit Signage</td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[exit_signage]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[exit_signage]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[exit_signage]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                    </tr>
-                    <!-- Item 15 -->
-                    <tr>
-                        <td class="text-start ps-3">BERT/SERT</td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[bert_sert]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[bert_sert]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[bert_sert]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                    </tr>
-                    <!-- Item 16 -->
-                    <tr>
-                        <td class="text-start ps-3">Wearing of IDs</td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[wear_ids]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[wear_ids]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[wear_ids]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                    </tr>
-                    <!-- Item 17 -->
-                    <tr>
-                        <td class="text-start ps-3">Walked Casually</td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[walk_casually]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[walk_casually]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[walk_casually]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                    </tr>
+                        <!-- Item 7 -->
+                        <tr>
+                            <td class="text-start ps-3">Hotline Numbers</td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[hotline_numbers]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[hotline_numbers]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[hotline_numbers]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                        </tr>
+                        <!-- Item 8 -->
+                        <tr>
+                            <td class="text-start ps-3">Duck Cover and Hold (ER)</td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[duck_cover_and_hold]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[duck_cover_and_hold]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[duck_cover_and_hold]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                        </tr>
+                        <!-- Item 9 -->
+                        <tr>
+                            <td class="text-start ps-3">Command Center</td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[command_center]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[command_center]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[command_center]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                        </tr>
+                        <!-- Item 10 -->
+                        <tr>
+                            <td class="text-start ps-3">Student Release Form</td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[student_release_form]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[student_release_form]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[student_release_form]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                        </tr>
+                        <!-- Item 14 -->
+                        <tr>
+                            <td class="text-start ps-3">Exit Signage</td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[exit_signage]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[exit_signage]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[exit_signage]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                        </tr>
+                        <!-- Item 15 -->
+                        <tr>
+                            <td class="text-start ps-3">BERT/SERT</td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[bert_sert]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[bert_sert]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[bert_sert]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                        </tr>
+                        <!-- Item 16 -->
+                        <tr>
+                            <td class="text-start ps-3">Wearing of IDs</td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[wear_ids]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[wear_ids]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[wear_ids]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                        </tr>
+                        <!-- Item 17 -->
+                        <tr>
+                            <td class="text-start ps-3">Walked Casually</td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[walk_casually]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[walk_casually]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[walk_casually]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -257,20 +535,6 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Item 4 -->
-                        <tr>
-                            <td class="text-start ps-3">First Aid Kit</td>
-                            <td><input class="form-check-input" type="radio" name="checklist_data[first_aid_kit]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                            <td><input class="form-check-input" type="radio" name="checklist_data[first_aid_kit]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                            <td><input class="form-check-input" type="radio" name="checklist_data[first_aid_kit]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        </tr>
-                        <!-- Item 5 -->
-                        <tr>
-                            <td class="text-start ps-3">Actual headcount</td>
-                            <td><input class="form-check-input" type="radio" name="checklist_data[actual_headcount]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                            <td><input class="form-check-input" type="radio" name="checklist_data[actual_headcount]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                            <td><input class="form-check-input" type="radio" name="checklist_data[actual_headcount]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        </tr>
                         <!-- Item 6 -->
                         <tr>
                             <td class="text-start ps-3">Directional Arrows</td>
@@ -278,55 +542,90 @@
                             <td><input class="form-check-input" type="radio" name="checklist_data[directional_arrows]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                             <td><input class="form-check-input" type="radio" name="checklist_data[directional_arrows]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                         </tr>
-                    <!-- Item 11 -->
-                    <tr>
-                        <td class="text-start ps-3">Attendance Sheet</td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[attendance_sheet]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[attendance_sheet]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[attendance_sheet]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                    </tr>
-                    <!-- Item 12 -->
-                    <tr>
-                        <td class="text-start ps-3">Megaphone</td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[megaphone]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[megaphone]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[megaphone]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                    </tr>
-                    <!-- Item 13 -->
-                    <tr>
-                        <td class="text-start ps-3">Group Signage</td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[group_signage]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[group_signage]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[group_signage]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                    </tr>   
-                    <!-- Item 18 -->
-                    <tr>
-                        <td class="text-start ps-3">Guard on Duty</td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[guard_on_duty]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[guard_on_duty]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[guard_on_duty]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                    </tr>
-                    <!-- Item 19 -->
-                    <tr>
-                        <td class="text-start ps-3">School ID of personnel</td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[school_id]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[school_id]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[school_id]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                    </tr>
-                    <!-- Item 20 -->
-                    <tr>
-                        <td class="text-start ps-3">Open Doors(EQ)</td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[open_doors]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[open_doors]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[open_doors]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                    </tr>
-                    <!-- Item 21 -->                
-                    <tr>
-                        <td class="text-start ps-3">Closed Doors(Fire)</td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[closed_doors]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[closed_doors]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                        <td><input class="form-check-input" type="radio" name="checklist_data[closed_doors]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                    </tr>
+                        <!-- Item 11 -->
+                        <tr>
+                            <td class="text-start ps-3">Attendance Sheet</td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[attendance_sheet]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[attendance_sheet]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[attendance_sheet]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                        </tr>
+                        <!-- Item 12 -->
+                        <tr>
+                            <td class="text-start ps-3">Megaphone</td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[megaphone]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[megaphone]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[megaphone]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                        </tr>
+                        <!-- Item 13 -->
+                        <tr>
+                            <td class="text-start ps-3">Group Signage</td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[group_signage]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[group_signage]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[group_signage]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                        </tr>   
+                        <!-- Item 18 -->
+                        <tr>
+                            <td class="text-start ps-3">Guard on Duty</td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[guard_on_duty]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[guard_on_duty]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[guard_on_duty]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                        </tr>
+                        <!-- Item 19 -->
+                        <tr>
+                            <td class="text-start ps-3">School ID of Personnel</td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[school_id]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[school_id]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[school_id]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                        </tr>
+                        <!-- Item 20 -->
+                        <tr>
+                            <td class="text-start ps-3">Open Doors (EQ)</td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[open_doors]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[open_doors]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[open_doors]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                        </tr>
+                        <!-- Item 21 -->                
+                        <tr>
+                            <td class="text-start ps-3">Closed Doors (Fire)</td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[closed_doors]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[closed_doors]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[closed_doors]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                        </tr>
+                        <!-- Item 22 -->
+                        <tr>
+                            <td class="text-start ps-3">Perform Run (LDD)</td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[perform_run]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[perform_run]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[perform_run]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                        </tr>
+                        <!-- Item 23 -->
+                        <tr>
+                            <td class="text-start ps-3">Perform Hide (LDD)</td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[perform_hide]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[perform_hide]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[perform_hide]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                        </tr>
+                        <!-- Item 24 -->
+                        <tr>
+                            <td class="text-start ps-3">Perform Call / Tell (LDD)</td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[perform_call_tell]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[perform_call_tell]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[perform_call_tell]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                        </tr>
+                        <!-- Item 25 -->
+                        <tr>
+                            <td class="text-start ps-3">Perform Fight (LDD)</td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[perform_fight]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[perform_fight]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[perform_fight]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                        </tr>
+                        <!-- Item 26 -->
+                        <tr>
+                            <td class="text-start ps-3">Evacuate to High Ground (TSD)</td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[perform_evacuate]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[perform_evacuate]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                            <td><input class="form-check-input" type="radio" name="checklist_data[perform_evacuate]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                        </tr>                    
                     </tbody>
                 </table>
             </div>
@@ -366,7 +665,7 @@
                         </tr>
                         <!-- Observer 4 -->
                         <tr>
-                            <td class="text-start ps-3">Bureau of Fire Protection(BFP)</td>
+                            <td class="text-start ps-3">Bureau of Fire Protection (BFP)</td>
                             <td><input class="form-check-input" type="radio" name="observers_data[bfp]" value="present" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked;"></td>
                         </tr>
                     </tbody>
@@ -507,11 +806,9 @@ function toggleObserverOthersInput(radioElement, wrapperId) {
                                 <button class="btn btn-outline-primary btn-sm shadow-sm" onclick="viewDrillDetails({{ $log->id }})" title="View Details">
                                     <i class="fas fa-eye"></i>
                                 </button>
-<a href="{{ route('drill-monitoring.drill-monitoring.print.monitoring-tool', $log->id) }}" target="_blank" class="btn btn-outline-dark btn-sm shadow-sm" title="Print Monitoring Tool">
-
+                                <a href="{{ route('drill-monitoring.drill-monitoring.print.monitoring-tool', $log->id) }}" target="_blank" class="btn btn-outline-dark btn-sm shadow-sm" title="Print Monitoring Tool">
                                     <i class="fas fa-print"></i>
                                 </a>
-
                             </td>
                         </tr>
                         @empty
@@ -634,15 +931,18 @@ function toggleObserverOthersInput(radioElement, wrapperId) {
                         <div class="row mb-4">
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold">Time Started</label>
-                                <input type="time" class="form-control" name="time_started" id="edit_time_started">
+                                <input type="time" class="form-control" name="time_started" id="edit_time_started" oninput="calcElapsed('edit_time_started','edit_time_finished','edit_elapsed_time')">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label small fw-bold">Time Finished</label>
-                                <input type="time" class="form-control" name="time_finished" id="edit_time_finished">
+                                <input type="time" class="form-control" name="time_finished" id="edit_time_finished" oninput="calcElapsed('edit_time_started','edit_time_finished','edit_elapsed_time')">
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label small fw-bold">Elapsed Time</label>
-                                <input type="text" class="form-control" name="elapsed_time" id="edit_elapsed_time">
+                                <label class="form-label small fw-bold">Elapsed Time (mm:ss)</label>
+                                <div class="input-group">
+                                    <input type="text" class="form-control bg-light" name="elapsed_time" id="edit_elapsed_time" placeholder="Auto-calculated" readonly>
+                                    <span class="input-group-text" title="Auto-calculated from Time Started and Time Finished"><i class="fas fa-clock text-muted"></i></span>
+                                </div>
                             </div>
                         </div>
 
@@ -685,19 +985,25 @@ function toggleObserverOthersInput(radioElement, wrapperId) {
                                             </thead>
                                             <tbody>
                                                 <tr>
+                                                    <td class="text-start ps-3">Actual Headcount</td>
+                                                    <td><input class="form-check-input" type="radio" name="checklist_data[actual_headcount]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                                                    <td><input class="form-check-input" type="radio" name="checklist_data[actual_headcount]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                                                    <td><input class="form-check-input" type="radio" name="checklist_data[actual_headcount]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                                                </tr>                                                
+                                                <tr>
                                                     <td class="text-start ps-3">Alarm</td>
                                                     <td><input class="form-check-input" type="radio" name="checklist_data[alarm_audible]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                                                     <td><input class="form-check-input" type="radio" name="checklist_data[alarm_audible]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                                                     <td><input class="form-check-input" type="radio" name="checklist_data[alarm_audible]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                                                 </tr>
                                                 <tr>
-                                                    <td class="text-start ps-3">Evacuation plan(updated)</td>
+                                                    <td class="text-start ps-3">Evacuation Plan (Updated)</td>
                                                     <td><input class="form-check-input" type="radio" name="checklist_data[routes_clear]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                                                     <td><input class="form-check-input" type="radio" name="checklist_data[routes_clear]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                                                     <td><input class="form-check-input" type="radio" name="checklist_data[routes_clear]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                                                 </tr>
                                                 <tr>
-                                                    <td class="text-start ps-3">DRRM team</td>
+                                                    <td class="text-start ps-3">DRRM Team</td>
                                                     <td><input class="form-check-input" type="radio" name="checklist_data[participants_calm]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                                                     <td><input class="form-check-input" type="radio" name="checklist_data[participants_calm]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                                                     <td><input class="form-check-input" type="radio" name="checklist_data[participants_calm]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
@@ -750,6 +1056,12 @@ function toggleObserverOthersInput(radioElement, wrapperId) {
                                                     <td><input class="form-check-input" type="radio" name="checklist_data[walk_casually]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                                                     <td><input class="form-check-input" type="radio" name="checklist_data[walk_casually]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                                                 </tr>
+                                                <tr>
+                                                    <td class="text-start ps-3">First Aid Kit</td>
+                                                    <td><input class="form-check-input" type="radio" name="checklist_data[first_aid_kit]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                                                    <td><input class="form-check-input" type="radio" name="checklist_data[first_aid_kit]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                                                    <td><input class="form-check-input" type="radio" name="checklist_data[first_aid_kit]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                                                </tr>
                                             </tbody>
                                         </table>
                                     </div>
@@ -766,18 +1078,6 @@ function toggleObserverOthersInput(radioElement, wrapperId) {
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <tr>
-                                                    <td class="text-start ps-3">First Aid Kit</td>
-                                                    <td><input class="form-check-input" type="radio" name="checklist_data[first_aid_kit]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                                                    <td><input class="form-check-input" type="radio" name="checklist_data[first_aid_kit]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                                                    <td><input class="form-check-input" type="radio" name="checklist_data[first_aid_kit]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                                                </tr>
-                                                <tr>
-                                                    <td class="text-start ps-3">Actual headcount</td>
-                                                    <td><input class="form-check-input" type="radio" name="checklist_data[actual_headcount]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                                                    <td><input class="form-check-input" type="radio" name="checklist_data[actual_headcount]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                                                    <td><input class="form-check-input" type="radio" name="checklist_data[actual_headcount]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
-                                                </tr>
                                                 <tr>
                                                     <td class="text-start ps-3">Directional Arrows</td>
                                                     <td><input class="form-check-input" type="radio" name="checklist_data[directional_arrows]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
@@ -809,23 +1109,53 @@ function toggleObserverOthersInput(radioElement, wrapperId) {
                                                     <td><input class="form-check-input" type="radio" name="checklist_data[guard_on_duty]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                                                 </tr>
                                                 <tr>
-                                                    <td class="text-start ps-3">School ID of personnel</td>
+                                                    <td class="text-start ps-3">School ID of Personnel</td>
                                                     <td><input class="form-check-input" type="radio" name="checklist_data[school_id]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                                                     <td><input class="form-check-input" type="radio" name="checklist_data[school_id]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                                                     <td><input class="form-check-input" type="radio" name="checklist_data[school_id]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                                                 </tr>
                                                 <tr>
-                                                    <td class="text-start ps-3">Open Doors(EQ)</td>
+                                                    <td class="text-start ps-3">Open Doors (EQ)</td>
                                                     <td><input class="form-check-input" type="radio" name="checklist_data[open_doors]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                                                     <td><input class="form-check-input" type="radio" name="checklist_data[open_doors]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                                                     <td><input class="form-check-input" type="radio" name="checklist_data[open_doors]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                                                 </tr>
                                                 <tr>
-                                                    <td class="text-start ps-3">Closed Doors(Fire)</td>
+                                                    <td class="text-start ps-3">Closed Doors (Fire)</td>
                                                     <td><input class="form-check-input" type="radio" name="checklist_data[closed_doors]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                                                     <td><input class="form-check-input" type="radio" name="checklist_data[closed_doors]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                                                     <td><input class="form-check-input" type="radio" name="checklist_data[closed_doors]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
                                                 </tr>
+                                                <tr>
+                                                    <td class="text-start ps-3">Perform Run (LDD)</td>
+                                                    <td><input class="form-check-input" type="radio" name="checklist_data[perform_run]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                                                    <td><input class="form-check-input" type="radio" name="checklist_data[perform_run]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                                                    <td><input class="form-check-input" type="radio" name="checklist_data[perform_run]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-start ps-3">Perform Hide (LDD)</td>
+                                                    <td><input class="form-check-input" type="radio" name="checklist_data[perform_hide]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                                                    <td><input class="form-check-input" type="radio" name="checklist_data[perform_hide]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                                                    <td><input class="form-check-input" type="radio" name="checklist_data[perform_hide]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-start ps-3">Perform Call / Tell (LDD)</td>
+                                                    <td><input class="form-check-input" type="radio" name="checklist_data[perform_call_tell]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                                                    <td><input class="form-check-input" type="radio" name="checklist_data[perform_call_tell]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                                                    <td><input class="form-check-input" type="radio" name="checklist_data[perform_call_tell]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td class="text-start ps-3">Perform Fight (LDD)</td>
+                                                    <td><input class="form-check-input" type="radio" name="checklist_data[perform_fight]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                                                    <td><input class="form-check-input" type="radio" name="checklist_data[perform_fight]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                                                    <td><input class="form-check-input" type="radio" name="checklist_data[perform_fight]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                                                </tr>   
+                                                <tr>
+                                                    <td class="text-start ps-3">Evacuate to High Grounds (TSD)</td>
+                                                    <td><input class="form-check-input" type="radio" name="checklist_data[evacuate_high_grounds]" value="check" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                                                    <td><input class="form-check-input" type="radio" name="checklist_data[evacuate_high_grounds]" value="circle" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                                                    <td><input class="form-check-input" type="radio" name="checklist_data[evacuate_high_grounds]" value="x" onclick="this.wasChecked ? (this.checked = false) : null; this.wasChecked = this.checked; document.getElementsByName(this.name).forEach(r => r !== this ? r.wasChecked = false : null)"></td>
+                                                </tr>                                                                                             
                                             </tbody>
                                         </table>
                                     </div>
@@ -900,6 +1230,60 @@ function toggleObserverOthersInput(radioElement, wrapperId) {
 
 @push('scripts')
 <script>
+/**
+ * Calculates the elapsed time (mm:ss) between two time inputs and updates a target field.
+ * Handles overnight drills where finish time is on the next day.
+ */
+function calcElapsed(startId, finishId, elapsedId) {
+    const startVal = document.getElementById(startId).value;
+    const finishVal = document.getElementById(finishId).value;
+    const elapsedInput = document.getElementById(elapsedId);
+
+    if (!startVal || !finishVal) {
+        elapsedInput.value = '';
+        return;
+    }
+
+    const [startH, startM, startS] = startVal.split(':').map(Number);
+    const [finishH, finishM, finishS] = finishVal.split(':').map(Number);
+
+    let startTotalSec = (startH * 3600) + (startM * 60) + (startS || 0);
+    let finishTotalSec = (finishH * 3600) + (finishM * 60) + (finishS || 0);
+
+    // Handle overnight: if finish is before start, assume next-day
+    if (finishTotalSec < startTotalSec) {
+        finishTotalSec += 86400;
+    }
+
+    const diffSec = finishTotalSec - startTotalSec;
+    const minutes = Math.floor(diffSec / 60);
+    const seconds = diffSec % 60;
+
+    elapsedInput.value = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+}
+
+/**
+ * Computes elapsed time (mm:ss) directly from two HH:MM or HH:MM:SS string values.
+ * Returns the formatted string, or falls back to the stored value if inputs are missing.
+ */
+function calcElapsedFromValues(startVal, finishVal, fallback) {
+    if (!startVal || !finishVal) return fallback || '—';
+
+    const [startH, startM, startS] = startVal.split(':').map(Number);
+    const [finishH, finishM, finishS] = finishVal.split(':').map(Number);
+
+    let startTotalSec = (startH * 3600) + (startM * 60) + (startS || 0);
+    let finishTotalSec = (finishH * 3600) + (finishM * 60) + (finishS || 0);
+
+    if (finishTotalSec < startTotalSec) finishTotalSec += 86400;
+
+    const diffSec = finishTotalSec - startTotalSec;
+    const minutes = Math.floor(diffSec / 60);
+    const seconds = diffSec % 60;
+
+    return String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+}
+
 let currentViewedRecord = null;
 
 async function viewDrillDetails(id) {
@@ -921,7 +1305,7 @@ async function viewDrillDetails(id) {
                     <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Timing Details</label>
                     <p class="mb-1"><strong>Started:</strong> ${record.time_started || '—'}</p>
                     <p class="mb-1"><strong>Finished:</strong> ${record.time_finished || '—'}</p>
-                    <p class="mb-1"><strong>Elapsed:</strong> <span class="text-primary fw-bold">${record.elapsed_time || '—'}</span></p>
+                    <p class="mb-1"><strong>Elapsed:</strong> <span class="text-primary fw-bold">${calcElapsedFromValues(record.time_started, record.time_finished, record.elapsed_time)}</span></p>
                 </div>
                 <div class="col-md-6 border-top pt-3">
                     <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Participants</label>
@@ -958,7 +1342,8 @@ async function viewDrillDetails(id) {
                                             'wear_ids': 'Wearing of IDs', 'walk_casually': 'Walked Casually', 'first_aid_kit': 'First Aid Kit',
                                             'actual_headcount': 'Actual headcount', 'directional_arrows': 'Directional Arrows', 'attendance_sheet': 'Attendance Sheet',
                                             'megaphone': 'Megaphone', 'group_signage': 'Group Signage', 'guard_on_duty': 'Guard on Duty',
-                                            'school_id': 'School ID of personnel', 'open_doors': 'Open Doors(EQ)', 'closed_doors': 'Closed Doors(Fire)'
+                                            'school_id': 'School ID of personnel', 'open_doors': 'Open Doors(EQ)', 'closed_doors': 'Closed Doors(Fire)', 'perform_run': 'Perform Run (LDD)', 
+                                            'perform_hide': 'Perform Hide (LDD)', 'perform_call_tell': 'Perform Call/Tell (LDD)', 'perform_fight': 'Perform Fight (LDD)'
                                         };
                                         let statusHtml = '';
                                         if (val === 'check') statusHtml = '<span class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i>Good</span>';
@@ -1040,7 +1425,12 @@ function openEditModalFromView() {
     document.getElementById('edit_inspection_time').value = rec.inspection_time;
     document.getElementById('edit_time_started').value = rec.time_started || '';
     document.getElementById('edit_time_finished').value = rec.time_finished || '';
-    document.getElementById('edit_elapsed_time').value = rec.elapsed_time || '';
+    // Recalculate elapsed time from start/finish; fall back to stored value if times are missing
+    if (rec.time_started && rec.time_finished) {
+        calcElapsed('edit_time_started', 'edit_time_finished', 'edit_elapsed_time');
+    } else {
+        document.getElementById('edit_elapsed_time').value = rec.elapsed_time || '';
+    }
     document.getElementById('edit_no_of_students').value = rec.no_of_students || 0;
     document.getElementById('edit_no_of_personnel').value = rec.no_of_personnel || 0;
     document.getElementById('edit_monitored_by').value = rec.monitored_by || '';
@@ -1179,5 +1569,145 @@ document.getElementById('logMonitoringForm').addEventListener('submit', async fu
         btn.innerHTML = originalBtnHtml;
     }
 });
+
+/* ── School Search Picker ─────────────────────────────────────────── */
+(function () {
+    const picker      = document.getElementById('schoolPicker');
+    const trigger     = document.getElementById('schoolPickerTrigger');
+    const panel       = document.getElementById('schoolPickerPanel');
+    const searchInput = document.getElementById('schoolPickerSearch');
+    const list        = document.getElementById('schoolPickerList');
+    const countEl     = document.getElementById('schoolPickerCount');
+
+    // Collect all items once
+    const allItems = Array.from(list.querySelectorAll('.school-picker-item'));
+    let focusedIndex = -1;
+
+    function openPicker() {
+        picker.classList.add('open');
+        trigger.setAttribute('aria-expanded', 'true');
+        searchInput.value = '';
+        filterItems('');
+        focusedIndex = allItems.findIndex(i => i.classList.contains('active'));
+        setTimeout(() => { searchInput.focus(); }, 50);
+    }
+
+    function closePicker() {
+        picker.classList.remove('open');
+        trigger.setAttribute('aria-expanded', 'false');
+        focusedIndex = -1;
+        allItems.forEach(i => i.classList.remove('focused'));
+    }
+
+    function togglePicker() {
+        picker.classList.contains('open') ? closePicker() : openPicker();
+    }
+
+    // Highlight matching text inside a string
+    function highlight(text, query) {
+        if (!query) return escHtml(text);
+        const regex = new RegExp('(' + escRegex(query) + ')', 'gi');
+        return escHtml(text).replace(regex, '<mark>$1</mark>');
+    }
+    function escHtml(s) {
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+    function escRegex(s) {
+        return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    }
+
+    function filterItems(query) {
+        const q = query.trim().toLowerCase();
+        let visible = 0;
+        focusedIndex = -1;
+
+        allItems.forEach(item => {
+            const label = item.dataset.label.toLowerCase();
+            const match = !q || label.includes(q);
+            item.style.display = match ? '' : 'none';
+            item.classList.remove('focused');
+            if (match) {
+                visible++;
+                // Update highlighted name
+                item.querySelector('.item-name').innerHTML = highlight(item.dataset.label, query.trim());
+            }
+        });
+
+        // Show/hide empty state
+        let emptyEl = list.querySelector('.school-picker-empty');
+        if (visible === 0) {
+            if (!emptyEl) {
+                emptyEl = document.createElement('div');
+                emptyEl.className = 'school-picker-empty';
+                list.appendChild(emptyEl);
+            }
+            emptyEl.textContent = `No schools match "${query.trim()}"`;
+            emptyEl.style.display = '';
+        } else if (emptyEl) {
+            emptyEl.style.display = 'none';
+        }
+
+        const total = allItems.length;
+        countEl.textContent = q
+            ? `${visible} of ${total} school${total !== 1 ? 's' : ''}`
+            : `${total} school${total !== 1 ? 's' : ''}`;
+    }
+
+    function getVisibleItems() {
+        return allItems.filter(i => i.style.display !== 'none');
+    }
+
+    function setFocus(idx) {
+        const visible = getVisibleItems();
+        visible.forEach(i => i.classList.remove('focused'));
+        if (idx >= 0 && idx < visible.length) {
+            visible[idx].classList.add('focused');
+            visible[idx].scrollIntoView({ block: 'nearest' });
+            focusedIndex = idx;
+        }
+    }
+
+    function selectItem(item) {
+        window.location.href = item.dataset.url;
+    }
+
+    // Trigger click / keyboard
+    trigger.addEventListener('click', togglePicker);
+    trigger.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePicker(); }
+        if (e.key === 'Escape') closePicker();
+    });
+
+    // Search input
+    searchInput.addEventListener('input', () => filterItems(searchInput.value));
+    searchInput.addEventListener('keydown', e => {
+        const visible = getVisibleItems();
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setFocus(Math.min(focusedIndex + 1, visible.length - 1));
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (focusedIndex <= 0) { trigger.focus(); closePicker(); return; }
+            setFocus(Math.max(focusedIndex - 1, 0));
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (focusedIndex >= 0 && visible[focusedIndex]) selectItem(visible[focusedIndex]);
+        } else if (e.key === 'Escape') {
+            closePicker();
+            trigger.focus();
+        }
+    });
+
+    // Item clicks
+    list.addEventListener('click', e => {
+        const item = e.target.closest('.school-picker-item');
+        if (item) selectItem(item);
+    });
+
+    // Close on outside click
+    document.addEventListener('click', e => {
+        if (!picker.contains(e.target)) closePicker();
+    });
+})();
 </script>
 @endpush

@@ -37,7 +37,7 @@
                 padding: 0;
                 margin: 1.5cm; 
             }
-            .no-print { display: none; }
+            .no-print, .no-print * { display: none !important; visibility: hidden !important; }
         }
 
         .no-print { 
@@ -88,9 +88,10 @@
     </style>
 </head>
 <body>
+
     <div class="no-print">
-        <button onclick="window.print()" class="print-btn">Print Document</button>
-        <a href="{{ route('drill-monitoring.dashboard') }}" class="back-btn">Back to Dashboard</a>
+        <button class="btn-print" style="background: #ff7a00; color: #fff; border: none; padding: 10px 18px; border-radius: 4px; cursor: pointer; font-weight: 600;" onclick="window.print()">Print Document</button>
+        <button class="btn-print" style="background: #6c757d; color: white; border: none; padding: 10px 18px; border-radius: 4px; cursor: pointer; font-weight: 600;" onclick="window.close()">Close</button>
     </div>
 
     <!-- Improved Header using Table-like behavior for Print Stability -->
@@ -188,15 +189,34 @@
             <td class="label">NO. OF BLDG/S</td>
         </tr>
         <tr>
-            <td style="text-align: center; font-weight: bold; background-color: #f9f9f9;">{{ $inspection->elapsed_time ?? 'N/A' }}</td>
-            <td class="label">ELAPSED TIME</td>
+            @php
+                // Auto-compute elapsed time from time_started and time_finished
+                $elapsedDisplay = $inspection->elapsed_time ?? 'N/A';
+                if (!empty($inspection->time_started) && !empty($inspection->time_finished)) {
+                    try {
+                        $start  = \Carbon\Carbon::createFromFormat('H:i:s', strlen($inspection->time_started) === 5 ? $inspection->time_started . ':00' : $inspection->time_started);
+                        $finish = \Carbon\Carbon::createFromFormat('H:i:s', strlen($inspection->time_finished) === 5 ? $inspection->time_finished . ':00' : $inspection->time_finished);
+                        // Handle overnight drill
+                        if ($finish->lt($start)) $finish->addDay();
+                        // Use timestamp subtraction to avoid Carbon's signed diffInSeconds quirk
+                        $diffSec  = abs($finish->timestamp - $start->timestamp);
+                        $mins     = (int) floor($diffSec / 60);
+                        $secs     = (int) ($diffSec % 60);
+                        $elapsedDisplay = str_pad($mins, 2, '0', STR_PAD_LEFT) . ':' . str_pad($secs, 2, '0', STR_PAD_LEFT);
+                    } catch (\Exception $e) {
+                        // Keep the stored value on parse error
+                    }
+                }
+            @endphp
+            <td style="text-align: center; font-weight: bold; background-color: #f9f9f9;">{{ $elapsedDisplay }}</td>
+            <td class="label">ELAPSED TIME (mm:ss)</td>
             <td style="text-align: center; font-weight: bold; background-color: #f9f9f9;">{{ number_format(($inspection->no_of_students ?? 0) + ($inspection->no_of_personnel ?? 0)) }}</td>
             <td class="label">TOTAL COUNT</td>
             <td colspan="2" style="background-color: #f2f2f2;"></td>
         </tr>
     </table>
 
-\    <!-- CHECKLIST ITEMS - 3 COLUMNS -->
+    <!-- CHECKLIST ITEMS - 3 COLUMNS -->
     <div class="results-section">
         <h4>CHECKLIST ITEMS</h4>
         <div style="margin-bottom: 5px; font-style: italic; font-size: 9px;">
@@ -228,7 +248,12 @@
                     'guard_on_duty' => 'Guard on Duty',
                     'school_id' => 'School ID of personnel',
                     'open_doors' => 'Open Doors(EQ)',
-                    'closed_doors' => 'Closed Doors(Fire)'
+                    'closed_doors' => 'Closed Doors(Fire)',
+                    'perform_run' => 'Perform Run(LDD)',
+                    'perform_hide' => 'Perform Hide(LDD)',
+                    'perform_call_tell' => 'Perform Call/Tell(LDD)',
+                    'perform_fight' => 'Perform Fight(LDD)',
+                    'evacuate_high_grounds' => 'Evacuate to High Ground (TSD)'                    
                 ];
 
                 $displayItems = [];

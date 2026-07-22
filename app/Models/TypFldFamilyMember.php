@@ -14,12 +14,13 @@ class TypFldFamilyMember extends Model
         'full_name',
         'age',
         'gender',
+        'family_role',
         'is_head',
         'status',
     ];
 
     protected $casts = [
-        'age' => 'integer',
+        'age'     => 'integer',
         'is_head' => 'boolean',
     ];
 
@@ -28,4 +29,3 @@ class TypFldFamilyMember extends Model
         return $this->belongsTo(TypFldFamily::class, 'family_id');
     }
 }
-

@@ -15,23 +15,35 @@ class TypFldFamily extends Model
     protected $fillable = [
         'school_id',
         'head_family_name',
+        'street',
+        'barangay',
+        'city',
+        'contact_number',
         'has_pregnant',
         'has_pwd',
         'has_senior',
         'has_lactating',
         'has_child_under5',
+        'has_other_needs',
+        'other_needs_details',
+        'personal_belongings',
+        'personal_pets',
+        'registered_by',
         'checked_in_at',
         'checked_out_at',
     ];
 
     protected $casts = [
-        'has_pregnant' => 'boolean',
-        'has_pwd' => 'boolean',
-        'has_senior' => 'boolean',
-        'has_lactating' => 'boolean',
-        'has_child_under5' => 'boolean',
-        'checked_in_at' => 'datetime',
-        'checked_out_at' => 'datetime',
+        'has_pregnant'       => 'boolean',
+        'has_pwd'            => 'boolean',
+        'has_senior'         => 'boolean',
+        'has_lactating'      => 'boolean',
+        'has_child_under5'   => 'boolean',
+        'has_other_needs'    => 'boolean',
+        'personal_belongings'=> 'array',
+        'personal_pets'      => 'array',
+        'checked_in_at'      => 'datetime',
+        'checked_out_at'     => 'datetime',
     ];
 
     public function school(): BelongsTo
@@ -47,6 +59,11 @@ class TypFldFamily extends Model
     public function needs(): HasMany
     {
         return $this->hasMany(TypFldNeed::class, 'family_id');
+    }
+
+    public function registrant(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'registered_by');
     }
 
     public function getNeedsSummaryAttribute(): string
@@ -65,4 +82,3 @@ class TypFldFamily extends Model
             ->implode(', ');
     }
 }
-

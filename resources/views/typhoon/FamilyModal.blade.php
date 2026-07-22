@@ -14,6 +14,9 @@
                 <div class="modal-body" style="max-height: 75vh; overflow-y: auto;">
 
                     {{-- Registration Mode --}}
+                    @if(isset($hidden_ec_id))
+                        <input type="hidden" name="evacuation_center_id" value="{{ $hidden_ec_id }}">
+                    @endif
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">Family Encoding Mode <span class="text-danger">*</span></label>
