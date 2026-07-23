@@ -4,7 +4,7 @@
 @section('hide_main_nav', '1')
 
 @push('styles')
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
     :root {
         --bg-dark: #0a1128;
@@ -14,17 +14,19 @@
         --text-dark: #1e293b;
         --text-muted: #64748b;
         --glass-border: rgba(0, 0, 0, 0.05);
+        --font-display: 'Sora', sans-serif;
+        --font-body: 'Inter', sans-serif;
     }
 
     body {
         background-color: var(--bg-dark) !important;
         background-image: radial-gradient(circle at 50% 50%, #112240 0%, #0a1128 100%);
         color: var(--text-dark);
-        font-family: 'Space Grotesk', 'Inter', sans-serif;
+        font-family: var(--font-body);
     }
 
     h1, h2, h3, h4, h5, .card-header-custom, .stat-value, .fw-bold {
-        font-family: 'Rajdhani', sans-serif;
+        font-family: var(--font-display);
         letter-spacing: 0.5px;
     }
 
@@ -127,7 +129,7 @@
     .nav-link-custom {
         color: rgba(255, 255, 255, 0.7);
         text-decoration: none;
-        font-family: 'Rajdhani', sans-serif;
+        font-family: var(--font-display);
         font-weight: 700;
         font-size: 1.1rem;
         text-transform: uppercase;
@@ -306,7 +308,7 @@
                                     </div>
                                     <div class="flex-grow-1">
                                         <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <h6 class="fw-bold mb-0 {{ $notif->is_read ? 'text-dark' : 'text-primary' }}" style="font-family: 'Rajdhani', sans-serif; font-size: 1.25rem; letter-spacing: 0.5px;">
+                                            <h6 class="fw-bold mb-0 {{ $notif->is_read ? 'text-dark' : 'text-primary' }}" style="font-family: var(--font-display); font-size: 1.25rem; letter-spacing: 0.5px;">
                                                 {{ strtoupper($notif->title) }}
                                             </h6>
                                             <div class="text-end">

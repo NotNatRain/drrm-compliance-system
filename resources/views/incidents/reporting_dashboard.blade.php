@@ -10,11 +10,13 @@
         --incident-orange: #F2994A;
         --incident-dark: #333333;
         --incident-light: #fdfcf0;
+        --font-display: 'Sora', sans-serif;
+        --font-body: 'Inter', sans-serif;
     }
 
     body {
         background-color: #ffffff !important;
-        font-family: 'Outfit', sans-serif;
+        font-family: var(--font-body);
     }
 
     main.py-4 {

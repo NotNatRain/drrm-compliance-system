@@ -207,7 +207,7 @@ body{
                         <td>
                             <div class="d-flex align-items-center">
                                 <!-- Image element added here -->
-                                <img src="{{ asset('images/aluminumstretcher.jpg') }}" style="width: 45px; height: 45px; object-fit: cover; border-radius: 4px;">
+                                <img src="{{ asset('photoViews/aluminumstretcher.jpg') }}" style="width: 45px; height: 45px; object-fit: cover; border-radius: 4px;">
                                 <span>2-fold Aluminum Stretcher</span>
                             </div>
                         </td>
@@ -406,7 +406,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -434,7 +434,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -462,7 +462,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required  ></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -490,7 +490,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -518,7 +518,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required  ></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -546,7 +546,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -574,7 +574,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -602,7 +602,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -630,7 +630,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -658,7 +658,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -686,7 +686,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -716,7 +716,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -746,7 +746,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -776,7 +776,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -806,7 +806,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -836,7 +836,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -866,7 +866,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -896,7 +896,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -926,7 +926,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -956,7 +956,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
 
@@ -1027,7 +1027,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -1057,7 +1057,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -1087,7 +1087,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
                     <tr>
@@ -1117,7 +1117,7 @@ body{
                             <option value="Others">Others</option>
                         </select>
 </td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
+                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
                         <td class="text-center text-muted small">-</td>
                     </tr>
             </tbody>

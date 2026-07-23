@@ -1421,7 +1421,7 @@
                         </div>
                         <button type="button" class="btn btn-dark btn-sm px-4 fw-semibold rounded-2 assign-school-user-btn" style="padding-top: 6px; padding-bottom: 6px;" data-user-id="${u.id}">Assign</button>
                     </div>
-                `;
+                `
             }).join('');
         }
 

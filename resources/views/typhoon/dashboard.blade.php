@@ -5,7 +5,7 @@
 @section('hide_main_nav', '1')
 
 @push('styles')
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
     :root {
         --bg-dark: #0a1128;
@@ -15,6 +15,8 @@
         --text-dark: #1e293b;
         --text-muted: #64748b;
         --glass-border: rgba(0, 0, 0, 0.05);
+        --font-display: 'Sora', sans-serif;
+        --font-body: 'Inter', sans-serif;
     }
 
     .search-bar-container input::placeholder {
@@ -35,11 +37,11 @@
         background-color: var(--bg-dark) !important;
         background-image: radial-gradient(circle at 50% 50%, #112240 0%, #0a1128 100%);
         color: var(--text-dark);
-        font-family: 'Space Grotesk', 'Inter', sans-serif;
+        font-family: var(--font-body);
     }
 
     h1, h2, h3, h4, h5, .card-header-custom, .stat-value, .fw-bold {
-        font-family: 'Rajdhani', sans-serif;
+        font-family: var(--font-display);
         letter-spacing: 0.5px;
     }
 
@@ -259,7 +261,7 @@
     .nav-link-custom {
         color: rgba(255, 255, 255, 0.7);
         text-decoration: none;
-        font-family: 'Rajdhani', sans-serif;
+        font-family: var(--font-display);
         font-weight: 700;
         font-size: 1.1rem;
         text-transform: uppercase;
@@ -318,7 +320,7 @@
             <div>
                 <h1 class="h3 mb-0 fw-bold text-white">
                     <i class="fas fa-satellite-dish me-2" style="color: var(--accent-blue);"></i>
-                    Typhoon & Flood Monitoring System
+                    Evacuation Management System
                 </h1>
             </div>
         </div>
@@ -363,164 +365,89 @@
         </div>
     </div>
 
-    {{-- Main Layout Grid --}}
-    <div class="row g-4 mb-4">
-        {{-- Left Section (65%) --}}
-        <div class="col-lg-8">
-            <div class="row g-4">
-                {{-- 1st Row: Estimated Affected Population & Incident Monitoring --}}
-                <div class="col-md-6">
-                    <div class="dashboard-card">
-                        <div class="card-header-custom"><i class="fas fa-users"></i>Estimated Affected Population</div>
-                        <div class="p-4">
-                            <div class="row g-0 align-items-center">
-                                <div class="col-6 mb-4">
-                                    <div class="stat-label">Total Families</div>
-                                    <div class="stat-value text-primary">{{ $totalFamilies ?? 0 }}</div>
-                                </div>
-                                <div class="col-6 mb-4">
-                                    <div class="stat-label">Total Individuals</div>
-                                    <div class="stat-value">{{ $totalEvacuees ?? 0 }}</div>
-                                </div>
-                                <div class="col-12">
-                                    <div class="d-flex align-items-center justify-content-between p-3 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0;">
-                                        <div class="stat-label mb-0">Active Evacuation Centers</div>
-                                        <div class="h4 mb-0 fw-bold text-primary">{{ $openEvacuationCentersCount ?? 0 }}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+{{-- Main Row spanning 100% width --}}
+<div class="row g-4 mb-4 mx-0 w-100">
 
-                <div class="col-md-6">
-                    <div class="dashboard-card">
-                        <div class="card-header-custom"><i class="fas fa-exclamation-triangle"></i>Incident Monitoring</div>
-                        <div class="p-4">
-                            <div class="d-flex flex-column gap-3">
-                                <div class="d-flex justify-content-between align-items-center p-3 rounded" style="background: #fff5f5; border-left: 4px solid #dc3545;">
-                                    <div>
-                                        <div class="fw-bold" style="color: #991b1b;">Major Incidents</div>
-                                        <small class="text-muted">High priority response</small>
-                                    </div>
-                                    <div class="stat-value" style="color: #dc3545;">{{ $incidentMonitoring['major'] ?? 0 }}</div>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center p-3 rounded" style="background: #f0fdf4; border-left: 4px solid #198754;">
-                                    <div>
-                                        <div class="fw-bold" style="color: #166534;">Minor Incidents</div>
-                                        <small class="text-muted">Managed/Under control</small>
-                                    </div>
-                                    <div class="stat-value" style="color: #198754;">{{ $incidentMonitoring['minor'] ?? 0 }}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    {{-- Left Card: Estimated Affected Population --}} 
+    <div class="col-md-6"> 
+        <div class="dashboard-card h-100"> 
+            <div class="card-header-custom"><i class="fas fa-users"></i>Estimated Affected Population</div> 
+            <div class="p-4"> 
+                <div class="row g-0 align-items-center"> 
+                    <div class="col-6 mb-4"> 
+                        <div class="stat-label">Total Families</div> 
+                        <div class="stat-value text-primary">{{ $totalFamilies ?? 0 }}</div> 
+                    </div> 
+                    <div class="col-6 mb-4"> 
+                        <div class="stat-label">Total Individuals</div> 
+                        <div class="stat-value">{{ $totalEvacuees ?? 0 }}</div> 
+                    </div> 
+                    <div class="col-12"> 
+                        <div class="d-flex align-items-center justify-content-between p-3 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0;"> 
+                            <div class="stat-label mb-0">Active Evacuation Centers</div> 
+                            <div class="h4 mb-0 fw-bold text-primary">{{ $openEvacuationCentersCount ?? 0 }}</div> 
+                        </div> 
+                    </div> 
+                </div> 
+            </div> 
+        </div> 
+    </div> 
 
-                {{-- 2nd Row: Daily Rainfall (MM) & Weather Forecast --}}
-                <div class="col-md-6">
-                    <div class="dashboard-card">
-                        <div class="card-header-custom"><i class="fas fa-cloud-showers-heavy"></i>Daily Rainfall (MM)</div>
-                        <div class="p-4">
-                            <div class="row">
-                                <div class="col-6">
-                                    <div class="p-3 text-center rounded" style="background: #f0f9ff;">
-                                        <div class="stat-label">Bangal Station</div>
-                                        <div class="h3 mb-0 fw-bold text-primary">{{ $rainfall['bangal'] ?? '0.0' }} <small>mm</small></div>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="p-3 text-center rounded" style="background: #f0f9ff;">
-                                        <div class="stat-label">Kalaklan Station</div>
-                                        <div class="h3 mb-0 fw-bold text-primary">{{ $rainfall['kalaklan'] ?? '0.0' }} <small>mm</small></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mt-4">
-                                <div class="progress" style="height: 6px; background: #f1f5f9;">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 45%;"></div>
-                                </div>
-                                <small class="text-muted mt-2 d-block">Accumulated precipitation last 24h</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    {{-- Right Card: Occupancy Overview --}} 
+    <div class="col-md-6"> 
+        <div class="dashboard-card d-flex flex-column h-100"> 
+            <div class="card-header-custom justify-content-between"> 
+                <div class="d-flex align-items-center"> 
+                    <i class="fas fa-chart-pie"></i>Occupancy Overview 
+                </div> 
+                <div class="dropdown"> 
+                    <button class="btn btn-sm occupancy-filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"> 
+                        <i class="fas fa-filter"></i> Filter 
+                    </button> 
+                    <div class="dropdown-menu occupancy-filter-menu"> 
+                        <div class="mb-2"> 
+                            <label for="occupancySortOrder" class="form-label mb-1 small text-uppercase text-muted fw-semibold">Sort By</label> 
+                            <select id="occupancySortOrder" class="form-select form-select-sm"> 
+                                <option value="alphabetical">Alphabetical</option> 
+                                <option value="highest">Highest to Lowest</option> 
+                                <option value="newest">Newest to Lowest</option> 
+                            </select> 
+                        </div> 
+                        <div> 
+                            <div class="small text-uppercase text-muted fw-semibold mb-1">Direction</div> 
+                            <div class="form-check"> 
+                                <input class="form-check-input" type="radio" name="occupancyDirection" id="occupancyDirectionLtr" value="ltr" checked> 
+                                <label class="form-check-label small" for="occupancyDirectionLtr">Left to Right</label> 
+                            </div> 
+                            <div class="form-check"> 
+                                <input class="form-check-input" type="radio" name="occupancyDirection" id="occupancyDirectionRtl" value="rtl"> 
+                                <label class="form-check-label small" for="occupancyDirectionRtl">Right to Left</label> 
+                            </div> 
+                        </div> 
+                    </div> 
+                </div> 
+            </div> 
+            <div class="p-2 flex-grow-1 d-flex flex-column justify-content-between"> 
+                <div class="occupancy-chart-panel" style="position: relative; overflow-x: auto; width: 100%;"> 
+                    <div id="occupancyChartScroll" class="occupancy-chart-scroll" style="width: 100%;"> 
+                        <canvas id="occupancyChart" style="width: 100%; min-height: 200px;"></canvas> 
+                    </div> 
+                </div> 
+                <div class="occupancy-summary"> 
+                    <div class="d-flex justify-content-between small mb-1"> 
+                        <span class="text-muted">Total System Capacity</span> 
+                        <span class="fw-bold">{{ $totalSystemCapacity ?? 0 }}</span> 
+                    </div> 
+                    <div class="progress" style="height: 8px; background: #f1f5f9;"> 
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: 100%;"></div> 
+                    </div> 
+                </div> 
+            </div> 
+        </div> 
+    </div> 
 
-                <div class="col-md-6">
-                    <div class="dashboard-card">
-                        <div class="card-header-custom"><i class="fas fa-cloud-sun-rain"></i>Weather Forecast</div>
-                        <div class="p-4">
-                            <div class="d-flex align-items-center mb-4">
-                                <div class="me-4">
-                                    <i class="fas fa-cloud-showers-water fa-3x text-primary"></i>
-                                </div>
-                                <div>
-                                    <div class="h3 mb-0 fw-bold">{{ $typhoonData->name ?? 'Moderate Rain' }}</div>
-                                    <div class="text-muted">{{ $typhoonData->temp ?? '28' }}°C | {{ $typhoonData->wind ?? '15' }} km/h Wind</div>
-                                </div>
-                            </div>
-                            <div class="small p-2 rounded bg-light border text-center">
-                                <i class="fas fa-info-circle me-1 text-primary"></i> Public Storm Warning Signal #1 Active
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+</div>
 
-        {{-- Right Section: Occupancy Overview (35%) --}}
-        <div class="col-lg-4">
-            <div class="dashboard-card d-flex flex-column">
-                <div class="card-header-custom justify-content-between">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-chart-pie"></i>Occupancy Overview
-                    </div>
-                    <div class="dropdown">
-                        <button class="btn btn-sm occupancy-filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-filter"></i> Filter
-                        </button>
-                        <div class="dropdown-menu occupancy-filter-menu">
-                            <div class="mb-2">
-                                <label for="occupancySortOrder" class="form-label mb-1 small text-uppercase text-muted fw-semibold">Sort By</label>
-                                <select id="occupancySortOrder" class="form-select form-select-sm">
-                                    <option value="alphabetical">Alphabetical</option>
-                                    <option value="highest">Highest to Lowest</option>
-                                    <option value="newest">Newest to Lowest</option>
-                                </select>
-                            </div>
-                            <div>
-                                <div class="small text-uppercase text-muted fw-semibold mb-1">Direction</div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="occupancyDirection" id="occupancyDirectionLtr" value="ltr" checked>
-                                    <label class="form-check-label small" for="occupancyDirectionLtr">Left to Right</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="occupancyDirection" id="occupancyDirectionRtl" value="rtl">
-                                    <label class="form-check-label small" for="occupancyDirectionRtl">Right to Left</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="p-2 flex-grow-1 d-flex flex-column">
-                    <div class="occupancy-chart-panel" style="position: relative; overflow-x: auto;">
-                        <div id="occupancyChartScroll" class="occupancy-chart-scroll">
-                            <canvas id="occupancyChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="occupancy-summary">
-                        <div class="d-flex justify-content-between small mb-1">
-                            <span class="text-muted">Total System Capacity</span>
-                            <span class="fw-bold">{{ $totalSystemCapacity ?? 0 }}</span>
-                        </div>
-                        <div class="progress" style="height: 8px; background: #f1f5f9;">
-                            <div class="progress-bar bg-warning" role="progressbar" style="width: 100%;"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     {{-- ═══ Active Typhoon Alert Banner (only shown when a TC is near Philippines) ═══ --}}
     @if(!empty($activeTyphoon))
@@ -558,7 +485,7 @@
                         <div style="font-size:0.65rem; color:rgba(255,255,255,0.75); text-transform:uppercase; letter-spacing:2px; font-weight:700; margin-bottom:0.2rem;">
                             ⚠ PAGASA Active Weather Alert — Directly Affecting Olongapo City Area
                         </div>
-                        <div style="font-family:'Rajdhani',sans-serif; font-size:1.65rem; font-weight:800; color:#fff; letter-spacing:1px; line-height:1.1;">
+                        <div style="font-family:var(--font-display); font-size:1.65rem; font-weight:800; color:#fff; letter-spacing:1px; line-height:1.1;">
                             Effects of <span style="color:rgba(255,255,255,0.75); font-weight:500;">{{ $activeTyphoon['category'] }}</span>
                             "<span style="color:#fff; font-weight:900;">{{ $activeTyphoon['name'] }}"</span>
                         </div>
@@ -574,7 +501,7 @@
                 <div style="text-align:center; flex-shrink:0;">
                     <div style="font-size:0.6rem; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:1px; margin-bottom:0.3rem;">TCWS Level</div>
                     <div style="background:rgba(255,255,255,0.15); border:2px solid rgba(255,255,255,0.4); border-radius:12px; padding:0.5rem 1.5rem; backdrop-filter:blur(6px);">
-                        <div style="font-family:'Rajdhani',sans-serif; font-size:2.5rem; font-weight:900; color:#fff; line-height:1;">
+                        <div style="font-family:var(--font-display); font-size:2.5rem; font-weight:900; color:#fff; line-height:1;">
                             #{{ $activeTyphoon['signal'] }}
                         </div>
                         <div style="font-size:0.65rem; color:rgba(255,255,255,0.7); letter-spacing:1px; text-transform:uppercase;">Signal No.</div>
@@ -1156,7 +1083,7 @@
 
                         <div class="search-bar-container position-relative" style="min-width: 280px;">
                             <i class="fas fa-search position-absolute top-50 translate-middle-y" style="left: 12px; font-size: 0.9rem;"></i>
-                            <input type="text" id="schoolSearchInput" class="form-control form-control-sm" placeholder="Search school name..." style="padding-left: 36px; border-radius: 20px; width: 100%; background-color: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; transition: all 0.3s ease; font-family: 'Space Grotesk', sans-serif; text-transform: none; letter-spacing: normal;">
+                            <input type="text" id="schoolSearchInput" class="form-control form-control-sm" placeholder="Search school name..." style="padding-left: 36px; border-radius: 20px; width: 100%; background-color: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; transition: all 0.3s ease; font-family: var(--font-body); text-transform: none; letter-spacing: normal;">
                         </div>
 
                         <div class="d-flex gap-2">
@@ -1266,7 +1193,7 @@
     </div>
 
     {{-- PRINT CARD (landscape, 1100px wide) --}}
-    <div id="printCard" style="background: linear-gradient(135deg, #0a1128 0%, #112240 55%, #0d2137 100%); color: #e2e8f0; width: 1100px; max-width: 96vw; border-radius: 16px; box-shadow: 0 0 80px rgba(0,210,255,0.15); border: 1px solid rgba(0,210,255,0.2); font-family: 'Rajdhani', 'Space Grotesk', sans-serif; padding: 2.25rem; margin-bottom: 2rem;">
+    <div id="printCard" style="background: linear-gradient(135deg, #0a1128 0%, #112240 55%, #0d2137 100%); color: #e2e8f0; width: 1100px; max-width: 96vw; border-radius: 16px; box-shadow: 0 0 80px rgba(0,210,255,0.15); border: 1px solid rgba(0,210,255,0.2); font-family: 'Sora', 'Inter', sans-serif; padding: 2.25rem; margin-bottom: 2rem;">
 
         {{-- Header with Logos --}}
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; padding-bottom:1.25rem; border-bottom:1px solid rgba(0,210,255,0.2);">
@@ -2129,7 +2056,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Typhoon & Flood Report</title>
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         @page { margin: 0; size: A4 landscape; }
@@ -2139,7 +2066,7 @@
             background: #0a1128 !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
-            font-family: 'Rajdhani', 'Space Grotesk', sans-serif;
+            font-family: 'Sora', 'Inter', sans-serif;
             display: flex;
             align-items: center;
             justify-content: center;

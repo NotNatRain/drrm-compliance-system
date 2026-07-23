@@ -2,7 +2,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content border-0 shadow-lg" style="background: var(--bg-dark); border-radius: 16px; overflow: hidden;">
             <div class="modal-header border-bottom border-white-50" style="background: rgba(0, 210, 255, 0.1); color: #00d2ff; padding: 1.5rem 2rem;">
-                <h5 class="modal-title fw-bold" style="font-family: 'Rajdhani', sans-serif; letter-spacing: 1px;">
+                <h5 class="modal-title fw-bold" style="font-family: 'Sora', sans-serif; letter-spacing: 1px;">
                     <i class="fas fa-school me-2"></i> SELECT EVACUATION CENTER HUB
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -25,7 +25,7 @@
                                             <div class="bg-info bg-opacity-10 p-2 rounded-circle me-3">
                                                 <i class="fas fa-hotel text-info"></i>
                                             </div>
-                                            <h6 class="fw-bold text-white mb-0" style="font-family: 'Rajdhani', sans-serif;">
+                                            <h6 class="fw-bold text-white mb-0" style="font-family: 'Sora', sans-serif;">
                                                 {{ strtoupper($ec->school_name ?? $ec->identification ?? ('Center #' . $ec->id)) }}
                                             </h6>
                                         </div>

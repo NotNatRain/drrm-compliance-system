@@ -22,9 +22,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="dns-prefetch" href="//fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Scripts -->
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
@@ -38,11 +36,13 @@
             --app-bg: #F8FAFC;
             --navy: #0D1B36;
             --orange: #E05C2E;
+            --font-display: 'Sora', sans-serif;
+            --font-body: 'Inter', sans-serif;
         }
 
         body {
             background-color: var(--app-bg);
-            font-family: 'Inter', sans-serif;
+            font-family: var(--font-body);
         }
 
         /* Navbar Styling */
@@ -66,6 +66,7 @@
             font-weight: 800;
             color: var(--navy);
             font-size: 1.1rem;
+            font-family: var(--font-display);
         }
 
         /* User Profile Toggle */
