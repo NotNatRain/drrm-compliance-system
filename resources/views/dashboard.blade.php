@@ -5,83 +5,66 @@
 
 @push('styles')
 <style>
-        .announcement-banner {
-        position: relative;
-        width: 100%;
-        padding-top: 25%; /* Reduced height */
-        overflow: hidden;
-        border-radius: 15px;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-        margin-bottom: 2.5rem;
-        background-color: #ffffff;
-    }
-    @media (max-width: 768px) {
-        .announcement-banner {
-            padding-top: 56.25%; /* 16:9 on mobile */
-        }
-    }
-    .announcement-banner .carousel-inner {
+    /* Announcement Ribbon & Offcanvas Styles */
+    .announcement-ribbon {
         position: absolute;
         top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-    }
-    .announcement-banner img {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: contain; /* Shows white spaces at sides if not landscape */
-        transition: transform 0.5s ease;
-    }
-    .announcement-banner:hover img {
-        transform: scale(1.02);
-    }
-    .announcement-overlay {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: linear-gradient(transparent, rgba(0,0,0,0.85));
+        left: 30px;
+        background: linear-gradient(135deg, var(--orange, #E05C2E), #FF7A45);
         color: white;
-        padding: 40px;
-        z-index: 2;
+        padding: 12px 15px 15px;
+        border-radius: 0 0 12px 12px;
+        cursor: pointer;
+        z-index: 1040;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 0 4px 10px rgba(224, 92, 46, 0.3);
     }
-    .announcement-content {
-        max-width: 80% ;
+    .announcement-ribbon:hover {
+        padding-top: 20px;
+        background: linear-gradient(135deg, #FF7A45, var(--orange, #E05C2E));
     }
-    .announcement-meta {
-        font-size: 0.9rem;
-        opacity: 0.9;
-        margin-bottom: 10px;
+    .announcement-ribbon .ringing-bell {
+        font-size: 1.5rem;
+        margin-bottom: 5px;
+        transform-origin: top center;
+        animation: swing 2s ease-in-out infinite;
     }
-    .announcement-title {
-        font-size: 2.5rem;
-        font-weight: 800;
-        margin-bottom: 10px;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    .announcement-ribbon .ribbon-text {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
-    .announcement-why {
-        font-size: 1.1rem;
-        line-height: 1.4;
-        opacity: 0.95;
+    @keyframes swing {
+        0% { transform: rotate(0deg); }
+        10% { transform: rotate(15deg); }
+        20% { transform: rotate(-10deg); }
+        30% { transform: rotate(5deg); }
+        40% { transform: rotate(-5deg); }
+        50%, 100% { transform: rotate(0deg); }
     }
     .delete-announcement-btn {
         position: absolute;
-        top: 20px;
-        right: 20px;
+        top: 10px;
+        right: 10px;
         z-index: 10;
-        background: rgba(220, 53, 69, 0.8);
+        background: rgba(220, 53, 69, 0.9);
         border: none;
         color: white;
-        padding: 5px 12px;
-        border-radius: 5px;
-        backdrop-filter: blur(5px);
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
     }
     .delete-announcement-btn:hover {
         background: #dc3545;
+        transform: scale(1.1);
     }
     /* Dashboard Wireframe Styles */
     .dashboard-welcome {
@@ -305,7 +288,7 @@
 @endpush
 
     @section('content')
-<div class="container-fluid dashboard-container">
+<div class="container-fluid px-4 px-lg-5 position-relative">
     @php
         $user = auth()->user();
         $modules = $user?->module_access ?? [];
@@ -313,101 +296,89 @@
         $isContributor = $user && $user->role === 'contributor';
         $canShowSchoolTab = $isAdmin || $isContributor;
     @endphp
-    <!-- @if($announcements->count() == 0)
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <p class="text-muted mb-0">Welcome back, <strong>{{ Auth::user()->name }}</strong>! Select a compliance system to manage.</p>
-        </div>
-    @endif -->
 
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
-            <i class="fas fa-check-circle me-1"></i> {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
-            <i class="fas fa-triangle-exclamation me-1"></i> {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-        @if($announcements->count() > 0)
-        {{-- ... (Rest of Carousel remains same) --}}
-        <div id="announcementCarousel" class="carousel slide announcement-banner mb-5" data-bs-ride="carousel" data-bs-interval="5000">
-            @if($announcements->count() > 1)
-                <div class="carousel-indicators">
-                    @foreach($announcements as $index => $announcement)
-                        <button type="button" data-bs-target="#announcementCarousel" data-bs-slide-to="{{ $index }}" class="{{ $index === 0 ? 'active' : '' }}" aria-label="Slide {{ $index + 1 }}"></button>
-                    @endforeach
-                </div>
-            @endif
-
-            <div class="carousel-inner h-100">
-                @foreach($announcements as $index => $announcement)
-                    <div class="carousel-item h-100 {{ $index === 0 ? 'active' : '' }}">
-                        @if(Auth::user()->role === 'admin')
-                            <button class="delete-announcement-btn" onclick="deleteAnnouncement({{ $announcement->id }})" title="Remove Announcement">
-                                <i class="fas fa-times me-1"></i> Remove
-                            </button>
-                        @endif
-                        <img src="{{ \Illuminate\Support\Facades\Storage::disk(config('filesystems.default'))->url($announcement->image_path) }}" class="d-block w-100" alt="Announcement Poster">
-                        <div class="announcement-overlay">
-                            <div class="announcement-content">
-                                <p class="announcement-meta">
-                                    <i class="far fa-calendar-alt me-1"></i> {{ \Carbon\Carbon::parse($announcement->when)->format('F j, Y \a\t h:i A') }}
-                                    <span class="mx-2">|</span>
-                                    <i class="fas fa-map-marker-alt me-1"></i> {{ $announcement->where }}
-                                </p>
-                                <h2 class="announcement-title">{{ $announcement->what }}</h2>
-                                <p class="announcement-why mb-0">{{ $announcement->why }}</p>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
+        <!-- Announcements Offcanvas -->
+        <div class="offcanvas offcanvas-start border-0 shadow" tabindex="-1" id="announcementsOffcanvas" aria-labelledby="announcementsOffcanvasLabel" style="width: 400px; max-width: 90vw;">
+            <div class="offcanvas-header bg-white border-bottom py-3 px-4">
+                <h5 class="offcanvas-title fw-bolder mb-0" id="announcementsOffcanvasLabel" style="font-family: var(--font-display, 'Sora', sans-serif); color: var(--navy, #0D1B36);">
+                    <i class="fas fa-bullhorn me-2 text-primary"></i> System Announcements
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
-
-            @if($announcements->count() > 1)
-                <button class="carousel-control-prev" type="button" data-bs-target="#announcementCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Previous</span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#announcementCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Next</span>
-                </button>
-            @endif
+            <div class="offcanvas-body p-0 bg-light position-relative">
+                @if($announcements->count() > 0)
+                    <div id="announcementCarousel" class="carousel slide h-100" data-bs-ride="carousel" data-bs-interval="5000">
+                        <div class="carousel-inner h-100">
+                            @foreach($announcements as $index => $announcement)
+                                <div class="carousel-item h-100 {{ $index === 0 ? 'active' : '' }}">
+                                    @if(Auth::user()->role === 'admin')
+                                        <button class="delete-announcement-btn shadow-sm" onclick="deleteAnnouncement({{ $announcement->id }})" title="Remove Announcement">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    @endif
+                                    <div class="announcement-card-wrap p-4 h-100 d-flex flex-column">
+                                        <div class="announcement-poster-wrap rounded-3 shadow-sm overflow-hidden mb-4 position-relative" style="padding-top: 100%; background: #fff;">
+                                            <img src="{{ asset('storage/' . $announcement->image_path) }}" class="position-absolute top-0 start-0 w-100 h-100" style="object-fit: cover;" alt="Announcement Poster">
+                                        </div>
+                                        <div class="announcement-content-text px-2 flex-grow-1">
+                                            <p class="text-muted small mb-1 fw-bold">
+                                                <i class="far fa-calendar-alt me-1"></i> {{ \Carbon\Carbon::parse($announcement->when)->format('M j, Y h:i A') }}
+                                            </p>
+                                            <p class="text-muted small mb-3 fw-bold">
+                                                <i class="fas fa-map-marker-alt me-1 text-danger"></i> {{ $announcement->where }}
+                                            </p>
+                                            <h4 class="fw-bolder text-dark mb-3" style="font-family: var(--font-display, 'Sora', sans-serif);">{{ $announcement->what }}</h4>
+                                            <p class="text-secondary" style="line-height: 1.6;">{{ $announcement->why }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                        @if($announcements->count() > 1)
+                            <div class="carousel-indicators mb-2" style="position: absolute; bottom: 10px;">
+                                @foreach($announcements as $index => $announcement)
+                                    <button type="button" data-bs-target="#announcementCarousel" data-bs-slide-to="{{ $index }}" class="{{ $index === 0 ? 'active' : '' }} bg-primary" aria-label="Slide {{ $index + 1 }}"></button>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                @else
+                    <div class="d-flex flex-column align-items-center justify-content-center h-100 p-5 text-center" style="color: #94A3B8;">
+                        <i class="fas fa-bell-slash mb-3" style="font-size: 3rem; opacity: 0.5;"></i>
+                        <h5 class="fw-bold mb-2" style="color: var(--navy, #0D1B36); font-family: var(--font-display, 'Sora', sans-serif);">All Caught Up!</h5>
+                        <p class="small mb-0" style="font-family: var(--font-body, 'Inter', sans-serif);">There are no active announcements at the moment. Check back later.</p>
+                    </div>
+                @endif
+            </div>
         </div>
-    @endif
 
-    @section('content')
-<div class="container-fluid px-4 px-lg-5">
-    @php
-        $user = auth()->user();
-        $modules = $user?->module_access ?? [];
-        $isAdmin = $user && $user->role === 'admin';
-        $isContributor = $user && $user->role === 'contributor';
-        $canShowSchoolTab = $isAdmin || $isContributor;
-    @endphp
-    
-    <div class="dashboard-welcome">
+    <div class="dashboard-welcome mt-4">
         Welcome back, <strong>{{ Auth::user()->name }}</strong>! Select a compliance system to manage.
     </div>
 
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
-            <i class="fas fa-check-circle me-1"></i> {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
-            <i class="fas fa-triangle-exclamation me-1"></i> {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
+    <!-- Toast Container for Notifications -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-4" style="z-index: 1080;">
+        @if(session('success'))
+            <div id="successToast" class="toast align-items-center bg-white border-0 shadow-lg" style="border-radius: 12px;" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body fw-semibold py-3 px-4" style="color: var(--navy, #0D1B36); font-family: var(--font-body, 'Inter', sans-serif);">
+                        <i class="fas fa-check-circle me-2 text-success"></i> {{ session('success') }}
+                    </div>
+                    <button type="button" class="btn-close me-3 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        @endif
+        @if(session('error'))
+            <div id="errorToast" class="toast align-items-center bg-white border-0 shadow-lg" style="border-radius: 12px;" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body fw-semibold py-3 px-4" style="color: var(--navy, #0D1B36); font-family: var(--font-body, 'Inter', sans-serif);">
+                        <i class="fas fa-exclamation-triangle me-2 text-danger"></i> {{ session('error') }}
+                    </div>
+                    <button type="button" class="btn-close me-3 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        @endif
+    </div>
 
     <!-- System Overview -->
     <div class="overview-card">
@@ -1328,15 +1299,17 @@
 
 <!-- Announce Modal -->
 <div class="modal fade" id="announceModal" tabindex="-1" aria-labelledby="announceModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="announceModalLabel"><i class="fas fa-bullhorn me-2"></i> Create System Announcement</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 18px; overflow: hidden;">
+            <div class="modal-header border-bottom bg-white py-3 px-4">
+                <h5 class="modal-title" id="announceModalLabel" style="font-family: var(--font-display, 'Sora', sans-serif); font-weight: 800; color: var(--navy, #0D1B36);">
+                    <i class="fas fa-bullhorn me-2 text-primary"></i> Create System Announcement
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="announceForm" method="POST" action="{{ route('announcements.store', [], false) }}" enctype="multipart/form-data">
                 @csrf
-                <div class="modal-body">
+                <div class="modal-body p-4 text-dark">
                     <div class="row g-3">
                         <div class="col-md-8">
                             <label class="form-label fw-bold">What is the event? (Title)</label>
@@ -1367,9 +1340,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="submitAnnounce">
+                <div class="modal-footer bg-light border-top-0 px-4 py-3">
+                    <button type="button" class="btn btn-light border shadow-sm fw-semibold" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn border-0 shadow-sm fw-semibold text-white px-4" id="submitAnnounce" style="background: var(--navy, #0D1B36);">
                         <i class="fas fa-paper-plane me-2"></i> Post Announcement
                     </button>
                 </div>
@@ -2100,6 +2073,13 @@
                 btn.disabled = false;
             }
         });
+    });
+    document.addEventListener('DOMContentLoaded', function () {
+        var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        var toastList = toastElList.map(function (toastEl) {
+            return new bootstrap.Toast(toastEl, { autohide: true, delay: 5000 });
+        });
+        toastList.forEach(toast => toast.show());
     });
 </script>
 @endpush

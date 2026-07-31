@@ -88,7 +88,7 @@
             text-align: right;
             display: none;
         }
-        @media (min-width: 576px) { .user-info { display: block; } }
+        @media (min-width: 768px) { .user-info { display: block; } }
 
         .user-name {
             font-weight: 700;
@@ -211,19 +211,25 @@
     <div id="app">
         @unless(View::hasSection('hide_main_nav'))
             <nav class="navbar navbar-expand-md app-navbar">
-                <div class="container-fluid px-4 px-lg-5">
+                <div class="container-fluid px-4 px-lg-5 position-relative">
                     <a class="navbar-brand d-flex align-items-center" href="{{ route('dashboard') }}">
                         @if(Route::is('typhoon.*'))
                             <img src="{{ asset('images/typhoon-flood-logo.png') }}" alt="Typhoon/Flood">
-                            <span class="navbar-brand-text">Typhoon/Flood Monitoring</span>
+                            <span class="navbar-brand-text d-none d-sm-inline-block">Typhoon/Flood Monitoring</span>
                         @elseif(Route::is('incidents.*'))
                             <img src="{{ asset('images/incident-checklist-logo.png') }}" alt="Incident Checklist">
-                            <span class="navbar-brand-text">Incident Checklist</span>
+                            <span class="navbar-brand-text d-none d-sm-inline-block">Incident Checklist</span>
                         @else
                             <img src="{{ asset('images/drrmis-logo-2.png') }}" alt="DRRM">
-                            <span class="navbar-brand-text">DRRM Compliance Dashboard</span>
+                            <span class="navbar-brand-text d-none d-sm-inline-block">DRRM Compliance Dashboard</span>
                         @endif
                     </a>
+
+                    <!-- Live Time & Date -->
+                    <div class="d-none d-lg-flex flex-column align-items-center position-absolute top-50 start-50 translate-middle text-center" style="pointer-events: none;">
+                        <span id="nav-time" class="fw-bold" style="font-family: var(--font-display, 'Sora', sans-serif); color: #1D232A; font-size: 0.75rem; line-height: 1; letter-spacing: 0.5px;">--:--:--</span>
+                        <span id="nav-date" class="fw-semibold text-uppercase" style="font-family: var(--font-body, 'Inter', sans-serif); color: #414F62; font-size: 0.65rem; letter-spacing: 0.5px; margin-top: 2px;">---</span>
+                    </div>
 
                     <ul class="navbar-nav ms-auto flex-row">
                         @guest
@@ -238,6 +244,43 @@
                                 $names = explode(' ', Auth::user()->name);
                                 $initials = substr($names[0], 0, 1) . (isset($names[1]) ? substr($names[1], 0, 1) : '');
                             @endphp
+                            <li class="nav-item d-flex align-items-center me-3">
+                                @isset($announcements)
+                                    <div class="position-relative announcement-bell-btn" data-bs-toggle="offcanvas" data-bs-target="#announcementsOffcanvas" role="button" title="View Announcements">
+                                        <i class="fas fa-bell fs-5" style="{{ $announcements->count() > 0 ? 'animation: swing 2s ease-in-out infinite; transform-origin: top center;' : '' }}"></i>
+                                        @if($announcements->count() > 0)
+                                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; padding: 0.25em 0.5em; font-family: var(--font-body, 'Inter', sans-serif);">
+                                                {{$announcements->count()}}
+                                            </span>
+                                        @endif
+                                    </div>
+                                    <style>
+                                        .announcement-bell-btn {
+                                            color: var(--navy, #0D1B36);
+                                            cursor: pointer;
+                                            transition: all 0.2s ease-in-out;
+                                            padding: 8px;
+                                            border-radius: 50%;
+                                            display: flex;
+                                            align-items: center;
+                                            justify-content: center;
+                                        }
+                                        .announcement-bell-btn:hover {
+                                            color: var(--orange, #E05C2E);
+                                            background-color: rgba(224, 92, 46, 0.1);
+                                            transform: scale(1.1);
+                                        }
+                                        @keyframes swing {
+                                            0% { transform: rotate(0deg); }
+                                            10% { transform: rotate(15deg); }
+                                            20% { transform: rotate(-10deg); }
+                                            30% { transform: rotate(5deg); }
+                                            40% { transform: rotate(-5deg); }
+                                            50%, 100% { transform: rotate(0deg); }
+                                        }
+                                    </style>
+                                @endisset
+                            </li>
                             <li class="nav-item dropdown">
                                 <a id="navbarDropdown" class="nav-link p-0 text-decoration-none dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" v-pre>
                                     <div class="user-toggle">
@@ -307,5 +350,18 @@
         </main>
     </div>
     @stack('scripts')
+    <script>
+        function updateNavDateTime() {
+            const timeEl = document.getElementById('nav-time');
+            const dateEl = document.getElementById('nav-date');
+            if(!timeEl || !dateEl) return;
+            
+            const now = new Date();
+            timeEl.textContent = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true });
+            dateEl.textContent = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' });
+        }
+        setInterval(updateNavDateTime, 1000);
+        updateNavDateTime();
+    </script>
 </body>
 </html>

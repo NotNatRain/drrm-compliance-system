@@ -45,6 +45,23 @@
         letter-spacing: 0.5px;
     }
 
+    /* ── Full-screen context for dashboard ── */
+    html {
+        font-size: 80%;
+    }
+    html, body {
+        height: 100%;
+    }
+    body > div,
+    body > div > main {
+        height: 100%;
+    }
+    /* Override app layout's py-4 padding for this page */
+    main.py-4 {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+
     .container-fluid {
         padding: 2rem;
     }
@@ -189,13 +206,13 @@
     }
 
     /* ====================================================
-     * 70/30 HYBRID MOBILE APPROACH — Typhoon Dashboard
+     * 70/30 HYBRID MOBILE APPROACH â€” Typhoon Dashboard
      * Desktop layout preserved. Minimal tweaks only:
      *  1. Scrollable tables
      *  2. Slightly larger button tap targets
      *  3. Stack form columns in modals/forms
      * ==================================================== */
-    /* Triggered by 1024px viewport lock — desktop layout preserved but mobile enhancements active */
+    /* Triggered by 1024px viewport lock â€” desktop layout preserved but mobile enhancements active */
     @media (max-width: 1024.1px) {
         .table-responsive {
             overflow-x: auto !important;
@@ -305,881 +322,1132 @@
     .school-btn-custom:hover, .school-btn-custom.active {
         color: var(--accent-blue);
     }
+
+    /* ============================================================
+     *  EVAC DASHBOARD — Premium UI Redesign
+     * ============================================================ */
+
+    /* Override app layout's py-4 padding for this page */
+    main.py-4 {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+    body, html {
+        height: 100%;
+        margin: 0;
+        overflow: hidden; /* Prevent page scrolling, dashboard handles its own */
+    }
+    #app, main {
+        height: 100%;
+    }
+
+    /* Animations */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideInLeft {
+        from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes typhoonSpin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    @keyframes pulseGlow {
+        0% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(0, 210, 255, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(0, 210, 255, 0); }
+    }
+
+    /* Root wrapper — flex column, 100% height constraint */
+    .evac-dashboard-root {
+        display: flex;
+        flex-direction: column;
+        height: 100%; /* Instead of 100vh to fit inside wrapper perfectly */
+        background: #080d1a; /* deep modern dark */
+        font-family: 'Inter', var(--font-body), sans-serif;
+        overflow: hidden;
+    }
+
+    /* ── Top Bar ── */
+    .evac-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.8rem 1.5rem;
+        background: rgba(11, 19, 37, 0.8);
+        border-bottom: 1px solid rgba(0, 210, 255, 0.1);
+        backdrop-filter: blur(16px);
+        flex-shrink: 0;
+        z-index: 100;
+        animation: slideInLeft 0.5s ease-out;
+    }
+    .evac-topbar-left {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+    }
+    .evac-back-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        border: 1px solid rgba(0,210,255,0.2);
+        background: rgba(0,210,255,0.05);
+        color: #00d2ff;
+        text-decoration: none;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        font-size: 1rem;
+    }
+    .evac-back-btn:hover {
+        background: #00d2ff;
+        color: #080d1a;
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0,210,255,0.3);
+    }
+    .evac-brand {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+    .evac-brand-icon {
+        font-size: 1.5rem;
+        color: #00d2ff;
+        filter: drop-shadow(0 0 8px rgba(0,210,255,0.5));
+    }
+    .evac-brand-title {
+        font-family: 'Outfit', var(--font-display), sans-serif;
+        font-size: 1.35rem;
+        font-weight: 800;
+        color: #ffffff;
+        letter-spacing: 0.5px;
+    }
+    .evac-datetime {
+        text-align: right;
+    }
+    .evac-date {
+        font-family: 'Outfit', var(--font-display), sans-serif;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #e2e8f0;
+    }
+    .evac-time {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        margin-top: 0.1rem;
+    }
+
+    /* ── Body (Flex layout for inner scrolling) ── */
+    .evac-body {
+        display: flex;
+        flex: 1;
+        min-height: 0; /* Important for flex children to scroll */
+        position: relative;
+    }
+
+    /* ── Left Sidebar ── */
+    .evac-sidebar {
+        width: 240px;
+        background: rgba(11, 19, 37, 0.5);
+        border-right: 1px solid rgba(0,210,255,0.08);
+        padding: 1.5rem 0.75rem;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        flex-shrink: 0;
+        animation: slideInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    /* Scrollbar styling for sidebar */
+    .evac-sidebar::-webkit-scrollbar { width: 4px; }
+    .evac-sidebar::-webkit-scrollbar-thumb { background: rgba(0,210,255,0.2); border-radius: 4px; }
+
+    .evac-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+    .evac-nav-item, .evac-nav-item-inner {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        padding: 0.85rem 1rem;
+        border-radius: 12px;
+        color: #94a3b8;
+        text-decoration: none;
+        font-family: 'Outfit', var(--font-display), sans-serif;
+        font-size: 0.95rem;
+        font-weight: 600;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+    .evac-nav-item:hover, .evac-nav-item-inner:hover {
+        color: #ffffff;
+        background: rgba(255,255,255,0.03);
+        transform: translateX(4px);
+    }
+    .evac-nav-item.active {
+        background: linear-gradient(90deg, rgba(0,210,255,0.15) 0%, rgba(0,210,255,0.02) 100%);
+        color: #00d2ff;
+        border-left: 3px solid #00d2ff;
+    }
+    .evac-nav-icon {
+        width: 24px;
+        text-align: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+        color: #64748b;
+        transition: color 0.3s;
+    }
+    .evac-nav-item:hover .evac-nav-icon, .evac-nav-item-inner:hover .evac-nav-icon, .evac-nav-item.active .evac-nav-icon {
+        color: #00d2ff;
+    }
+    .evac-nav-label {
+        flex: 1;
+    }
+    /* Register dropdown */
+    .evac-nav-has-sub {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 0;
+        background: none !important;
+        transform: none !important;
+    }
+    .evac-nav-caret {
+        font-size: 0.7rem;
+        margin-left: auto;
+        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        color: #64748b;
+    }
+    .evac-nav-caret.open {
+        transform: rotate(180deg);
+        color: #00d2ff;
+    }
+    .evac-nav-sub {
+        display: none; /* Hide entirely when closed */
+        flex-direction: column;
+        gap: 0.2rem;
+        margin-left: 1rem;
+        padding-left: 1rem;
+        border-left: 1px solid rgba(0,210,255,0.1);
+    }
+    .evac-nav-sub.open {
+        display: flex;
+        animation: fadeInUp 0.2s ease-out;
+        margin-top: 0.4rem;
+        margin-bottom: 0.4rem;
+    }
+    .evac-nav-sub-item {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0.6rem 0.85rem;
+        border-radius: 8px;
+        color: #94a3b8;
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    .evac-nav-sub-item:hover {
+        color: #00d2ff;
+        background: rgba(0,210,255,0.05);
+        transform: translateX(3px);
+    }
+
+    /* ── Center Main ── */
+    .evac-main {
+        flex: 1;
+        min-width: 0;
+        overflow-y: auto;
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        scroll-behavior: smooth;
+    }
+    /* Custom scrollbar for main */
+    .evac-main::-webkit-scrollbar { width: 8px; }
+    .evac-main::-webkit-scrollbar-track { background: transparent; }
+    .evac-main::-webkit-scrollbar-thumb { background: rgba(0,210,255,0.15); border-radius: 8px; }
+    .evac-main::-webkit-scrollbar-thumb:hover { background: rgba(0,210,255,0.3); }
+
+    /* ── Generic Premium Panel ── */
+    .evac-panel {
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px -5px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .evac-panel:nth-child(1) { animation-delay: 0.1s; }
+    .evac-panel:nth-child(2) { animation-delay: 0.2s; }
+
+    .evac-panel-alert {
+        flex: 4;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .evac-panel-schools {
+        flex: 6;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .evac-panel-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.85rem 1.25rem;
+        background: #ffffff;
+        border-bottom: 1px solid #f1f5f9;
+        color: #0f172a;
+        font-family: 'Outfit', var(--font-display), sans-serif;
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .evac-panel-header i {
+        color: #0ea5e9;
+        font-size: 1rem;
+    }
+    .evac-panel-body {
+        flex: 1;
+        padding: 0;
+        background: #ffffff;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* ── Typhoon Alert ── */
+    .evac-typhoon-alert {
+        position: relative;
+        overflow: hidden;
+        border-radius: 16px; /* standalone card look */
+        margin: -1px; /* hide panel borders */
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    .evac-storm-ring {
+        position: absolute;
+        border-radius: 50%;
+        pointer-events: none;
+        border: 2px dashed rgba(255,255,255,0.2);
+    }
+    .evac-storm-ring-1 {
+        width: 300px; height: 300px;
+        top: -100px; right: -50px;
+        animation: typhoonSpin 12s linear infinite;
+        opacity: 0.4;
+    }
+    .evac-storm-ring-2 {
+        width: 180px; height: 180px;
+        top: -40px; right: 10px;
+        animation: typhoonSpin 8s linear infinite reverse;
+        opacity: 0.5;
+        border-style: solid;
+    }
+    .evac-alert-content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.25rem 1.5rem;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        flex: 1;
+    }
+    .evac-alert-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        flex: 1;
+        min-width: 0;
+    }
+    .evac-storm-emoji {
+        font-size: 2.75rem;
+        line-height: 1;
+        animation: typhoonSpin 4s linear infinite;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+    }
+    .evac-alert-text {
+        min-width: 0;
+    }
+    .evac-alert-sub {
+        font-size: 0.6rem;
+        color: rgba(255,255,255,0.85);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 800;
+        margin-bottom: 0.2rem;
+    }
+    .evac-alert-title {
+        font-family: 'Outfit', var(--font-display), sans-serif;
+        font-size: 1.35rem;
+        font-weight: 900;
+        color: #fff;
+        letter-spacing: 0.5px;
+        line-height: 1.1;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .evac-alert-cat {
+        color: rgba(255,255,255,0.9);
+        font-weight: 600;
+    }
+    .evac-alert-name {
+        color: #fff;
+    }
+    .evac-alert-meta {
+        font-size: 0.85rem;
+        color: rgba(255,255,255,0.85);
+        margin-top: 0.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: center;
+    }
+    .evac-alert-meta span {
+        display: flex;
+        align-items: center;
+        background: rgba(0,0,0,0.2);
+        padding: 0.2rem 0.6rem;
+        border-radius: 4px;
+        backdrop-filter: blur(4px);
+    }
+    .evac-alert-right {
+        text-align: center;
+        flex-shrink: 0;
+        background: rgba(0,0,0,0.15);
+        padding: 0.75rem 1.25rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.2);
+        backdrop-filter: blur(8px);
+    }
+    .evac-signal-label {
+        font-size: 0.6rem;
+        color: rgba(255,255,255,0.8);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.2rem;
+        font-weight: 700;
+    }
+    .evac-signal-badge {
+        font-family: 'Outfit', var(--font-display), sans-serif;
+        font-size: 2.2rem;
+        font-weight: 900;
+        color: #fff;
+        line-height: 1;
+        text-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .evac-signal-sub {
+        font-size: 0.65rem;
+        color: rgba(255,255,255,0.8);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 0.2rem;
+    }
+    .evac-alert-stripe {
+        background: rgba(0,0,0,0.3);
+        padding: 0.5rem 1.5rem;
+        font-size: 0.75rem;
+        color: rgba(255,255,255,0.9);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        backdrop-filter: blur(4px);
+    }
+
+    /* ── Empty State (Alert Panel) ── */
+    .evac-empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem 1.5rem;
+        text-align: center;
+        background: #ffffff;
+        flex: 1;
+    }
+    .evac-empty-icon {
+        position: relative;
+        font-size: 2.5rem;
+        color: #f59e0b;
+        margin-bottom: 1rem;
+        line-height: 1;
+        animation: fadeInUp 0.5s ease-out;
+    }
+    .evac-empty-cloud {
+        position: absolute;
+        bottom: -5px;
+        right: -10px;
+        font-size: 1.2rem;
+        color: #94a3b8;
+    }
+    .evac-empty-title {
+        font-family: 'Outfit', var(--font-display), sans-serif;
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+    }
+    .evac-empty-sub {
+        font-size: 0.8rem;
+        color: #64748b;
+        max-width: 400px;
+        line-height: 1.6;
+        margin-bottom: 1.25rem;
+    }
+    .evac-empty-badge {
+        display: inline-flex;
+        align-items: center;
+        background: #dcfce7;
+        color: #16a34a;
+        border: 1px solid #86efac;
+        border-radius: 50px;
+        padding: 0.4rem 1.25rem;
+        font-size: 0.85rem;
+        font-weight: 700;
+        box-shadow: 0 4px 10px rgba(22,163,74,0.1);
+    }
+
+    /* ── Status Badges ── */
+    .evac-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.35rem 0.85rem;
+        border-radius: 6px;
+        font-size: 0.72rem;
+        font-weight: 800;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+    }
+    .evac-badge-cleared  { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+    .evac-badge-occupied { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+    .evac-badge-full     { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+    .evac-badge-decamp   { background: #faf5ff; color: #9333ea; border: 1px solid #e9d5ff; }
+
+    /* ── School Status Table ── */
+    .evac-schools-table-wrap {
+        overflow-x: auto;
+        overflow-y: auto;
+        flex: 1;
+        width: 100%;
+    }
+    .evac-schools-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 600px; /* Ensures table doesn't squash too much */
+    }
+    .evac-schools-table thead tr {
+        background: #f8fafc;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    .evac-schools-table th {
+        padding: 0.6rem 1rem;
+        font-size: 0.6rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: #64748b;
+        white-space: nowrap;
+    }
+    .evac-schools-table .th-name     { width: 45%; text-align: left; }
+    .evac-schools-table .th-status   { width: 20%; text-align: center; }
+    .evac-schools-table .th-families { width: 17%; text-align: center; }
+    .evac-schools-table .th-individuals { width: 18%; text-align: center; }
+
+    .evac-schools-table tbody tr.evac-school-row {
+        cursor: pointer;
+        border-bottom: 1px solid #f1f5f9;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        background: #ffffff;
+    }
+    .evac-schools-table tbody tr.evac-school-row:hover {
+        background: #f8fafc;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        z-index: 10;
+        position: relative;
+    }
+    .evac-schools-table tbody tr.evac-cluster-row {
+        background: #fffbeb;
+    }
+    .evac-schools-table tbody tr.evac-cluster-row:hover {
+        background: #fef3c7;
+    }
+    .evac-schools-table td {
+        padding: 0.6rem 1rem;
+        vertical-align: middle;
+    }
+    .evac-schools-table .td-name {
+        vertical-align: middle;
+    }
+    .evac-school-name {
+        font-family: 'Outfit', var(--font-display), sans-serif;
+        font-weight: 700;
+        font-size: 0.75rem;
+        color: #0f172a;
+        vertical-align: middle;
+    }
+    .evac-cluster-pin {
+        color: #f59e0b;
+        font-size: 0.85rem;
+        filter: drop-shadow(0 2px 4px rgba(245,158,11,0.3));
+        margin-right: 0.5rem;
+        vertical-align: middle;
+    }
+    .evac-schools-table .td-status {
+        text-align: center;
+    }
+    .evac-schools-table .td-num {
+        text-align: center;
+        font-family: 'Outfit', var(--font-display), sans-serif;
+        font-size: 0.9rem;
+        font-weight: 800;
+        color: #1e293b;
+    }
+
+    /* ── Pagination Bar ── */
+    .evac-pagination-bar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 1.5rem;
+        padding: 1.25rem;
+        border-top: 1px solid #e2e8f0;
+        background: #ffffff;
+    }
+    .evac-page-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        padding: 0.5rem 1.25rem;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #334155;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+    .evac-page-btn:hover:not(:disabled) {
+        background: #f8fafc;
+        border-color: #94a3b8;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    .evac-page-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        background: #f1f5f9;
+    }
+    .evac-page-info {
+        font-family: 'Outfit', var(--font-display), sans-serif;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #475569;
+    }
+
+    /* ── Right Sidebar ── */
+    .evac-right-sidebar {
+        width: 280px;
+        background: rgba(11, 19, 37, 0.4);
+        border-left: 1px solid rgba(0,210,255,0.08);
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        flex-shrink: 0;
+        animation: slideInLeft 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .evac-right-sidebar::-webkit-scrollbar { width: 4px; }
+    .evac-right-sidebar::-webkit-scrollbar-thumb { background: rgba(0,210,255,0.2); }
+
+    .evac-right-panel {
+        border-bottom: 1px solid rgba(0,210,255,0.08);
+    }
+    .evac-right-panel-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1.25rem 1.5rem;
+        background: rgba(0, 210, 255, 0.03);
+        color: #ffffff;
+        font-family: 'Outfit', var(--font-display), sans-serif;
+        font-size: 0.8rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    .evac-right-panel-header i {
+        color: #00d2ff;
+        font-size: 1rem;
+    }
+    .evac-right-panel-body {
+        padding: 1.5rem;
+        background: rgba(255,255,255,0.01);
+    }
+    .evac-future-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        border-bottom: none;
+    }
+    .evac-future-panel .evac-right-panel-body {
+        flex: 1;
+    }
+    
+    /* Guidelines Active */
+    .evac-guidelines-active {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .evac-guideline-alert-icon {
+        font-size: 3rem;
+        animation: typhoonSpin 6s linear infinite;
+        margin-bottom: 0.75rem;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+    }
+    .evac-guideline-signal-badge {
+        background: linear-gradient(135deg, #f97316, #ef4444);
+        color: #fff;
+        font-family: 'Outfit', var(--font-display), sans-serif;
+        font-size: 1rem;
+        font-weight: 900;
+        padding: 0.4rem 1.25rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 12px rgba(239,68,68,0.3);
+    }
+    .evac-guideline-title {
+        font-family: 'Outfit', var(--font-display), sans-serif;
+        font-size: 1rem;
+        font-weight: 800;
+        color: #e2e8f0;
+        margin-bottom: 1rem;
+    }
+    .evac-guideline-list {
+        text-align: left;
+        list-style: none;
+        padding: 0;
+        margin: 0 0 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.85rem;
+    }
+    .evac-guideline-list li {
+        font-size: 0.85rem;
+        color: #cbd5e1;
+        line-height: 1.5;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        background: rgba(0,0,0,0.2);
+        padding: 0.75rem;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+    .evac-guideline-list li i {
+        margin-top: 0.2rem;
+    }
+    .evac-guideline-footer {
+        font-size: 0.7rem;
+        color: #64748b;
+        border-top: 1px solid rgba(255,255,255,0.05);
+        padding-top: 0.85rem;
+        width: 100%;
+        text-align: center;
+    }
+    
+    /* Empty state (right sidebar) */
+    .evac-right-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2.5rem 1rem;
+        text-align: center;
+    }
+    .evac-right-empty-icon {
+        font-size: 2.5rem;
+        color: rgba(255,255,255,0.1);
+        margin-bottom: 1rem;
+    }
+    .evac-right-empty-title {
+        font-family: 'Outfit', var(--font-display), sans-serif;
+        font-size: 0.95rem;
+        font-weight: 800;
+        color: rgba(255,255,255,0.4);
+        margin-bottom: 0.5rem;
+    }
+    .evac-right-empty-sub {
+        font-size: 0.8rem;
+        color: rgba(255,255,255,0.25);
+        line-height: 1.5;
+    }
+
+    /* ── Responsive Layout Overrides ── */
+    @media (max-width: 1280px) {
+        .evac-right-sidebar { display: none; }
+    }
+    @media (max-width: 992px) {
+        .evac-sidebar { display: none; }
+    }
+    @media (max-width: 768px) {
+        .evac-alert-content { padding: 1.25rem; flex-direction: column; text-align: center; }
+        .evac-alert-left { flex-direction: column; gap: 0.5rem; }
+        .evac-alert-right { width: 100%; }
+        .evac-alert-meta { justify-content: center; }
+    }
+
 </style>
 @endpush
 
+
 @section('content')
-<div class="container-fluid">
-    {{-- Header --}}
-    <div class="d-flex justify-content-between align-items-center mb-5">
-        {{-- Left Side --}}
-        <div class="d-flex align-items-center" style="width: 30%;">
-            <a href="{{ route('dashboard') }}" class="btn btn-outline-info border-0 me-3" title="Back">
-                <i class="fas fa-chevron-left fa-lg"></i>
+
+{{-- ============================================================
+     NEW ADMIN DASHBOARD â€” Evacuation Monitoring
+     Layout: Left Sidebar | Center (Alert + Table) | Right Sidebar
+     ============================================================ --}}
+
+<div class="evac-dashboard-root">
+
+    {{-- â”€â”€ TOP BAR â”€â”€ --}}
+    <div class="evac-topbar">
+        <div class="evac-topbar-left">
+            <a href="{{ route('dashboard') }}" class="evac-back-btn" title="Back to Main">
+                <i class="fas fa-chevron-left"></i>
             </a>
-            <div>
-                <h1 class="h3 mb-0 fw-bold text-white">
-                    <i class="fas fa-satellite-dish me-2" style="color: var(--accent-blue);"></i>
-                    Evacuation Management System
-                </h1>
+            <div class="evac-brand">
+                <i class="fas fa-satellite-dish evac-brand-icon"></i>
+                <span class="evac-brand-title">Evacuation Monitoring</span>
             </div>
         </div>
-
-        {{-- Centered Navigation --}}
-        <div class="header-nav-center">
-            <a href="{{ route('typhoon.dashboard') }}" class="nav-link-custom active">
-                Dashboard
-            </a>
-            <a href="{{ route('typhoon.notifications') }}" class="notif-btn-custom" title="Notifications">
-                <i class="fas fa-bell"></i>
-                @php
-                    $unreadCount = \App\Models\FireSafetyNotification::forCompliance('typhoon_flood')->unread()->count();
-                @endphp
-                @if($unreadCount > 0)
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light" style="font-size: 0.6rem; padding: 0.35em 0.65em;">
-                        {{ $unreadCount > 99 ? '99+' : $unreadCount }}
-                    </span>
-                @endif
-            </a>
-            <button type="button" class="school-btn-custom" data-bs-toggle="modal" data-bs-target="#chooseSchoolModal" title="Choose Evacuation Center">
-                <i class="fas fa-school"></i>
-            </button>
-        </div>
-
-        {{-- Right Side --}}
-        <div class="d-flex align-items-center gap-3 justify-content-end" style="width: 30%;">
-            <div class="text-white-50 small text-end">
-                <div class="fw-bold text-white">{{ now()->format('M d, Y') }}</div>
-                <div>{{ now()->format('h:i A') }}</div>
-            </div>
-            <div class="btn-group shadow-lg">
-                <button class="btn btn-success px-3 fw-bold" onclick="document.getElementById('socialPrintModal').style.display='flex'" title="Send to Social">
-                    <i class="fas fa-share-alt"></i>
-                </button>
-                @if(auth()->user()->role === 'admin')
-                <button type="button" class="btn btn-warning text-white px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#announceSomethingModal">
-                    <i class="fas fa-bullhorn"></i>
-                </button>
-                @endif
+        <div class="evac-topbar-right">
+            <div class="evac-datetime">
+                <div class="evac-date">{{ now()->format('F d, Y') }}</div>
+                <div class="evac-time">{{ now()->format('h:i A') }}</div>
             </div>
         </div>
     </div>
 
-{{-- Main Row spanning 100% width --}}
-<div class="row g-4 mb-4 mx-0 w-100">
+    {{-- â”€â”€ MAIN BODY: Sidebar + Center + Right â”€â”€ --}}
+    <div class="evac-body">
 
-    {{-- Left Card: Estimated Affected Population --}} 
-    <div class="col-md-6"> 
-        <div class="dashboard-card h-100"> 
-            <div class="card-header-custom"><i class="fas fa-users"></i>Estimated Affected Population</div> 
-            <div class="p-4"> 
-                <div class="row g-0 align-items-center"> 
-                    <div class="col-6 mb-4"> 
-                        <div class="stat-label">Total Families</div> 
-                        <div class="stat-value text-primary">{{ $totalFamilies ?? 0 }}</div> 
-                    </div> 
-                    <div class="col-6 mb-4"> 
-                        <div class="stat-label">Total Individuals</div> 
-                        <div class="stat-value">{{ $totalEvacuees ?? 0 }}</div> 
-                    </div> 
-                    <div class="col-12"> 
-                        <div class="d-flex align-items-center justify-content-between p-3 rounded" style="background: #f8fafc; border: 1px solid #e2e8f0;"> 
-                            <div class="stat-label mb-0">Active Evacuation Centers</div> 
-                            <div class="h4 mb-0 fw-bold text-primary">{{ $openEvacuationCentersCount ?? 0 }}</div> 
-                        </div> 
-                    </div> 
-                </div> 
-            </div> 
-        </div> 
-    </div> 
+        {{-- â”€â”€ LEFT SIDEBAR â”€â”€ --}}
+        <aside class="evac-sidebar">
+            <nav class="evac-nav">
 
-    {{-- Right Card: Occupancy Overview --}} 
-    <div class="col-md-6"> 
-        <div class="dashboard-card d-flex flex-column h-100"> 
-            <div class="card-header-custom justify-content-between"> 
-                <div class="d-flex align-items-center"> 
-                    <i class="fas fa-chart-pie"></i>Occupancy Overview 
-                </div> 
-                <div class="dropdown"> 
-                    <button class="btn btn-sm occupancy-filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"> 
-                        <i class="fas fa-filter"></i> Filter 
-                    </button> 
-                    <div class="dropdown-menu occupancy-filter-menu"> 
-                        <div class="mb-2"> 
-                            <label for="occupancySortOrder" class="form-label mb-1 small text-uppercase text-muted fw-semibold">Sort By</label> 
-                            <select id="occupancySortOrder" class="form-select form-select-sm"> 
-                                <option value="alphabetical">Alphabetical</option> 
-                                <option value="highest">Highest to Lowest</option> 
-                                <option value="newest">Newest to Lowest</option> 
-                            </select> 
-                        </div> 
-                        <div> 
-                            <div class="small text-uppercase text-muted fw-semibold mb-1">Direction</div> 
-                            <div class="form-check"> 
-                                <input class="form-check-input" type="radio" name="occupancyDirection" id="occupancyDirectionLtr" value="ltr" checked> 
-                                <label class="form-check-label small" for="occupancyDirectionLtr">Left to Right</label> 
-                            </div> 
-                            <div class="form-check"> 
-                                <input class="form-check-input" type="radio" name="occupancyDirection" id="occupancyDirectionRtl" value="rtl"> 
-                                <label class="form-check-label small" for="occupancyDirectionRtl">Right to Left</label> 
-                            </div> 
-                        </div> 
-                    </div> 
-                </div> 
-            </div> 
-            <div class="p-2 flex-grow-1 d-flex flex-column justify-content-between"> 
-                <div class="occupancy-chart-panel" style="position: relative; overflow-x: auto; width: 100%;"> 
-                    <div id="occupancyChartScroll" class="occupancy-chart-scroll" style="width: 100%;"> 
-                        <canvas id="occupancyChart" style="width: 100%; min-height: 200px;"></canvas> 
-                    </div> 
-                </div> 
-                <div class="occupancy-summary"> 
-                    <div class="d-flex justify-content-between small mb-1"> 
-                        <span class="text-muted">Total System Capacity</span> 
-                        <span class="fw-bold">{{ $totalSystemCapacity ?? 0 }}</span> 
-                    </div> 
-                    <div class="progress" style="height: 8px; background: #f1f5f9;"> 
-                        <div class="progress-bar bg-warning" role="progressbar" style="width: 100%;"></div> 
-                    </div> 
-                </div> 
-            </div> 
-        </div> 
-    </div> 
-
-</div>
-
-
-    {{-- ═══ Active Typhoon Alert Banner (only shown when a TC is near Philippines) ═══ --}}
-    @if(!empty($activeTyphoon))
-    @php
-        $signalColors = [
-            1 => ['bg' => '#f59e0b', 'border' => '#d97706', 'text' => '#78350f', 'badge' => '#fde68a'],
-            2 => ['bg' => '#f97316', 'border' => '#ea580c', 'text' => '#431407', 'badge' => '#fed7aa'],
-            3 => ['bg' => '#ef4444', 'border' => '#dc2626', 'text' => '#450a0a', 'badge' => '#fecaca'],
-            4 => ['bg' => '#9333ea', 'border' => '#7c3aed', 'text' => '#2e1065', 'badge' => '#e9d5ff'],
-            5 => ['bg' => '#0f172a', 'border' => '#00d2ff', 'text' => '#e2e8f0', 'badge' => '#00d2ff'],
-        ];
-        $sc = $signalColors[$activeTyphoon['signal']] ?? $signalColors[1];
-    @endphp
-    <div class="mb-4" style="border-radius: 14px; overflow: hidden; box-shadow: 0 0 40px {{ $sc['border'] }}55;">
-        <div style="background: linear-gradient(135deg, {{ $sc['bg'] }} 0%, {{ $sc['border'] }} 100%); padding: 0; position: relative; overflow: hidden;">
-            
-            {{-- Animated rotating storm background --}}
-            <div style="position:absolute; top:-60px; right:-60px; width:220px; height:220px; border-radius:50%;
-                        border: 3px solid rgba(255,255,255,0.1);
-                        animation: typhoonSpin 8s linear infinite; pointer-events:none; opacity:0.3;">
-            </div>
-            <div style="position:absolute; top:-30px; right:-30px; width:160px; height:160px; border-radius:50%;
-                        border: 3px solid rgba(255,255,255,0.15);
-                        animation: typhoonSpin 5s linear infinite reverse; pointer-events:none; opacity:0.4;">
-            </div>
-
-            <div style="position:relative; z-index:2; display:flex; align-items:center; justify-content:space-between; padding: 1.25rem 1.75rem; gap: 1.5rem; flex-wrap:wrap;">
-                
-                {{-- Left: Storm icon + label --}}
-                <div style="display:flex; align-items:center; gap:1rem;">
-                    <div style="font-size:3rem; animation: typhoonSpin 4s linear infinite; line-height:1;">
-                        🌀
+                <a href="#" class="evac-nav-item" id="evac-nav-incident">
+                    <div class="evac-nav-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
                     </div>
-                    <div>
-                        <div style="font-size:0.65rem; color:rgba(255,255,255,0.75); text-transform:uppercase; letter-spacing:2px; font-weight:700; margin-bottom:0.2rem;">
-                            ⚠ PAGASA Active Weather Alert — Directly Affecting Olongapo City Area
+                    <span class="evac-nav-label">Incident</span>
+                </a>
+
+                {{-- Register with dropdown --}}
+                <div class="evac-nav-item evac-nav-has-sub" id="evac-nav-register-wrap">
+                    <div class="evac-nav-item-inner" id="evac-nav-register-toggle">
+                        <div class="evac-nav-icon">
+                            <i class="fas fa-clipboard-list"></i>
                         </div>
-                        <div style="font-family:var(--font-display); font-size:1.65rem; font-weight:800; color:#fff; letter-spacing:1px; line-height:1.1;">
-                            Effects of <span style="color:rgba(255,255,255,0.75); font-weight:500;">{{ $activeTyphoon['category'] }}</span>
-                            "<span style="color:#fff; font-weight:900;">{{ $activeTyphoon['name'] }}"</span>
-                        </div>
-                        <div style="font-size:0.78rem; color:rgba(255,255,255,0.8); margin-top:0.3rem;">
-                            <i class="fas fa-map-marker-alt me-1"></i> Near <strong>Olongapo City · Zambales</strong>&nbsp;|&nbsp;
-                            <i class="fas fa-ruler-combined me-1"></i> Distance: <strong>~{{ $activeTyphoon['distance_km'] ?? '?' }} km from Olongapo</strong>&nbsp;|&nbsp;
-                            <i class="fas fa-wind me-1"></i> Max Wind: <strong>{{ $activeTyphoon['wind_kph'] > 0 ? $activeTyphoon['wind_kph'].' km/h' : '--' }}</strong>
-                        </div>
+                        <span class="evac-nav-label">Register</span>
+                        <i class="fas fa-chevron-down evac-nav-caret" id="evac-register-caret"></i>
+                    </div>
+                    <div class="evac-nav-sub" id="evac-nav-register-sub">
+                        <a href="#" class="evac-nav-sub-item">
+                            <i class="fas fa-arrow-right evac-sub-arrow"></i> New
+                        </a>
+                        <a href="#" class="evac-nav-sub-item">
+                            <i class="fas fa-arrow-right evac-sub-arrow"></i> Existing
+                        </a>
                     </div>
                 </div>
 
-                {{-- Right: PAGASA Signal + source note --}}
-                <div style="text-align:center; flex-shrink:0;">
-                    <div style="font-size:0.6rem; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:1px; margin-bottom:0.3rem;">TCWS Level</div>
-                    <div style="background:rgba(255,255,255,0.15); border:2px solid rgba(255,255,255,0.4); border-radius:12px; padding:0.5rem 1.5rem; backdrop-filter:blur(6px);">
-                        <div style="font-family:var(--font-display); font-size:2.5rem; font-weight:900; color:#fff; line-height:1;">
-                            #{{ $activeTyphoon['signal'] }}
-                        </div>
-                        <div style="font-size:0.65rem; color:rgba(255,255,255,0.7); letter-spacing:1px; text-transform:uppercase;">Signal No.</div>
+                <a href="#" class="evac-nav-item" id="evac-nav-school" data-bs-toggle="modal" data-bs-target="#chooseSchoolModal">
+                    <div class="evac-nav-icon">
+                        <i class="fas fa-school"></i>
                     </div>
-                    <div style="font-size:0.55rem; color:rgba(255,255,255,0.5); margin-top:0.4rem;">
-                        Source: GDACS · Auto-refreshes every 30 min
+                    <span class="evac-nav-label">School</span>
+                </a>
+
+                <a href="#" class="evac-nav-item" id="evac-nav-remarks">
+                    <div class="evac-nav-icon">
+                        <i class="fas fa-comment-dots"></i>
+                    </div>
+                    <span class="evac-nav-label">Remarks</span>
+                </a>
+
+                <div class="evac-nav-item evac-nav-has-sub" id="evac-nav-reports-wrap">
+                    <div class="evac-nav-item-inner" id="evac-nav-reports-toggle">
+                        <div class="evac-nav-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <span class="evac-nav-label">Reports</span>
+                        <i class="fas fa-chevron-down evac-nav-caret" id="evac-reports-caret"></i>
+                    </div>
+                    <div class="evac-nav-sub" id="evac-nav-reports-sub">
+                        <a href="#" class="evac-nav-sub-item">
+                            <i class="fas fa-arrow-right evac-sub-arrow"></i> Current
+                        </a>
+                        <a href="#" class="evac-nav-sub-item">
+                            <i class="fas fa-arrow-right evac-sub-arrow"></i> Decamped
+                        </a>
+                        <a href="#" class="evac-nav-sub-item">
+                            <i class="fas fa-arrow-right evac-sub-arrow"></i> Joined
+                        </a>
                     </div>
                 </div>
-            </div>
 
-            {{-- Bottom stripe --}}
-            <div style="background:rgba(0,0,0,0.25); padding:0.4rem 1.75rem; font-size:0.7rem; color:rgba(255,255,255,0.65); display:flex; align-items:center; gap:0.75rem;">
-                <i class="fas fa-exclamation-circle me-1" style="color:rgba(255,255,255,0.9);"></i>
-                <strong style="color:#fff;">DepEd Reminder:</strong>
-                Classes in affected areas are automatically suspended under Tropical Cyclone Wind Signal {{ $activeTyphoon['signal'] >= 1 ? '#'.$activeTyphoon['signal'] : '' }}.
-                All DepEd-Zambales schools must activate their DRRM protocols immediately.
-            </div>
-        </div>
-    </div>
-    @endif
+            </nav>
+        </aside>
 
-<div class="modal fade" id="familyRegistrationModal" tabindex="-1" aria-labelledby="familyRegistrationModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <form method="POST" action="{{ route('typhoon.families.store') }}" id="familyRegistrationForm">
-            @csrf
-            <div class="modal-content">
-                <div class="modal-header" style="background-color: var(--bg-dark); color: var(--accent-blue); border-bottom: 1px solid var(--glass-border);">
-                    <h5 class="modal-title" id="familyRegistrationModalLabel">
-                        <i class="fas fa-people-arrows me-2"></i> Register Family Evacuee
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        {{-- â”€â”€ CENTER COLUMN â”€â”€ --}}
+        <main class="evac-main">
+
+            {{-- â”€â”€ SCHOOL STATUS / UPDATES (Typhoon Alert Banner) â”€â”€ --}}
+            <section class="evac-panel evac-panel-alert">
+                <div class="evac-panel-header">
+                    <i class="fas fa-broadcast-tower"></i>
+                    <span>School Status / Updates</span>
+                </div>
+                <div class="evac-panel-body">
+                    @if(!empty($activeTyphoon))
+                        @php
+                            $signalColors = [
+                                1 => ['bg' => '#f59e0b', 'border' => '#d97706', 'glow' => 'rgba(245,158,11,0.35)'],
+                                2 => ['bg' => '#f97316', 'border' => '#ea580c', 'glow' => 'rgba(249,115,22,0.35)'],
+                                3 => ['bg' => '#ef4444', 'border' => '#dc2626', 'glow' => 'rgba(239,68,68,0.35)'],
+                                4 => ['bg' => '#9333ea', 'border' => '#7c3aed', 'glow' => 'rgba(147,51,234,0.35)'],
+                                5 => ['bg' => '#0f172a',  'border' => '#00d2ff', 'glow' => 'rgba(0,210,255,0.35)'],
+                            ];
+                            $sc = $signalColors[$activeTyphoon['signal']] ?? $signalColors[1];
+                        @endphp
+                        <div class="evac-typhoon-alert" style="background: linear-gradient(135deg, {{ $sc['bg'] }} 0%, {{ $sc['border'] }} 100%); box-shadow: 0 0 30px {{ $sc['glow'] }};">
+                            {{-- Animated storm rings --}}
+                            <div class="evac-storm-ring evac-storm-ring-1"></div>
+                            <div class="evac-storm-ring evac-storm-ring-2"></div>
+
+                            <div class="evac-alert-content">
+                                <div class="evac-alert-left">
+                                    <div class="evac-storm-emoji">ðŸŒ€</div>
+                                    <div class="evac-alert-text">
+                                        <div class="evac-alert-sub">âš  PAGASA Active Weather Alert â€” Directly Affecting Olongapo City Area</div>
+                                        <div class="evac-alert-title">
+                                            Effects of <span class="evac-alert-cat">{{ $activeTyphoon['category'] }}</span>
+                                            "<span class="evac-alert-name">{{ $activeTyphoon['name'] }}</span>"
+                                        </div>
+                                        <div class="evac-alert-meta">
+                                            <span><i class="fas fa-map-marker-alt me-1"></i> Near <strong>Olongapo City Â· Zambales</strong></span>
+                                            <span>|</span>
+                                            <span><i class="fas fa-ruler-combined me-1"></i> ~{{ $activeTyphoon['distance_km'] ?? '?' }} km from Olongapo</span>
+                                            <span>|</span>
+                                            <span><i class="fas fa-wind me-1"></i> {{ $activeTyphoon['wind_kph'] > 0 ? $activeTyphoon['wind_kph'].' km/h' : '--' }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="evac-alert-right">
+                                    <div class="evac-signal-label">TCWS Level</div>
+                                    <div class="evac-signal-badge">#{{ $activeTyphoon['signal'] }}</div>
+                                    <div class="evac-signal-sub">Signal No.</div>
+                                    <div class="evac-signal-source">Source: GDACS Â· Auto-refreshes every 30 min</div>
+                                </div>
+                            </div>
+                            <div class="evac-alert-stripe">
+                                <i class="fas fa-exclamation-circle me-1"></i>
+                                <strong>DepEd Reminder:</strong>
+                                Classes in affected areas are automatically suspended under Tropical Cyclone Wind Signal {{ $activeTyphoon['signal'] >= 1 ? '#'.$activeTyphoon['signal'] : '' }}.
+                                All DepEd-Zambales schools must activate their DRRM protocols immediately.
+                            </div>
+                        </div>
+                    @else
+                        {{-- Empty State --}}
+                        <div class="evac-empty-state">
+                            <div class="evac-empty-icon">
+                                <i class="fas fa-sun"></i>
+                                <i class="fas fa-cloud evac-empty-cloud"></i>
+                            </div>
+                            <div class="evac-empty-title">No Active Typhoon Alerts</div>
+                            <div class="evac-empty-sub">Weather conditions are currently normal. No tropical cyclone threats detected in the area.</div>
+                        </div>
+                    @endif
+                </div>
+            </section>
+
+            {{-- â”€â”€ CURRENT STATUS OF SCHOOL â”€â”€ --}}
+            <section class="evac-panel evac-panel-schools">
+                <div class="evac-panel-header">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <span>Current Status of School</span>
+                    <div class="evac-status-legend ms-auto d-flex gap-2">
+                        <span class="evac-badge evac-badge-cleared">CLEARED</span>
+                        <span class="evac-badge evac-badge-occupied">OCCUPIED</span>
+                        <span class="evac-badge evac-badge-full">FULL</span>
+                        <span class="evac-badge evac-badge-decamp">DECAMP</span>
+                    </div>
+                </div>
+                <div class="evac-schools-table-wrap">
+                    <table class="evac-schools-table" id="evacSchoolsTable">
+                        <thead>
+                            <tr>
+                                <th class="th-name">Name of School</th>
+                                <th class="th-status">Status</th>
+                                <th class="th-families">No. Family</th>
+                                <th class="th-individuals">No. Individual</th>
+                            </tr>
+                        </thead>
+                        <tbody id="evacSchoolsTbody">
+                            @forelse($evacuationCenters ?? [] as $ec)
+                            <tr class="evac-school-row {{ $ec->is_cluster_priority ? 'evac-cluster-row' : '' }}"
+                                data-href="{{ route('typhoon.evacuation-center.show', $ec->id) }}"
+                                data-priority="{{ $ec->is_cluster_priority ? '1' : '0' }}"
+                                onclick="window.location=this.dataset.href">
+                                <td class="td-name">
+                                    @if($ec->is_cluster_priority)
+                                        <span class="evac-cluster-pin" title="Clustered / Priority School"><i class="fas fa-star"></i></span>
+                                    @endif
+                                    <span class="evac-school-name">{{ $ec->school_name ?? $ec->identification ?? ('Center #' . $ec->id) }}</span>
+                                </td>
+                                <td class="td-status">
+                                    @php
+                                        $st = $ec->usage_status ?? 'cleared';
+                                        $statusMap = [
+                                            'cleared'  => ['cls' => 'evac-badge-cleared',  'label' => 'CLEARED'],
+                                            'occupied' => ['cls' => 'evac-badge-occupied', 'label' => 'OCCUPIED'],
+                                            'full'     => ['cls' => 'evac-badge-full',     'label' => 'FULL'],
+                                            'decamp'   => ['cls' => 'evac-badge-decamp',   'label' => 'DECAMP'],
+                                        ];
+                                        $sm = $statusMap[$st] ?? $statusMap['cleared'];
+                                    @endphp
+                                    <span class="evac-badge {{ $sm['cls'] }}">{{ $sm['label'] }}</span>
+                                </td>
+                                <td class="td-num">{{ $ec->families_count ?? 0 }}</td>
+                                <td class="td-num">{{ $ec->current_occupancy ?? 0 }}</td>
+                            </tr>
+                            @empty
+                            <tr>
+                                <td colspan="4" class="evac-empty-row">
+                                    <i class="fas fa-school me-2 opacity-50"></i> No evacuation centers registered.
+                                </td>
+                            </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
                 </div>
 
-                <div class="modal-body" style="max-height: 75vh; overflow-y: auto;">
-
-                    {{-- Registration Mode --}}
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label small fw-bold">Family Encoding Mode <span class="text-danger">*</span></label>
-                            <select name="registration_mode" id="familyRegistrationMode" class="form-select" required>
-                                <option value="new" selected>Encode new family</option>
-                                <option value="existing">Register existing</option>
-                            </select>
-                            <input type="hidden" name="existing_family_id" id="existingFamilyId" value="">
-                        </div>
-                        <div class="col-md-6 d-none" id="existingFamilySelectorWrap">
-                            <label class="form-label small fw-bold">Registered Family in This Center</label>
-                            <select id="existingFamilySelect" class="form-select">
-                                <option value="">-- Select existing family --</option>
-                            </select>
-                            <small class="text-muted">Only families previously registered in the selected evacuation center are listed.</small>
-                        </div>
-                    </div>
-
-                    {{-- ── SECTION 1: HEAD OF FAMILY ── --}}
-                    <div class="card mb-3 border-0 shadow-sm">
-                        <div class="card-header fw-bold small text-uppercase" style="background: #eaf0fb; color: #1B4C6D;">
-                            <i class="fas fa-user-tie me-2"></i> Head of Family Details
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-2">
-                                {{-- Name --}}
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label small fw-bold">Full Name (Head) <span class="text-danger">*</span></label>
-                                    <input type="text" name="head_family_name" id="input_head_name" class="form-control" placeholder="Full name of head" required
-                                        oninput="document.getElementById('hidden_head_name').value = this.value">
-                                    <input type="hidden" name="members[0][full_name]" id="hidden_head_name">
-                                    <input type="hidden" name="members[0][is_head]" value="1">
-                                </div>
-                                {{-- Age --}}
-                                <div class="col-md-3 mb-2">
-                                    <label class="form-label small fw-bold">Age <span class="text-danger">*</span></label>
-                                    <input type="number" name="members[0][age]" class="form-control" placeholder="Age" required min="0" max="150">
-                                </div>
-                                {{-- Gender --}}
-                                <div class="col-md-3 mb-2">
-                                    <label class="form-label small fw-bold">Gender <span class="text-danger">*</span></label>
-                                    <select name="members[0][gender]" class="form-select" required>
-                                        <option value="">Select...</option>
-                                        <option value="male">Male</option>
-                                        <option value="female">Female</option>
-                                    </select>
-                                </div>
-                                {{-- Contact Number --}}
-                                <div class="col-md-4 mb-2">
-                                    <label class="form-label small fw-bold">Contact Number</label>
-                                    <input type="text" name="contact_number" class="form-control" placeholder="e.g. 09XXXXXXXXX">
-                                </div>
-                                {{-- Street --}}
-                                <div class="col-md-8 mb-2">
-                                    <label class="form-label small fw-bold">Street / Purok</label>
-                                    <input type="text" name="street" class="form-control" placeholder="Street or Purok name">
-                                </div>
-                                {{-- Barangay --}}
-                                <div class="col-md-5 mb-2">
-                                    <label class="form-label small fw-bold">Barangay</label>
-                                    <input type="text" name="barangay" class="form-control" placeholder="Barangay">
-                                </div>
-                                {{-- City --}}
-                                <div class="col-md-7 mb-2">
-                                    <label class="form-label small fw-bold">City / Municipality</label>
-                                    <input type="text" name="city" class="form-control" placeholder="City or Municipality">
-                                </div>
-                            </div>
-
-                            {{-- Vulnerabilities --}}
-                            <div class="vulnerability-wrapper mt-3">
-                                <div class="p-3 rounded border" style="background: #f8f9fa;">
-                                    <label class="form-label fw-bold small mb-2">Vulnerabilities / Special Concerns</label>
-                                    <select class="form-select form-select-sm mb-2 vulnerability-selector" id="headVulnerabilitySelector">
-                                        <option value="">-- Add Concern --</option>
-                                        <option value="flagPregnant">Pregnant</option>
-                                        <option value="flagPwd">PWD</option>
-                                        <option value="flagSenior">Senior Citizen</option>
-                                        <option value="flagLactating">Lactating</option>
-                                        <option value="flagChild">Child Under 5</option>
-                                        <option value="flagOtherNeeds">Other / Special Needs</option>
-                                    </select>
-                                    <div class="vulnerability-tags-container d-flex flex-wrap gap-2 mb-2"></div>
-                                    <div id="otherNeedsDetailsWrap" class="d-none">
-                                        <input type="text" name="other_needs_details" class="form-control form-control-sm" placeholder="Describe the special need..." maxlength="500">
-                                    </div>
-                                    <div class="d-none">
-                                        <input class="vulnerability-checkbox flagPregnant" type="checkbox" name="has_pregnant" value="1" id="flagPregnant">
-                                        <input class="vulnerability-checkbox flagPwd" type="checkbox" name="has_pwd" value="1" id="flagPwd">
-                                        <input class="vulnerability-checkbox flagSenior" type="checkbox" name="has_senior" value="1" id="flagSenior">
-                                        <input class="vulnerability-checkbox flagLactating" type="checkbox" name="has_lactating" value="1" id="flagLactating">
-                                        <input class="vulnerability-checkbox flagChild" type="checkbox" name="has_child_under5" value="1" id="flagChild">
-                                        <input class="vulnerability-checkbox flagOtherNeeds" type="checkbox" name="has_other_needs" value="1" id="flagOtherNeeds">
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{-- Collective Needs --}}
-                            <div class="mt-3">
-                                <label class="form-label small fw-bold">Collective Family Needs <span class="text-danger">*</span></label>
-                                <div class="family-needs-builder" data-family-needs-builder="create" data-need-options='@json($familyNeedOptions ?? [])' data-existing-needs='[]'></div>
-                                <small class="text-muted d-block mt-1">Choose a need and quantity. Selecting <strong>Others Please Specify</strong> will reveal a custom need field.</small>
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- ── SECTION 2: OTHER FAMILY MEMBERS ── --}}
-                    <div class="card mb-3 border-0 shadow-sm">
-                        <div class="card-header d-flex justify-content-between align-items-center fw-bold small text-uppercase" style="background: #eaf0fb; color: #1B4C6D;">
-                            <span><i class="fas fa-users me-2"></i> Other Family Members</span>
-                            <button type="button" class="btn btn-sm btn-primary" id="add-member-btn" style="font-size:0.75rem;">
-                                <i class="fas fa-plus me-1"></i> Add Member
-                            </button>
-                        </div>
-                        <div class="card-body">
-                            <div id="family-members-container"></div>
-                            <div id="no-members-hint" class="text-muted small text-center py-2">
-                                <i class="fas fa-info-circle me-1"></i> No additional members added. Click "Add Member" to include family members.
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- ── SECTION 3: PERSONAL BELONGINGS ── --}}
-                    <div class="card mb-3 border-0 shadow-sm">
-                        <div class="card-header d-flex justify-content-between align-items-center fw-bold small text-uppercase" style="background: #eaf0fb; color: #1B4C6D;">
-                            <span><i class="fas fa-briefcase me-2"></i> Personal Belongings</span>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="add-belonging-btn" style="font-size:0.75rem;">
-                                <i class="fas fa-plus me-1"></i> Add Item
-                            </button>
-                        </div>
-                        <div class="card-body">
-                            <div id="belongings-container"></div>
-                            <div id="no-belongings-hint" class="text-muted small text-center py-2">
-                                <i class="fas fa-box-open me-1"></i> No items added yet. Click "Add Item" to list belongings.
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- ── SECTION 4: PERSONAL PETS ── --}}
-                    <div class="card mb-3 border-0 shadow-sm">
-                        <div class="card-header d-flex justify-content-between align-items-center fw-bold small text-uppercase" style="background: #eaf0fb; color: #1B4C6D;">
-                            <span><i class="fas fa-paw me-2"></i> Personal Pets</span>
-                            <button type="button" class="btn btn-sm btn-outline-secondary" id="add-pet-btn" style="font-size:0.75rem;">
-                                <i class="fas fa-plus me-1"></i> Add Pet
-                            </button>
-                        </div>
-                        <div class="card-body">
-                            <div id="pets-container"></div>
-                            <div id="no-pets-hint" class="text-muted small text-center py-2">
-                                <i class="fas fa-paw me-1"></i> No pets added yet. Click "Add Pet" to list pets.
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- ── SECTION 5: REGISTRANT & CHECK-IN ── --}}
-                    <div class="card mb-3 border-0 shadow-sm">
-                        <div class="card-header fw-bold small text-uppercase" style="background: #eaf0fb; color: #1B4C6D;">
-                            <i class="fas fa-clipboard-check me-2"></i> Registration Info
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-2">
-                                {{-- Registrant (read-only) --}}
-                                <div class="col-md-6">
-                                    <label class="form-label small fw-bold">Registered By</label>
-                                    <input type="text" class="form-control" value="{{ auth()->user()->name }}" readonly style="background: #f1f3f5; cursor: not-allowed;">
-                                    <small class="text-muted">Automatically assigned to the currently logged-in user.</small>
-                                </div>
-                                {{-- Check-in --}}
-                                <div class="col-md-6 d-flex align-items-center">
-                                    <div class="form-check mt-3">
-                                        <input class="form-check-input" type="checkbox" name="confirm_check_in" id="confirmCheckIn" checked>
-                                        <label class="form-check-label" for="confirmCheckIn">
-                                            <strong>Check-in this family now</strong><br>
-                                            <small class="text-muted">Sets current date/time as check-in.</small>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <hr>
-
-                    {{-- Evacuation Center Dropdown --}}
-                    <div class="col-12 mb-3">
-                        <label class="form-label fw-bold small text-uppercase text-muted">Evacuation Center / School <span class="text-danger">*</span></label>
-                        <div id="lockedCenterHint" class="small text-primary mb-1 d-none">
-                            <i class="fas fa-lock me-1"></i> Locked to selected evacuation center.
-                        </div>
-                        <select name="evacuation_center_id" id="modal_evacuation_center_id" class="form-select" required>
-                            <option value="">-- Select Evacuation Center --</option>
-                            @foreach($evacuationCenters ?? [] as $ec)
-                                <option value="{{ $ec->id }}">
-                                    {{ $ec->school_name ?? $ec->identification ?? ('Evacuation Center #' . $ec->id) }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <!--work in progress-->
-                    <!-- Fire Safety Building Dropdown -->
-                    <div class="col-12 mb-3">
-                        <label class="form-label fw-bold small text-uppercase text-muted">Building <span class="text-danger">*</span></label>
-                        <select name="building_id" id="firesafety_buildings" class="form-select" required>
-                            <option value="">-- Select Building --</option> 
-                        </select>
-                    </div>
-
-                    <!-- Room Dropdown -->
-                    <div class="col-12 mb-3">
-                        <label class="form-label fw-bold small text-uppercase text-muted">Room <span class="text-danger">*</span></label>
-                        <select name="room_id" id="fire_safety_rooms" class="form-select" required>
-                            <option value="">-- Select Room --</option>
-                        </select>
-                    </div>
-                    <!--work in progress-->
-
-                </div>{{-- /modal-body --}}
-
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn" style="background-color: #1B4C6D; color: white;">
-                        <i class="fas fa-save me-1"></i> Register Family
+                {{-- Pagination Footer --}}
+                <div class="evac-pagination-bar">
+                    <button class="evac-page-btn" id="evacPrevPage" disabled>
+                        <i class="fas fa-chevron-left"></i> Prev
+                    </button>
+                    <span class="evac-page-info" id="evacPageInfo">Page 1 of â€”</span>
+                    <button class="evac-page-btn" id="evacNextPage">
+                        Next <i class="fas fa-chevron-right"></i>
                     </button>
                 </div>
-            </div>
-        </form>
-    </div>
-</div>
+            </section>
 
-<script>
-    const COMMON_BELONGINGS = [
-        'Clothing / Clothes', 'Blanket', 'Pillow', 'Towel', 'Toiletries',
-        'Food / Groceries', 'Water Containers', 'Medicine / First Aid Kit',
-        'Mobile Phone / Charger', 'Flashlight / Batteries', 'Important Documents',
-        'Cash / Valuables', 'Baby Items / Diapers', 'Cooking Utensils',
-        'Mattress / Sleeping Mat', 'Backpack / Bag'
-    ];
+        </main>
 
-    const COMMON_PETS = [
-        'Dog', 'Cat', 'Chicken / Poultry', 'Pig', 'Goat', 'Rabbit',
-        'Bird / Pigeon', 'Fish (in container)', 'Cow / Carabao', 'Horse'
-    ];
+        {{-- â”€â”€ RIGHT SIDEBAR â”€â”€ --}}
+        <aside class="evac-right-sidebar">
 
-    const FAMILY_ROLES = [
-        'Father', 'Mother', 'Son', 'Daughter', 'Grandfather', 'Grandmother',
-        'Uncle', 'Aunt', 'Nephew', 'Niece', 'Cousin', 'Relative', 'Guardian',
-        'Family Friend'
-    ];
+            {{-- Guidelines Panel --}}
+            <div class="evac-right-panel evac-guidelines-panel">
+                <div class="evac-right-panel-body">
+                    @if(!empty($activeTyphoon))
+                        @php $sig = $activeTyphoon['signal']; @endphp
+                        <div class="evac-guidelines-active">
+                            <div class="evac-guideline-alert-icon">ðŸŒ€</div>
+                            <div class="evac-guideline-signal-badge">Signal #{{ $sig }}</div>
+                            <div class="evac-guideline-title">Active Typhoon Protocols</div>
 
-    // ── Belongings Builder ──
-    let belongingIndex = 0;
+                            <ul class="evac-guideline-list">
+                                @if($sig >= 1)
+                                    <li><i class="fas fa-ban text-warning me-2"></i><strong>Classes Suspended</strong> in all affected areas under Signal #{{ $sig }}.</li>
+                                @endif
+                                @if($sig >= 2)
+                                    <li><i class="fas fa-door-open text-info me-2"></i><strong>Open Evacuation Centers</strong> â€” Coordinate with Barangay DRRM Officers.</li>
+                                    <li><i class="fas fa-first-aid text-danger me-2"></i>Activate <strong>Emergency Response Teams</strong>.</li>
+                                @endif
+                                @if($sig >= 3)
+                                    <li><i class="fas fa-broadcast-tower text-danger me-2"></i>Establish <strong>Emergency Communication Lines</strong>.</li>
+                                    <li><i class="fas fa-truck text-warning me-2"></i>Pre-position <strong>relief goods</strong> at staging areas.</li>
+                                @endif
+                                @if($sig >= 4)
+                                    <li><i class="fas fa-exclamation-triangle text-danger me-2"></i><strong>Mandatory evacuation</strong> of high-risk zones.</li>
+                                @endif
+                                <li><i class="fas fa-clipboard-check text-success me-2"></i>Submit <strong>DRRM Situation Report</strong> every 6 hours.</li>
+                            </ul>
 
-    function buildSelectOptions(optionsList, selectedVal = '') {
-        let html = '<option value="">-- Select --</option>';
-        optionsList.forEach(opt => {
-            html += `<option value="${opt}" ${opt === selectedVal ? 'selected' : ''}>${opt}</option>`;
-        });
-        html += `<option value="Others" ${selectedVal === 'Others' ? 'selected' : ''}>Others (specify)</option>`;
-        return html;
-    }
-
-    function addBelongingRow(item = {}) {
-        const container = document.getElementById('belongings-container');
-        const hint = document.getElementById('no-belongings-hint');
-        if (hint) hint.classList.add('d-none');
-
-        const idx = belongingIndex++;
-        const row = document.createElement('div');
-        row.className = 'row g-2 mb-2 align-items-end belonging-row';
-
-        const selectedName = item.name || '';
-        const isOther = selectedName && !COMMON_BELONGINGS.includes(selectedName);
-        const qty = item.qty || 1;
-
-        row.innerHTML = `
-            <div class="col-md-5">
-                <label class="form-label small fw-bold">Item</label>
-                <select class="form-select belonging-select" name="belongings[${idx}][name]">
-                    ${buildSelectOptions(COMMON_BELONGINGS, isOther ? 'Others' : selectedName)}
-                </select>
-            </div>
-            <div class="col-md-4 belonging-other-wrap ${isOther ? '' : 'd-none'}">
-                <label class="form-label small fw-bold">Specify</label>
-                <input type="text" class="form-control belonging-other-input" placeholder="Specify item..." value="${isOther ? selectedName : ''}">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small fw-bold">Qty</label>
-                <input type="number" class="form-control" name="belongings[${idx}][qty]" value="${qty}" min="1" max="999">
-            </div>
-            <div class="col-md-1 d-flex align-items-end">
-                <button type="button" class="btn btn-outline-danger btn-sm remove-belonging w-100"><i class="fas fa-trash"></i></button>
-            </div>
-        `;
-
-        const select = row.querySelector('.belonging-select');
-        const otherWrap = row.querySelector('.belonging-other-wrap');
-        const otherInput = row.querySelector('.belonging-other-input');
-
-        select.addEventListener('change', function () {
-            const isOtherVal = this.value === 'Others';
-            otherWrap.classList.toggle('d-none', !isOtherVal);
-            // Sync name field
-            if (!isOtherVal) {
-                otherInput.value = '';
-                this.name = \`belongings[\${idx}][name]\`;
-            } else {
-                this.name = ''; // let other input carry the value
-                otherInput.name = \`belongings[\${idx}][name]\`;
-            }
-        });
-
-        // Init: if it's Others, wire up properly
-        if (isOther) {
-            select.name = '';
-            otherInput.name = \`belongings[\${idx}][name]\`;
-        }
-
-        row.querySelector('.remove-belonging').addEventListener('click', function () {
-            row.remove();
-            checkBelongingsHint();
-        });
-
-        container.appendChild(row);
-    }
-
-    function checkBelongingsHint() {
-        const container = document.getElementById('belongings-container');
-        const hint = document.getElementById('no-belongings-hint');
-        if (hint) hint.classList.toggle('d-none', container.children.length > 0);
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        document.getElementById('add-belonging-btn')?.addEventListener('click', function () {
-            addBelongingRow();
-        });
-    });
-
-    // ── Pets Builder ──
-    let petIndex = 0;
-
-    function addPetRow(item = {}) {
-        const container = document.getElementById('pets-container');
-        const hint = document.getElementById('no-pets-hint');
-        if (hint) hint.classList.add('d-none');
-
-        const idx = petIndex++;
-        const row = document.createElement('div');
-        row.className = 'row g-2 mb-2 align-items-end pet-row';
-
-        const selectedName = item.name || '';
-        const isOther = selectedName && !COMMON_PETS.includes(selectedName);
-        const qty = item.qty || 1;
-
-        row.innerHTML = `
-            <div class="col-md-5">
-                <label class="form-label small fw-bold">Pet Type</label>
-                <select class="form-select pet-select" name="pets[${idx}][name]">
-                    ${buildSelectOptions(COMMON_PETS, isOther ? 'Others' : selectedName)}
-                </select>
-            </div>
-            <div class="col-md-4 pet-other-wrap ${isOther ? '' : 'd-none'}">
-                <label class="form-label small fw-bold">Specify</label>
-                <input type="text" class="form-control pet-other-input" placeholder="Specify pet type..." value="${isOther ? selectedName : ''}">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small fw-bold">Qty</label>
-                <input type="number" class="form-control" name="pets[${idx}][qty]" value="${qty}" min="1" max="999">
-            </div>
-            <div class="col-md-1 d-flex align-items-end">
-                <button type="button" class="btn btn-outline-danger btn-sm remove-pet w-100"><i class="fas fa-trash"></i></button>
-            </div>
-        `;
-
-        const select = row.querySelector('.pet-select');
-        const otherWrap = row.querySelector('.pet-other-wrap');
-        const otherInput = row.querySelector('.pet-other-input');
-
-        select.addEventListener('change', function () {
-            const isOtherVal = this.value === 'Others';
-            otherWrap.classList.toggle('d-none', !isOtherVal);
-            if (!isOtherVal) {
-                otherInput.value = '';
-                this.name = \`pets[\${idx}][name]\`;
-            } else {
-                this.name = '';
-                otherInput.name = \`pets[\${idx}][name]\`;
-            }
-        });
-
-        if (isOther) {
-            select.name = '';
-            otherInput.name = \`pets[\${idx}][name]\`;
-        }
-
-        row.querySelector('.remove-pet').addEventListener('click', function () {
-            row.remove();
-            checkPetsHint();
-        });
-
-        container.appendChild(row);
-    }
-
-    function checkPetsHint() {
-        const container = document.getElementById('pets-container');
-        const hint = document.getElementById('no-pets-hint');
-        if (hint) hint.classList.toggle('d-none', container.children.length > 0);
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        document.getElementById('add-pet-btn')?.addEventListener('click', function () {
-            addPetRow();
-        });
-    });
-
-    // Reset belongings/pets when modal is reset
-    function resetBelongingsAndPets() {
-        const bc = document.getElementById('belongings-container');
-        const pc = document.getElementById('pets-container');
-        if (bc) bc.innerHTML = '';
-        if (pc) pc.innerHTML = '';
-        checkBelongingsHint();
-        checkPetsHint();
-        belongingIndex = 0;
-        petIndex = 0;
-        const otherWrap = document.getElementById('otherNeedsDetailsWrap');
-        if (otherWrap) otherWrap.classList.add('d-none');
-    }
-</script>
-
-
-    {{-- Bottom Row: Evacuation Centers Status --}}
-    <div class="row g-4">
-        <div class="col-12">
-            @if(auth()->user()->role === 'contributor')
-                @php $ec = $evacuationCenters->first(); @endphp
-                @if($ec)
-                <div class="dashboard-card overflow-hidden">
-                    <div class="card-header-custom d-flex justify-content-between align-items-center">
-                        <span><i class="fas fa-school"></i> Your Managed School Center</span>
-                        <div class="d-flex gap-2">
-                            <span class="badge bg-success">CLEARED</span>
-                            <span class="badge bg-primary">OCCUPIED</span>
-                            <span class="badge bg-danger">FULL</span>
-                            <span class="badge text-white" style="background-color: #6f42c1;">DECAMP</span>
-                        </div>
-                    </div>
-                    <div class="p-4" style="background: white;">
-                        <div class="row align-items-center">
-                            <div class="col-md-4 border-end">
-                                <div class="stat-label mb-1">Center Name</div>
-                                <div class="h4 fw-bold text-primary mb-1">{{ $ec->school_name ?? $ec->identification }}</div>
-                                <div class="small text-muted mb-3"><i class="fas fa-id-card me-1"></i> UID: {{ $ec->id }}</div>
-                                
-                                <div class="stat-label mb-1">Location</div>
-                                <div class="small mb-0"><i class="fas fa-map-marker-alt me-1 text-danger"></i> {{ $ec->location }}</div>
-                            </div>
-                            <div class="col-md-5 px-4">
-                                <div class="row text-center g-3">
-                                    <div class="col-6">
-                                        <div class="p-3 rounded bg-light border">
-                                            <div class="stat-label">Current Load</div>
-                                            <div class="stat-value text-info" style="font-size: 1.8rem;">{{ $ec->current_occupancy }}</div>
-                                            <div class="small text-muted">Individuals</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="p-3 rounded bg-light border">
-                                            <div class="stat-label">Max Capacity</div>
-                                            <div class="stat-value text-dark" style="font-size: 1.8rem;">{{ $ec->capacity > 0 ? $ec->capacity : '∞' }}</div>
-                                            <div class="small text-muted">Limit</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="mt-4">
-                                    <div class="d-flex justify-content-between small mb-1">
-                                        <span class="text-muted">Load Status</span>
-                                        @php
-                                            $loadPercent = $ec->capacity > 0 ? round(($ec->current_occupancy / $ec->capacity) * 100) : 0;
-                                            $barColor = $loadPercent >= 90 ? 'bg-danger' : ($loadPercent >= 70 ? 'bg-warning' : 'bg-success');
-                                        @endphp
-                                        <span class="fw-bold">{{ $loadPercent }}% Full</span>
-                                    </div>
-                                    <div class="progress" style="height: 10px;">
-                                        <div class="progress-bar {{ $barColor }}" style="width: {{ min($loadPercent, 100) }}%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-md-3 text-center border-start">
-                                <div class="stat-label mb-2">Operational Status</div>
-                                @php
-                                    $statusClass = 'success';
-                                    $statusText = 'CLEARED';
-                                    if($ec->usage_status === 'occupied') { $statusClass = 'primary'; $statusText = 'OCCUPIED'; }
-                                    elseif($ec->usage_status === 'full') { $statusClass = 'danger'; $statusText = 'FULL'; }
-                                    elseif($ec->usage_status === 'decamp') { $statusClass = 'custom'; $statusText = 'DECAMP'; }
-                                @endphp
-                                <span class="badge badge-custom bg-{{ $statusClass }} fs-6 mb-4 px-4 py-2" style="{{ $ec->usage_status === 'decamp' ? 'background-color: #6f42c1 !important;' : '' }}">
-                                    {{ $statusText }}
-                                </span>
-                                
-                                <div class="d-grid gap-2">
-                                    <button class="btn btn-primary fw-bold"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#familyRegistrationModal"
-                                            data-ec-id="{{ $ec->id }}"
-                                            data-ec-name="{{ $ec->school_name ?? $ec->identification }}">
-                                        <i class="fas fa-user-plus me-1"></i> Register Family
-                                    </button>
-                                    <a href="{{ route('typhoon.evacuation-center.show', $ec->id) }}" class="btn btn-outline-primary fw-bold">
-                                        <i class="fas fa-external-link-alt me-1"></i> Manage Records
-                                    </a>
-                                </div>
+                            <div class="evac-guideline-footer">
+                                <i class="fas fa-info-circle me-1"></i> Per DepEd-Zambales DRRM Guidelines
                             </div>
                         </div>
-                    </div>
-                    <div class="bg-light p-3 border-top">
-                        <div class="row align-items-center">
-                            <div class="col-md-9">
-                                <span class="small fw-bold text-muted text-uppercase me-2"><i class="fas fa-boxes me-1"></i> Resources:</span>
-                                <span class="small text-dark">{{ $ec->emergency_resources ?: 'No reported resource shortages.' }}</span>
+                    @else
+                        {{-- Empty State --}}
+                        <div class="evac-right-empty">
+                            <div class="evac-right-empty-icon">
+                                <i class="fas fa-shield-alt"></i>
                             </div>
-                            <div class="col-md-3 text-end">
-                                <span class="small text-muted" style="font-size: 0.7rem;"><i>Updated: {{ $ec->updated_at->diffForHumans() }}</i></span>
+                            <div class="evac-right-empty-title">No Active Alerts</div>
+                            <div class="evac-right-empty-sub">
+                                Guidelines will appear here when there is an active typhoon threat.
                             </div>
                         </div>
-                    </div>
+                    @endif
                 </div>
-                @else
-                <div class="dashboard-card p-5 text-center">
-                    <div class="opacity-50">
-                        <i class="fas fa-school fa-4x mb-4"></i>
-                        <h3>No School Assigned</h3>
-                        <p>Please contact an administrator to assign you a school for management.</p>
-                    </div>
-                </div>
-                @endif
-            @else
-                <!-- Admin Table View -->
-                <div class="dashboard-card">
-                    <div class="card-header-custom d-flex justify-content-between align-items-center flex-wrap gap-3">
-                        <span><i class="fas fa-hospital-user"></i>Evacuation Centers Status Monitoring</span>
+            </div>
 
-                        <div class="search-bar-container position-relative" style="min-width: 280px;">
-                            <i class="fas fa-search position-absolute top-50 translate-middle-y" style="left: 12px; font-size: 0.9rem;"></i>
-                            <input type="text" id="schoolSearchInput" class="form-control form-control-sm" placeholder="Search school name..." style="padding-left: 36px; border-radius: 20px; width: 100%; background-color: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: white; transition: all 0.3s ease; font-family: var(--font-body); text-transform: none; letter-spacing: normal;">
-                        </div>
-
-                        <div class="d-flex gap-2">
-                            <span class="badge bg-success">CLEARED</span>
-                            <span class="badge bg-primary">OCCUPIED</span>
-                            <span class="badge bg-danger">FULL</span>
-                            <span class="badge text-white" style="background-color: #6f42c1;">DECAMP</span>
-                        </div>
+            {{-- Future Use Panel --}}
+            <div class="evac-right-panel evac-future-panel">
+                <div class="evac-right-panel-body evac-right-empty" style="min-height: 200px;">
+                    <div class="evac-right-empty-icon" style="opacity:0.25;">
+                        <i class="fas fa-cube"></i>
                     </div>
-                    <div class="table-responsive">
-                        <table class="table table-custom table-hover mb-0">
-                            <thead>
-                                <tr>
-                                    <th class="ps-4">School / Center Name</th>
-                                    <th>Location & Area</th>
-                                    <th class="text-center">Max Capacity</th>
-                                    <th class="text-center">Current Load</th>
-                                    <th class="text-center">Operational Status</th>
-                                    <th>Resource Inventory</th>
-                                    <th class="pe-4 text-end">Management</th>
-                                </tr>
-                            </thead>
-                            <tbody id="evacuationCentersTableBody">
-                                @forelse($evacuationCenters ?? [] as $ec)
-                                <tr class="school-row">
-                                    <td class="ps-4">
-                                        <div class="fw-bold fs-6 school-name-text">{{ $ec->school_name ?? $ec->identification ?? ('Center #' . $ec->id) }}</div>
-                                        <small class="text-muted">UID: {{ $ec->school_id }}</small>
-                                    </td>
-                                    <td>
-                                        <div class="small"><i class="fas fa-map-marker-alt me-1 text-danger"></i> {{ Str::limit($ec->location, 40) }}</div>
-                                    </td>
-                                    <td class="text-center fw-bold">{{ $ec->capacity > 0 ? $ec->capacity : 'Unlimited' }}</td>
-                                    <td class="text-center">
-                                        <div class="fw-bold text-info fs-5">{{ $ec->current_occupancy }}</div>
-                                    </td>
-                                    <td class="text-center">
-                                        @php
-                                            $statusClass = 'success';
-                                            $statusText = 'CLEARED';
-                                            if($ec->usage_status === 'occupied') { $statusClass = 'primary'; $statusText = 'OCCUPIED'; }
-                                            elseif($ec->usage_status === 'full') { $statusClass = 'danger'; $statusText = 'FULL'; }
-                                            elseif($ec->usage_status === 'decamp') { $statusClass = 'custom'; $statusText = 'DECAMP'; }
-                                        @endphp
-                                        <span class="badge badge-custom bg-{{ $statusClass }}" style="{{ $ec->usage_status === 'decamp' ? 'background-color: #6f42c1 !important;' : '' }}">
-                                            {{ $statusText }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="small text-truncate" style="max-width: 180px;" title="{{ $ec->emergency_resources }}">
-                                            {{ $ec->emergency_resources ?? 'Standby' }}
-                                        </div>
-                                    </td>
-                                    <td class="pe-4 text-end">
-                                        <div class="btn-group">
-                                            <button class="btn btn-sm btn-action rounded-start"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#familyRegistrationModal"
-                                                    data-ec-id="{{ $ec->id }}"
-                                                    data-ec-name="{{ $ec->school_name ?? $ec->identification ?? ('Center #' . $ec->id) }}">
-                                                <i class="fas fa-user-plus me-1"></i> Register
-                                            </button>
-                                            <a href="{{ route('typhoon.evacuation-center.show', $ec->id) }}" class="btn btn-sm btn-action rounded-end">
-                                                <i class="fas fa-expand-alt"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="7" class="text-center py-5">
-                                        <div class="opacity-50">
-                                            <i class="fas fa-satellite fa-3x mb-3"></i>
-                                            <h5>No Active Monitoring Stations</h5>
-                                            <p>Please register evacuation centers to begin tracking.</p>
-                                        </div>
-                                    </td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
+                    <div class="evac-right-empty-title" style="opacity:0.3;">Reserved</div>
+                    <div class="evac-right-empty-sub" style="opacity:0.25;">This section is reserved for future features.</div>
                 </div>
-            @endif
-        </div>
-    </div>
-    {{-- Shared modals --}}
-    @include('typhoon.partials.choose-school-modal')
-    @include('typhoon.partials.create-evac-center-modal')
-    @include('typhoon.FamilyModal')
-</div>
+            </div>
+
+        </aside>
+
+    </div>{{-- /.evac-body --}}
+</div>{{-- /.evac-dashboard-root --}}
+
+{{-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ SHARED MODALS & PARTIALS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ --}}
+@include('typhoon.partials.choose-school-modal')
+@include('typhoon.partials.create-evac-center-modal')
+@include('typhoon.FamilyModal')
+
+
+
+
+
 
 {{-- ===================== SOCIAL / PRINT OVERLAY ===================== --}}
 <div id="socialPrintModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.92); z-index:9999; flex-direction:column; align-items:center; justify-content:flex-start; overflow-y:auto; padding: 1.5rem 0;">
 
-    {{-- ACTION BUTTONS — outside the printable card --}}
+    {{-- ACTION BUTTONS â€” outside the printable card --}}
     <div id="printActionBar" style="display:flex; align-items:center; gap:1rem; margin-bottom:1.25rem; width:1100px; max-width:96vw; justify-content:flex-end;">
         <span style="color:#8892b0; font-size:0.82rem; margin-right:auto; font-family:'Space Grotesk',sans-serif;">
             <i class="fas fa-info-circle me-1"></i> Preview your social media report. Click <strong style="color:#00d2ff;">Save as PDF</strong> to download.
@@ -1209,7 +1477,7 @@
             <div style="text-align:right;">
                 <div style="font-size:1.75rem; font-weight:800; color:#00d2ff; letter-spacing:3px; line-height:1;">TYPHOON & FLOOD</div>
                 <div style="font-size:1rem; font-weight:700; color:#ffffff; letter-spacing:2px;">REPORTING SYSTEM</div>
-                <div style="font-size:0.72rem; color:#8892b0; margin-top:0.35rem; letter-spacing:0.5px;">📅 {{ now()->format('F d, Y  —  h:i A') }}</div>
+                <div style="font-size:0.72rem; color:#8892b0; margin-top:0.35rem; letter-spacing:0.5px;">ðŸ“… {{ now()->format('F d, Y  â€”  h:i A') }}</div>
             </div>
         </div>
 
@@ -1236,7 +1504,7 @@
         {{-- Rainfall & Weather + Active Centers --}}
         <div style="display:grid; grid-template-columns: 1fr 1fr 0.6fr; gap:1rem; margin-bottom:1.25rem;">
             <div style="background:rgba(0,210,255,0.06); border:1px solid rgba(0,210,255,0.15); border-radius:10px; padding:1rem;">
-                <div style="font-size:0.65rem; color:#00d2ff; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:0.75rem; font-weight:700;">📡 Daily Rainfall</div>
+                <div style="font-size:0.65rem; color:#00d2ff; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:0.75rem; font-weight:700;">ðŸ“¡ Daily Rainfall</div>
                 <div style="display:flex; justify-content:space-around;">
                     <div style="text-align:center;">
                         <div style="font-size:0.65rem; color:#8892b0; margin-bottom:0.25rem;">Bangal Station</div>
@@ -1250,10 +1518,10 @@
                 </div>
             </div>
             <div style="background:rgba(52,152,219,0.08); border:1px solid rgba(52,152,219,0.2); border-radius:10px; padding:1rem;">
-                <div style="font-size:0.65rem; color:#00d2ff; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:0.75rem; font-weight:700;">🌩 Weather Forecast</div>
+                <div style="font-size:0.65rem; color:#00d2ff; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:0.75rem; font-weight:700;">ðŸŒ© Weather Forecast</div>
                 <div style="font-size:1.6rem; font-weight:800; color:#ffffff; line-height:1; margin-bottom:0.25rem;">{{ $typhoonData->name ?? 'Moderate Rain' }}</div>
-                <div style="font-size:0.82rem; color:#8892b0; margin-bottom:0.5rem;">{{ $typhoonData->temp ?? '28' }}°C &nbsp;|&nbsp; {{ $typhoonData->wind ?? '15' }} km/h Wind</div>
-                <div style="font-size:0.72rem; background:rgba(255,183,3,0.12); border-radius:6px; padding:0.35rem 0.75rem; color:#f0b429; display:inline-block;">⚠ Storm Signal #1 Active</div>
+                <div style="font-size:0.82rem; color:#8892b0; margin-bottom:0.5rem;">{{ $typhoonData->temp ?? '28' }}Â°C &nbsp;|&nbsp; {{ $typhoonData->wind ?? '15' }} km/h Wind</div>
+                <div style="font-size:0.72rem; background:rgba(255,183,3,0.12); border-radius:6px; padding:0.35rem 0.75rem; color:#f0b429; display:inline-block;">âš  Storm Signal #1 Active</div>
             </div>
             <div style="background:rgba(0,210,255,0.06); border:1px solid rgba(0,210,255,0.15); border-radius:10px; padding:1rem; display:flex; flex-direction:column; align-items:center; justify-content:center;">
                 <div style="font-size:0.65rem; color:#8892b0; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:0.5rem; text-align:center;">Active Centers</div>
@@ -1263,7 +1531,7 @@
 
         {{-- Evacuation Centers Table --}}
         <div style="margin-bottom:1rem;">
-            <div style="font-size:0.7rem; color:#00d2ff; text-transform:uppercase; letter-spacing:2px; font-weight:700; margin-bottom:0.75rem; padding-bottom:0.5rem; border-bottom:1px solid rgba(0,210,255,0.2);">🏫 Evacuation Centers Status Monitoring</div>
+            <div style="font-size:0.7rem; color:#00d2ff; text-transform:uppercase; letter-spacing:2px; font-weight:700; margin-bottom:0.75rem; padding-bottom:0.5rem; border-bottom:1px solid rgba(0,210,255,0.2);">ðŸ« Evacuation Centers Status Monitoring</div>
             <table style="width:100%; border-collapse:collapse; font-size:0.82rem;">
                 <thead>
                     <tr style="background:rgba(0,210,255,0.12);">
@@ -1279,7 +1547,7 @@
                     <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
                         <td style="padding:0.6rem 0.75rem; font-weight:700; color:#e2e8f0;">{{ $ec->school_name ?? $ec->identification ?? ('Center #' . $ec->id) }}</td>
                         <td style="padding:0.6rem 0.75rem; color:#8892b0; font-size:0.78rem;">{{ Str::limit($ec->location, 40) }}</td>
-                        <td style="padding:0.6rem 0.75rem; text-align:center; color:#8892b0;">{{ $ec->capacity > 0 ? $ec->capacity : '∞' }}</td>
+                        <td style="padding:0.6rem 0.75rem; text-align:center; color:#8892b0;">{{ $ec->capacity > 0 ? $ec->capacity : 'âˆž' }}</td>
                         <td style="padding:0.6rem 0.75rem; text-align:center; font-weight:800; color:#00d2ff; font-size:1.05rem;">{{ $ec->current_occupancy }}</td>
                         <td style="padding:0.6rem 0.75rem; text-align:center;">
                             @php
@@ -1299,7 +1567,7 @@
         {{-- Footer --}}
         <div style="margin-top:1.25rem; padding-top:0.9rem; border-top:1px solid rgba(0,210,255,0.12); display:flex; justify-content:space-between; align-items:center; font-size:0.68rem; color:#4a5568;">
             <span>Generated by DRRM Typhoon & Flood Monitoring System</span>
-            <span>{{ now()->format('Y') }} · DepEd DRRM Monitoring · Printed: {{ now()->format('M d, Y h:i A') }}</span>
+            <span>{{ now()->format('Y') }} Â· DepEd DRRM Monitoring Â· Printed: {{ now()->format('M d, Y h:i A') }}</span>
         </div>
     </div>
 </div>
@@ -1323,6 +1591,66 @@
 {{-- ===================== SCRIPTS ===================== --}}
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    /* ── Sidebar Dropdown Toggles ── */
+    document.addEventListener('DOMContentLoaded', function () {
+        function setupDropdown(toggleId, subId, caretId) {
+            const toggleBtn = document.getElementById(toggleId);
+            const subMenu   = document.getElementById(subId);
+            const caret     = document.getElementById(caretId);
+            if (toggleBtn && subMenu) {
+                toggleBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    subMenu.classList.toggle('open');
+                    if (caret) caret.classList.toggle('open');
+                });
+            }
+        }
+        
+        setupDropdown('evac-nav-register-toggle', 'evac-nav-register-sub', 'evac-register-caret');
+        setupDropdown('evac-nav-reports-toggle', 'evac-nav-reports-sub', 'evac-reports-caret');
+
+        /* ── School Table Pagination ── */
+        const ROWS_PER_PAGE = 10;
+        const tbody = document.getElementById('evacSchoolsTbody');
+        const prevBtn = document.getElementById('evacPrevPage');
+        const nextBtn = document.getElementById('evacNextPage');
+        const pageInfo = document.getElementById('evacPageInfo');
+
+        if (!tbody || !prevBtn || !nextBtn || !pageInfo) return;
+
+        // Separate clustered (priority) rows from regular rows
+        const allRows = Array.from(tbody.querySelectorAll('tr.evac-school-row'));
+        const priorityRows = allRows.filter(r => r.dataset.priority === '1');
+        const regularRows  = allRows.filter(r => r.dataset.priority !== '1');
+
+        // Re-order: priority rows first, then regular
+        const orderedRows = [...priorityRows, ...regularRows];
+        orderedRows.forEach(r => tbody.appendChild(r)); // re-append in order
+
+        const totalRows  = orderedRows.length;
+        const totalPages = Math.max(1, Math.ceil(totalRows / ROWS_PER_PAGE));
+        let currentPage  = 1;
+
+        function renderPage(page) {
+            currentPage = page;
+            const start = (page - 1) * ROWS_PER_PAGE;
+            const end   = start + ROWS_PER_PAGE;
+            orderedRows.forEach((row, idx) => {
+                row.style.display = (idx >= start && idx < end) ? '' : 'none';
+            });
+            pageInfo.textContent = `Page ${page} of ${totalPages}`;
+            prevBtn.disabled = page <= 1;
+            nextBtn.disabled = page >= totalPages;
+        }
+
+        prevBtn.addEventListener('click', () => { if (currentPage > 1) renderPage(currentPage - 1); });
+        nextBtn.addEventListener('click', () => { if (currentPage < totalPages) renderPage(currentPage + 1); });
+
+        renderPage(1);
+    });
+</script>
+
 <script>
     // 1. Setup Chart
     document.addEventListener('DOMContentLoaded', function() {
@@ -1781,7 +2109,7 @@
             if (container && checkbox) {
                 addVulnerabilityTag(container, checkbox, label);
 
-                // If "Other / Special Needs" — show the details input
+                // If "Other / Special Needs" â€” show the details input
                 if (val === 'flagOtherNeeds') {
                     const otherWrap = document.getElementById('otherNeedsDetailsWrap');
                     if (otherWrap) otherWrap.classList.remove('d-none');
@@ -1836,7 +2164,7 @@
         families.forEach((family) => {
             const status = family.checked_out_at ? 'History' : 'Current';
             const timestamp = family.created_at ? new Date(family.created_at).toLocaleDateString() : '';
-            const label = `#${family.id} - ${family.head_family_name} (${status}${timestamp ? ' • ' + timestamp : ''})`;
+            const label = `#${family.id} - ${family.head_family_name} (${status}${timestamp ? ' â€¢ ' + timestamp : ''})`;
             const option = document.createElement('option');
             option.value = family.id;
             option.textContent = label;
