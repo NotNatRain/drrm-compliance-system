@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Typhoon/Flood Notifications')
+@section('title', 'Evacuation Notifications')
 @section('hide_main_nav', '1')
 
 @push('styles')
@@ -223,7 +223,7 @@
                 </a>
                 <div>
                     <h1 class="h3 mb-0 fw-bold text-white">
-                        Typhoon/Flood Notifications hub
+                        Evacuation Notifications hub
                     </h1>
                     <div class="small text-white-50 mt-1">Live dispatch & system intelligence</div>
                 </div>

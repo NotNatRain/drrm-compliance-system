@@ -12,6 +12,7 @@ class InventoryStorage extends Model
     protected $table = 'inventory_storage';
 
     protected $fillable = [
+        'school_id',
         'item_name',
         'unit',
         'quantity',
@@ -21,4 +22,9 @@ class InventoryStorage extends Model
         'date_received',
         'date_checked'
     ];
+
+    public function school()
+    {
+        return $this->belongsTo(School::class);
+    }
 }

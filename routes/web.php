@@ -386,18 +386,22 @@ Route::prefix('inventory-storage')
     ->name('inventory-storage.')
     ->middleware(['auth', 'module.access:inventory_storage'])
     ->group(function () {
-        Route::get('/dashboard', [InventoryStorageController::class, 'dashboard'])->name('dashboard');
-        Route::post('/store', [InventoryStorageController::class, 'store'])->name('store');
-        Route::put('/update/{id}', [InventoryStorageController::class, 'update'])->name('update');
+        Route::get('/dashboard',      [InventoryStorageController::class, 'dashboard'])->name('dashboard');
+        Route::get('/default-list',   [InventoryStorageController::class, 'defaultList'])->name('default-list');
 
+        // Inventory CRUD
+        Route::post('/store',          [InventoryStorageController::class, 'store'])->name('store');
+        Route::get('/item/{id}',       [InventoryStorageController::class, 'getItem'])->name('item.get');
+        Route::put('/update/{id}',     [InventoryStorageController::class, 'update'])->name('update');
+        Route::delete('/destroy/{id}', [InventoryStorageController::class, 'destroy'])->name('destroy');
 
-        Route::get('/default-list', [InventoryStorageController::class, 'defaultList'])->name('default-list');
+        // Default List compliance
+        Route::post('/default-list/save', [InventoryStorageController::class, 'saveDefaultList'])->name('default-list.save');
 
-    
-    Route::post('/default-list', [InventoryStorageController::class, 'storeDefaultList'])
-        ->name('default-list.store');
+        // School switcher (admin only)
+        Route::post('/set-school', [InventoryStorageController::class, 'setSchool'])->name('set-school');
 
-        Route::get('/inventory-storage', [InventoryStorageController::class, 'dashboard'])
-    ->name('inventory-storage.dashboard');
-
+        // PDF export
+        Route::get('/export-pdf', [InventoryStorageController::class, 'exportPdf'])->name('export-pdf');
     });
+

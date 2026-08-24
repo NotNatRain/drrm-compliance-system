@@ -17,23 +17,6 @@
             padding: 0;
         }
 
-        .no-print {
-            background: #f8f9fa;
-            border-bottom: 1px solid #ddd;
-            padding: 10px;
-            text-align: center;
-        }
-
-        .btn-print {
-            background: #00d2ff;
-            color: #000;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin: 5px;
-            font-weight: bold;
-        }
 
         .page {
             padding: 1cm;
@@ -119,9 +102,6 @@
         }
 
         @media print {
-            .no-print {
-                display: none;
-            }
 
             body {
                 -webkit-print-color-adjust: exact;
@@ -131,11 +111,7 @@
         }
     </style>
 </head>
-<body onload="window.print()">
-    <div class="no-print">
-        <button class="btn-print" onclick="window.print()">Print Report</button>
-        <button class="btn-print" style="background: #6c757d; color: white;" onclick="window.close()">Close</button>
-    </div>
+<body onload="window.print()" onafterprint="window.history.back()">
 
     <div class="page">
         <div class="header-container">

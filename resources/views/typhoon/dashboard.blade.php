@@ -1,7 +1,7 @@
 {{-- resources/views/typhoon/dashboard.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'Typhoon/Flooding Monitoring')
+@section('title', 'Evacuation Monitoring')
 @section('hide_main_nav', '1')
 
 @push('styles')
@@ -1174,10 +1174,10 @@
                         <i class="fas fa-chevron-down evac-nav-caret" id="evac-register-caret"></i>
                     </div>
                     <div class="evac-nav-sub" id="evac-nav-register-sub">
-                        <a href="#" class="evac-nav-sub-item">
+                        <a href="#" class="evac-nav-sub-item" id="registerNavNew">
                             <i class="fas fa-arrow-right evac-sub-arrow"></i> New
                         </a>
-                        <a href="#" class="evac-nav-sub-item">
+                        <a href="#" class="evac-nav-sub-item" id="registerNavExisting">
                             <i class="fas fa-arrow-right evac-sub-arrow"></i> Existing
                         </a>
                     </div>
@@ -1298,11 +1298,18 @@
                 <div class="evac-panel-header">
                     <i class="fas fa-map-marked-alt"></i>
                     <span>Current Status of School</span>
-                    <div class="evac-status-legend ms-auto d-flex gap-2">
-                        <span class="evac-badge evac-badge-cleared">CLEARED</span>
-                        <span class="evac-badge evac-badge-occupied">OCCUPIED</span>
-                        <span class="evac-badge evac-badge-full">FULL</span>
-                        <span class="evac-badge evac-badge-decamp">DECAMP</span>
+                    <div class="dropdown ms-auto">
+                        <button class="btn btn-sm btn-outline-primary dropdown-toggle d-flex align-items-center gap-2" type="button" id="statusFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 20px; padding: 0.4rem 1rem;">
+                            <i class="fas fa-filter"></i> <span id="currentStatusFilterText">All Status</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" aria-labelledby="statusFilterDropdown" style="border-radius: 12px; min-width: 150px; padding: 0.5rem;">
+                            <li><a class="dropdown-item d-flex align-items-center justify-content-between filter-status-btn mb-1 rounded" href="#" data-status="all"><span>All Status</span><i class="fas fa-check text-primary check-icon"></i></a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item d-flex align-items-center justify-content-between filter-status-btn mb-1 rounded" href="#" data-status="cleared"><span class="evac-badge evac-badge-cleared w-100 text-center me-2" style="padding: 4px 8px;">CLEARED</span><i class="fas fa-check text-primary check-icon d-none"></i></a></li>
+                            <li><a class="dropdown-item d-flex align-items-center justify-content-between filter-status-btn mb-1 rounded" href="#" data-status="occupied"><span class="evac-badge evac-badge-occupied w-100 text-center me-2" style="padding: 4px 8px;">OCCUPIED</span><i class="fas fa-check text-primary check-icon d-none"></i></a></li>
+                            <li><a class="dropdown-item d-flex align-items-center justify-content-between filter-status-btn mb-1 rounded" href="#" data-status="full"><span class="evac-badge evac-badge-full w-100 text-center me-2" style="padding: 4px 8px;">FULL</span><i class="fas fa-check text-primary check-icon d-none"></i></a></li>
+                            <li><a class="dropdown-item d-flex align-items-center justify-content-between filter-status-btn rounded" href="#" data-status="decamp"><span class="evac-badge evac-badge-decamp w-100 text-center me-2" style="padding: 4px 8px;">DECAMP</span><i class="fas fa-check text-primary check-icon d-none"></i></a></li>
+                        </ul>
                     </div>
                 </div>
                 <div class="evac-schools-table-wrap">
@@ -1609,6 +1616,36 @@
         
         setupDropdown('evac-nav-register-toggle', 'evac-nav-register-sub', 'evac-register-caret');
         setupDropdown('evac-nav-reports-toggle', 'evac-nav-reports-sub', 'evac-reports-caret');
+
+        // Register sub-nav: programmatically open family modal to avoid e.preventDefault() conflict
+        function openFamilyModalWithMode(mode) {
+            const el = document.getElementById('familyRegistrationModal');
+            if (!el) return;
+            
+            // Move modal directly to body to avoid z-index or stacking context issues
+            if (el.parentElement !== document.body) {
+                document.body.appendChild(el);
+            }
+            
+            const modal = bootstrap.Modal.getOrCreateInstance(el);
+            // Attach the mode as a temporary property so show.bs.modal can read it
+            el.dataset.pendingMode = mode;
+            modal.show();
+        }
+        const registerNavNew = document.getElementById('registerNavNew');
+        const registerNavExisting = document.getElementById('registerNavExisting');
+        if (registerNavNew) {
+            registerNavNew.addEventListener('click', function(e) {
+                e.preventDefault();
+                openFamilyModalWithMode('new');
+            });
+        }
+        if (registerNavExisting) {
+            registerNavExisting.addEventListener('click', function(e) {
+                e.preventDefault();
+                openFamilyModalWithMode('existing');
+            });
+        }
 
         /* ── School Table Pagination ── */
         const ROWS_PER_PAGE = 10;
@@ -2352,11 +2389,24 @@
                 }
             }
 
-            if (registrationModeSelect) {
-                registrationModeSelect.value = 'new';
-            }
-            if (existingFamilyWrap) {
-                existingFamilyWrap.classList.add('d-none');
+            const mode = (button && button.dataset.mode) || familyModalEl.dataset.pendingMode || 'new';
+            delete familyModalEl.dataset.pendingMode; // clear after reading
+
+            if (mode !== 'new') {
+                if (registrationModeSelect) {
+                    registrationModeSelect.value = mode;
+                    registrationModeSelect.dispatchEvent(new Event('change'));
+                }
+                if (existingFamilyWrap) {
+                    existingFamilyWrap.classList.toggle('d-none', mode !== 'existing');
+                }
+            } else {
+                if (registrationModeSelect) {
+                    registrationModeSelect.value = 'new';
+                }
+                if (existingFamilyWrap) {
+                    existingFamilyWrap.classList.add('d-none');
+                }
             }
             if (existingFamilySelect) {
                 existingFamilySelect.value = '';
@@ -2445,6 +2495,50 @@
             rows.forEach(row => {
                 const text = row.querySelector('.school-name-text')?.textContent.toLowerCase() || '';
                 row.style.display = text.includes(query) ? '' : 'none';
+            });
+        });
+    }
+
+    // Status Filter for Evacuation Centers Table
+    const filterStatusBtns = document.querySelectorAll('.filter-status-btn');
+    const currentStatusFilterText = document.getElementById('currentStatusFilterText');
+    const evacSchoolsTbody = document.getElementById('evacSchoolsTbody');
+    
+    if (filterStatusBtns.length > 0 && evacSchoolsTbody) {
+        filterStatusBtns.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const status = this.getAttribute('data-status');
+                
+                // Update checkmarks
+                filterStatusBtns.forEach(b => {
+                    const icon = b.querySelector('.check-icon');
+                    if(icon) icon.classList.add('d-none');
+                });
+                const myIcon = this.querySelector('.check-icon');
+                if(myIcon) myIcon.classList.remove('d-none');
+                
+                // Update dropdown button text
+                if (status === 'all') {
+                    currentStatusFilterText.textContent = 'All Status';
+                } else {
+                    currentStatusFilterText.textContent = status.toUpperCase();
+                }
+
+                // Filter rows
+                const rows = evacSchoolsTbody.querySelectorAll('tr.evac-school-row');
+                rows.forEach(row => {
+                    if (status === 'all') {
+                        row.style.display = '';
+                        return;
+                    }
+                    const badge = row.querySelector('.td-status .evac-badge');
+                    if (badge && badge.textContent.trim().toLowerCase() === status) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
             });
         });
     }

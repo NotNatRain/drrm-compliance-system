@@ -11,7 +11,7 @@
                 </div>
                 <div class="modal-body">
                     <p class="text-muted small mb-3">
-                        Add schools from <strong>DRRM Main Dashboard → Schools</strong> first. Only schools not yet registered for Typhoon/Flood appear below.
+                        Add schools from <strong>DRRM Main Dashboard → Schools</strong> first. Only schools not yet registered for Evacuation Monitoring appear below.
                     </p>
 
                     <div class="mb-4">

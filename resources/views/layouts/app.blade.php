@@ -8,15 +8,22 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>@yield('title', 'DRRM Compliance Dashboard')</title>
-    @if(Route::is('typhoon.*'))
-        <link rel="icon" type="image/png" href="{{ asset('images/typhoon-flood-logo.png') }}">
-        <link rel="apple-touch-icon" href="{{ asset('images/typhoon-flood-logo.png') }}">
-    @elseif(Route::is('incidents.*'))
-        <link rel="icon" type="image/png" href="{{ asset('images/incident-checklist-logo.png') }}">
-        <link rel="apple-touch-icon" href="{{ asset('images/incident-checklist-logo.png') }}">
+    @if(Request::is('typhoon*') || Route::is('typhoon.*'))
+        <link rel="icon" type="image/png" href="{{ asset('images/typhoon-flood-logo.png') }}?v=2">
+        <link rel="shortcut icon" type="image/png" href="{{ asset('images/typhoon-flood-logo.png') }}?v=2">
+        <link rel="apple-touch-icon" href="{{ asset('images/typhoon-flood-logo.png') }}?v=2">
+    @elseif(Request::is('incidents*') || Route::is('incidents.*'))
+        <link rel="icon" type="image/png" href="{{ asset('images/incident-checklist-logo.png') }}?v=2">
+        <link rel="shortcut icon" type="image/png" href="{{ asset('images/incident-checklist-logo.png') }}?v=2">
+        <link rel="apple-touch-icon" href="{{ asset('images/incident-checklist-logo.png') }}?v=2">
+    @elseif(Request::is('fire-safety*') || Route::is('fire-safety.*'))
+        <link rel="icon" type="image/png" href="{{ asset('images/fire-safety-logo.png') }}?v=2">
+        <link rel="shortcut icon" type="image/png" href="{{ asset('images/fire-safety-logo.png') }}?v=2">
+        <link rel="apple-touch-icon" href="{{ asset('images/fire-safety-logo.png') }}?v=2">
     @else
-        <link rel="icon" type="image/png" href="{{ asset('images/drrmis-logo-2.png') }}">
-        <link rel="apple-touch-icon" href="{{ asset('images/drrmis-logo-2.png') }}">
+        <link rel="icon" type="image/png" href="{{ asset('images/drrmis-logo-2.png') }}?v=2">
+        <link rel="shortcut icon" type="image/png" href="{{ asset('images/drrmis-logo-2.png') }}?v=2">
+        <link rel="apple-touch-icon" href="{{ asset('images/drrmis-logo-2.png') }}?v=2">
     @endif
 
     <!-- Fonts -->
@@ -215,7 +222,7 @@
                     <a class="navbar-brand d-flex align-items-center" href="{{ route('dashboard') }}">
                         @if(Route::is('typhoon.*'))
                             <img src="{{ asset('images/typhoon-flood-logo.png') }}" alt="Typhoon/Flood">
-                            <span class="navbar-brand-text d-none d-sm-inline-block">Typhoon/Flood Monitoring</span>
+                            <span class="navbar-brand-text d-none d-sm-inline-block">Evacuation Monitoring</span>
                         @elseif(Route::is('incidents.*'))
                             <img src="{{ asset('images/incident-checklist-logo.png') }}" alt="Incident Checklist">
                             <span class="navbar-brand-text d-none d-sm-inline-block">Incident Checklist</span>
@@ -345,7 +352,7 @@
             </nav>
         @endunless
 
-        <main class="py-4">
+        <main class="{{ View::hasSection('hide_main_nav') ? 'p-0' : 'py-4' }}">
             @yield('content')
         </main>
     </div>

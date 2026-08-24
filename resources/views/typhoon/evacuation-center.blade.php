@@ -6,18 +6,179 @@
 @push('styles')
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-    .search-bar-container input::placeholder {
-        color: rgba(255, 255, 255, 0.6);
-    }
+    /* ── Search bars ── */
+    .search-bar-container input::placeholder { color: rgba(255,255,255,0.6); }
     .search-bar-container input:focus {
-        background-color: rgba(255, 255, 255, 0.15) !important;
-        border-color: rgba(255, 255, 255, 0.5) !important;
+        background-color: rgba(255,255,255,0.15) !important;
+        border-color: rgba(255,255,255,0.5) !important;
         color: white !important;
-        box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.1) !important;
+        box-shadow: 0 0 0 0.25rem rgba(255,255,255,0.1) !important;
         outline: none;
     }
-    .search-bar-container i {
-        color: rgba(255, 255, 255, 0.7) !important;
+    .search-bar-container i { color: rgba(255,255,255,0.7) !important; }
+
+    /* ── Keyframe animations ── */
+    @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideInLeft {
+        from { opacity: 0; transform: translateX(-20px); }
+        to   { opacity: 1; transform: translateX(0); }
+    }
+
+    /* ── Remove layout gap above topbar ── */
+    main { padding-top: 0 !important; padding-bottom: 0 !important; }
+
+    /* ── New Topbar ── */
+    .evac-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.8rem 1.5rem;
+        background: rgba(11, 19, 37, 0.95);
+        border-bottom: 1px solid rgba(0, 210, 255, 0.12);
+        backdrop-filter: blur(16px);
+        flex-shrink: 0;
+        z-index: 1050;
+        animation: slideInLeft 0.5s ease-out;
+        position: sticky;
+        top: 0;
+    }
+    .evac-topbar-left {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+    }
+    .evac-topbar-right {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        margin-left: auto;
+    }
+    .evac-back-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        border: 1px solid rgba(0,210,255,0.2);
+        background: rgba(0,210,255,0.05);
+        color: #00d2ff;
+        text-decoration: none;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        font-size: 1rem;
+    }
+    .evac-back-btn:hover {
+        background: #00d2ff;
+        color: #080d1a;
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(0,210,255,0.3);
+    }
+    .evac-brand { display: flex; align-items: center; gap: 0.75rem; }
+    .evac-brand-icon {
+        font-size: 1.4rem;
+        color: #00d2ff;
+        filter: drop-shadow(0 0 8px rgba(0,210,255,0.5));
+    }
+    .evac-brand-title {
+        font-family: 'Sora', sans-serif;
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: #ffffff;
+        letter-spacing: 0.5px;
+        line-height: 1.15;
+    }
+    .evac-brand-sub {
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: #00d2ff;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        opacity: 0.85;
+    }
+    .evac-datetime { text-align: right; }
+    .evac-date {
+        font-family: 'Sora', sans-serif;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #e2e8f0;
+        letter-spacing: 0.3px;
+    }
+    .evac-time {
+        font-size: 0.65rem;
+        color: #94a3b8;
+        margin-top: 0.1rem;
+    }
+
+    /* ── Icon-only action buttons ── */
+    .evac-action-icon-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        border: none;
+        cursor: pointer;
+        font-size: 1rem;
+        text-decoration: none;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+    }
+    .evac-action-icon-btn.btn-print {
+        background: rgba(34, 197, 94, 0.15);
+        color: #22c55e;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+    .evac-action-icon-btn.btn-print:hover {
+        background: #22c55e;
+        color: #080d1a;
+        transform: scale(1.08);
+        box-shadow: 0 4px 14px rgba(34, 197, 94, 0.4);
+    }
+    .evac-action-icon-btn.btn-update {
+        background: rgba(99, 102, 241, 0.15);
+        color: #818cf8;
+        border: 1px solid rgba(99, 102, 241, 0.3);
+    }
+    .evac-action-icon-btn.btn-update:hover {
+        background: #6366f1;
+        color: #ffffff;
+        transform: scale(1.08);
+        box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    }
+
+    /* ── Profile / action button ── */
+    .profile-menu-btn {
+        border: 1px solid rgba(255,255,255,0.2);
+        background: rgba(255,255,255,0.06);
+        color: #fff;
+        border-radius: 999px;
+        padding: 0.45rem 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+    }
+    .profile-menu-btn:hover, .profile-menu-btn:focus {
+        color: #00d2ff;
+        border-color: rgba(0,210,255,0.55);
+    }
+    .profile-menu .dropdown-menu {
+        background: #0f1b3f;
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 12px;
+        min-width: 210px;
+    }
+    .profile-menu .dropdown-item { color: #dbeafe; font-weight: 600; }
+    .profile-menu .dropdown-item:hover { background: rgba(0,210,255,0.15); color: #fff; }
+    .header-action-btn {
+        min-height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 
     :root {
@@ -112,204 +273,48 @@
         border-radius: 8px;
     }
 
-    /* System Status Pulse */
-    .status-pulse {
-        width: 12px;
-        height: 12px;
-        background: #22c55e;
-        border-radius: 50%;
-        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-        70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
-        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-    }
-    
-    .btn-circle {
-        width: 45px;
-        height: 45px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0;
-    }
-
-    /* Centered Navigation */
-    .header-nav-center {
-        display: flex;
-        align-items: center;
-        gap: 1.5rem;
-        background: rgba(255, 255, 255, 0.05);
-        padding: 0.5rem 2rem;
-        border-radius: 50px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-    }
-
-    .nav-link-custom {
-        color: rgba(255, 255, 255, 0.7);
-        text-decoration: none;
-        font-family: var(--font-display);
-        font-weight: 700;
-        font-size: 1.1rem;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        background: none;
-        border: none;
-        padding: 0.5rem 0.25rem;
-    }
-
-    .nav-link-custom:hover {
-        color: var(--accent-blue);
-    }
-
-    .nav-link-custom.active {
-        color: var(--accent-blue);
-        text-shadow: 0 0 15px rgba(0, 210, 255, 0.5);
-    }
-
-    .notif-btn-custom {
-        position: relative;
-        color: rgba(255, 255, 255, 0.7);
-        font-size: 1.25rem;
-        transition: all 0.3s ease;
-    }
-
-    .notif-btn-custom:hover, .notif-btn-custom.active {
-        color: var(--accent-blue);
-    }
-
-    .school-btn-custom {
-        color: rgba(255, 255, 255, 0.7);
-        font-size: 1.25rem;
-        transition: all 0.3s ease;
-        background: none;
-        border: none;
-    }
-
-    .school-btn-custom:hover, .school-btn-custom.active {
-        color: var(--accent-blue);
-    }
-
-    .profile-menu-btn {
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        background: rgba(255, 255, 255, 0.06);
-        color: #fff;
-        border-radius: 999px;
-        padding: 0.45rem 0.9rem;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-weight: 600;
-    }
-
-    .profile-menu-btn:hover,
-    .profile-menu-btn:focus {
-        color: var(--accent-blue);
-        border-color: rgba(0, 210, 255, 0.55);
-    }
-
-    .profile-menu .dropdown-menu {
-        background: #0f1b3f;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 12px;
-        min-width: 210px;
-    }
-
-    .profile-menu .dropdown-item {
-        color: #dbeafe;
-        font-weight: 600;
-    }
-
-    .profile-menu .dropdown-item:hover {
-        background: rgba(0, 210, 255, 0.15);
-        color: #fff;
-    }
-
-    .header-action-btn {
-        min-height: 46px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
 </style>
 @endpush
 
 @section('content')
-<div class="container-fluid">
-    {{-- Unified Header --}}
-    <div class="d-flex justify-content-between align-items-center mb-5">
-        {{-- Left Side --}}
-        <div class="d-flex align-items-center" style="width: 30%;">
-            <a href="{{ route('typhoon.dashboard') }}" class="btn btn-outline-info border-0 me-3 shadow-sm" style="background: rgba(255,255,255,0.05);">
+
+    {{-- ── Topbar ── --}}
+    <div class="evac-topbar">
+
+        {{-- Left: back button + school name + subtitle --}}
+        <div class="evac-topbar-left">
+            <a href="{{ route('typhoon.dashboard') }}" class="evac-back-btn" title="Back to Dashboard">
                 <i class="fas fa-chevron-left"></i>
             </a>
-            <div>
-                <h1 class="h3 mb-0 fw-bold text-white">
-                    {{ $ec->school_name ?? 'NOT DEFINED' }}
-                </h1>
-                <div class="small text-info opacity-75 fw-bold text-uppercase tracking-wider">EVACUATION HUB</div>
+            <div class="evac-brand">
+                <i class="fas fa-satellite-dish evac-brand-icon"></i>
+                <div>
+                    <div class="evac-brand-title">{{ $ec->school_name ?? 'Evacuation Center' }}</div>
+                    <div class="evac-brand-sub">Evacuation Hub</div>
+                </div>
             </div>
         </div>
 
-        {{-- Centered Navigation --}}
-        <div class="header-nav-center">
-            <a href="{{ route('typhoon.dashboard') }}" class="nav-link-custom">
-                Dashboard
+        {{-- Right: icon action buttons + date & time --}}
+        <div class="evac-topbar-right">
+            <a href="{{ route('typhoon.evacuation-center.print', $ec->id) }}" 
+               class="evac-action-icon-btn btn-print" title="Print Report">
+                <i class="fas fa-print"></i>
             </a>
-            <a href="{{ route('typhoon.notifications') }}" class="notif-btn-custom" title="Notifications">
-                <i class="fas fa-bell"></i>
-                @php
-                    $unreadCount = \App\Models\FireSafetyNotification::forCompliance('typhoon_flood')->unread()->count();
-                @endphp
-                @if($unreadCount > 0)
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light" style="font-size: 0.6rem; padding: 0.35em 0.65em;">
-                        {{ $unreadCount > 99 ? '99+' : $unreadCount }}
-                    </span>
-                @endif
-            </a>
-            <button type="button" class="school-btn-custom active" data-bs-toggle="modal" data-bs-target="#chooseSchoolModal" title="Choose Evacuation Center">
-                <i class="fas fa-school"></i>
+            <button type="button"
+                    class="evac-action-icon-btn btn-update"
+                    data-bs-toggle="modal" data-bs-target="#updateCenterStatusModal"
+                    title="Update Site">
+                <i class="fas fa-pen-to-square"></i>
             </button>
-        </div>
-
-        {{-- Right Side --}}
-        <div class="d-flex align-items-center gap-3 justify-content-end" style="width: 30%;">
-            <a href="{{ route('typhoon.evacuation-center.print', $ec->id) }}" target="_blank" class="btn btn-success px-3 fw-bold shadow-lg header-action-btn me-1" style="display:inline-flex; align-items:center; color:white; text-decoration:none;" title="Print Evacuation Center">
-                <i class="fas fa-print me-2"></i>PRINT REPORT
-            </a>
-            <button type="button" class="btn btn-primary px-3 fw-bold shadow-lg header-action-btn" data-bs-toggle="modal" data-bs-target="#updateCenterStatusModal">
-                <i class="fas fa-edit me-2"></i>UPDATE SITE
-            </button>
-            <div class="dropdown profile-menu">
-                <button class="btn profile-menu-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-bars"></i>
-                    <span>{{ auth()->user()->name }}</span>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li>
-                        <a class="dropdown-item" href="{{ route('users.index') }}">
-                            <i class="fas fa-user-cog me-2"></i>User Account
-                        </a>
-                    </li>
-                    @if(auth()->user()->role === 'admin')
-                        <li>
-                            <a class="dropdown-item" href="{{ route('activity-logs.index') }}">
-                                <i class="fas fa-history me-2"></i>Logs
-                            </a>
-                        </li>
-                    @endif
-                </ul>
+            <div class="evac-datetime">
+                <div class="evac-date">{{ now()->format('F d, Y') }}</div>
+                <div class="evac-time">{{ now()->format('h:i A') }}</div>
             </div>
         </div>
     </div>
+
+<div class="container-fluid" style="padding-top: 1.5rem;">
 
     {{-- Profile Row (Full Width) --}}
     <div class="row g-4 mb-4">
@@ -322,8 +327,8 @@
                                 <i class="fas fa-id-card-alt fa-2x text-info"></i>
                             </div>
                             <div>
-                                <div class="profile-property text-white-50 mb-0" style="font-size: 0.75rem; letter-spacing: 1px;">Identification Code</div>
-                                <div class="h5 mb-0 fw-bold text-white">{{ $ec->identification ?? '—' }}</div>
+                                <div class="profile-property text-white-50 mb-0" style="font-size: 0.75rem; letter-spacing: 1px;">School ID</div>
+                                <div class="h5 mb-0 fw-bold text-white">{{ $ec->school_id ?? '—' }}</div>
                             </div>
                         </div>
                         <div class="d-flex align-items-center">
@@ -433,7 +438,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="5" class="text-center py-5 opacity-50">
+                                            <td colspan="5" class="text-center opacity-50 py-5" style="height: 340px; vertical-align: middle;">
                                                 <i class="fas fa-house-user fa-3x mb-3 text-muted"></i>
                                                 <p class="h6 mb-0">No families currently taking cover.</p>
                                             </td>
@@ -470,7 +475,7 @@
                                         <th>Head of Family</th>
                                         <th class="text-center">Members</th>
                                         <th>Decamped At</th>
-                                        <th class="pe-4 text-end">Action</th>
+                                        <th class="text-center pe-4">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -480,15 +485,15 @@
                                             <td><div class="fw-bold fs-6 text-primary">{{ $family->head_family_name }}</div><small class="text-muted">Checked in: {{ $family->created_at->format('M d, Y h:i A') }}</small></td>
                                             <td class="text-center"><span class="badge bg-light text-dark border p-2" style="min-width: 35px;">{{ $family->members_count }}</span></td>
                                             <td><small>{{ optional($family->checked_out_at)->format('M d, Y h:i A') }}</small></td>
-                                            <td class="pe-4 text-end">
-                                                <button class="btn btn-sm btn-outline-primary fw-bold" data-bs-toggle="modal" data-bs-target="#historyViewModal{{ $family->id }}">
-                                                    <i class="fas fa-eye me-1"></i> VIEW
+                                            <td class="text-center pe-4">
+                                                <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#historyViewModal{{ $family->id }}" title="View Details">
+                                                    <i class="fas fa-eye"></i>
                                                 </button>
                                             </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="4" class="text-center py-5 opacity-50">
+                                            <td colspan="5" class="text-center opacity-50 py-5" style="height: 340px; vertical-align: middle;">
                                                 <i class="fas fa-history fa-3x mb-3 text-muted"></i>
                                                 <p class="h6 mb-0">No decamped family records yet.</p>
                                             </td>

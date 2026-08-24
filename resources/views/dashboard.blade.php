@@ -942,6 +942,25 @@
                                 <input type="text" name="school_id" class="form-control" placeholder="e.g. 107119">
                             </div>
 
+                            {{-- School Type --}}
+                            <div class="mb-4">
+                                <label class="form-label d-block">School Type <span class="text-danger">*</span></label>
+                                <div class="d-flex gap-4 mt-2">
+                                    <div class="form-check custom-radio">
+                                        <input class="form-check-input" type="radio" name="school_type" id="typeClustered" value="Clustered" required>
+                                        <label class="form-check-label" for="typeClustered">
+                                            Clustered
+                                        </label>
+                                    </div>
+                                    <div class="form-check custom-radio">
+                                        <input class="form-check-input" type="radio" name="school_type" id="typeNonClustered" value="Non-Clustered" required>
+                                        <label class="form-check-label" for="typeNonClustered">
+                                            Non-Clustered
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
                             {{-- Address --}}
                             <div class="form-section-label">School's Address</div>
                             <div class="mb-4">

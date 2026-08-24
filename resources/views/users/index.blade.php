@@ -641,7 +641,7 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="form-check m-0">
                                     <input class="form-check-input module-check mt-1" type="checkbox" name="modules[]" value="typhoon_flood" id="checkTF">
-                                    <label class="form-check-label fw-bold text-dark ms-2" for="checkTF">Typhoon/Flooding Monitoring</label>
+                                    <label class="form-check-label fw-bold text-dark ms-2" for="checkTF">Evacuation Monitoring</label>
                                 </div>
                             </div>
                         </div>
@@ -936,7 +936,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (removedModules.length) {
                     const moduleLabels = {
                         fire_safety: 'Fire Safety Compliance',
-                        typhoon_flood: 'Typhoon/Flooding Monitoring',
+                        typhoon_flood: 'Evacuation Monitoring',
                         incident_checklist: 'Incident Checklist',
                         comprehensive_school_safety: 'Comprehensive School Safety',
                         hazard_mapping: 'Hazard Mapping',

@@ -384,6 +384,7 @@ class DashboardController extends Controller
         $rules = [
             'school_name' => 'required|string|max:255|unique:schools,school_name',
             'school_id' => 'nullable|string|max:255',
+            'school_type' => 'required|in:Clustered,Non-Clustered',
             'address' => 'required|string',
             'school_head' => 'nullable|string|max:255',
             'drrm_coordinator' => 'nullable|string|max:255',
@@ -413,6 +414,7 @@ class DashboardController extends Controller
         $payload = $request->only([
             'school_name',
             'school_id',
+            'school_type',
             'address',
             'school_head',
             'drrm_coordinator',
