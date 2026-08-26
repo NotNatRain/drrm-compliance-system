@@ -20,11 +20,12 @@
             --teal-light: rgba(13, 115, 119, .12);
             --sidebar-bg: #112626;
             --sidebar-w: 260px;
-            --body-bg: #f0f4f4;
-            --card-radius: 12px;
+            --body-bg: #eef2f5;
+            --card-radius: 14px;
             --missing: #dc3545;
             --attention: #f59e0b;
             --working: #10b981;
+            --card-shadow: 0 2px 8px rgba(0, 0, 0, .06), 0 0 1px rgba(0, 0, 0, .08);
         }
 
         * {
@@ -36,6 +37,8 @@
             font-family: 'Inter', sans-serif;
             background: var(--body-bg);
             color: #1a2e2e;
+            background-image: radial-gradient(circle at 20% 50%, rgba(21, 143, 143, .03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(21, 143, 143, .04) 0%, transparent 40%);
         }
 
         .layout {
@@ -46,7 +49,7 @@
         /* ── SIDEBAR ── */
         .sidebar {
             width: var(--sidebar-w);
-            background: var(--sidebar-bg);
+            background: linear-gradient(180deg, #158f8f 0%, #0d7377 100%);
             color: #fff;
             display: flex;
             flex-direction: column;
@@ -57,41 +60,47 @@
             height: 100vh;
             z-index: 100;
             overflow-y: auto;
+            border-right: none;
         }
 
         .sidebar-brand {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 14px;
             padding: 32px 24px 20px;
         }
 
         .sidebar-brand .brand-icon {
-            width: 40px;
-            height: 40px;
-            background: var(--teal);
+            width: 42px;
+            height: 42px;
+            background: #ffffff;
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.1rem;
+            color: var(--teal);
+            font-size: 1.15rem;
             flex-shrink: 0;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, .1);
         }
 
         .sidebar-brand .brand-text {
-            font-size: 1.05rem;
+            font-size: 1.1rem;
             font-weight: 700;
             line-height: 1.25;
+            letter-spacing: .02em;
+            color: #ffffff;
         }
 
         .sidebar-back-link {
             padding: 0 24px 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, .08);
+            border-bottom: 1px solid rgba(255, 255, 255, .15);
             margin-bottom: 10px;
         }
 
         .sidebar-back-link a {
-            color: rgba(255, 255, 255, .7);
+            color: rgba(255, 255, 255, .85);
             text-decoration: none;
             font-size: .88rem;
             font-weight: 600;
@@ -106,11 +115,11 @@
         }
 
         .sidebar-section-label {
-            font-size: .7rem;
+            font-size: .68rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: .08em;
-            color: rgba(255, 255, 255, .5);
+            letter-spacing: .1em;
+            color: rgba(255, 255, 255, .65);
             padding: 24px 24px 10px;
         }
 
@@ -124,12 +133,12 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 12px 14px;
-            color: rgba(255, 255, 255, .8);
-            font-size: .9rem;
+            padding: 11px 14px;
+            color: rgba(255, 255, 255, .85);
+            font-size: .88rem;
             font-weight: 600;
             text-decoration: none;
-            transition: background .18s, color .18s;
+            transition: all .2s ease;
             cursor: pointer;
             border: none;
             background: transparent;
@@ -137,53 +146,203 @@
             text-align: left;
             font-family: inherit;
             border-radius: 10px;
+            position: relative;
         }
 
         .sidebar-nav .nav-link:hover {
-            background: rgba(255, 255, 255, .08);
+            background: rgba(255, 255, 255, .15);
             color: #fff;
         }
 
         .sidebar-nav .nav-link.active {
-            background: var(--teal);
-            color: #fff;
+            background: #ffffff;
+            color: var(--teal-dark);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, .15);
         }
 
         .sidebar-nav .nav-link .nav-icon {
-            width: 20px;
+            width: 22px;
             text-align: center;
             font-size: 1rem;
+            opacity: .85;
+        }
+
+        .sidebar-nav .nav-link.active .nav-icon {
+            opacity: 1;
         }
 
         /* ── SCHOOL SWITCHER ── */
         .school-switcher {
             padding: 0 16px 16px;
+            position: relative;
         }
 
-        .school-switcher select {
-            background: rgba(255, 255, 255, .1);
-            border: 1px solid rgba(255, 255, 255, .15);
-            color: #fff;
-            border-radius: 8px;
-            padding: 6px 10px;
-            font-size: .78rem;
-            width: 100%;
-            font-family: inherit;
-        }
-
-        .school-switcher select option {
-            background: #1a3535;
-            color: #fff;
-        }
-
-        .school-switcher label {
+        .school-switcher-label {
             font-size: .65rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: .07em;
-            color: rgba(255, 255, 255, .45);
-            margin-bottom: 5px;
+            color: rgba(255, 255, 255, .65);
+            margin-bottom: 6px;
             display: block;
+        }
+
+        .school-picker-btn {
+            width: 100%;
+            background: rgba(255, 255, 255, .15);
+            border: 1px solid rgba(255, 255, 255, .25);
+            border-radius: 10px;
+            padding: 9px 12px;
+            color: #fff;
+            font-size: .82rem;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all .2s;
+            text-align: left;
+        }
+
+        .school-picker-btn:hover {
+            background: rgba(255, 255, 255, .22);
+            border-color: rgba(255, 255, 255, .4);
+        }
+
+        .school-picker-btn .school-picker-name {
+            flex: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .school-picker-btn .chevron {
+            font-size: .65rem;
+            opacity: .7;
+            transition: transform .2s;
+            flex-shrink: 0;
+        }
+
+        .school-picker-btn.open .chevron {
+            transform: rotate(180deg);
+        }
+
+        .school-picker-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% - 4px);
+            left: 16px;
+            right: 16px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, .18), 0 2px 8px rgba(0, 0, 0, .1);
+            z-index: 200;
+            overflow: hidden;
+        }
+
+        .school-picker-dropdown.open {
+            display: block;
+        }
+
+        .school-picker-search-wrap {
+            padding: 10px 10px 8px;
+            border-bottom: 1px solid #edf2f2;
+        }
+
+        .school-picker-search {
+            width: 100%;
+            border: 1.5px solid #dde8e8;
+            border-radius: 8px;
+            padding: 7px 10px 7px 32px;
+            font-size: .8rem;
+            font-family: inherit;
+            color: #1a2e2e;
+            outline: none;
+            background: #f8fbfb url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238aa0a0' stroke-width='2.5'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 10px center;
+            transition: border-color .2s;
+        }
+
+        .school-picker-search:focus {
+            border-color: var(--teal);
+        }
+
+        .school-picker-list {
+            max-height: 220px;
+            overflow-y: auto;
+            padding: 6px;
+        }
+
+        .school-picker-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .school-picker-list::-webkit-scrollbar-thumb {
+            background: #c5dede;
+            border-radius: 4px;
+        }
+
+        .school-picker-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: .82rem;
+            color: #2a4040;
+            font-weight: 500;
+            transition: background .15s;
+        }
+
+        .school-picker-item:hover {
+            background: #f0f7f7;
+        }
+
+        .school-picker-item.active {
+            background: rgba(21, 143, 143, .1);
+            color: var(--teal-dark);
+            font-weight: 700;
+        }
+
+        .school-picker-item .school-icon {
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
+            background: rgba(21, 143, 143, .1);
+            color: var(--teal);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .72rem;
+            flex-shrink: 0;
+        }
+
+        .school-picker-item.active .school-icon {
+            background: var(--teal);
+            color: #fff;
+        }
+
+        .school-picker-item .check {
+            margin-left: auto;
+            color: var(--teal);
+            font-size: .75rem;
+            display: none;
+        }
+
+        .school-picker-item.active .check {
+            display: block;
+        }
+
+        .school-picker-empty {
+            padding: 20px;
+            text-align: center;
+            color: #8aa0a0;
+            font-size: .8rem;
+        }
+
+        .school-switcher-collapsed {
+            display: none;
         }
 
         /* ── MAIN ── */
@@ -195,9 +354,9 @@
         }
 
         .topbar {
-            background: #fff;
-            border-bottom: 1px solid #e5eaea;
-            padding: 18px 32px 14px;
+            background: linear-gradient(135deg, #ffffff 0%, #f7fafa 100%);
+            border-bottom: 1px solid #e0eaea;
+            padding: 20px 32px 16px;
         }
 
         .topbar h1 {
@@ -270,6 +429,12 @@
             border-radius: 6px;
             cursor: pointer;
             font-family: inherit;
+            transition: background .15s, transform .15s;
+        }
+
+        .btn-danger-sm:hover {
+            background: #c82333;
+            transform: translateY(-1px);
         }
 
         .btn-edit-sm {
@@ -281,20 +446,31 @@
             border-radius: 6px;
             cursor: pointer;
             font-family: inherit;
+            transition: background .15s, border-color .15s, transform .15s;
+        }
+
+        .btn-edit-sm:hover {
+            background: #d4eded;
+            border-color: var(--teal);
+            transform: translateY(-1px);
         }
 
         /* ── PAGE BODY ── */
         .page-body {
             padding: 28px 32px;
             flex: 1;
+            display: flex;
+            flex-direction: column;
         }
 
         .panel {
             display: none;
+            flex: 1;
         }
 
         .panel.active {
-            display: block;
+            display: flex;
+            flex-direction: column;
         }
 
         /* ── STAT CARDS ── */
@@ -309,7 +485,37 @@
             background: #fff;
             border-radius: var(--card-radius);
             padding: 20px 24px;
-            box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+            box-shadow: var(--card-shadow);
+            position: relative;
+            overflow: hidden;
+            transition: transform .2s ease, box-shadow .2s ease;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-left: 4px solid var(--teal);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, .08);
+        }
+
+        .stat-card .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+            background: rgba(21, 143, 143, .1);
+            color: var(--teal);
+        }
+
+        .stat-card .stat-info {
+            flex: 1;
+            min-width: 0;
         }
 
         .stat-card .stat-label {
@@ -328,12 +534,39 @@
             color: #0f1f1f;
         }
 
+        .stat-card.stat-missing {
+            border-left-color: var(--missing);
+        }
+
+        .stat-card.stat-missing .stat-icon {
+            background: rgba(220, 53, 69, .1);
+            color: var(--missing);
+        }
+
         .stat-card.stat-missing .stat-value {
             color: var(--missing);
         }
 
+        .stat-card.stat-attention {
+            border-left-color: var(--attention);
+        }
+
+        .stat-card.stat-attention .stat-icon {
+            background: rgba(245, 158, 11, .1);
+            color: var(--attention);
+        }
+
         .stat-card.stat-attention .stat-value {
             color: var(--attention);
+        }
+
+        .stat-card.stat-working {
+            border-left-color: var(--working);
+        }
+
+        .stat-card.stat-working .stat-icon {
+            background: rgba(16, 185, 129, .1);
+            color: var(--working);
         }
 
         .stat-card.stat-working .stat-value {
@@ -344,7 +577,7 @@
         .inv-card {
             background: #fff;
             border-radius: var(--card-radius);
-            box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+            box-shadow: var(--card-shadow);
             overflow: hidden;
         }
 
@@ -356,19 +589,28 @@
             border-bottom: 1px solid #edf2f2;
             flex-wrap: wrap;
             gap: 10px;
+            background: linear-gradient(135deg, #f8fbfb 0%, #f0f7f7 100%);
         }
 
         .inv-card-header .title {
-            font-size: .92rem;
-            font-weight: 600;
+            font-size: .95rem;
+            font-weight: 700;
             color: #1a2e2e;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
 
         .inv-card-header .title i {
-            color: var(--teal);
+            color: #fff;
+            background: var(--teal);
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .8rem;
         }
 
         .search-box {
@@ -412,16 +654,20 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: .07em;
-            color: #8aa0a0;
-            padding: 10px 16px;
-            background: #f8fbfb;
-            border-bottom: 1px solid #edf2f2;
+            color: var(--teal-dark);
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #f0f8f8 0%, #f8fbfb 100%);
+            border-bottom: 2px solid #dbeaea;
             white-space: nowrap;
+        }
+
+        .inv-table thead th:first-child {
+            border-left: 3px solid var(--teal);
         }
 
         .inv-table tbody tr {
             border-bottom: 1px solid #f0f5f5;
-            transition: background .12s;
+            transition: background .15s, transform .1s;
         }
 
         .inv-table tbody tr:last-child {
@@ -429,11 +675,11 @@
         }
 
         .inv-table tbody tr:hover {
-            background: #f8fbfb;
+            background: rgba(21, 143, 143, .03);
         }
 
         .inv-table tbody td {
-            padding: 10px 16px;
+            padding: 12px 16px;
             font-size: .83rem;
             color: #2a4040;
             vertical-align: middle;
@@ -455,33 +701,43 @@
             gap: 5px;
             font-size: .72rem;
             font-weight: 600;
-            padding: 3px 10px;
+            padding: 4px 12px;
             border-radius: 20px;
+            transition: transform .15s;
+        }
+
+        .status-badge:hover {
+            transform: scale(1.05);
         }
 
         .status-badge.missing {
-            background: #fde8ea;
+            background: linear-gradient(135deg, #fde8ea, #fff0f1);
             color: #c0293a;
+            border: 1px solid rgba(192, 41, 58, .15);
         }
 
         .status-badge.attention {
-            background: #fef3e2;
+            background: linear-gradient(135deg, #fef3e2, #fffbf0);
             color: #b45309;
+            border: 1px solid rgba(180, 83, 9, .15);
         }
 
         .status-badge.working {
-            background: #d1fae5;
+            background: linear-gradient(135deg, #d1fae5, #ecfdf5);
             color: #065f46;
+            border: 1px solid rgba(6, 95, 70, .15);
         }
 
         .status-badge.repair {
-            background: #e8e8ff;
+            background: linear-gradient(135deg, #e8e8ff, #f0f0ff);
             color: #3730a3;
+            border: 1px solid rgba(55, 48, 163, .15);
         }
 
         .status-badge.defective {
-            background: #f3e8ff;
+            background: linear-gradient(135deg, #f3e8ff, #faf5ff);
             color: #6b21a8;
+            border: 1px solid rgba(107, 33, 168, .15);
         }
 
         /* ── COMPLIANCE SCORE CARD ── */
@@ -600,6 +856,26 @@
             color: #fff;
         }
 
+        /* ── IMAGE HOVER PREVIEW ── */
+        #img-preview-overlay {
+            position: fixed;
+            z-index: 9999;
+            pointer-events: none;
+            display: none;
+            background: #fff;
+            padding: 4px;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            border: 1px solid #d4dede;
+        }
+
+        #img-preview-overlay img {
+            max-width: 300px;
+            max-height: 300px;
+            border-radius: 4px;
+            display: block;
+        }
+
         .section-tab .tab-badge {
             background: rgba(255, 255, 255, .25);
             font-size: .65rem;
@@ -616,7 +892,7 @@
         .section-card {
             background: #fff;
             border-radius: var(--card-radius);
-            box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+            box-shadow: var(--card-shadow);
             margin-bottom: 28px;
             overflow: hidden;
         }
@@ -629,6 +905,7 @@
             border-bottom: 1px solid #edf2f2;
             flex-wrap: wrap;
             gap: 10px;
+            background: linear-gradient(135deg, #f8fbfb 0%, #f0f7f7 100%);
         }
 
         .section-title {
@@ -844,37 +1121,73 @@
         /* ── MODAL ── */
         .modal-content {
             border: none;
-            border-radius: 16px;
+            border-radius: 18px;
             overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .2), 0 0 1px rgba(0, 0, 0, .1);
         }
 
         .modal-header {
-            background: #1a2e2e;
+            background: linear-gradient(180deg, #158f8f 0%, #0d7377 100%);
             color: #fff;
-            padding: 18px 24px;
+            padding: 20px 28px;
             border-bottom: none;
+            position: relative;
+        }
+
+        .modal-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--teal), #1aadad, transparent);
         }
 
         .modal-header .modal-title {
-            font-size: .95rem;
+            font-size: 1rem;
             font-weight: 700;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
 
         .modal-header .modal-title i {
-            color: var(--teal);
+            color: #fff;
+            background: var(--teal);
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: .75rem;
+            box-shadow: 0 2px 8px rgba(21, 143, 143, .3);
         }
 
         .modal-body {
-            padding: 24px;
+            padding: 28px;
+            background: #fafcfc;
         }
 
         .modal-footer {
-            background: #f8fbfb;
-            border-top: 1px solid #edf2f2;
-            padding: 14px 24px;
+            background: linear-gradient(135deg, #f4f8f8 0%, #f8fbfb 100%);
+            border-top: 1px solid #e5edef;
+            padding: 16px 28px;
+        }
+
+        .modal-body .form-section-label {
+            font-size: .72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            color: var(--teal);
+            margin-bottom: 14px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(21, 143, 143, .1);
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .form-label {
@@ -892,32 +1205,36 @@
         .form-control,
         .form-select {
             border: 1.5px solid #dde8e8;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: .83rem;
             color: #1a2e2e;
-            padding: 8px 12px;
+            padding: 9px 14px;
+            background: #fff;
+            transition: border-color .2s, box-shadow .2s;
         }
 
         .form-control:focus,
         .form-select:focus {
             border-color: var(--teal);
-            box-shadow: 0 0 0 3px rgba(13, 115, 119, .12);
+            box-shadow: 0 0 0 3px rgba(13, 115, 119, .1);
+            background: #fff;
         }
 
         .btn-cancel {
-            background: transparent;
+            background: #fff;
             border: 1.5px solid #d4dede;
             color: #4a6060;
             font-size: .82rem;
-            font-weight: 500;
-            padding: 7px 18px;
-            border-radius: 8px;
+            font-weight: 600;
+            padding: 8px 20px;
+            border-radius: 10px;
             cursor: pointer;
-            transition: background .15s;
+            transition: all .18s;
         }
 
         .btn-cancel:hover {
             background: #f0f4f4;
+            border-color: #afc4c4;
         }
 
         /* ── TOAST ── */
@@ -972,25 +1289,37 @@
             }
 
             .sidebar-brand {
-                padding: 22px 0 18px;
+                padding: 24px 0 16px;
                 justify-content: center;
             }
 
-            .brand-text,
+            .sidebar-brand .brand-text {
+                display: none;
+            }
+
             .sidebar-section-label,
             .nav-text,
             .school-switcher {
                 display: none !important;
             }
 
+            .school-switcher-collapsed {
+                display: block !important;
+                margin-bottom: 10px;
+            }
+
             .sidebar-back-link {
                 padding: 0;
                 border-bottom: none;
             }
-            
+
             .sidebar-back-link a {
                 justify-content: center;
                 padding: 12px 0;
+            }
+
+            .sidebar-nav {
+                padding: 0 8px;
             }
 
             .sidebar-nav .nav-link {
@@ -1028,8 +1357,8 @@
         <!-- ── SIDEBAR ── -->
         <nav class="sidebar">
             <div class="sidebar-brand">
-                <div class="brand-icon"><i class="fa-solid fa-shield-halved"></i></div>
-                <div class="brand-text">Inventory<br>Manager</div>
+                <div class="brand-icon"><i class="fas fa-boxes"></i></div>
+                <div class="brand-text">Inventory</div>
             </div>
             <div class="sidebar-back-link">
                 <a href="{{ url('/dashboard') }}" title="Back to Dashboard">
@@ -1040,16 +1369,42 @@
 
             {{-- School switcher (admin only) --}}
             @if(auth()->user()->role === 'admin' && $schools->count() > 1)
-                <div class="school-switcher">
-                    <label>Active School</label>
-                    <select id="schoolSwitcher">
-                        @foreach($schools as $s)
-                            <option value="{{ $s->id }}" {{ $school && $school->id == $s->id ? 'selected' : '' }}>
-                                {{ $s->school_name }}
-                            </option>
-                        @endforeach
-                    </select>
+                <div class="school-switcher" id="schoolSwitcherWrap">
+                    <span class="school-switcher-label">Active School</span>
+                    <button class="school-picker-btn" id="schoolPickerBtn" type="button" aria-expanded="false">
+                        <i class="fa-solid fa-school" style="font-size:.8rem;opacity:.8;flex-shrink:0;"></i>
+                        <span class="school-picker-name"
+                            id="schoolPickerName">{{ $school ? $school->school_name : 'Select school' }}</span>
+                        <i class="fa-solid fa-chevron-down chevron"></i>
+                    </button>
+                    <div class="school-picker-dropdown" id="schoolPickerDropdown">
+                        <div class="school-picker-search-wrap">
+                            <input type="text" class="school-picker-search" id="schoolPickerSearch"
+                                placeholder="Search schools..." autocomplete="off">
+                        </div>
+                        <div class="school-picker-list" id="schoolPickerList">
+                            @foreach($schools as $s)
+                                <div class="school-picker-item {{ $school && $school->id == $s->id ? 'active' : '' }}"
+                                    data-id="{{ $s->id }}" data-name="{{ $s->school_name }}">
+                                    <div class="school-icon"><i class="fa-solid fa-school"></i></div>
+                                    <span>{{ $s->school_name }}</span>
+                                    <i class="fa-solid fa-check check"></i>
+                                </div>
+                            @endforeach
+                            <div class="school-picker-empty" id="schoolPickerEmpty" style="display:none;">No schools found
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
+                <ul class="sidebar-nav school-switcher-collapsed">
+                    <li>
+                        <button class="nav-link" data-bs-toggle="modal" data-bs-target="#schoolSwitcherModal"
+                            title="Switch School">
+                            <span class="nav-icon"><i class="fa-solid fa-school"></i></span>
+                        </button>
+                    </li>
+                </ul>
             @endif
 
             <div class="sidebar-section-label">Workspace</div>
@@ -1090,7 +1445,8 @@
                     </p>
                 </div>
                 <div class="topbar-actions">
-                    <a href="{{ route('inventory-storage.export-pdf') }}" class="btn-outline-muted" id="btn-export" style="display:none;">
+                    <a href="{{ route('inventory-storage.export-pdf') }}" class="btn-outline-muted" id="btn-export"
+                        style="display:none;">
                         <i class="fa-solid fa-file-pdf"></i> Export PDF
                     </a>
                     <button class="btn-primary-teal" data-bs-toggle="modal" data-bs-target="#addItemModal"
@@ -1101,32 +1457,46 @@
             </div>
 
             <div class="page-body">
-
-                <!-- ═══════════════════════════════════════
-                 PANEL: DASHBOARD
-            ════════════════════════════════════════ -->
                 <div class="panel active" id="panel-dashboard">
 
                     <div class="stat-grid">
                         <div class="stat-card">
-                            <div class="stat-label">Total Items</div>
-                            <div class="stat-value" id="stat-total">{{ $items->count() }}</div>
+                            <div class="stat-icon"><i class="fa-solid fa-cubes"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-label">Total Items</div>
+                                <div class="stat-value" id="stat-total">{{ $items->count() }}</div>
+                            </div>
                         </div>
                         <div class="stat-card stat-missing">
-                            <div class="stat-label">Missing</div>
-                            <div class="stat-value" id="stat-missing">{{ $items->where('status', 'missing')->count() }}</div>
+                            <div class="stat-icon"><i class="fa-solid fa-circle-exclamation"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-label">Missing</div>
+                                <div class="stat-value" id="stat-missing">
+                                    {{ $items->where('status', 'missing')->count() }}
+                                </div>
+                            </div>
                         </div>
                         <div class="stat-card stat-attention">
-                            <div class="stat-label">Needs Attention</div>
-                            <div class="stat-value" id="stat-needs_attention">{{ $items->where('status', 'needs_attention')->count() }}</div>
+                            <div class="stat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-label">Needs Attention</div>
+                                <div class="stat-value" id="stat-needs_attention">
+                                    {{ $items->where('status', 'needs_attention')->count() }}
+                                </div>
+                            </div>
                         </div>
                         <div class="stat-card stat-working">
-                            <div class="stat-label">Working</div>
-                            <div class="stat-value" id="stat-working">{{ $items->where('status', 'working')->count() }}</div>
+                            <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
+                            <div class="stat-info">
+                                <div class="stat-label">Working</div>
+                                <div class="stat-value" id="stat-working">
+                                    {{ $items->where('status', 'working')->count() }}
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="inv-card">
+                    <div class="inv-card d-flex flex-column" style="flex: 1;">
                         <div class="inv-card-header">
                             <div class="title"><i class="fa-solid fa-bars-staggered"></i> Inventory</div>
                             <div class="d-flex gap-2 align-items-center">
@@ -1182,24 +1552,25 @@
                                         </td>
                                     </tr>
                                 @endforeach
-                                <tr id="emptyInventoryRow" style="display: {{ $items->count() > 0 ? 'none' : 'table-row' }};">
-                                    <td colspan="9"
-                                        style="text-align:center;padding:40px;color:#9bb2b2;font-size:.85rem;">
-                                        <i class="fa-solid fa-inbox"
-                                            style="font-size:1.8rem;display:block;margin-bottom:10px;opacity:.4;"></i>
-                                        No inventory items yet. Click <strong>Add New Item</strong> to get started.
-                                    </td>
-                                </tr>
                             </tbody>
                         </table>
+
+                        <div id="emptyInventoryRow"
+                            style="display: {{ $items->count() > 0 ? 'none' : 'flex' }}; flex: 1; flex-direction: column; align-items: center; justify-content: center; padding: 60px 40px; text-align: center;">
+                            <div
+                                style="width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg, rgba(21, 143, 143, .08), rgba(21, 143, 143, .15)); display: flex; align-items: center; justify-content: center; margin-bottom: 18px;">
+                                <i class="fa-solid fa-boxes-stacked"
+                                    style="font-size: 1.6rem; color: var(--teal); opacity: .7;"></i>
+                            </div>
+                            <div style="font-size: .95rem; font-weight: 600; color: #3a5050; margin-bottom: 6px;">No
+                                inventory items yet</div>
+                            <div style="font-size: .82rem; color: #8aa0a0;">Click <strong style="color: var(--teal);">+
+                                    Add New Item</strong> to start tracking your supplies.</div>
+                        </div>
                     </div>
 
-                </div><!-- /panel-dashboard -->
+                </div>
 
-
-                <!-- ═══════════════════════════════════════
-                 PANEL: DEFAULT LIST
-            ════════════════════════════════════════ -->
                 <div class="panel" id="panel-default-list">
 
                     @php
@@ -1225,18 +1596,22 @@
                     <!-- Compliance overview -->
                     <div style="margin-bottom:24px;">
                         <div class="compliance-scores">
-                            <div class="compliance-score-box">
-                                <div class="cs-label">Overall Compliance</div>
+                            <div class="compliance-score-box" style="border-left: 4px solid var(--teal);">
+                                <div class="cs-label"><i class="fa-solid fa-chart-pie"
+                                        style="margin-right:6px;opacity:.6;"></i>Overall Compliance</div>
                                 <div class="cs-value {{ $colorClass($pctAll) }}" id="score-val-all">{{ $pctAll }}%</div>
-                                <div class="cs-sub" id="score-sub-all">{{ $haveA + $haveB }} / {{ count($itemsA) + count($itemsB) }} items
-                                    sourced</div>
+                                <div class="cs-sub" id="score-sub-all">{{ $haveA + $haveB }} /
+                                    {{ count($itemsA) + count($itemsB) }} items
+                                    sourced
+                                </div>
                                 <div class="progress-thin">
                                     <div class="progress-thin-bar {{ $barClass($pctAll) }}" id="score-bar-all"
                                         style="width:{{ $pctAll }}%"></div>
                                 </div>
                             </div>
-                            <div class="compliance-score-box">
-                                <div class="cs-label">Section A — Emergency Supplies</div>
+                            <div class="compliance-score-box" style="border-left: 4px solid #f59e0b;">
+                                <div class="cs-label"><i class="fa-solid fa-kit-medical"
+                                        style="margin-right:6px;opacity:.6;"></i>Emergency Supplies</div>
                                 <div class="cs-value {{ $colorClass($pctA) }}" id="score-val-a">{{ $pctA }}%</div>
                                 <div class="cs-sub" id="score-sub-a">{{ $haveA }} / {{ count($itemsA) }} sourced</div>
                                 <div class="progress-thin">
@@ -1244,8 +1619,9 @@
                                         style="width:{{ $pctA }}%"></div>
                                 </div>
                             </div>
-                            <div class="compliance-score-box">
-                                <div class="cs-label">Section B — Rescue Supplies</div>
+                            <div class="compliance-score-box" style="border-left: 4px solid #10b981;">
+                                <div class="cs-label"><i class="fa-solid fa-life-ring"
+                                        style="margin-right:6px;opacity:.6;"></i>Rescue Supplies</div>
                                 <div class="cs-value {{ $colorClass($pctB) }}" id="score-val-b">{{ $pctB }}%</div>
                                 <div class="cs-sub" id="score-sub-b">{{ $haveB }} / {{ count($itemsB) }} sourced</div>
                                 <div class="progress-thin">
@@ -1262,12 +1638,10 @@
                             <i class="fa-solid fa-check" style="font-size:.7rem;"></i> All Categories
                         </button>
                         <button class="section-tab" data-filter="a" id="tab-a">
-                            <span style="font-size:.75rem;font-weight:700;">A</span>
                             Emergency Supplies &amp; Equipment
                             <span class="tab-badge">{{ count($itemsA) }} items</span>
                         </button>
                         <button class="section-tab" data-filter="b" id="tab-b">
-                            <span style="font-size:.75rem;font-weight:700;">B</span>
                             Response &amp; Rescue Supplies
                             <span class="tab-badge">{{ count($itemsB) }} items</span>
                         </button>
@@ -1277,7 +1651,6 @@
                     <div class="section-card" id="section-a" data-section="a">
                         <div class="section-card-header">
                             <div class="section-title">
-                                <div class="section-label-badge">A</div>
                                 <div>
                                     <div class="section-title-text">Emergency Supplies and Equipment</div>
                                     <div class="sourced-counter">Provided by DepEd and/or Partners</div>
@@ -1336,24 +1709,34 @@
                                                     <option value="deped" {{ $row && $row->source == 'deped' ? 'selected' : '' }}>DepEd</option>
                                                     <option value="partner" {{ $row && $row->source == 'partner' ? 'selected' : '' }}>Partner</option>
                                                 </select>
+                                                @php
+                                                    $depedVals = ['Division Office', 'Regional Office', 'Central Office', 'School MOOE'];
+                                                    $partnerVals = ['PTA', 'FPTA', 'City Government (SEF)'];
+                                                    
+                                                    $isDepedOther = $row && $row->source == 'deped' && $row->source_detail && !in_array($row->source_detail, $depedVals);
+                                                    $isPartnerOther = $row && $row->source == 'partner' && $row->source_detail && !in_array($row->source_detail, $partnerVals);
+                                                    
+                                                    $otherVal = '';
+                                                    if ($isDepedOther || $isPartnerOther) $otherVal = $row->source_detail;
+                                                @endphp
                                                 <select
                                                     class="form-select-sm deped-options {{ ($row && $row->source == 'deped') ? '' : 'd-none' }}">
                                                     <option value="">Select DepEd Source</option>
-                                                    <option value="GAA" {{ $row && $row->source_detail == 'GAA' ? 'selected' : '' }}>GAA</option>
-                                                    <option value="Special Purpose Fund" {{ $row && $row->source_detail == 'Special Purpose Fund' ? 'selected' : '' }}>
-                                                        Special Purpose Fund</option>
-                                                    <option value="Other DepEd Sources" {{ $row && $row->source_detail == 'Other DepEd Sources' ? 'selected' : '' }}>
-                                                        Other DepEd Sources</option>
-                                                    <option value="Others" {{ $row && $row->source_detail == 'Others' ? 'selected' : '' }}>Others</option>
+                                                    <option value="Division Office" {{ $row && $row->source_detail == 'Division Office' ? 'selected' : '' }}>Division Office</option>
+                                                    <option value="Regional Office" {{ $row && $row->source_detail == 'Regional Office' ? 'selected' : '' }}>Regional Office</option>
+                                                    <option value="Central Office" {{ $row && $row->source_detail == 'Central Office' ? 'selected' : '' }}>Central Office</option>
+                                                    <option value="School MOOE" {{ $row && $row->source_detail == 'School MOOE' ? 'selected' : '' }}>School MOOE</option>
+                                                    <option value="Others (Please Specify)" {{ $isDepedOther ? 'selected' : '' }}>Others (Please Specify)</option>
                                                 </select>
                                                 <select
                                                     class="form-select-sm partner-options {{ ($row && $row->source == 'partner') ? '' : 'd-none' }}">
                                                     <option value="">Select Partner Source</option>
-                                                    <option value="NGO" {{ $row && $row->source_detail == 'NGO' ? 'selected' : '' }}>NGO</option>
-                                                    <option value="LGU" {{ $row && $row->source_detail == 'LGU' ? 'selected' : '' }}>LGU</option>
-                                                    <option value="Private Sector" {{ $row && $row->source_detail == 'Private Sector' ? 'selected' : '' }}>Private Sector</option>
-                                                    <option value="Others" {{ $row && $row->source_detail == 'Others' ? 'selected' : '' }}>Others</option>
+                                                    <option value="PTA" {{ $row && $row->source_detail == 'PTA' ? 'selected' : '' }}>PTA</option>
+                                                    <option value="FPTA" {{ $row && $row->source_detail == 'FPTA' ? 'selected' : '' }}>FPTA</option>
+                                                    <option value="City Government (SEF)" {{ $row && $row->source_detail == 'City Government (SEF)' ? 'selected' : '' }}>City Government (SEF)</option>
+                                                    <option value="Others (Please Specify)" {{ $isPartnerOther ? 'selected' : '' }}>Others (Please Specify)</option>
                                                 </select>
+                                                <input type="text" class="form-control form-control-sm other-source-input mt-1 {{ ($isDepedOther || $isPartnerOther) ? '' : 'd-none' }}" placeholder="Please specify..." value="{{ $otherVal }}">
                                             </div>
                                         </td>
                                         <td><input type="date" class="form-control-date"
@@ -1363,12 +1746,20 @@
                                                 rows="2">{{ $row ? $row->remarks : '' }}</textarea></td>
                                     </tr>
                                 @endforeach
+                                <tr id="no-search-a" style="display:none;">
+                                    <td colspan="6"
+                                        style="text-align:center;padding:40px;color:#718096;font-size:.85rem;">
+                                        <i class="fa-solid fa-magnifying-glass"
+                                            style="font-size:1.6rem;display:block;margin-bottom:10px;opacity:.4;"></i>
+                                        No items found matching your search.
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                         <div class="section-save-bar">
                             <span class="save-status" id="save-status-a"></span>
                             <button class="btn-primary-teal btn-save-section" data-section="A" id="btn-save-a">
-                                <i class="fa-solid fa-floppy-disk"></i> Save Section A
+                                <i class="fa-solid fa-floppy-disk"></i> Save Section
                             </button>
                         </div>
                     </div><!-- /section-a -->
@@ -1377,7 +1768,6 @@
                     <div class="section-card" id="section-b" data-section="b">
                         <div class="section-card-header">
                             <div class="section-title">
-                                <div class="section-label-badge" style="background:#1a7f5a;">B</div>
                                 <div>
                                     <div class="section-title-text">Response and Rescue Supplies</div>
                                     <div class="sourced-counter">Provided by DepEd and/or Partners</div>
@@ -1436,23 +1826,34 @@
                                                     <option value="deped" {{ $row && $row->source == 'deped' ? 'selected' : '' }}>DepEd</option>
                                                     <option value="partner" {{ $row && $row->source == 'partner' ? 'selected' : '' }}>Partner</option>
                                                 </select>
+                                                @php
+                                                    $depedVals = ['Division Office', 'Regional Office', 'Central Office', 'School MOOE'];
+                                                    $partnerVals = ['PTA', 'FPTA', 'City Government (SEF)'];
+                                                    
+                                                    $isDepedOther = $row && $row->source == 'deped' && $row->source_detail && !in_array($row->source_detail, $depedVals);
+                                                    $isPartnerOther = $row && $row->source == 'partner' && $row->source_detail && !in_array($row->source_detail, $partnerVals);
+                                                    
+                                                    $otherVal = '';
+                                                    if ($isDepedOther || $isPartnerOther) $otherVal = $row->source_detail;
+                                                @endphp
                                                 <select
                                                     class="form-select-sm deped-options {{ ($row && $row->source == 'deped') ? '' : 'd-none' }}">
                                                     <option value="">Select DepEd Source</option>
-                                                    <option value="GAA" {{ $row && $row->source_detail == 'GAA' ? 'selected' : '' }}>GAA</option>
-                                                    <option value="Special Purpose Fund" {{ $row && $row->source_detail == 'Special Purpose Fund' ? 'selected' : '' }}>
-                                                        Special Purpose Fund</option>
-                                                    <option value="Other DepEd Sources">Other DepEd Sources</option>
-                                                    <option value="Others" {{ $row && $row->source_detail == 'Others' ? 'selected' : '' }}>Others</option>
+                                                    <option value="Division Office" {{ $row && $row->source_detail == 'Division Office' ? 'selected' : '' }}>Division Office</option>
+                                                    <option value="Regional Office" {{ $row && $row->source_detail == 'Regional Office' ? 'selected' : '' }}>Regional Office</option>
+                                                    <option value="Central Office" {{ $row && $row->source_detail == 'Central Office' ? 'selected' : '' }}>Central Office</option>
+                                                    <option value="School MOOE" {{ $row && $row->source_detail == 'School MOOE' ? 'selected' : '' }}>School MOOE</option>
+                                                    <option value="Others (Please Specify)" {{ $isDepedOther ? 'selected' : '' }}>Others (Please Specify)</option>
                                                 </select>
                                                 <select
                                                     class="form-select-sm partner-options {{ ($row && $row->source == 'partner') ? '' : 'd-none' }}">
                                                     <option value="">Select Partner Source</option>
-                                                    <option value="NGO" {{ $row && $row->source_detail == 'NGO' ? 'selected' : '' }}>NGO</option>
-                                                    <option value="LGU" {{ $row && $row->source_detail == 'LGU' ? 'selected' : '' }}>LGU</option>
-                                                    <option value="Private Sector" {{ $row && $row->source_detail == 'Private Sector' ? 'selected' : '' }}>Private Sector</option>
-                                                    <option value="Others" {{ $row && $row->source_detail == 'Others' ? 'selected' : '' }}>Others</option>
+                                                    <option value="PTA" {{ $row && $row->source_detail == 'PTA' ? 'selected' : '' }}>PTA</option>
+                                                    <option value="FPTA" {{ $row && $row->source_detail == 'FPTA' ? 'selected' : '' }}>FPTA</option>
+                                                    <option value="City Government (SEF)" {{ $row && $row->source_detail == 'City Government (SEF)' ? 'selected' : '' }}>City Government (SEF)</option>
+                                                    <option value="Others (Please Specify)" {{ $isPartnerOther ? 'selected' : '' }}>Others (Please Specify)</option>
                                                 </select>
+                                                <input type="text" class="form-control form-control-sm other-source-input mt-1 {{ ($isDepedOther || $isPartnerOther) ? '' : 'd-none' }}" placeholder="Please specify..." value="{{ $otherVal }}">
                                             </div>
                                         </td>
                                         <td><input type="date" class="form-control-date"
@@ -1462,12 +1863,20 @@
                                                 rows="2">{{ $row ? $row->remarks : '' }}</textarea></td>
                                     </tr>
                                 @endforeach
+                                <tr id="no-search-b" style="display:none;">
+                                    <td colspan="6"
+                                        style="text-align:center;padding:40px;color:#718096;font-size:.85rem;">
+                                        <i class="fa-solid fa-magnifying-glass"
+                                            style="font-size:1.6rem;display:block;margin-bottom:10px;opacity:.4;"></i>
+                                        No items found matching your search.
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                         <div class="section-save-bar">
                             <span class="save-status" id="save-status-b"></span>
                             <button class="btn-primary-teal btn-save-section" data-section="B" id="btn-save-b">
-                                <i class="fa-solid fa-floppy-disk"></i> Save Section B
+                                <i class="fa-solid fa-floppy-disk"></i> Save Section
                             </button>
                         </div>
                     </div><!-- /section-b -->
@@ -1480,33 +1889,34 @@
             ════════════════════════════════════════ -->
                 <div class="panel" id="panel-monthly-summary">
                     @php
-                        $now        = \Carbon\Carbon::now();
+                        $now = \Carbon\Carbon::now();
                         $monthStart = $now->copy()->startOfMonth();
-                        $monthEnd   = $now->copy()->endOfMonth();
+                        $monthEnd = $now->copy()->endOfMonth();
 
-                        $missingItems   = $items->where('status', 'missing');
+                        $missingItems = $items->where('status', 'missing');
                         $attentionItems = $items->where('status', 'needs_attention');
-                        $newlyAdded     = $items->filter(fn($i) => $i->created_at && \Carbon\Carbon::parse($i->created_at)->between($monthStart, $monthEnd));
+                        $newlyAdded = $items->filter(fn($i) => $i->created_at && \Carbon\Carbon::parse($i->created_at)->between($monthStart, $monthEnd));
 
-                        $totalA   = count($itemsA);
-                        $totalB   = count($itemsB);
-                        $haveAc   = $savedA->where('has_item', true)->count();
-                        $haveBc   = $savedB->where('has_item', true)->count();
-                        $pctAc    = $totalA > 0 ? round(($haveAc / $totalA) * 100) : 0;
-                        $pctBc    = $totalB > 0 ? round(($haveBc / $totalB) * 100) : 0;
-                        $pctCus   = 100;
+                        $totalA = count($itemsA);
+                        $totalB = count($itemsB);
+                        $haveAc = $savedA->where('has_item', true)->count();
+                        $haveBc = $savedB->where('has_item', true)->count();
+                        $pctAc = $totalA > 0 ? round(($haveAc / $totalA) * 100) : 0;
+                        $pctBc = $totalB > 0 ? round(($haveBc / $totalB) * 100) : 0;
+                        $pctCus = 100;
 
                         $byFund = $items->groupBy(fn($i) => $i->fund_source ?: 'Unspecified')
-                                        ->map(fn($g) => $g->count())
-                                        ->sortDesc();
+                            ->map(fn($g) => $g->count())
+                            ->sortDesc();
                     @endphp
 
                     <!-- Month label -->
                     <div style="margin-bottom:20px;">
-                        <div style="font-size:.72rem;font-weight:700;letter-spacing:.1em;color:#9bb2b2;text-transform:uppercase;">
+                        <div
+                            style="font-size:.72rem;font-weight:700;letter-spacing:.1em;color:#4a6060;text-transform:uppercase;">
                             Monthly Summary Report &middot; {{ $now->format('F Y') }}
                         </div>
-                        <div style="font-size:.75rem;color:#6a9191;margin-top:3px;">
+                        <div style="font-size:.75rem;color:#2c3e50;margin-top:3px;font-weight:600;">
                             {{ $school ? $school->school_name : 'No school selected' }}
                         </div>
                     </div>
@@ -1535,25 +1945,30 @@
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
 
                         <div class="inv-card" style="padding:22px 24px;">
-                            <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;color:#9bb2b2;text-transform:uppercase;margin-bottom:16px;">
+                            <div
+                                style="font-size:.7rem;font-weight:700;letter-spacing:.08em;color:#2c3e50;text-transform:uppercase;margin-bottom:16px;">
                                 <i class="fa-solid fa-layer-group" style="margin-right:6px;"></i>Category Completion
                             </div>
                             <div style="display:flex;flex-direction:column;gap:14px;">
                                 @php
                                     $catRows = [
-                                        ['A · Emergency Supplies', $haveAc, $totalA, $pctAc, '#158f8f'],
-                                        ['B · Response & Rescue',  $haveBc, $totalB, $pctBc, '#1a7f5a'],
-                                        ['Custom / Ad-hoc Items',  $items->count(), $items->count(), $pctCus, '#2a6e8a'],
+                                        ['Emergency Supplies', $haveAc, $totalA, $pctAc, '#158f8f'],
+                                        ['Rescue Supplies', $haveBc, $totalB, $pctBc, '#1a7f5a'],
+                                        ['Custom / Ad-hoc Items', $items->count(), $items->count(), $pctCus, '#2a6e8a'],
                                     ];
                                 @endphp
                                 @foreach($catRows as [$label, $have, $total, $pct, $color])
                                     <div>
-                                        <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:6px;">
-                                            <span style="color:#c8dada;">{{ $label }}</span>
-                                            <span style="color:#9bb2b2;font-size:.75rem;">{{ $have }}/{{ $total }}</span>
+                                        <div
+                                            style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:6px;">
+                                            <span style="color:#2c3e50;font-weight:600;">{{ $label }}</span>
+                                            <span
+                                                style="color:#5a738e;font-size:.75rem;font-weight:600;">{{ $have }}/{{ $total }}</span>
                                         </div>
-                                        <div style="background:#1e3535;border-radius:4px;height:7px;overflow:hidden;">
-                                            <div style="height:100%;width:{{ $pct }}%;background:{{ $color }};border-radius:4px;"></div>
+                                        <div style="background:#e8ecec;border-radius:4px;height:7px;overflow:hidden;">
+                                            <div
+                                                style="height:100%;width:{{ $pct }}%;background:{{ $color }};border-radius:4px;">
+                                            </div>
                                         </div>
                                     </div>
                                 @endforeach
@@ -1561,17 +1976,20 @@
                         </div>
 
                         <div class="inv-card" style="padding:22px 24px;">
-                            <div style="font-size:.7rem;font-weight:700;letter-spacing:.08em;color:#9bb2b2;text-transform:uppercase;margin-bottom:16px;">
+                            <div
+                                style="font-size:.7rem;font-weight:700;letter-spacing:.08em;color:#2c3e50;text-transform:uppercase;margin-bottom:16px;">
                                 <i class="fa-solid fa-coins" style="margin-right:6px;"></i>Items by Fund Source
                             </div>
                             <div style="display:flex;flex-direction:column;gap:9px;">
                                 @forelse($byFund as $source => $cnt)
-                                    <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;background:#1e3535;border-radius:8px;">
-                                        <span style="font-size:.83rem;color:#c8dada;">{{ $source }}</span>
-                                        <span style="font-size:.78rem;color:#9bb2b2;font-weight:600;">{{ $cnt }} {{ $cnt === 1 ? 'item' : 'items' }}</span>
+                                    <div
+                                        style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;background:#f5f7f8;border:1px solid #e2e8f0;border-radius:8px;">
+                                        <span style="font-size:.83rem;color:#2c3e50;font-weight:600;">{{ $source }}</span>
+                                        <span style="font-size:.78rem;color:#5a738e;font-weight:700;">{{ $cnt }}
+                                            {{ $cnt === 1 ? 'item' : 'items' }}</span>
                                     </div>
                                 @empty
-                                    <p style="color:#9bb2b2;font-size:.82rem;">No items recorded.</p>
+                                    <p style="color:#718096;font-size:.82rem;">No items recorded.</p>
                                 @endforelse
                             </div>
                         </div>
@@ -1580,48 +1998,73 @@
 
                     <!-- Missing items -->
                     @if($missingItems->count() > 0)
-                    <div class="inv-card" style="margin-bottom:20px;">
-                        <div class="inv-card-header">
-                            <div class="title" style="color:var(--missing);"><i class="fa-solid fa-circle-exclamation"></i> Missing Items &mdash; Requires Immediate Action</div>
+                        <div class="inv-card" style="margin-bottom:20px;">
+                            <div class="inv-card-header">
+                                <div class="title" style="color:var(--missing);"><i
+                                        class="fa-solid fa-circle-exclamation"></i> Missing Items &mdash; Requires Immediate
+                                    Action</div>
+                            </div>
+                            <table class="inv-table">
+                                <thead>
+                                    <tr>
+                                        <th>Item Name</th>
+                                        <th>Location</th>
+                                        <th>Fund Source</th>
+                                        <th>Last Checked</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($missingItems as $item)
+                                        <tr>
+                                            <td class="item-name-cell">{{ $item->item_name }}</td>
+                                            <td>{{ $item->location ?: '&ndash;' }}</td>
+                                            <td>{{ $item->fund_source ?: '&ndash;' }}</td>
+                                            <td class="muted-val">
+                                                {{ $item->date_checked ? \Carbon\Carbon::parse($item->date_checked)->format('M d, Y') : '&ndash;' }}
+                                            </td>
+                                            <td><span class="status-badge missing"><i
+                                                        class="fa-solid fa-circle-exclamation"></i> Missing</span></td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
-                        <table class="inv-table">
-                            <thead><tr><th>Item Name</th><th>Location</th><th>Fund Source</th><th>Last Checked</th><th>Status</th></tr></thead>
-                            <tbody>
-                                @foreach($missingItems as $item)
-                                <tr>
-                                    <td class="item-name-cell">{{ $item->item_name }}</td>
-                                    <td>{{ $item->location ?: '&ndash;' }}</td>
-                                    <td>{{ $item->fund_source ?: '&ndash;' }}</td>
-                                    <td class="muted-val">{{ $item->date_checked ? \Carbon\Carbon::parse($item->date_checked)->format('M d, Y') : '&ndash;' }}</td>
-                                    <td><span class="status-badge missing"><i class="fa-solid fa-circle-exclamation"></i> Missing</span></td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
                     @endif
 
                     <!-- Needs attention -->
                     @if($attentionItems->count() > 0)
-                    <div class="inv-card" style="margin-bottom:20px;">
-                        <div class="inv-card-header">
-                            <div class="title" style="color:var(--attention);"><i class="fa-solid fa-triangle-exclamation"></i> Needs Attention &mdash; Follow-up Recommended</div>
+                        <div class="inv-card" style="margin-bottom:20px;">
+                            <div class="inv-card-header">
+                                <div class="title" style="color:var(--attention);"><i
+                                        class="fa-solid fa-triangle-exclamation"></i> Needs Attention &mdash; Follow-up
+                                    Recommended</div>
+                            </div>
+                            <table class="inv-table">
+                                <thead>
+                                    <tr>
+                                        <th>Item Name</th>
+                                        <th>Qty</th>
+                                        <th>Location</th>
+                                        <th>Fund Source</th>
+                                        <th>Last Checked</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($attentionItems as $item)
+                                        <tr>
+                                            <td class="item-name-cell">{{ $item->item_name }}</td>
+                                            <td>{{ $item->quantity }}</td>
+                                            <td>{{ $item->location ?: '&ndash;' }}</td>
+                                            <td>{{ $item->fund_source ?: '&ndash;' }}</td>
+                                            <td class="muted-val">
+                                                {{ $item->date_checked ? \Carbon\Carbon::parse($item->date_checked)->format('M d, Y') : '&ndash;' }}
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         </div>
-                        <table class="inv-table">
-                            <thead><tr><th>Item Name</th><th>Qty</th><th>Location</th><th>Fund Source</th><th>Last Checked</th></tr></thead>
-                            <tbody>
-                                @foreach($attentionItems as $item)
-                                <tr>
-                                    <td class="item-name-cell">{{ $item->item_name }}</td>
-                                    <td>{{ $item->quantity }}</td>
-                                    <td>{{ $item->location ?: '&ndash;' }}</td>
-                                    <td>{{ $item->fund_source ?: '&ndash;' }}</td>
-                                    <td class="muted-val">{{ $item->date_checked ? \Carbon\Carbon::parse($item->date_checked)->format('M d, Y') : '&ndash;' }}</td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
                     @endif
 
                     <!-- Newly added this month -->
@@ -1629,29 +2072,41 @@
                         <div class="inv-card-header">
                             <div class="title">
                                 <i class="fa-solid fa-plus"></i> Newly Added This Month
-                                <span style="font-size:.72rem;color:#9bb2b2;font-weight:400;margin-left:8px;">{{ $now->format('F Y') }}</span>
+                                <span
+                                    style="font-size:.72rem;color:#5a738e;font-weight:500;margin-left:8px;">{{ $now->format('F Y') }}</span>
                             </div>
                         </div>
                         @if($newlyAdded->count() > 0)
-                        <table class="inv-table">
-                            <thead><tr><th>Item Name</th><th>Qty</th><th>Location</th><th>Fund Source</th><th>Date Received</th></tr></thead>
-                            <tbody>
-                                @foreach($newlyAdded as $item)
-                                <tr>
-                                    <td class="item-name-cell">{{ $item->item_name }}</td>
-                                    <td>{{ $item->quantity }}</td>
-                                    <td>{{ $item->location ?: '&ndash;' }}</td>
-                                    <td>{{ $item->fund_source ?: '&ndash;' }}</td>
-                                    <td class="muted-val">{{ $item->date_received ? \Carbon\Carbon::parse($item->date_received)->format('M d, Y') : '&ndash;' }}</td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
+                            <table class="inv-table">
+                                <thead>
+                                    <tr>
+                                        <th>Item Name</th>
+                                        <th>Qty</th>
+                                        <th>Location</th>
+                                        <th>Fund Source</th>
+                                        <th>Date Received</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($newlyAdded as $item)
+                                        <tr>
+                                            <td class="item-name-cell">{{ $item->item_name }}</td>
+                                            <td>{{ $item->quantity }}</td>
+                                            <td>{{ $item->location ?: '&ndash;' }}</td>
+                                            <td>{{ $item->fund_source ?: '&ndash;' }}</td>
+                                            <td class="muted-val">
+                                                {{ $item->date_received ? \Carbon\Carbon::parse($item->date_received)->format('M d, Y') : '&ndash;' }}
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
                         @else
-                        <div style="text-align:center;padding:32px;color:#9bb2b2;font-size:.85rem;">
-                            <i class="fa-solid fa-inbox" style="font-size:1.6rem;display:block;margin-bottom:10px;opacity:.4;"></i>
-                            No new items added in {{ $now->format('F Y') }}.
-                        </div>
+                            <div style="text-align:center;padding:32px;color:#718096;font-size:.85rem;">
+                                <i class="fa-solid fa-inbox"
+                                    style="font-size:1.6rem;display:block;margin-bottom:10px;opacity:.4;"></i>
+                                No new items added in {{ $now->format('F Y') }}.
+                            </div>
                         @endif
                     </div>
 
@@ -1662,7 +2117,6 @@
     </div><!-- /layout -->
 
 
-    <!-- ── ADD ITEM MODAL ── -->
     <div class="modal fade" id="addItemModal" tabindex="-1" aria-labelledby="addItemModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
@@ -1675,6 +2129,7 @@
                 <form action="{{ route('inventory-storage.store') }}" method="POST">
                     @csrf
                     <div class="modal-body">
+                        <div class="form-section-label"><i class="fa-solid fa-cube"></i> Item Details</div>
                         <div class="row g-3">
                             <div class="col-md-8">
                                 <label class="form-label" for="add-item-name">Item Name</label>
@@ -1715,6 +2170,10 @@
                                 <input type="text" class="form-control" id="add-location" name="location"
                                     placeholder="Storage area">
                             </div>
+                        </div>
+                        <div class="form-section-label" style="margin-top:24px;"><i
+                                class="fa-solid fa-money-bill-wave"></i> Funding & Dates</div>
+                        <div class="row g-3">
                             <div class="col-12">
                                 <label class="form-label" for="add-fund-source">Fund Source</label>
                                 <select class="form-select" id="add-fund-source" name="fund_source">
@@ -1766,6 +2225,7 @@
                         aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="form-section-label"><i class="fa-solid fa-cube"></i> Item Details</div>
                     <div class="row g-3">
                         <div class="col-md-8">
                             <label class="form-label" for="edit-item-name">Item Name</label>
@@ -1800,6 +2260,10 @@
                             <label class="form-label" for="edit-location">Location</label>
                             <input type="text" class="form-control" id="edit-location" placeholder="Storage area">
                         </div>
+                    </div>
+                    <div class="form-section-label" style="margin-top:24px;"><i class="fa-solid fa-money-bill-wave"></i>
+                        Funding & Dates</div>
+                    <div class="row g-3">
                         <div class="col-12">
                             <label class="form-label" for="edit-fund-source">Fund Source</label>
                             <select class="form-select" id="edit-fund-source">
@@ -1833,26 +2297,80 @@
     </div>
 
     <!-- ── DELETE CONFIRMATION MODAL ── -->
-    <div class="modal fade" id="deleteItemModal" tabindex="-1" aria-labelledby="deleteItemModalLabel" aria-hidden="true">
+    <div class="modal fade" id="deleteItemModal" tabindex="-1" aria-labelledby="deleteItemModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="deleteItemModalLabel"><i class="fa-solid fa-triangle-exclamation" style="color: var(--missing);"></i> Delete Item</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title" id="deleteItemModalLabel"><i class="fa-solid fa-triangle-exclamation"
+                            style="color: var(--missing);"></i> Delete Item</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="mb-0">Are you sure you want to delete "<strong id="deleteItemName"></strong>"?<br><br>This action cannot be undone.</p>
+                    <p class="mb-0">Are you sure you want to delete "<strong id="deleteItemName"></strong>"?<br><br>This
+                        action cannot be undone.</p>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn-danger-sm py-2 px-3" id="btn-confirm-delete"><i class="fa-solid fa-trash"></i> Delete Item</button>
+                    <button type="button" class="btn-danger-sm py-2 px-3" id="btn-confirm-delete"><i
+                            class="fa-solid fa-trash"></i> Delete Item</button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- ── SCHOOL SWITCHER MODAL (collapsed sidebar) ── -->
+    @if(auth()->user()->role === 'admin' && $schools->count() > 1)
+        <div class="modal fade" id="schoolSwitcherModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" style="max-width:420px;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title"><i class="fa-solid fa-school"></i> Select Active School</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" style="padding:16px;">
+                        <div style="position:relative;margin-bottom:10px;">
+                            <i class="fa-solid fa-magnifying-glass"
+                                style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#8aa0a0;font-size:.8rem;"></i>
+                            <input type="text" id="modalSchoolSearch" placeholder="Search schools..."
+                                style="width:100%;border:1.5px solid #dde8e8;border-radius:10px;padding:8px 12px 8px 34px;font-size:.83rem;font-family:inherit;outline:none;color:#1a2e2e;transition:border-color .2s;"
+                                autocomplete="off">
+                        </div>
+                        <div id="modalSchoolList"
+                            style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;">
+                            @foreach($schools as $s)
+                                <div class="modal-school-item {{ $school && $school->id == $s->id ? 'modal-school-active' : '' }}"
+                                    data-id="{{ $s->id }}" data-name="{{ $s->school_name }}"
+                                    style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;transition:background .15s;border:1.5px solid transparent;">
+                                    <div
+                                        style="width:32px;height:32px;border-radius:8px;background:rgba(21,143,143,.1);color:var(--teal);display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;">
+                                        <i class="fa-solid fa-school"></i>
+                                    </div>
+                                    <span
+                                        style="font-size:.85rem;font-weight:500;color:#2a4040;flex:1;">{{ $s->school_name }}</span>
+                                    <i class="fa-solid fa-check"
+                                        style="color:var(--teal);font-size:.75rem;{{ $school && $school->id == $s->id ? '' : 'display:none;' }}"></i>
+                                </div>
+                            @endforeach
+                            <div id="modalSchoolEmpty"
+                                style="display:none;padding:24px;text-align:center;color:#8aa0a0;font-size:.83rem;">No
+                                schools found</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- ── TOAST CONTAINER ── -->
     <div class="toast-wrap" id="toastWrap"></div>
+
+    <!-- ── IMAGE HOVER PREVIEW ── -->
+    <div id="img-preview-overlay">
+        <img id="img-preview-img" src="" alt="Preview">
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -1889,11 +2407,11 @@
             document.getElementById('topbar-title').textContent = panelTitles[panelId] || '';
 
             // Toggle topbar action buttons
-            var btnExport  = document.getElementById('btn-export');
+            var btnExport = document.getElementById('btn-export');
             var btnAddItem = document.getElementById('btn-add-item');
-            var isMonthly  = panelId === 'panel-monthly-summary';
-            if (btnExport)  btnExport.style.display  = isMonthly ? '' : 'none';
-            if (btnAddItem) btnAddItem.style.display  = isMonthly ? 'none' : '';
+            var isMonthly = panelId === 'panel-monthly-summary';
+            if (btnExport) btnExport.style.display = isMonthly ? '' : 'none';
+            if (btnAddItem) btnAddItem.style.display = isMonthly ? 'none' : '';
         }
 
         document.querySelectorAll('[data-panel]').forEach(function (btn) {
@@ -1918,9 +2436,14 @@
             if (!input) return;
             input.addEventListener('input', function () {
                 var q = this.value.toLowerCase();
-                document.querySelectorAll('#table-' + s + ' tbody tr').forEach(function (row) {
-                    row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+                var visibleCount = 0;
+                document.querySelectorAll('#table-' + s + ' tbody tr.compliance-row').forEach(function (row) {
+                    var match = row.textContent.toLowerCase().includes(q);
+                    row.style.display = match ? '' : 'none';
+                    if (match) visibleCount++;
                 });
+                var noDataRow = document.getElementById('no-search-' + s);
+                if (noDataRow) noDataRow.style.display = (visibleCount === 0) ? 'table-row' : 'none';
             });
         });
 
@@ -1933,15 +2456,32 @@
         });
 
         // ── Source cascade ────────────────────────────────────────────
-        document.querySelectorAll('.source-select').forEach(function (sel) {
-            sel.addEventListener('change', function () {
-                var wrap = this.closest('.source-select-wrap');
-                var deped = wrap.querySelector('.deped-options');
-                var partner = wrap.querySelector('.partner-options');
-                deped.classList.add('d-none'); partner.classList.add('d-none');
+        document.querySelectorAll('.source-select-wrap').forEach(function (wrap) {
+            var srcSel = wrap.querySelector('.source-select');
+            var deped = wrap.querySelector('.deped-options');
+            var partner = wrap.querySelector('.partner-options');
+            var otherInput = wrap.querySelector('.other-source-input');
+
+            function toggleOtherInput() {
+                if (srcSel.value === 'deped' && deped.value === 'Others (Please Specify)') {
+                    otherInput.classList.remove('d-none');
+                } else if (srcSel.value === 'partner' && partner.value === 'Others (Please Specify)') {
+                    otherInput.classList.remove('d-none');
+                } else {
+                    otherInput.classList.add('d-none');
+                }
+            }
+
+            srcSel.addEventListener('change', function () {
+                deped.classList.add('d-none'); 
+                partner.classList.add('d-none');
                 if (this.value === 'deped') deped.classList.remove('d-none');
                 if (this.value === 'partner') partner.classList.remove('d-none');
+                toggleOtherInput();
             });
+
+            if (deped) deped.addEventListener('change', toggleOtherInput);
+            if (partner) partner.addEventListener('change', toggleOtherInput);
         });
 
         // ── Compliance score updater ──────────────────────────────────
@@ -1965,7 +2505,7 @@
             var allHave = 0;
             allRows.forEach(function (r) { if (r.querySelector('.have-checkbox').checked) allHave++; });
             var allPct = allTotal > 0 ? Math.round((allHave / allTotal) * 100) : 0;
-            
+
             var allEl = document.getElementById('score-val-all');
             var allSub = document.getElementById('score-sub-all');
             var allBar = document.getElementById('score-bar-all');
@@ -1995,6 +2535,13 @@
                     var detail = '';
                     if (src === 'deped') detail = wrap.querySelector('.deped-options').value;
                     if (src === 'partner') detail = wrap.querySelector('.partner-options').value;
+                    
+                    if (detail === 'Others (Please Specify)') {
+                        var otherInput = wrap.querySelector('.other-source-input');
+                        if (otherInput && otherInput.value.trim() !== '') {
+                            detail = otherInput.value.trim();
+                        }
+                    }
                     items.push({
                         item_key: row.dataset.key,
                         has_item: row.querySelector('.have-checkbox').checked,
@@ -2119,7 +2666,7 @@
                             var remaining = document.querySelectorAll('#inventoryTable tbody tr.item-row');
                             if (remaining.length === 0) {
                                 var emptyRow = document.getElementById('emptyInventoryRow');
-                                if (emptyRow) emptyRow.style.display = 'table-row';
+                                if (emptyRow) emptyRow.style.display = 'flex';
                             }
                         }
                         deleteModal.hide();
@@ -2128,20 +2675,154 @@
         });
 
         // ── School switcher (admin) ───────────────────────────────────
-        var schoolSwitcher = document.getElementById('schoolSwitcher');
-        if (schoolSwitcher) {
-            schoolSwitcher.addEventListener('change', function () {
-                apiFetch('{{ route("inventory-storage.set-school") }}', 'POST', { school_id: this.value })
-                    .then(function (res) { if (res.success) location.reload(); })
-                    .catch(function () { toast('Could not switch school.', 'error'); });
+        function switchSchool(schoolId) {
+            apiFetch('{{ route("inventory-storage.set-school") }}', 'POST', { school_id: schoolId })
+                .then(function (res) { if (res.success) location.reload(); })
+                .catch(function () { toast('Could not switch school.', 'error'); });
+        }
+
+        // Sidebar custom picker
+        var pickerBtn = document.getElementById('schoolPickerBtn');
+        var pickerDropdown = document.getElementById('schoolPickerDropdown');
+        var pickerSearch = document.getElementById('schoolPickerSearch');
+        var pickerList = document.getElementById('schoolPickerList');
+        var pickerEmpty = document.getElementById('schoolPickerEmpty');
+
+        if (pickerBtn) {
+            // Toggle dropdown
+            pickerBtn.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var isOpen = pickerDropdown.classList.toggle('open');
+                pickerBtn.classList.toggle('open', isOpen);
+                pickerBtn.setAttribute('aria-expanded', isOpen);
+                if (isOpen) {
+                    pickerSearch.value = '';
+                    filterPicker('');
+                    setTimeout(function () { pickerSearch.focus(); }, 50);
+                }
             });
+
+            // Search
+            pickerSearch.addEventListener('input', function () {
+                filterPicker(this.value.toLowerCase());
+            });
+
+            function filterPicker(q) {
+                var items = pickerList.querySelectorAll('.school-picker-item');
+                var visible = 0;
+                items.forEach(function (item) {
+                    var match = item.dataset.name.toLowerCase().includes(q);
+                    item.style.display = match ? '' : 'none';
+                    if (match) visible++;
+                });
+                pickerEmpty.style.display = visible === 0 ? '' : 'none';
+            }
+
+            // Select school
+            pickerList.addEventListener('click', function (e) {
+                var item = e.target.closest('.school-picker-item');
+                if (!item) return;
+                if (item.classList.contains('active')) {
+                    pickerDropdown.classList.remove('open');
+                    pickerBtn.classList.remove('open');
+                    return;
+                }
+                switchSchool(item.dataset.id);
+            });
+
+            // Close on outside click
+            document.addEventListener('click', function (e) {
+                if (!document.getElementById('schoolSwitcherWrap').contains(e.target)) {
+                    pickerDropdown.classList.remove('open');
+                    pickerBtn.classList.remove('open');
+                }
+            });
+        }
+
+        // Modal picker (collapsed sidebar)
+        var modalSchoolSearch = document.getElementById('modalSchoolSearch');
+        var modalSchoolList = document.getElementById('modalSchoolList');
+        var modalSchoolEmpty = document.getElementById('modalSchoolEmpty');
+
+        if (modalSchoolSearch) {
+            modalSchoolSearch.addEventListener('input', function () {
+                var q = this.value.toLowerCase();
+                var items = modalSchoolList.querySelectorAll('.modal-school-item');
+                var visible = 0;
+                items.forEach(function (item) {
+                    var match = item.dataset.name.toLowerCase().includes(q);
+                    item.style.display = match ? '' : 'none';
+                    if (match) visible++;
+                });
+                modalSchoolEmpty.style.display = visible === 0 ? '' : 'none';
+            });
+
+            // Hover styles
+            modalSchoolList.addEventListener('mouseover', function (e) {
+                var item = e.target.closest('.modal-school-item');
+                if (item && !item.classList.contains('modal-school-active')) item.style.background = '#f0f7f7';
+            });
+            modalSchoolList.addEventListener('mouseout', function (e) {
+                var item = e.target.closest('.modal-school-item');
+                if (item && !item.classList.contains('modal-school-active')) item.style.background = '';
+            });
+
+            // Click to switch
+            modalSchoolList.addEventListener('click', function (e) {
+                var item = e.target.closest('.modal-school-item');
+                if (!item) return;
+                switchSchool(item.dataset.id);
+            });
+
+            // Style active items
+            document.querySelectorAll('.modal-school-active').forEach(function (item) {
+                item.style.background = 'rgba(21,143,143,.08)';
+                item.style.borderColor = 'rgba(21,143,143,.2)';
+            });
+
+            // Clear search when modal opens
+            var schoolModal = document.getElementById('schoolSwitcherModal');
+            if (schoolModal) {
+                schoolModal.addEventListener('show.bs.modal', function () {
+                    modalSchoolSearch.value = '';
+                    modalSchoolList.querySelectorAll('.modal-school-item').forEach(function (i) { i.style.display = ''; });
+                    modalSchoolEmpty.style.display = 'none';
+                });
+            }
         }
 
         // ── Session-based panel open ──────────────────────────────────
         @if(session('open_panel') === 'default-list')
             switchPanel('panel-default-list');
         @endif
-if (window.location.hash === '#default-list') switchPanel('panel-default-list');
+        if (window.location.hash === '#default-list') switchPanel('panel-default-list');
+
+        // ── Image Hover Preview ───────────────────────────────────────
+        var previewOverlay = document.getElementById('img-preview-overlay');
+        var previewImg = document.getElementById('img-preview-img');
+
+        document.querySelectorAll('.item-img').forEach(function (img) {
+            img.addEventListener('mouseenter', function (e) {
+                previewImg.src = this.src;
+                previewOverlay.style.display = 'block';
+            });
+            img.addEventListener('mousemove', function (e) {
+                var offsetX = 15;
+                var offsetY = 15;
+                var x = e.clientX + offsetX;
+                var y = e.clientY + offsetY;
+
+                // Prevent going off screen (assuming max width/height ~320px)
+                if (x + 320 > window.innerWidth) x = e.clientX - 320 - offsetX;
+                if (y + 320 > window.innerHeight) y = e.clientY - 320 - offsetY;
+
+                previewOverlay.style.left = x + 'px';
+                previewOverlay.style.top = y + 'px';
+            });
+            img.addEventListener('mouseleave', function () {
+                previewOverlay.style.display = 'none';
+            });
+        });
     </script>
 </body>
 
