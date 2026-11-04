@@ -404,3 +404,16 @@ Route::prefix('inventory-storage')
 
     });
 
+use App\Http\Controllers\HeatIndexReportController;
+
+// Heat Index Reports Routes
+Route::prefix('heat-index')
+    ->name('heat-index.')
+    ->middleware(['auth'])
+    ->group(function () {
+        Route::get('/dashboard', [HeatIndexReportController::class, 'dashboard'])->name('dashboard');
+        Route::get('/submissions', [HeatIndexReportController::class, 'getSubmissions'])->name('submissions');
+        Route::post('/store', [HeatIndexReportController::class, 'store'])->name('store');
+        Route::delete('/{id}', [HeatIndexReportController::class, 'destroy'])->name('destroy');
+    });
+
