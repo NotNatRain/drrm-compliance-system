@@ -286,7 +286,7 @@ class VerifyDrrmSystem extends Command
             $failed++;
         }
 
-        // ====== USER MANAGEMENT ======
+        // ====== USER MANAGEMENT ====== (no module assignment)
         $this->info('--- User Management Tests ---');
         try {
             $totalUsers = DB::table('users')->count();

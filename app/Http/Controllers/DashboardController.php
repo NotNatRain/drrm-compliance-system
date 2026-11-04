@@ -384,6 +384,7 @@ class DashboardController extends Controller
         $rules = [
             'school_name' => 'required|string|max:255|unique:schools,school_name',
             'school_id' => 'nullable|string|max:255',
+            'school_type' => 'required|in:Clustered,Non-Clustered',
             'address' => 'required|string',
             'school_head' => 'nullable|string|max:255',
             'drrm_coordinator' => 'nullable|string|max:255',
@@ -427,6 +428,20 @@ class DashboardController extends Controller
             'engineer_last_inspection_date',
             'emergency_resources',
         ]);
+
+        if ($request->filled('school_type')) {
+            $type = strtolower(trim($request->school_type));
+            if ($type === 'clustered' || $type === 'cluster') {
+                $payload['cluster_type'] = 1;
+                $payload['noncluster_type'] = 0;
+            } elseif ($type === 'non-clustered' || $type === 'nonclustered' || $type === 'non-cluster') {
+                $payload['cluster_type'] = 0;
+                $payload['noncluster_type'] = 1;
+            }
+        } elseif ($request->has('cluster_type') || $request->has('noncluster_type')) {
+            $payload['cluster_type'] = (int) (bool) $request->cluster_type;
+            $payload['noncluster_type'] = (int) (bool) $request->noncluster_type;
+        }
 
         if (array_key_exists('school_head', $payload) && trim((string) $payload['school_head']) === '') {
             unset($payload['school_head']);
@@ -466,6 +481,9 @@ class DashboardController extends Controller
         $rules = [
             'school_name' => 'required|string|max:255|unique:schools,school_name,' . $id,
             'school_id' => 'nullable|string|max:255',
+            'school_type' => 'nullable|string|max:255',
+            'cluster_type' => 'nullable',
+            'noncluster_type' => 'nullable',
             'address' => 'required|string',
             'school_head' => 'nullable|string|max:255',
             'drrm_coordinator' => 'nullable|string|max:255',
@@ -495,6 +513,7 @@ class DashboardController extends Controller
         $payload = $request->only([
             'school_name',
             'school_id',
+            'school_type',
             'address',
             'school_head',
             'drrm_coordinator',
@@ -509,6 +528,20 @@ class DashboardController extends Controller
             'engineer_last_inspection_date',
             'emergency_resources',
         ]);
+
+        if ($request->filled('school_type')) {
+            $type = strtolower(trim($request->school_type));
+            if ($type === 'clustered' || $type === 'cluster') {
+                $payload['cluster_type'] = 1;
+                $payload['noncluster_type'] = 0;
+            } elseif ($type === 'non-clustered' || $type === 'nonclustered' || $type === 'non-cluster') {
+                $payload['cluster_type'] = 0;
+                $payload['noncluster_type'] = 1;
+            }
+        } elseif ($request->has('cluster_type') || $request->has('noncluster_type')) {
+            $payload['cluster_type'] = (int) (bool) $request->cluster_type;
+            $payload['noncluster_type'] = (int) (bool) $request->noncluster_type;
+        }
 
         if (array_key_exists('school_head', $payload) && trim((string) $payload['school_head']) === '') {
             unset($payload['school_head']);
@@ -635,8 +668,13 @@ class DashboardController extends Controller
             'fire_safety',
             'typhoon_flood',
             'incident_checklist',
+            'comprehensive_school_safety',
             'drill_monitoring',
             'hazard_mapping',
+            'casualty_tracking',
+            'damage_reports',
+            'inventory_storage',
+            'heat_index',
         ];
 
         $user = User::create([
@@ -699,23 +737,18 @@ class DashboardController extends Controller
             $user->position = null;
 
             if ($request->role === 'contributor') {
-                $currentModules = collect((array) $user->module_access);
-                $baseModules = collect([
+                $user->module_access = [
                     'fire_safety',
                     'typhoon_flood',
                     'incident_checklist',
+                    'comprehensive_school_safety',
                     'drill_monitoring',
                     'hazard_mapping',
                     'casualty_tracking',
-                ]);
-
-                $mergedModules = $baseModules
-                    ->merge($currentModules->contains('comprehensive_school_safety') ? ['comprehensive_school_safety'] : [])
-                    ->unique()
-                    ->values()
-                    ->all();
-
-                $user->module_access = $mergedModules;
+                    'damage_reports',
+                    'inventory_storage',
+                    'heat_index',
+                ];
             }
         }
 
@@ -762,27 +795,15 @@ class DashboardController extends Controller
             'drill_monitoring',
             'hazard_mapping',
             'casualty_tracking',
+            'damage_reports',
+            'inventory_storage',
+            'heat_index',
         ];
 
         $selectedModules = collect((array) $request->input('modules', []))
             ->filter(fn ($module) => in_array($module, $allowedModules, true))
             ->values()
             ->all();
-
-        if ($user->role === 'contributor') {
-            $selectedModules = [
-                'fire_safety',
-                'typhoon_flood',
-                'incident_checklist',
-                'drill_monitoring',
-                'hazard_mapping',
-                'casualty_tracking',
-            ];
-
-            if (in_array('comprehensive_school_safety', (array) $request->input('modules', []), true)) {
-                $selectedModules[] = 'comprehensive_school_safety';
-            }
-        }
 
         $universalSchoolId = $request->filled('universal_school_id')
             ? (int) $request->input('universal_school_id')
@@ -931,6 +952,10 @@ class DashboardController extends Controller
                 if ($user->needs_tf_registration) {
                     $user->typhoon_school_id = $school->id;
                     $user->needs_tf_registration = false;
+                }
+
+                if (!$user->incident_school_id) {
+                    $user->incident_school_id = $school->id;
                 }
 
                 $user->save();

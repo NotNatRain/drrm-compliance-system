@@ -96,6 +96,7 @@
                             </td>
                             <td>
                                 @if($user->role === 'admin')
+<<<<<<< Updated upstream
                                     <span class="text-muted small">All Modules</span>
                                 @elseif($user->role === 'contributor')
                                     <span class="text-muted small">All Modules excluding Comprehensive Safety</span>
@@ -110,6 +111,14 @@
                                             'hazard_mapping',
                                         ];
                                         $hasAllModules = empty(array_diff($coreComplianceModules, $modules));
+=======
+                                    All Modules
+                                @else
+                                    @php
+                                        $modules = $user->module_access ?? [];
+                                        $allSystemModules = ['fire_safety','typhoon_flood','incident_checklist','comprehensive_school_safety','drill_monitoring','hazard_mapping','casualty_tracking','damage_reports','inventory_storage','heat_index'];
+                                        $hasAllModules = empty(array_diff($allSystemModules, $modules));
+>>>>>>> Stashed changes
                                     @endphp
 
                                     @if($hasAllModules)
@@ -293,10 +302,18 @@
             <form id="assignForm">
                 @csrf
                 <input type="hidden" name="user_id" id="assignUserId">
+<<<<<<< Updated upstream
                 <div class="modal-body">
                     <p class="mb-3">Select WHICH compliance systems <strong id="assignUserName"></strong> can see and assign a school if applicable.</p>
                     <div id="contributorModuleNotice" class="alert alert-info small d-none">
                         Contributor accounts automatically include Fire Safety, Typhoon/Flood, Incident Checklist, and Hazard Mapping. You can only toggle Comprehensive School Safety.
+=======
+                <div class="modal-body p-4">
+                    <p class="mb-3 text-dark">Select WHICH compliance systems <strong id="assignUserName"></strong> can see and assign a school if applicable.</p>
+                    
+                    <div id="contributorModuleNotice" class="alert alert-info small d-none border-0" style="background-color: #E0F2FE; color: #0369A1; border-radius: 8px;">
+                        Contributor accounts have access to all modules by default. You can restrict access by unchecking specific modules below.
+>>>>>>> Stashed changes
                     </div>
 
                     <div class="border rounded p-3 mb-3 bg-light">
@@ -360,13 +377,67 @@
                         </div>
 
                         <!-- Hazard Mapping -->
+<<<<<<< Updated upstream
                         <div class="list-group-item module-row" data-module-row="hazard_mapping">
+=======
+                        <div class="list-group-item border-start-0 border-end-0 px-4 py-3 module-row" data-module-row="hazard_mapping">
+>>>>>>> Stashed changes
                             <div class="d-flex justify-content-between align-items-center">
                                 <div class="form-check">
                                     <input class="form-check-input module-check" type="checkbox" name="modules[]" value="hazard_mapping" id="checkHM">
                                     <label class="form-check-label fw-bold" for="checkHM">Hazard Mapping</label>
                                 </div>
                                 <span class="badge bg-secondary text-white">To be Developed</span>
+                            </div>
+                        </div>
+
+                        <!-- Drill Monitoring -->
+                        <div class="list-group-item border-start-0 border-end-0 px-4 py-3 module-row" data-module-row="drill_monitoring">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="form-check m-0">
+                                    <input class="form-check-input module-check mt-1" type="checkbox" name="modules[]" value="drill_monitoring" id="checkDM">
+                                    <label class="form-check-label fw-bold text-dark ms-2" for="checkDM">Drill Monitoring</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Casualty Tracking -->
+                        <div class="list-group-item border-start-0 border-end-0 px-4 py-3 module-row" data-module-row="casualty_tracking">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="form-check m-0">
+                                    <input class="form-check-input module-check mt-1" type="checkbox" name="modules[]" value="casualty_tracking" id="checkCT">
+                                    <label class="form-check-label fw-bold text-dark ms-2" for="checkCT">Casualty Tracking</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Damage Reports -->
+                        <div class="list-group-item border-start-0 border-end-0 px-4 py-3 module-row" data-module-row="damage_reports">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="form-check m-0">
+                                    <input class="form-check-input module-check mt-1" type="checkbox" name="modules[]" value="damage_reports" id="checkDR">
+                                    <label class="form-check-label fw-bold text-dark ms-2" for="checkDR">Damage Reports</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Inventory & Storage -->
+                        <div class="list-group-item border-start-0 border-end-0 px-4 py-3 module-row" data-module-row="inventory_storage">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="form-check m-0">
+                                    <input class="form-check-input module-check mt-1" type="checkbox" name="modules[]" value="inventory_storage" id="checkIS">
+                                    <label class="form-check-label fw-bold text-dark ms-2" for="checkIS">Inventory &amp; Storage</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Heat Index Report -->
+                        <div class="list-group-item border-start-0 border-end-0 border-bottom-0 px-4 py-3 module-row" data-module-row="heat_index">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="form-check m-0">
+                                    <input class="form-check-input module-check mt-1" type="checkbox" name="modules[]" value="heat_index" id="checkHI">
+                                    <label class="form-check-label fw-bold text-dark ms-2" for="checkHI">Heat Index Report</label>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -570,13 +641,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (assignForm) {
             assignForm.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                if (csssCheckbox && csssCheckbox.checked && !csssRestrictionConfirmed) {
-                    if (csssRestrictionModalInstance) {
-                        csssRestrictionModalInstance.show();
-                    }
-                    return;
-                }
-
                 const formData = new FormData(this);
                 const userId = document.getElementById('assignUserId').value;
                 const userRole = assignForm.dataset.userRole || '';
@@ -584,12 +648,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 this.querySelectorAll('input[name="modules[]"]:checked').forEach(c => modules.push(c.value));
                 const universalSchoolId = formData.get('universal_school_id') || '';
 
-                if (userRole === 'contributor') {
-                    ['fire_safety', 'typhoon_flood', 'incident_checklist', 'hazard_mapping'].forEach(module => {
-                        if (!modules.includes(module)) {
-                            modules.push(module);
-                        }
-                    });
+                if (csssCheckbox && csssCheckbox.checked && !csssRestrictionConfirmed) {
+                    if (csssRestrictionModalInstance) {
+                        csssRestrictionModalInstance.show();
+                    }
+                    return;
                 }
 
                 if (modules.length > 0 && !universalSchoolId) {
@@ -611,7 +674,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         typhoon_flood: 'Typhoon/Flooding Monitoring',
                         incident_checklist: 'Incident Checklist',
                         comprehensive_school_safety: 'Comprehensive School Safety',
+                        drill_monitoring: 'Drill Monitoring',
                         hazard_mapping: 'Hazard Mapping',
+                        casualty_tracking: 'Casualty Tracking',
+                        damage_reports: 'Damage Reports',
+                        inventory_storage: 'Inventory & Storage',
+                        heat_index: 'Heat Index Report',
                     };
                     const removedLabelList = removedModules.map(module => moduleLabels[module] || module).join(', ');
                     const confirmResult = await Swal.fire({
@@ -713,7 +781,6 @@ function assignAccess(userId) {
             const universalSchoolSelect = document.getElementById('universalSchoolSelect');
             const csssCheckbox = document.getElementById('checkSS');
             const contributorNotice = document.getElementById('contributorModuleNotice');
-            const defaultContributorModules = ['fire_safety', 'typhoon_flood', 'incident_checklist', 'hazard_mapping'];
 
             if (userIdInput) userIdInput.value = user.id;
             if (userNameSpan) userNameSpan.textContent = user.name;
@@ -759,30 +826,13 @@ function assignAccess(userId) {
             }
 
             if (isContributor) {
-                defaultContributorModules.forEach(module => {
-                    const check = modalEl.querySelector(`.module-check[value="${module}"]`);
-                    if (check) {
-                        check.checked = true;
-                        check.disabled = true;
-                        const moduleRow = check.closest('.module-row');
-                        if (moduleRow) moduleRow.classList.add('d-none');
-                    }
-                });
-
-                ['checkSS'].forEach(id => {
-                    const check = document.getElementById(id);
-                    const moduleRow = check ? check.closest('.module-row') : null;
-                    if (check) {
-                        check.disabled = false;
-                    }
-                    if (moduleRow) {
-                        moduleRow.classList.remove('d-none');
-                    }
-                });
-
+                // Show notice; all checkboxes remain enabled so admin can pick and choose
                 if (contributorNotice) {
                     contributorNotice.classList.remove('d-none');
                 }
+                // Ensure all module rows are visible and checkboxes are enabled
+                modalEl.querySelectorAll('.module-row').forEach(row => row.classList.remove('d-none'));
+                modalEl.querySelectorAll('.module-check').forEach(check => { check.disabled = false; });
             } else if (contributorNotice) {
                 contributorNotice.classList.add('d-none');
             }

@@ -14,6 +14,9 @@ class TypFldFamily extends Model
 
     protected $fillable = [
         'school_id',
+        'building_id',
+        'room_id',
+        'serial_number',
         'head_family_name',
         'has_pregnant',
         'has_pwd',
@@ -37,6 +40,16 @@ class TypFldFamily extends Model
     public function school(): BelongsTo
     {
         return $this->belongsTo(School::class, 'school_id');
+    }
+
+    public function building(): BelongsTo
+    {
+        return $this->belongsTo(FireSafetyBuilding::class, 'building_id');
+    }
+
+    public function room(): BelongsTo
+    {
+        return $this->belongsTo(FireSafetyRoom::class, 'room_id');
     }
 
     public function members(): HasMany

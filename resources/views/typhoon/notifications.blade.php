@@ -16,6 +16,15 @@
         --glass-border: rgba(0, 0, 0, 0.05);
     }
 
+    html, body {
+        min-height: 100%;
+    }
+
+    body > div,
+    body > div > main {
+        min-height: 100%;
+    }
+
     body {
         background-color: var(--bg-dark) !important;
         background-image: radial-gradient(circle at 50% 50%, #112240 0%, #0a1128 100%);
@@ -33,7 +42,7 @@
     }
 
     .notification-page-wrapper {
-        padding: 2rem 2rem 0 2rem;
+        padding: 1.5rem 2rem 2rem 2rem;
         min-height: 100vh;
         display: flex;
         flex-direction: column;
@@ -42,15 +51,23 @@
     .dashboard-card {
         background: var(--card-bg);
         border: 1px solid var(--glass-border);
-        border-radius: 20px 20px 0 0; /* More rounded top, flat bottom to touch edge */
+        border-radius: 20px;
         transition: transform 0.2s ease;
         flex-grow: 1;
         color: var(--text-dark);
-        box-shadow: 0 -4px 30px rgba(0,0,0,0.15);
+        box-shadow: 0 4px 30px rgba(0,0,0,0.15);
         overflow: hidden;
-        margin-bottom: 0 !important;
+        margin-bottom: 2rem !important;
         display: flex;
         flex-direction: column;
+        min-height: 480px;
+    }
+
+    .notifications-list {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        min-height: 380px;
+        max-height: 72vh;
     }
 
     .card-header-custom {
@@ -277,7 +294,7 @@
         </div>
 
         <div class="row flex-grow-1">
-            <div class="col-12 h-100 d-flex">
+            <div class="col-12 d-flex flex-column">
                 <div class="dashboard-card shadow-lg border-0 d-flex flex-column w-100">
                     <div class="card-header-custom py-3">
                         <div class="d-flex justify-content-between align-items-center w-100">
@@ -286,7 +303,7 @@
                         </div>
                     </div>
                     
-                    <div class="notifications-list flex-grow-1 overflow-auto" style="height: calc(100% - 130px); max-height: 75vh;">
+                    <div class="notifications-list flex-grow-1 overflow-auto">
                         @forelse($notifications as $notif)
                             <div class="notification-item {{ $notif->is_read ? '' : 'unread' }} border-0 border-bottom" id="notif-{{ $notif->id }}">
                                 <div class="d-flex gap-4">
@@ -361,12 +378,14 @@
                                 </div>
                             </div>
                         @empty
-                            <div class="p-5 text-center opacity-50 d-flex flex-column align-items-center justify-content-center h-100">
-                                <div class="bg-light p-4 rounded-circle mb-4">
-                                    <i class="fas fa-bell-slash fa-5x text-muted"></i>
+                            <div class="p-5 text-center d-flex flex-column align-items-center justify-content-center flex-grow-1" style="min-height: 380px;">
+                                <div class="bg-light p-4 rounded-circle mb-3 shadow-sm d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                    <i class="fas fa-bell-slash fa-2x text-secondary opacity-50"></i>
                                 </div>
-                                <h3 class="fw-bold">CLEAR FEED</h3>
-                                <p class="text-muted fs-5">There are no recent alerts or announcements in the system.</p>
+                                <h4 class="fw-bold text-dark mt-2 mb-1" style="font-family: var(--font-display);">No Notifications Yet</h4>
+                                <p class="text-muted fs-6 mb-0" style="max-width: 480px;">
+                                    You're all caught up! There are no unread or recent alerts and announcements for your account.
+                                </p>
                             </div>
                         @endforelse
                     </div>
@@ -383,6 +402,7 @@
 </div>
 @endsection
 
+@push('modals')
 @include('typhoon.partials.choose-school-modal')
 
 <div class="modal fade" id="moduleRegistrationWarningModal" tabindex="-1" aria-hidden="true">
@@ -401,11 +421,18 @@
         </div>
     </div>
 </div>
+@endpush
 
 @push('scripts')
 <script>
+    const moduleRegistrationStatusUrl = @json(\Illuminate\Support\Facades\Route::has('module-registration.status') ? route('module-registration.status') : null);
+
     async function verifyModuleRegistration(moduleName, schoolId) {
-        const endpoint = `{{ route('module-registration.status') }}?module=${encodeURIComponent(moduleName)}&school_id=${encodeURIComponent(schoolId)}`;
+        if (!moduleRegistrationStatusUrl) {
+            return { registered: true };
+        }
+
+        const endpoint = `${moduleRegistrationStatusUrl}?module=${encodeURIComponent(moduleName)}&school_id=${encodeURIComponent(schoolId)}`;
         const response = await fetch(endpoint, {
             headers: {
                 'Accept': 'application/json',

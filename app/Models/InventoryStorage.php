@@ -12,6 +12,7 @@ class InventoryStorage extends Model
     protected $table = 'inventory_storage';
 
     protected $fillable = [
+        'id',
         'item_name',
         'unit',
         'quantity',

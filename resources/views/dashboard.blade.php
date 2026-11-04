@@ -199,57 +199,62 @@
     }
     .school-detail-value {
         font-weight: 600;
-        color: #212529;
-        margin-bottom: 12px;
+        font-size: 0.9rem;
+        color: #FFFFFF;
+        text-decoration: none;
+        margin: 0 auto;
+        transition: filter 0.2s;
     }
-    .btn-module {
-        transition: all 0.3s ease;
-        text-transform: uppercase;
-        font-weight: 700;
-        font-size: 0.75rem;
-        padding: 10px;
-        border-radius: 8px;
-    }
-    .btn-module i {
-        font-size: 1.1rem;
-        margin-bottom: 5px;
-        display: block;
-    }
-    .btn-module.disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-    }
-    .school-info-modal-dialog {
-        max-width: 980px;
-    }
-    #btn_fire_safety:hover { background-color: #D12428; border-color: #D12428; color: #fff; }
-    #btn_typhoon:hover { background-color: #1B4C6D; border-color: #1B4C6D; color: #fff; }
-    #btn_incident:hover { background-color: #F2C94C; border-color: #F2C94C; color: #212529; }
-    #btn_comprehensive:hover { background-color: #5C4033; border-color: #5C4033; color: #fff; }
-    #btn_hazard:hover { background-color: #0D7377; border-color: #0D7377; color: #fff; }
-    #btn_inventory:hover { background-color: #17a2b8; border-color: #17a2b8; color: #fff; }
-    #btn_damage_assessment:hover { background-color: #6f42c1; border-color: #6f42c1; color: #fff; }
+    .module-card:hover .module-btn { filter: brightness(1.1); }
 
-    /* Margins for the layout as requested */
-    .schools-tab-container {
-        margin-left: 20px;
-        margin-right: 20px;
-    }
-    @media (min-width: 1200px) {
-        .schools-tab-container {
-            margin-left: 60px;
-            margin-right: 60px;
-        }
-    }
+    /* Module specific colors */
+    .mod-fire { --mc: #D12428; --mbg: #FEE2E2; }
+    .mod-evac { --mc: #1B4C6D; --mbg: #E0F2FE; }
+    .mod-inc { --mc: #D97706; --mbg: #FEF3C7; } /* Wireframe is gold */
+    .mod-css { --mc: #5C4033; --mbg: #F5EAE6; } /* Brown */
+    .mod-drill { --mc: #EA580C; --mbg: #FFEDD5; } /* Orange */
+    .mod-haz { --mc: #0D7377; --mbg: #CCFBF1; } /* Teal */
+    .mod-dam { --mc: #8B5CF6; --mbg: #EDE9FE; } /* Purple */
+    .mod-inv { --mc: #0891B2; --mbg: #CFFAFE; } /* Cyan */
+    .mod-heat { --mc: #EA580C; --mbg: #FFEDD5; } /* Orange / Amber for Heat Index */
 
-    /* Tab Content Transitions */
-    .tab-content-active {
-        animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
+    .mod-fire .module-icon-wrap { background: var(--mbg); color: var(--mc); }
+    .mod-fire .module-title { color: var(--mc); }
+    .mod-fire .module-btn { background: var(--mc); }
+
+    .mod-evac .module-icon-wrap { background: var(--mbg); color: var(--mc); }
+    .mod-evac .module-title { color: var(--mc); }
+    .mod-evac .module-btn { background: var(--mc); }
+
+    .mod-inc .module-icon-wrap { background: var(--mbg); color: var(--mc); }
+    .mod-inc .module-title { color: var(--mc); }
+    .mod-inc .module-btn { background: var(--mc); }
+
+    .mod-css .module-icon-wrap { background: var(--mbg); color: var(--mc); }
+    .mod-css .module-title { color: var(--mc); }
+    .mod-css .module-btn { background: var(--mc); }
+
+    .mod-drill .module-icon-wrap { background: var(--mbg); color: var(--mc); }
+    .mod-drill .module-title { color: var(--mc); }
+    .mod-drill .module-btn { background: var(--mc); }
+
+    .mod-haz .module-icon-wrap { background: var(--mbg); color: var(--mc); }
+    .mod-haz .module-title { color: var(--mc); }
+    .mod-haz .module-btn { background: var(--mc); }
+
+    .mod-dam .module-icon-wrap { background: var(--mbg); color: var(--mc); }
+    .mod-dam .module-title { color: var(--mc); }
+    .mod-dam .module-btn { background: var(--mc); }
+
+    .mod-inv .module-icon-wrap { background: var(--mbg); color: var(--mc); }
+    .mod-inv .module-title { color: var(--mc); }
+    .mod-inv .module-btn { background: var(--mc); }
+
+    .mod-heat .module-icon-wrap { background: var(--mbg); color: var(--mc); }
+    .mod-heat .module-title { color: var(--mc); }
+    .mod-heat .module-btn { background: var(--mc); }
+
+    .btn-disabled { opacity: 0.6; cursor: not-allowed; }
 </style>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -348,240 +353,134 @@
 
     <!-- Compliance Content Division -->
     <div id="complianceTabContent" class="tab-content-active">
-        <div class="row justify-content-center">
-            <!-- Fire Safety Compliance -->
-            <div class="col-md-4 mb-4">
-                @php $canAccessFire = $isAdmin || in_array('fire_safety', $modules); @endphp
-                <a href="{{ route('fire-safety.dashboard') }}" class="text-decoration-none module-card-link"
-                   data-module="fire_safety" data-can-access="{{ $canAccessFire ? '1' : '0' }}" data-theme-color="#D12428">
-                    <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #D12428;">
-                        <div class="card-body text-center p-5">
-                            <div class="mb-4">
-                                <i class="fas fa-fire fa-4x" style="color: #D12428;"></i>
-                            </div>
-                            <h3 class="card-title fw-bold" style="color: #D12428;">Fire Safety</h3>
-                            <p class="card-text text-muted">
-                                Fire extinguishers, building inspections, and evacuation plans management
-                            </p>
-                        </div>
-                        <div class="card-footer bg-transparent text-center border-0">
-                            <span class="btn" style="background-color: #D12428; color: white;">
-                                <i class="fas fa-arrow-right"></i> Enter
-                            </span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <!-- Typhoon/Flooding Monitoring -->
-            <div class="col-md-4 mb-4">
-                @php $canAccessTyphoon = $isAdmin || in_array('typhoon_flood', $modules); @endphp
-                <a href="{{ route('typhoon.dashboard') }}" class="text-decoration-none module-card-link"
-                   data-module="typhoon_flood" data-can-access="{{ $canAccessTyphoon ? '1' : '0' }}" data-theme-color="#1B4C6D">
-                    <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #1B4C6D;">
-                        <div class="card-body text-center p-5">
-                            <div class="mb-4">
-                                <i class="fas fa-umbrella fa-4x" style="color: #1B4C6D;"></i>
-                            </div>
-                            <h3 class="card-title fw-bold" style="color: #1B4C6D;">Evacuation Monitoring</h3>
-                            <p class="card-text text-muted">
-                                Evacuation centers, evacuee management, and monitoring Evacuation centers.
-                            </p>
-                        </div>
-                        <div class="card-footer bg-transparent text-center border-0">
-                            <span class="btn" style="background-color: #1B4C6D; color: white;">
-                                <i class="fas fa-arrow-right"></i> Enter
-                            </span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <!-- Incidents Compliance -->
-            <div class="col-md-4 mb-4">
-                @php $canAccessIncidents = $isAdmin || in_array('incident_checklist', $modules); @endphp
-                <a href="{{ route('incidents.dashboard') }}" class="text-decoration-none module-card-link"
-                   data-module="incident_checklist" data-can-access="{{ $canAccessIncidents ? '1' : '0' }}" data-theme-color="#F2C94C">
-                    <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #F2C94C;">
-                        <div class="card-body text-center p-5">
-                            <div class="mb-4">
-                                <i class="fas fa-clipboard-list fa-4x" style="color: #F2C94C;"></i>
-                            </div>
-                            <h3 class="card-title fw-bold" style="color: #F2C94C;">Incident Checklist</h3>
-                            <p class="card-text text-muted">
-                                Incident recording, victim management, compliance checklists, and remarks tracking
-                            </p>
-                        </div>
-                        <div class="card-footer bg-transparent text-center border-0">
-                            <span class="btn" style="background-color: #F2C94C; color: #333; {{ $canAccessIncidents ? '' : 'opacity: 0.7; cursor: not-allowed;' }}">
-                                <i class="fas fa-arrow-right"></i> {{ $canAccessIncidents ? 'Enter' : 'Admin Only' }}
-                            </span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <!-- Comprehensive School Safety -->
-            <div class="col-md-4 mb-4">
-                @php $canAccessSchoolSafety = $isAdmin || in_array('comprehensive_school_safety', $modules); @endphp
-                <a href="{{ route('comprehensive-school-safety.dashboard') }}" class="text-decoration-none module-card-link"
-                   data-module="comprehensive_school_safety" data-can-access="{{ $canAccessSchoolSafety ? '1' : '0' }}" data-theme-color="#5C4033">
-                    <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #5C4033;">
-                        <div class="card-body text-center p-5">
-                            <div class="mb-4">
-                                <i class="fas fa-school fa-4x" style="color: #5C4033;"></i>
-                            </div>
-                            <h3 class="card-title fw-bold" style="color: #5C4033;">Comprehensive School Safety</h3>
-                            <p class="card-text text-muted">
-                                Evaluation compliance system assessing tools, disaster risk management, DRR in education, and safe learning facilities.
-                            </p>
-                        </div>
-                        <div class="card-footer bg-transparent text-center border-0">
-                            <span class="btn" style="background-color: #5C4033; color: white;">
-                                <i class="fas fa-arrow-right"></i> Enter
-                            </span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-                        <!--Drill Monitoring -->
-            <div class="col-md-4 mb-4">
-                @php $canAccessDrillMonitoring = $isAdmin || in_array('drill_monitoring', $modules); @endphp
-                <a href="{{ route('drill-monitoring.dashboard') }}" class="text-decoration-none module-card-link"
-                   data-module="drill_monitoring" data-can-access="{{ $canAccessDrillMonitoring ? '1' : '0' }}" data-theme-color="#FF6F00">
-                    <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #FF6F00;">
-                        <div class="card-body text-center p-5">
-                            <div class="mb-4">
-                                <i class="fas fa-bell fa-4x" style="color: #FF6F00;"></i>
-                            </div>
-                            <h3 class="card-title fw-bold" style="color: #FF6F00;">Drill Monitoring</h3>
-                            <p class="card-text text-muted">
-                                Track, log, and evaluate emergency evacuation drills, response times, and compliance metrics.
-                            </p>
-                        </div>
-                        <div class="card-footer bg-transparent text-center border-0">
-                            <span class="btn" style="background-color: #FF6F00; color: white;">
-                                <i class="fas fa-arrow-right"></i> Enter
-                            </span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-
-            <!-- Hazard Mapping -->
-            <div class="col-md-4 mb-4">
-                @php $canAccessHazard = $isAdmin || in_array('hazard_mapping', $modules); @endphp
-                     <a href="{{ route('hazard-mapping.dashboard') }}" class="text-decoration-none module-card-link"
-                         data-module="hazard_mapping" data-can-access="{{ $canAccessHazard ? '1' : '0' }}" data-theme-color="#0D7377">
-                    <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #0D7377;">
-                        <div class="card-body text-center p-5">
-                            <div class="mb-4">
-                                <i class="fas fa-map-marked-alt fa-4x" style="color: #0D7377;"></i>
-                            </div>
-                            <h3 class="card-title fw-bold" style="color: #0D7377;">Hazard Mapping</h3>
-                            <p class="card-text text-muted">
-                                Identify, assess, and map hazards affecting school sites and areas for risk reduction and preparedness planning.
-                            </p>
-                        </div>
-                        <div class="card-footer bg-transparent text-center border-0">
-                            <span class="btn" style="background-color: #0D7377; color: white;">
-                                <i class="fas fa-arrow-right"></i> Enter
-                            </span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-        </div>
-
-                <!-- Second Row For Alignment -->
-         <div class="row">
-            <!-- Damage Report Module --> 
-            <div class="col-md-6 col-lg-4 offset-lg-2 mb-4">
-                @php $canAccessDamageReport = $isAdmin || in_array('damage_reports', $modules); @endphp
-                <a href="#" class="text-decoration-none module-card-link" data-module="damage_reports" data-can-access="{{ $canAccessDamageReport ? '1' : '0' }}" data-theme-color="#6f42c1">
-                    <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #6f42c1;">
-                        <div class="card-body text-center p-5">
-                            <div class="mb-4">
-                                <i class="fas fa-user-injured fa-4x" style="color: #6f42c1;"></i>
-                            </div>
-                            <h3 class="card-title fw-bold" style="color: #6f42c1;">Damage Reports</h3>
-                            <p class="card-text text-muted">
-                                Track damages of facilities and resources. Assess the severity of damage and make decisions for recovery and rehabilitation.
-                            </p>
-                        </div>
-                        <div class="card-footer bg-transparent text-center border-0">
-                            <span class="btn" style="background-color: #6f42c1; color: white;">
-                                <i class="fas fa-arrow-right"></i> Enter
-                            </span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-
-            <!-- Inventory Module --> 
-            <div class="col-md-6 col-lg-4 mb-4">
-                @php $canAccessInventory = $isAdmin || in_array('inventory_storage', $modules); @endphp
-                <a href="{{ route('inventory-storage.dashboard') }}" class="text-decoration-none module-card-link" data-module="inventory_storage" data-can-access="{{ $canAccessInventory ? '1' : '0' }}" data-theme-color="#17a2b8">
-                    <div class="card border-0 shadow-lg h-100" style="border-top: 5px solid #17a2b8;">
-                        <div class="card-body text-center p-5">
-                            <div class="mb-4">
-                                <i class="fas fa-boxes fa-4x" style="color: #17a2b8;"></i>
-                            </div>
-                            <h3 class="card-title fw-bold" style="color: #17a2b8;">Inventory</h3>
-                            <p class="card-text text-muted">
-                                Manage and track sources, gears and equipment inventory for disaster preparedness, response, and recovery operations.
-                            </p>
-                        </div>
-                        <div class="card-footer bg-transparent text-center border-0">
-                            <span class="btn" style="background-color: #17a2b8; color: white;">
-                                <i class="fas fa-arrow-right"></i> Enter
-                            </span>
-                        </div>
-                    </div>
-                </a>
-            </div>
-        </div>
-
-
-        <!-- Quick Stats -->
-        <div class="row mt-5 mx-lg-5">
-            <div class="col-12">
-                <div class="card shadow-sm border-0 rounded-4 overflow-hidden">
-                    <div class="card-header bg-light p-3">
-                        <h5 class="mb-0 fw-bold"><i class="fas fa-chart-line me-2"></i> System Overview</h5>
-                    </div>
-                    <div class="card-body p-4">
-                        <div class="row text-center">
-                            <div class="col-md-3">
-                                <div class="p-3 border-end">
-                                    <h2 class="text-primary fw-bold">{{ $totalSchoolsCount }}</h2>
-                                    <p class="text-muted mb-0 small uppercase fw-bold">Total Schools</p>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="p-3 border-end">
-                                    <h2 class="text-success fw-bold">{{ $totalUsersCount }}</h2>
-                                    <p class="text-muted mb-0 small uppercase fw-bold">Total Users</p>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="p-3 border-end">
-                                    <h2 class="text-warning fw-bold">{{ $overallComplianceRate }}%</h2>
-                                    <p class="text-muted mb-0 small uppercase fw-bold">Compliance Rate</p>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="p-3">
-                                    <h2 class="text-info fw-bold">{{ number_format($totalPopulationCount) }}</h2>
-                                    <p class="text-muted mb-0 small uppercase fw-bold">Population Covered</p>
-                                </div>
-                            </div>
-                        </div>
+        <div class="modules-grid">
+            
+            <!-- Fire Safety -->
+            @php $canAccessFire = $isAdmin || $isContributor || in_array('fire_safety', $modules); @endphp
+            <a href="{{ route('fire-safety.dashboard') }}" class="module-card-link"
+               data-module="fire_safety" data-can-access="{{ $canAccessFire ? '1' : '0' }}">
+                <div class="module-card mod-fire">
+                    <div class="module-icon-wrap"><i class="fas fa-fire"></i></div>
+                    <div class="module-title">Fire Safety</div>
+                    <div class="module-desc">Fire extinguishers, building inspections, and evacuation plans management</div>
+                    <div class="module-btn {{ !$canAccessFire ? 'btn-disabled' : '' }}">
+                        <i class="fas fa-arrow-right"></i> {{ $canAccessFire ? 'Enter' : 'Admin Only' }}
                     </div>
                 </div>
-            </div>
+            </a>
+
+            <!-- Evacuation Monitoring -->
+            @php $canAccessTyphoon = $isAdmin || $isContributor || in_array('typhoon_flood', $modules); @endphp
+            <a href="{{ route('typhoon.dashboard') }}" class="module-card-link"
+               data-module="typhoon_flood" data-can-access="{{ $canAccessTyphoon ? '1' : '0' }}">
+                <div class="module-card mod-evac">
+                    <div class="module-icon-wrap"><i class="fas fa-route"></i></div>
+                    <div class="module-title">Evacuation Monitoring</div>
+                    <div class="module-desc">Evacuation centers, evacuee management, and monitoring Evacuation centers.</div>
+                    <div class="module-btn {{ !$canAccessTyphoon ? 'btn-disabled' : '' }}">
+                        <i class="fas fa-arrow-right"></i> {{ $canAccessTyphoon ? 'Enter' : 'Admin Only' }}
+                    </div>
+                </div>
+            </a>
+
+            <!-- Incident Checklist -->
+            @php $canAccessIncidents = $isAdmin || $isContributor || in_array('incident_checklist', $modules); @endphp
+            <a href="{{ route('incidents.dashboard') }}" class="module-card-link"
+               data-module="incident_checklist" data-can-access="{{ $canAccessIncidents ? '1' : '0' }}">
+                <div class="module-card mod-inc">
+                    <div class="module-icon-wrap"><i class="fas fa-clipboard-check"></i></div>
+                    <div class="module-title">Incident Checklist</div>
+                    <div class="module-desc">Incident recording, victim management, compliance checklists, and remarks tracking</div>
+                    <div class="module-btn {{ !$canAccessIncidents ? 'btn-disabled' : '' }}">
+                        <i class="fas fa-arrow-right"></i> {{ $canAccessIncidents ? 'Enter' : 'Admin Only' }}
+                    </div>
+                </div>
+            </a>
+
+            <!-- Comprehensive School Safety -->
+            @php $canAccessSchoolSafety = $isAdmin || $isContributor || in_array('comprehensive_school_safety', $modules); @endphp
+            <a href="{{ route('comprehensive-school-safety.dashboard') }}" class="module-card-link"
+               data-module="comprehensive_school_safety" data-can-access="{{ $canAccessSchoolSafety ? '1' : '0' }}">
+                <div class="module-card mod-css">
+                    <div class="module-icon-wrap"><i class="fas fa-school"></i></div>
+                    <div class="module-title">Comprehensive School Safety</div>
+                    <div class="module-desc">Centralized overview of every safety category, helping schools stay compliant and maintain safe learning facilities.</div>
+                    <div class="module-btn {{ !$canAccessSchoolSafety ? 'btn-disabled' : '' }}">
+                        <i class="fas fa-arrow-right"></i> {{ $canAccessSchoolSafety ? 'Enter' : 'Admin Only' }}
+                    </div>
+                </div>
+            </a>
+
+            <!-- Drill Monitoring -->
+            @php $canAccessDrillMonitoring = $isAdmin || $isContributor || in_array('drill_monitoring', $modules); @endphp
+            <a href="{{ route('drill-monitoring.dashboard') }}" class="module-card-link"
+               data-module="drill_monitoring" data-can-access="{{ $canAccessDrillMonitoring ? '1' : '0' }}">
+                <div class="module-card mod-drill">
+                    <div class="module-icon-wrap"><i class="fas fa-bell"></i></div>
+                    <div class="module-title">Drill Monitoring</div>
+                    <div class="module-desc">Track, log, and evaluate emergency evacuation drills, response times, and compliance metrics.</div>
+                    <div class="module-btn {{ !$canAccessDrillMonitoring ? 'btn-disabled' : '' }}">
+                        <i class="fas fa-arrow-right"></i> {{ $canAccessDrillMonitoring ? 'Enter' : 'Admin Only' }}
+                    </div>
+                </div>
+            </a>
+
+            <!-- Hazard Mapping -->
+            @php $canAccessHazard = $isAdmin || $isContributor || in_array('hazard_mapping', $modules); @endphp
+            <a href="{{ route('hazard-mapping.dashboard') }}" class="module-card-link"
+                data-module="hazard_mapping" data-can-access="{{ $canAccessHazard ? '1' : '0' }}">
+                <div class="module-card mod-haz">
+                    <div class="module-icon-wrap"><i class="fas fa-map"></i></div>
+                    <div class="module-title">Hazard Mapping</div>
+                    <div class="module-desc">Identify, assess, and map hazards affecting school sites and areas for risk reduction and preparedness.</div>
+                    <div class="module-btn {{ !$canAccessHazard ? 'btn-disabled' : '' }}">
+                        <i class="fas fa-arrow-right"></i> {{ $canAccessHazard ? 'Enter' : 'Admin Only' }}
+                    </div>
+                </div>
+            </a>
+
+            <!-- Damage Reports -->
+            @php $canAccessDamageReport = $isAdmin || $isContributor || in_array('damage_reports', $modules); @endphp
+            <a href="#" class="module-card-link" 
+               data-module="damage_reports" data-can-access="{{ $canAccessDamageReport ? '1' : '0' }}">
+                <div class="module-card mod-dam">
+                    <div class="module-icon-wrap"><i class="fas fa-user-injured"></i></div>
+                    <div class="module-title">Damage Reports</div>
+                    <div class="module-desc">Track damages of facilities and resources. Assess the severity of damage and make decisions for recovery and rehabilitation.</div>
+                    <div class="module-btn {{ !$canAccessDamageReport ? 'btn-disabled' : '' }}">
+                        <i class="fas fa-arrow-right"></i> {{ $canAccessDamageReport ? 'Enter' : 'Admin Only' }}
+                    </div>
+                </div>
+            </a>
+
+            <!-- Inventory -->
+            @php $canAccessInventory = $isAdmin || $isContributor || in_array('inventory_storage', $modules); @endphp
+            <a href="{{ route('inventory-storage.dashboard') }}" class="module-card-link" 
+               data-module="inventory_storage" data-can-access="{{ $canAccessInventory ? '1' : '0' }}">
+                <div class="module-card mod-inv">
+                    <div class="module-icon-wrap"><i class="fas fa-boxes"></i></div>
+                    <div class="module-title">Inventory</div>
+                    <div class="module-desc">Manage and track sources, gears and equipment inventory for disaster preparedness, response, and recovery operations.</div>
+                    <div class="module-btn {{ !$canAccessInventory ? 'btn-disabled' : '' }}">
+                        <i class="fas fa-arrow-right"></i> {{ $canAccessInventory ? 'Enter' : 'Admin Only' }}
+                    </div>
+                </div>
+            </a>
+
+            <!-- Heat Index Report -->
+            @php $canAccessHeatIndex = $isAdmin || $isContributor || in_array('heat_index', $modules) || in_array('heat_index_reports', $modules) || true; @endphp
+            <a href="#heatIndexReportModal" data-bs-toggle="modal" data-bs-target="#heatIndexReportModal" class="module-card-link" 
+               data-module="heat_index" data-can-access="{{ $canAccessHeatIndex ? '1' : '0' }}" data-theme-color="#EA580C">
+                <div class="module-card mod-heat">
+                    <div class="module-icon-wrap"><i class="fas fa-temperature-high"></i></div>
+                    <div class="module-title">Heat Index Report</div>
+                    <div class="module-desc">Monitor campus temperature and heat index thresholds, assess danger levels, and manage DepEd heat advisories.</div>
+                    <div class="module-btn {{ !$canAccessHeatIndex ? 'btn-disabled' : '' }}">
+                        <i class="fas fa-arrow-right"></i> {{ $canAccessHeatIndex ? 'Enter' : 'Admin Only' }}
+                    </div>
+                </div>
+            </a>
+
         </div>
     </div>
 
@@ -841,15 +740,48 @@
                                     <button id="btn_hazard" class="btn btn-module text-start py-3 border">
                                         <i class="fas fa-map-marked-alt me-2 d-inline"></i> Hazard (Dev)
                                     </button>
+                                    <button id="btn_heat_index" class="btn bg-white border d-flex align-items-center justify-content-between p-3 rounded-3 text-start w-100 module-btn-link" style="transition: all 0.2s;">
+                                        <div class="d-flex align-items-center fw-semibold text-dark">
+                                            <div class="d-flex align-items-center justify-content-center rounded-3 me-3" style="width: 32px; height: 32px; background: #FFEDD5; color: #EA580C;">
+                                                <i class="fas fa-temperature-high"></i>
+                                            </div>
+                                            Heat Index Report
+                                        </div>
+                                        <i class="fas fa-chevron-right text-muted small"></i>
+                                    </button>
+                                    <button id="btn_damage_assessment" class="btn bg-white border d-flex align-items-center justify-content-between p-3 rounded-3 text-start w-100 module-btn-link opacity-50 disabled" style="transition: all 0.2s;">
+                                        <div class="d-flex align-items-center fw-semibold text-muted">
+                                            <div class="d-flex align-items-center justify-content-center rounded-3 me-3" style="width: 32px; height: 32px; background: #EDE9FE; color: #8B5CF6;">
+                                                <i class="fas fa-user-injured"></i>
+                                            </div>
+                                            Damage Assessment
+                                        </div>
+                                    </button>
+                                    <button id="btn_hazard" class="btn bg-white border d-flex align-items-center justify-content-between p-3 rounded-3 text-start w-100 module-btn-link opacity-50 disabled" style="transition: all 0.2s;">
+                                        <div class="d-flex align-items-center fw-semibold text-muted">
+                                            <div class="d-flex align-items-center justify-content-center rounded-3 me-3" style="width: 32px; height: 32px; background: #CCFBF1; color: #0D7377;">
+                                                <i class="fas fa-map-marked-alt"></i>
+                                            </div>
+                                            Hazard (Dev)
+                                        </div>
+                                    </button>
+                                    <button id="btn_heat_index" class="btn bg-white border d-flex align-items-center justify-content-between p-3 rounded-3 text-start w-100 module-btn-link" style="transition: all 0.2s;">
+                                        <div class="d-flex align-items-center fw-semibold text-dark">
+                                            <div class="d-flex align-items-center justify-content-center rounded-3 me-3" style="width: 32px; height: 32px; background: #FFEDD5; color: #EA580C;">
+                                                <i class="fas fa-temperature-high"></i>
+                                            </div>
+                                            Heat Index Report
+                                        </div>
+                                        <i class="fas fa-chevron-right text-muted small"></i>
+                                    </button>
                                 </div>
 
-                                <div class="mt-4 pt-3 border-top">
-                                    <h6 class="fw-bold mb-2">Unassigned Contributors/Viewers</h6>
-                                    <div id="availableSchoolUsersMenu" class="d-grid gap-2 small">
-                                        <div class="text-muted small">No available users.</div>
+                                <div class="mb-4">
+                                    <div class="form-section-label">Unassigned Contributors/Viewers</div>
+                                    <div id="availableSchoolUsersMenu" class="d-grid gap-2 mb-2">
+                                        <div class="text-muted small" style="font-style: italic;">No available users.</div>
                                     </div>
-
-                                    <div class="small text-muted mt-2" id="schoolAssignmentHint">Only unassigned contributors/viewers are listed here.</div>
+                                    <div class="small text-muted" id="schoolAssignmentHint" style="font-size: 0.75rem;">Only unassigned contributors/viewers are listed here.</div>
                                 </div>
 
                                 <div class="mt-3">
@@ -942,19 +874,50 @@
                                 <label class="form-label fw-bold small text-uppercase">School's Address</label>
                                 <textarea name="address" class="form-control p-3" rows="2" required placeholder="Complete School Address"></textarea>
                             </div>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold small text-uppercase">School Head</label>
-                                    <input type="text" name="school_head" class="form-control p-3" placeholder="Enter School Head Name">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label fw-bold small text-uppercase">DRRM Coordinator</label>
-                                    <input type="text" name="drrm_coordinator" class="form-control p-3" placeholder="Enter DRRM Coordinator Name">
+
+                            {{-- School Type - wip --}}
+                            <div class="mb-4">
+                                <label class="form-label d-block">School Type <span class="text-danger">*</span></label>
+                                <div class="d-flex gap-4 mt-2">
+                                    <div class="form-check custom-radio">
+                                        <input class="form-check-input" type="radio" name="school_type" id="typeClustered" value="Clustered" >
+                                        <label class="form-check-label" for="typeClustered">
+                                            Clustered
+                                        </label>
+                                    </div>
+                                    <div class="form-check custom-radio">
+                                        <input class="form-check-input" type="radio" name="school_type" id="typeNonClustered" value="Non-Clustered" >
+                                        <label class="form-check-label" for="typeNonClustered">
+                                            Non-Clustered
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label fw-bold small text-uppercase">District</label>
+
+                            {{-- Address --}}
+                            <div class="form-section-label">School's Address</div>
+                            <div class="mb-4">
+                                <textarea name="address" class="form-control" rows="3" placeholder="Complete school address"></textarea>
+                            </div>
+
+                            {{-- Personnel --}}
+                            <div class="form-section-label">Personnel</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-6">
+                                    <label class="form-label">School Head</label>
+                                    <input type="text" name="school_head" class="form-control" placeholder="Enter school head name">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">DRRM Coordinator</label>
+                                    <input type="text" name="drrm_coordinator" class="form-control" placeholder="Enter DRRM coordinator name">
+                                </div>
+                            </div>
+
+                            {{-- Location --}}
+                            <div class="form-section-label">Location Details</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-4">
+                                    <label class="form-label">District</label>
                                     <input type="text" name="district" class="form-control" placeholder="Dist.">
                                 </div>
                                 <div class="col-md-4 mb-3">
@@ -1303,6 +1266,9 @@
         </div>
     </div>
 </div>
+
+<!-- Heat Index Report Modal -->
+@include('heat-index-reports.heat-index_dashboard')
 
 @push('scripts')
 <script>
@@ -1746,6 +1712,7 @@
             configureModuleButton('btn_comprehensive', m.comprehensive_school_safety, `/comprehensive-school-safety/schools/${s.id}/assessments`);
             configureModuleButton('btn_damage_assessment', m.damage_assessment, `/damage-assessment/dashboard?school_id=${s.id}`);
             configureModuleButton('btn_hazard', m.hazard_mapping, `#`);
+            configureModuleButton('btn_heat_index', true, null, () => openHeatIndexModalForSchool(s));
 
             // Setup Edit Button
             const editBtn = document.getElementById('editSchoolBtn');

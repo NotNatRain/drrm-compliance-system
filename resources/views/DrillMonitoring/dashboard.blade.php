@@ -899,234 +899,399 @@ function toggleObserverOthersInput(radioElement, wrapperId) {
 @endsection
 
 @push('scripts')
-<script>
-let currentViewedRecord = null;
+    <script>
+        /**
+         * Calculates the elapsed time (mm:ss) between two time inputs and updates a target field.
+         * Handles overnight drills where finish time is on the next day.
+         */
+        function calcElapsed(startId, finishId, elapsedId) {
+            const startVal = document.getElementById(startId).value;
+            const finishVal = document.getElementById(finishId).value;
+            const elapsedInput = document.getElementById(elapsedId);
 
-async function viewDrillDetails(id) {
-    try {
-        const response = await fetch(`/drill-monitoring/${id}`);
-        const record = await response.json();
+            if (!startVal || !finishVal) {
+                elapsedInput.value = '';
+                return;
+            }
+
+            const [startH, startM, startS] = startVal.split(':').map(Number);
+            const [finishH, finishM, finishS] = finishVal.split(':').map(Number);
+
+            let startTotalSec = (startH * 3600) + (startM * 60) + (startS || 0);
+            let finishTotalSec = (finishH * 3600) + (finishM * 60) + (finishS || 0);
+
+            // Handle overnight: if finish is before start, assume next-day
+            if (finishTotalSec < startTotalSec) {
+                finishTotalSec += 86400;
+            }
+
+            const diffSec = finishTotalSec - startTotalSec;
+            const minutes = Math.floor(diffSec / 60);
+            const seconds = diffSec % 60;
+
+            elapsedInput.value = String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+        }
+
+        /**
+         * Computes elapsed time (mm:ss) directly from two HH:MM or HH:MM:SS string values.
+         * Returns the formatted string, or falls back to the stored value if inputs are missing.
+         */
+        function calcElapsedFromValues(startVal, finishVal, fallback) {
+            if (!startVal || !finishVal) return fallback || '—';
+
+            const [startH, startM, startS] = startVal.split(':').map(Number);
+            const [finishH, finishM, finishS] = finishVal.split(':').map(Number);
+
+            let startTotalSec = (startH * 3600) + (startM * 60) + (startS || 0);
+            let finishTotalSec = (finishH * 3600) + (finishM * 60) + (finishS || 0);
+
+            if (finishTotalSec < startTotalSec) finishTotalSec += 86400;
+
+            const diffSec = finishTotalSec - startTotalSec;
+            const minutes = Math.floor(diffSec / 60);
+            const seconds = diffSec % 60;
+
+            return String(minutes).padStart(2, '0') + ':' + String(seconds).padStart(2, '0');
+        }
+
+        let currentViewedRecord = null;
+
+        async function viewDrillDetails(id) {
+            try {
+                const response = await fetch(`/drill-monitoring/${id}`);
+                        const record = await response.json();
+        ['checklist_data', 'observers_data', 'participants'].forEach(key => {
+            if (typeof record[key] === 'string') {
+                try { record[key] = JSON.parse(record[key]); } catch (_) { record[key] = {}; }
+            }
+        });
         currentViewedRecord = record;
         
         const html = `
-            <div class="row g-4">
-                <div class="col-md-6">
-                    <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Basic Information</label>
-                    <p class="mb-1"><strong>Type:</strong> ${record.drill_type}</p>
-                    <p class="mb-1"><strong>Date:</strong> ${new Date(record.inspection_date).toLocaleDateString('en-US', {month:'long', day:'numeric', year:'numeric'})}</p>
-                    <p class="mb-1"><strong>Time:</strong> ${record.inspection_time}</p>
-                    <p class="mb-1"><strong>Status:</strong> <span class="badge bg-success">${record.status}</span></p>
-                </div>
-                <div class="col-md-6">
-                    <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Timing Details</label>
-                    <p class="mb-1"><strong>Started:</strong> ${record.time_started || '—'}</p>
-                    <p class="mb-1"><strong>Finished:</strong> ${record.time_finished || '—'}</p>
-                    <p class="mb-1"><strong>Elapsed:</strong> <span class="text-primary fw-bold">${record.elapsed_time || '—'}</span></p>
-                </div>
-                <div class="col-md-6 border-top pt-3">
-                    <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Participants</label>
-                    <p class="mb-1"><strong>Students:</strong> ${record.no_of_students || 0}</p>
-                    <p class="mb-1"><strong>Personnel:</strong> ${record.no_of_personnel || 0}</p>
-                </div>
-                <div class="col-md-6 border-top pt-3">
-                    <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Monitors</label>
-                    <p class="mb-1"><strong>Monitored By:</strong> ${record.monitored_by}</p>
-                    <p class="mb-1"><strong>Coordinator:</strong> ${record.coordinator_name || 'N/A'}</p>
-                </div>
-                <div class="col-12 border-top pt-3">
-                    <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Remarks / Observations</label>
-                    <div class="p-3 bg-light rounded small">${record.remarks || 'No remarks recorded.'}</div>
-                </div>
-                <div class="col-md-7 border-top pt-3">
-                    <label class="text-muted small text-uppercase fw-bold mb-2 d-block">Drill Evaluation Results</label>
-                    <div class="table-responsive border rounded bg-white" style="max-height: 320px; overflow-y: auto;">
-                        <table class="table table-sm table-hover align-middle mb-0 text-center" style="font-size: 0.8rem;">
-                            <thead class="table-light sticky-top">
-                                <tr>
-                                    <th class="text-start ps-3">Evaluation Item</th>
-                                    <th style="width: 25%;">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${record.checklist_data ? (Array.isArray(record.checklist_data) ? 
-                                    record.checklist_data.map(item => `<tr><td class="text-start ps-3">${item}</td><td><span class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i>Good</span></td></tr>`).join('') :
-                                    Object.entries(record.checklist_data).map(([key, val]) => {
-                                        const labels = {
-                                            'alarm_audible': 'Alarm', 'routes_clear': 'Evacuation plan(updated)', 'participants_calm': 'DRRM team',
-                                            'hotline_numbers': 'Hotline Numbers', 'duck_cover_and_hold': 'Duck Cover and Hold (ER)', 'command_center': 'Command Center',
-                                            'student_release_form': 'Student Release Form', 'exit_signage': 'Exit Signage', 'bert_sert': 'BERT/SERT',
-                                            'wear_ids': 'Wearing of IDs', 'walk_casually': 'Walked Casually', 'first_aid_kit': 'First Aid Kit',
-                                            'actual_headcount': 'Actual headcount', 'directional_arrows': 'Directional Arrows', 'attendance_sheet': 'Attendance Sheet',
-                                            'megaphone': 'Megaphone', 'group_signage': 'Group Signage', 'guard_on_duty': 'Guard on Duty',
-                                            'school_id': 'School ID of personnel', 'open_doors': 'Open Doors(EQ)', 'closed_doors': 'Closed Doors(Fire)'
-                                        };
-                                        let statusHtml = '';
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Basic Information</label>
+                            <p class="mb-1"><strong>Type:</strong> ${record.drill_type}</p>
+                            <p class="mb-1"><strong>Date:</strong> ${new Date(record.inspection_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                            <p class="mb-1"><strong>Time:</strong> ${record.inspection_time}</p>
+                            <p class="mb-1"><strong>Status:</strong> <span class="badge bg-success">${record.status}</span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Timing Details</label>
+                            <p class="mb-1"><strong>Started:</strong> ${record.time_started || '—'}</p>
+                            <p class="mb-1"><strong>Finished:</strong> ${record.time_finished || '—'}</p>
+                            <p class="mb-1"><strong>Elapsed:</strong> <span class="text-primary fw-bold">${calcElapsedFromValues(record.time_started, record.time_finished, record.elapsed_time)}</span></p>
+                        </div>
+                        <div class="col-md-6 border-top pt-3">
+                            <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Participants</label>
+                            <p class="mb-1"><strong>Students:</strong> ${record.no_of_students || 0}</p>
+                            <p class="mb-1"><strong>Personnel:</strong> ${record.no_of_personnel || 0}</p>
+                        </div>
+                        <div class="col-md-6 border-top pt-3">
+                            <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Monitors</label>
+                            <p class="mb-1"><strong>Monitored By:</strong> ${record.monitored_by}</p>
+                            <p class="mb-1"><strong>Coordinator:</strong> ${record.coordinator_name || 'N/A'}</p>
+                        </div>
+                        <div class="col-12 border-top pt-3">
+                            <label class="text-muted small text-uppercase fw-bold mb-1 d-block">Remarks / Observations</label>
+                            <div class="p-3 bg-light rounded small">${record.remarks || 'No remarks recorded.'}</div>
+                        </div>
+                        <div class="col-md-7 border-top pt-3">
+                            <label class="text-muted small text-uppercase fw-bold mb-2 d-block">Drill Evaluation Results</label>
+                            <div class="table-responsive border rounded bg-white" style="max-height: 320px; overflow-y: auto;">
+                                <table class="table table-sm table-hover align-middle mb-0 text-center" style="font-size: 0.8rem;">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th class="text-start ps-3">Evaluation Item</th>
+                                            <th style="width: 25%;">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${record.checklist_data ? (Array.isArray(record.checklist_data) ?
+                        record.checklist_data.map(item => `<tr><td class="text-start ps-3">${item}</td><td><span class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i>Good</span></td></tr>`).join('') :
+                        Object.entries(record.checklist_data).map(([key, val]) => {
+                            const labels = {
+                                'alarm_audible': 'Alarm', 'routes_clear': 'Evacuation plan(updated)', 'participants_calm': 'DRRM team',
+                                'hotline_numbers': 'Hotline Numbers', 'duck_cover_and_hold': 'Duck Cover and Hold (ER)', 'command_center': 'Command Center',
+                                'student_release_form': 'Student Release Form', 'exit_signage': 'Exit Signage', 'bert_sert': 'BERT/SERT',
+                                'wear_ids': 'Wearing of IDs', 'walk_casually': 'Walked Casually', 'first_aid_kit': 'First Aid Kit',
+                                'actual_headcount': 'Actual headcount', 'directional_arrows': 'Directional Arrows', 'attendance_sheet': 'Attendance Sheet',
+                                'megaphone': 'Megaphone', 'group_signage': 'Group Signage', 'guard_on_duty': 'Guard on Duty',
+                                'school_id': 'School ID of personnel', 'open_doors': 'Open Doors(EQ)', 'closed_doors': 'Closed Doors(Fire)', 'perform_run': 'Perform Run (LDD)',
+                                'perform_hide': 'Perform Hide (LDD)', 'perform_call_tell': 'Perform Call/Tell (LDD)', 'perform_fight': 'Perform Fight (LDD)'
+                            };
+                                                                    let statusHtml = '';
                                         if (val === 'check') statusHtml = '<span class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i>Good</span>';
                                         else if (val === 'circle') statusHtml = '<span class="text-warning fw-bold"><i class="far fa-dot-circle me-1"></i>Partial</span>';
                                         else if (val === 'x') statusHtml = '<span class="text-danger fw-bold"><i class="fas fa-times-circle me-1"></i>Bad</span>';
+                                        else if (String(val) === '2') statusHtml = '<span class="text-success fw-bold">Satisfactory (2)</span>';
+                                        else if (String(val) === '1') statusHtml = '<span class="text-warning fw-bold">Needs Improvement (1)</span>';
+                                        else if (String(val) === '0') statusHtml = '<span class="text-danger fw-bold">Unsatisfactory (0)</span>';
+                                        else if (val === 'NO') statusHtml = '<span class="text-muted fw-bold">Not Observed / N/A</span>';
                                         else return '';
-                                        return `<tr><td class="text-start ps-3">${labels[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</td><td>${statusHtml}</td></tr>`;
-                                    }).join('')
-                                ) : '<tr><td colspan="2" class="text-muted py-3">No evaluation data recorded.</td></tr>'}
-                            </tbody>
-                        </table>
+                            return `<tr><td class="text-start ps-3">${labels[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</td><td>${statusHtml}</td></tr>`;
+                        }).join('')
+                    ) : '<tr><td colspan="2" class="text-muted py-3">No evaluation data recorded.</td></tr>'}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-md-5 border-top pt-3">
+                            <label class="text-muted small text-uppercase fw-bold mb-2 d-block">Observers Presence</label>
+                            <div class="table-responsive border rounded bg-white" style="max-height: 320px; overflow-y: auto;">
+                                <table class="table table-sm table-hover align-middle mb-0 text-center" style="font-size: 0.8rem;">
+                                    <thead class="table-light sticky-top">
+                                        <tr>
+                                            <th class="text-start ps-3">Observer Group</th>
+                                            <th style="width: 25%;">Present</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${record.observers_data ? (Array.isArray(record.observers_data) ?
+                        record.observers_data.map(item => `<tr><td class="text-start ps-3">${item}</td><td><i class="fas fa-check text-success"></i></td></tr>`).join('') :
+                        Object.entries(record.observers_data).map(([key, val]) => {
+                            const labels = {
+                                'local_barangay': 'Local Barangay', 'pnp': 'Philippine National Police (PNP)', 'city_drrm': 'City DRRM',
+                                'bfp': 'Bureau of Fire Protection(BFP)', 'pta_parents': 'PTA / Parent Observers', 'otmps': 'OTMPS'
+                            };
+                            if (key === 'others_specified') return '';
+                            if (val !== 'present') return '';
+
+                            let name = labels[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                            if (key === 'others_present') {
+                                if (record.observers_data.others_specified) {
+                                    name = `<strong>Others:</strong> ${record.observers_data.others_specified}`;
+                                } else {
+                                    return '';
+                                }
+                            }
+                            return `<tr><td class="text-start ps-3">${name}</td><td><i class="fas fa-check text-success"></i></td></tr>`;
+                        }).join('')
+                    ) : '<tr><td colspan="2" class="text-muted py-3">No observers recorded.</td></tr>'}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="col-md-5 border-top pt-3">
-                    <label class="text-muted small text-uppercase fw-bold mb-2 d-block">Observers Presence</label>
-                    <div class="table-responsive border rounded bg-white" style="max-height: 320px; overflow-y: auto;">
-                        <table class="table table-sm table-hover align-middle mb-0 text-center" style="font-size: 0.8rem;">
-                            <thead class="table-light sticky-top">
-                                <tr>
-                                    <th class="text-start ps-3">Observer Group</th>
-                                    <th style="width: 25%;">Present</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${record.observers_data ? (Array.isArray(record.observers_data) ? 
-                                    record.observers_data.map(item => `<tr><td class="text-start ps-3">${item}</td><td><i class="fas fa-check text-success"></i></td></tr>`).join('') :
-                                    Object.entries(record.observers_data).map(([key, val]) => {
-                                        const labels = {
-                                            'local_barangay': 'Local Barangay', 'pnp': 'Philippine National Police (PNP)', 'city_drrm': 'City DRRM',
-                                            'bfp': 'Bureau of Fire Protection(BFP)', 'pta_parents': 'PTA / Parent Observers', 'otmps': 'OTMPS'
-                                        };
-                                        if (key === 'others_specified') return '';
-                                        if (val !== 'present') return '';
-                                        
-                                        let name = labels[key] || key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                                        if (key === 'others_present') {
-                                            if (record.observers_data.others_specified) {
-                                                name = `<strong>Others:</strong> ${record.observers_data.others_specified}`;
-                                            } else {
-                                                return ''; 
-                                            }
-                                        }
-                                        return `<tr><td class="text-start ps-3">${name}</td><td><i class="fas fa-check text-success"></i></td></tr>`;
-                                    }).join('')
-                                ) : '<tr><td colspan="2" class="text-muted py-3">No observers recorded.</td></tr>'}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        document.getElementById('viewModalContent').innerHTML = html;
-        
-        const printBtn = document.getElementById('printBtnInView');
-        printBtn.href = `/drill-monitoring/monitoring-tool/${id}`;
-        printBtn.classList.remove('d-none');
-        
-        const modal = new bootstrap.Modal(document.getElementById('viewMonitoringModal'));
-        modal.show();
-    } catch (error) {
-        Swal.fire('Error', 'Could not load record details.', 'error');
+                `;
+
+                document.getElementById('viewModalContent').innerHTML = html;
+
+                const printBtn = document.getElementById('printBtnInView');
+                printBtn.href = `/drill-monitoring/monitoring-tool/${id}`;
+                printBtn.classList.remove('d-none');
+
+                const modal = new bootstrap.Modal(document.getElementById('viewMonitoringModal'));
+                modal.show();
+            } catch (error) {
+                Swal.fire('Error', 'Could not load record details.', 'error');
+            }
+        }
+
+        function openLockdownEditModal(record) {
+    const form = document.getElementById('lockdownEvaluationForm');
+    const modalElement = document.getElementById('lockdownEvaluationModal');
+    if (!form || !modalElement) return;
+
+    form.reset();
+    form.action = `/drill-monitoring/update/${record.id}`;
+    document.getElementById('lockdownFormMethod').value = 'PUT';
+
+    const setValue = (name, value) => {
+        const field = form.elements.namedItem(name);
+        if (field && !field.length && value !== undefined && value !== null) field.value = value;
+    };
+    setValue('school_name', record.school_name);
+    setValue('school_id', record.school_id);
+    setValue('inspection_date', record.inspection_date ? String(record.inspection_date).slice(0, 10) : '');
+    setValue('inspection_time', record.inspection_time ? String(record.inspection_time).slice(0, 5) : '');
+    setValue('school_head', record.school_head);
+    setValue('coordinator_name', record.coordinator_name || record.drrm_coordinator);
+    setValue('monitored_by', record.monitored_by || record.evaluator_observer);
+    setValue('scenario', record.scenario || 'Active Threat');
+    setValue('scenario_other', record.scenario_other);
+    setValue('no_of_students', record.no_of_students ?? 0);
+    setValue('no_of_personnel', record.no_of_personnel ?? 0);
+    setValue('remarks', record.remarks);
+    setValue('observed_strengths', record.observed_strengths);
+    setValue('improvement_gaps', record.improvement_gaps);
+    setValue('corrective_actions', record.corrective_actions);
+
+    form.querySelectorAll('input[name="drill_schedule_type"], input[name="participants[]"], .lockdown-rating').forEach(input => {
+        input.checked = false;
+    });
+    const drillType = record.drill_schedule_type || record.evaluation_drill_type || 'Announced';
+    const drillTypeOption = form.querySelector(`input[name="drill_schedule_type"][value="${CSS.escape(drillType)}"]`);
+    if (drillTypeOption) drillTypeOption.checked = true;
+    const saveButton = document.getElementById('saveLockdownEvaluationBtn');
+    if (saveButton) saveButton.innerHTML = '<i class="fas fa-save me-1"></i> Update Evaluation';
+    let participants = record.participants || [];
+    if (typeof participants === 'string') {
+        try { participants = JSON.parse(participants); } catch (_) { participants = []; }
     }
+    if (!Array.isArray(participants)) participants = [];
+    participants.forEach(value => {
+        const input = form.querySelector(`input[name="participants[]"][value="${CSS.escape(value)}"]`);
+        if (input) input.checked = true;
+    });
+    let checklistData = record.checklist_data || {};
+    if (typeof checklistData === 'string') {
+        try { checklistData = JSON.parse(checklistData); } catch (_) { checklistData = {}; }
+    }
+    if (checklistData) {
+        Object.entries(checklistData).forEach(([key, value]) => {
+            const radio = form.querySelector(`input[name="checklist_data[${key}]"][value="${CSS.escape(String(value))}"]`);
+            if (radio) radio.checked = true;
+        });
+    }
+    let observersData = record.observers_data || {};
+    if (typeof observersData === 'string') {
+        try { observersData = JSON.parse(observersData); } catch (_) { observersData = {}; }
+    }
+    const otherObserverWrapper = document.getElementById('observerOthersInputWrapper');
+    const otherObserverInput = form.querySelector('input[name="observers_data[others_specified]"]');
+    if (otherObserverWrapper) otherObserverWrapper.classList.add('d-none');
+    if (otherObserverInput) {
+        otherObserverInput.disabled = true;
+        otherObserverInput.required = false;
+        otherObserverInput.value = '';
+    }
+    Object.entries(observersData).forEach(([key, value]) => {
+        if (key === 'others_specified') {
+            if (otherObserverInput) otherObserverInput.value = value;
+            return;
+        }
+        const radio = form.querySelector(`input[name="observers_data[${key}]"][value="${CSS.escape(String(value))}"]`);
+        if (radio) radio.checked = true;
+    });
+    if (observersData.others_present === 'present') {
+        if (otherObserverWrapper) otherObserverWrapper.classList.remove('d-none');
+        if (otherObserverInput) {
+            otherObserverInput.disabled = false;
+            otherObserverInput.required = true;
+        }
+    }
+    if (record.overall_result) setValue('overall_result', record.overall_result);
+    if (record.overall_percentage) setValue('overall_percentage', record.overall_percentage);
+
+    const viewModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('viewMonitoringModal'));
+    const showEditor = () => bootstrap.Modal.getOrCreateInstance(modalElement).show();
+    document.getElementById('viewMonitoringModal').addEventListener('hidden.bs.modal', showEditor, { once: true });
+    viewModal.hide();
 }
 
 function openEditModalFromView() {
     if (!currentViewedRecord) return;
+    if (String(currentViewedRecord.drill_type).toLowerCase() === 'lockdown') {
+        openLockdownEditModal(currentViewedRecord);
+        return;
+    }
     
     // Close View Modal
-    bootstrap.Modal.getInstance(document.getElementById('viewMonitoringModal')).hide();
-    
-    // Fill Edit Form
-    const rec = currentViewedRecord;
-    const form = document.getElementById('editMonitoringForm');
-    
-    document.getElementById('edit_id').value = rec.id;
-    document.getElementById('edit_drill_type').value = rec.drill_type;
-    document.getElementById('edit_inspection_date').value = rec.inspection_date;
-    document.getElementById('edit_inspection_time').value = rec.inspection_time;
-    document.getElementById('edit_time_started').value = rec.time_started || '';
-    document.getElementById('edit_time_finished').value = rec.time_finished || '';
-    document.getElementById('edit_elapsed_time').value = rec.elapsed_time || '';
-    document.getElementById('edit_no_of_students').value = rec.no_of_students || 0;
-    document.getElementById('edit_no_of_personnel').value = rec.no_of_personnel || 0;
-    document.getElementById('edit_monitored_by').value = rec.monitored_by || '';
-    document.getElementById('edit_coordinator_name').value = rec.coordinator_name || '';
-    document.getElementById('edit_remarks').value = rec.remarks || '';
+            bootstrap.Modal.getInstance(document.getElementById('viewMonitoringModal')).hide();
 
-    // Reset and Populate Checklists in Edit Modal
-    form.querySelectorAll('input[type="radio"]').forEach(r => {
-        r.checked = false;
-        r.wasChecked = false;
-    });
-    
-    // Reset Others Input
-    const observerWrapper = document.getElementById('edit_observerOthersInputWrapper');
-    const observerInput = document.getElementById('edit_observerOthersSpecified');
-    observerWrapper.classList.add('d-none');
-    observerInput.disabled = true;
-    observerInput.value = '';
+            // Fill Edit Form
+            const rec = currentViewedRecord;
+            const form = document.getElementById('editMonitoringForm');
 
-    if (rec.checklist_data) {
-        Object.entries(rec.checklist_data).forEach(([key, value]) => {
-            const radio = form.querySelector(`input[name="checklist_data[${key}]"][value="${value}"]`);
-            if (radio) {
-                radio.checked = true;
-                radio.wasChecked = true;
-            }
-        });
-    }
-
-    if (rec.observers_data) {
-        Object.entries(rec.observers_data).forEach(([key, value]) => {
-            if (key === 'others_specified') {
-                observerInput.value = value;
+            document.getElementById('edit_id').value = rec.id;
+            document.getElementById('edit_drill_type').value = rec.drill_type;
+            document.getElementById('edit_inspection_date').value = rec.inspection_date;
+            document.getElementById('edit_inspection_time').value = rec.inspection_time;
+            document.getElementById('edit_time_started').value = rec.time_started || '';
+            document.getElementById('edit_time_finished').value = rec.time_finished || '';
+            // Recalculate elapsed time from start/finish; fall back to stored value if times are missing
+            if (rec.time_started && rec.time_finished) {
+                calcElapsed('edit_time_started', 'edit_time_finished', 'edit_elapsed_time');
             } else {
-                const radio = form.querySelector(`input[name="observers_data[${key}]"][value="${value}"]`);
-                if (radio) {
-                    radio.checked = true;
-                    radio.wasChecked = true;
-                    if (key === 'others_present') {
-                        observerWrapper.classList.remove('d-none');
-                        observerInput.disabled = false;
-                        observerInput.required = true;
-                    }
-                }
+                document.getElementById('edit_elapsed_time').value = rec.elapsed_time || '';
             }
-        });
-    }
-    
-    // Show Edit Modal
-    const editModal = new bootstrap.Modal(document.getElementById('editMonitoringModal'));
-    editModal.show();
-}
+            document.getElementById('edit_no_of_students').value = rec.no_of_students || 0;
+            document.getElementById('edit_no_of_personnel').value = rec.no_of_personnel || 0;
+            document.getElementById('edit_monitored_by').value = rec.monitored_by || '';
+            document.getElementById('edit_coordinator_name').value = rec.coordinator_name || '';
+            document.getElementById('edit_remarks').value = rec.remarks || '';
 
-document.getElementById('editMonitoringForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const form = this;
-    const id = document.getElementById('edit_id').value;
-    const btn = document.getElementById('updateLogBtn');
-    
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Updating...';
-    
-    try {
-        const formData = new FormData(form);
-        const response = await fetch(`/drill-monitoring/update/${id}`, {
-            method: 'POST', // Using POST with _method PUT handled by FormData
-            body: formData,
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json'
+            // Reset and Populate Checklists in Edit Modal
+            form.querySelectorAll('input[type="radio"]').forEach(r => {
+                r.checked = false;
+                r.wasChecked = false;
+            });
+
+            // Reset Others Input
+            const observerWrapper = document.getElementById('edit_observerOthersInputWrapper');
+            const observerInput = document.getElementById('edit_observerOthersSpecified');
+            observerWrapper.classList.add('d-none');
+            observerInput.disabled = true;
+            observerInput.value = '';
+
+            if (rec.checklist_data) {
+                Object.entries(rec.checklist_data).forEach(([key, value]) => {
+                    const radio = form.querySelector(`input[name="checklist_data[${key}]"][value="${value}"]`);
+                    if (radio) {
+                        radio.checked = true;
+                        radio.wasChecked = true;
+                    }
+                });
+            }
+
+            if (rec.observers_data) {
+                Object.entries(rec.observers_data).forEach(([key, value]) => {
+                    if (key === 'others_specified') {
+                        observerInput.value = value;
+                    } else {
+                        const radio = form.querySelector(`input[name="observers_data[${key}]"][value="${value}"]`);
+                        if (radio) {
+                            radio.checked = true;
+                            radio.wasChecked = true;
+                            if (key === 'others_present') {
+                                observerWrapper.classList.remove('d-none');
+                                observerInput.disabled = false;
+                                observerInput.required = true;
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Show Edit Modal
+            const editModal = new bootstrap.Modal(document.getElementById('editMonitoringModal'));
+            editModal.show();
+        }
+
+        document.getElementById('editMonitoringForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const form = this;
+            const id = document.getElementById('edit_id').value;
+            const btn = document.getElementById('updateLogBtn');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Updating...';
+
+            try {
+                const formData = new FormData(form);
+                const response = await fetch(`/drill-monitoring/update/${id}`, {
+                    method: 'POST', // Using POST with _method PUT handled by FormData
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    Swal.fire({ icon: 'success', title: 'Updated!', text: data.message, timer: 1500, showConfirmButton: false })
+                        .then(() => location.reload());
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                Swal.fire('Update Failed', error.message, 'error');
+                btn.disabled = false;
+                btn.innerHTML = 'Update Record';
             }
         });
-        
-        const data = await response.json();
-        if (data.success) {
-            Swal.fire({ icon: 'success', title: 'Updated!', text: data.message, timer: 1500, showConfirmButton: false })
-                .then(() => location.reload());
-        } else {
-            throw new Error(data.message);
-        }
-    } catch (error) {
-        Swal.fire('Update Failed', error.message, 'error');
-        btn.disabled = false;
-        btn.innerHTML = 'Update Record';
-    }
-});
 
 document.getElementById('logMonitoringForm').addEventListener('submit', async function(e) {
     e.preventDefault();

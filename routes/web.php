@@ -251,10 +251,17 @@ Route::prefix('typhoon')->middleware(['auth', 'module.access:typhoon_flood'])->g
     Route::post('/notifications/{id}/mark-read', [TyphoonController::class, 'markNotificationRead'])->name('typhoon.notification.mark-read');
     Route::post('/notifications/mark-all-read', [TyphoonController::class, 'markAllNotificationsRead'])->name('typhoon.notifications.mark-all-read');
     Route::post('/announcements', [TyphoonController::class, 'storeAnnouncement'])->name('typhoon.announcements.store');
-    
+    Route::get('/dswd-form', [TyphoonController::class, 'dswdForm'])->name('typhoon.dswd-form');
+    Route::get('/dswd-form/family/{serial}', [TyphoonController::class, 'getFamilyBySerial'])->name('typhoon.dswd-form.family');
+    Route::post('/dswd-form/submit', [TyphoonController::class, 'submitDSWDForm'])->name('typhoon.dswd-form.submit');
+    Route::delete('/dswd-form/{id}', [TyphoonController::class, 'destroyDSWDForm'])->name('typhoon.dswd-form.destroy');
+    Route::get('/typhoon/family-assistance', [TyphoonController::class, 'familyAssistance'])->name('typhoon.family-assistance');
+
+
 
     // Add other typhoon routes here
 });
+
 
 
 
@@ -343,7 +350,6 @@ Route::prefix('drill-monitoring')
         Route::post('/store', [DrillMonitoringController::class, 'store'])->name('store');
         Route::put('/update/{id}', [DrillMonitoringController::class, 'update'])->name('update');
         Route::delete('/{id}', [DrillMonitoringController::class, 'destroy'])->name('destroy');
-        Route::post('/drill-monitoring', [DrillMonitoringController::class, 'store'])->name('drill-monitoring.store');
         Route::get('/drill-monitoring/inspection/checklist/{id}', [DrillMonitoringController::class, 'inspectionChecklist'])->name('DrillMonitoring.inspection.checklist');
         Route::get('/inspection/checklist/{id}', [DrillMonitoringController::class, 'inspectionChecklist'])->name('inspection.checklist');
 
@@ -354,14 +360,14 @@ Route::prefix('drill-monitoring')
         Route::get('/inspection/{id}/checklist', [FireSafetyController::class, 'inspectionChecklist'])->name('fire-safety.inspection.checklist');
 
 
+
 // Clean explicit route for the report layout
         Route::get('monitoring-tool/{id}', [DrillMonitoringController::class, 'printInspection'])->name('drill-monitoring.print.monitoring-tool');
-
+    });
 
 
 // This defines the route name that your form is looking for
         Route::post('/drill-monitoring/auto-store', [DrillMonitoringController::class, 'autoStoreByDate'])->name('drill-monitoring.auto-store');
-    });
 
 // Hazard Mapping Routes
 Route::prefix('hazard-mapping')
@@ -397,3 +403,4 @@ Route::prefix('inventory-storage')
     ->name('inventory-storage.dashboard');
 
     });
+

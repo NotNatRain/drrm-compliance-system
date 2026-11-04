@@ -13,6 +13,9 @@ class School extends Model
         'school_id',
         'school_id_number',
         'school_name',
+        'school_type',
+        'cluster_type',
+        'noncluster_type',
         'address',
         'school_head',
         'drrm_coordinator',
@@ -45,6 +48,20 @@ class School extends Model
         'reports_status',
         'incident_count',
         'last_incident_date',
+    ];
+
+    protected $attributes = [
+        'cluster_type' => 0,
+        'noncluster_type' => 0,
+        'fire_safety_status' => 'unconfigured',
+        'evacuation_capacity' => 0,
+        'number_students' => 0,
+        'number_personnel' => 0,
+        'number_gates' => 0,
+        'operational_status' => 'operational',
+        'evacuation_status' => 'cleared',
+        'occupancy_safety' => 'safe',
+        'incident_count' => 0,
     ];
 
     protected $casts = [

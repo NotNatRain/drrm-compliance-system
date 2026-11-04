@@ -21,7 +21,7 @@ class CheckModuleAccess
             return redirect('login');
         }
 
-        // Admins have access to everything
+        // Admins have unrestricted access to all modules
         if ($user->role === 'admin') {
             return $next($request);
         }

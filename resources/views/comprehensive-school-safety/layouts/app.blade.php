@@ -326,9 +326,9 @@
             </div>
             <div class="d-flex align-items-center gap-2">
                 <div class="dropdown" style="display:flex; gap: .5rem; align-items:center;">
-                    <button type="button" class="csss-notification" aria-label="Notifications">
+                    <a href="{{ route('typhoon.notifications') }}" class="csss-notification" aria-label="Notifications" title="Notifications">
                         <i class="fas fa-bell"></i>
-                    </button>
+                    </a>
                     <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                         {{ auth()->user()->name ?? 'Account' }}
                     </button>
@@ -422,6 +422,7 @@
 
     @endif
 
+@stack('modals')
 @stack('scripts')
 </body>
 </html>
