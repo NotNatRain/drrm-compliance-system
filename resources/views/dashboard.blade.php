@@ -5,199 +5,231 @@
 
 @push('styles')
 <style>
-    .announcement-banner {
-        position: relative;
-        width: 100%;
-        padding-top: 25%; /* Reduced height */
-        overflow: hidden;
-        border-radius: 15px;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-        margin-bottom: 2.5rem;
-        background-color: #ffffff;
-    }
-    @media (max-width: 768px) {
-        .announcement-banner {
-            padding-top: 56.25%; /* 16:9 on mobile */
-        }
-    }
-    .announcement-banner .carousel-inner {
+    /* Announcement Ribbon & Offcanvas Styles */
+    .announcement-ribbon {
         position: absolute;
         top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-    }
-    .announcement-banner img {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: contain; /* Shows white spaces at sides if not landscape */
-        transition: transform 0.5s ease;
-    }
-    .announcement-banner:hover img {
-        transform: scale(1.02);
-    }
-    .announcement-overlay {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: linear-gradient(transparent, rgba(0,0,0,0.85));
+        left: 30px;
+        background: linear-gradient(135deg, var(--orange, #E05C2E), #FF7A45);
         color: white;
-        padding: 40px;
-        z-index: 2;
-    }
-    .announcement-content {
-        max-width: 80% ;
-    }
-    .announcement-meta {
-        font-size: 0.9rem;
-        opacity: 0.9;
-        margin-bottom: 10px;
-    }
-    .announcement-title {
-        font-size: 2.5rem;
-        font-weight: 800;
-        margin-bottom: 10px;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-    }
-    .announcement-why {
-        font-size: 1.1rem;
-        line-height: 1.4;
-        opacity: 0.95;
-    }
-    .delete-announcement-btn {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        z-index: 10;
-        background: rgba(220, 53, 69, 0.8);
-        border: none;
-        color: white;
-        padding: 5px 12px;
-        border-radius: 5px;
-        backdrop-filter: blur(5px);
-    }
-    .delete-announcement-btn:hover {
-        background: #dc3545;
-    }
-    .carousel-indicators {
-        margin-bottom: 2rem;
-    }
-    .carousel-indicators [data-bs-target] {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        background-color: rgba(255,255,255,0.5);
-        border: 2px solid transparent;
-        transition: all 0.3s ease;
-    }
-    .carousel-indicators .active {
-        background-color: #fff;
-        transform: scale(1.2);
-    }
-    .carousel-control-prev, .carousel-control-next {
-        width: 5%;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-    .announcement-banner:hover .carousel-control-prev,
-    .announcement-banner:hover .carousel-control-next {
-        opacity: 0.8;
-    }
-    .carousel-control-prev-icon, .carousel-control-next-icon {
-        background-color: rgba(0,0,0,0.3);
-        padding: 20px;
-        border-radius: 50%;
-        background-size: 50% 50%;
-    }
-
-    /* Remove gap between header and announcement */
-    .dashboard-container {
-        margin-top: -24px; /* Offsets the main py-4 padding-top */
-    }
-    .announcement-banner {
-        border-top-left-radius: 0;
-        border-top-right-radius: 0;
-    }
-    /* Tab System Styling */
-    .dashboard-tabs-wrapper {
-        margin: 2rem 0;
-        width: 100%;
-    }
-    .custom-tabs-container {
-        display: flex;
-        justify-content: center;
-        background-color: transparent;
-        padding: 0;
-        border-radius: 8px;
-        overflow: hidden;
-        width: 100%;
-    }
-    .nav-tab-item {
-        flex: 1;
-        text-align: center;
-        padding: 15px 30px;
-        font-weight: 700;
+        padding: 12px 15px 15px;
+        border-radius: 0 0 12px 12px;
         cursor: pointer;
-        transition: all 0.3s ease;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        border: none;
-        outline: none;
+        z-index: 1040;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        box-shadow: 0 4px 10px rgba(224, 92, 46, 0.3);
     }
-    .nav-tab-item.active {
-        background-color: #212529 !important;
-        color: #ffffff !important;
+    .announcement-ribbon:hover {
+        padding-top: 20px;
+        background: linear-gradient(135deg, #FF7A45, var(--orange, #E05C2E));
     }
-    .nav-tab-item:not(.active) {
-        background-color: #ffffff !important;
-        color: #212529 !important;
-        border: 1px solid #dee2e6;
+    .announcement-ribbon .ringing-bell {
+        font-size: 1.5rem;
+        margin-bottom: 5px;
+        transform-origin: top center;
+        animation: swing 2s ease-in-out infinite;
     }
-    .nav-tab-item:hover:not(.active) {
-        background-color: #f8f9fa;
-        color: #000;
-    }
-
-    /* Card Hover Animations (requested) */
-    .module-card-link {
-        display: block;
-        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    .module-card-link:hover {
-        transform: translateY(-12px) scale(1.02);
-    }
-    .module-card-link .card {
-        transition: box-shadow 0.3s ease, border-color 0.3s ease;
-    }
-    .module-card-link:hover .card {
-        box-shadow: 0 25px 50px rgba(0,0,0,0.15) !important;
-    }
-    .module-card-link:hover .card-body i {
-        animation: card-icon-float 2s ease-in-out infinite;
-    }
-
-    @keyframes card-icon-float {
-        0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-8px); }
-    }
-
-    /* Modal Styling Adjustments */
-    .modal-header.bg-dark {
-        background-color: #212529 !important;
-    }
-    .school-detail-label {
-        color: #6c757d;
+    .announcement-ribbon .ribbon-text {
         font-size: 0.75rem;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 2px;
+        letter-spacing: 1px;
     }
-    .school-detail-value {
+    @keyframes swing {
+        0% { transform: rotate(0deg); }
+        10% { transform: rotate(15deg); }
+        20% { transform: rotate(-10deg); }
+        30% { transform: rotate(5deg); }
+        40% { transform: rotate(-5deg); }
+        50%, 100% { transform: rotate(0deg); }
+    }
+    .delete-announcement-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+        background: rgba(220, 53, 69, 0.9);
+        border: none;
+        color: white;
+        width: 35px;
+        height: 35px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    .delete-announcement-btn:hover {
+        background: #dc3545;
+        transform: scale(1.1);
+    }
+    /* Dashboard Wireframe Styles */
+    .dashboard-welcome {
+        font-size: 1rem;
+        color: #64748B;
+        margin-bottom: 1.5rem;
+    }
+    .dashboard-welcome strong { color: var(--navy); }
+
+    /* System Overview Card */
+    .overview-card {
+        background: #FFFFFF;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        border: 1px solid #E2E8F0;
+        margin-bottom: 2rem;
+        overflow: hidden;
+    }
+    .overview-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #E2E8F0;
+        font-weight: 700;
+        color: var(--navy);
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .overview-stats-grid {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .stat-item {
+        flex: 1 1 25%;
+        padding: 2rem 1rem;
+        text-align: center;
+        border-right: 1px solid #E2E8F0;
+    }
+    .stat-item:last-child { border-right: none; }
+    @media (max-width: 768px) {
+        .stat-item { flex: 1 1 50%; border-bottom: 1px solid #E2E8F0; }
+        .stat-item:nth-child(2n) { border-right: none; }
+    }
+    .stat-icon-wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.25rem;
+    }
+    /* Stat Colors */
+    .stat-schools { background: #E0E7FF; color: #4F46E5; }
+    .stat-users { background: #DCFCE7; color: #16A34A; }
+    .stat-compliance { background: #FEF3C7; color: #D97706; }
+    .stat-population { background: #E0F2FE; color: #0284C7; }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--navy);
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+    .stat-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #64748B;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    /* Tabs (Pill style) */
+    .dashboard-tabs-wrapper {
+        margin-bottom: 2rem;
+    }
+    .custom-tabs-container {
+        display: inline-flex;
+        background: #FFFFFF;
+        border-radius: 12px;
+        padding: 6px;
+        border: 1px solid #E2E8F0;
+        gap: 8px;
+    }
+    .nav-tab-item {
+        padding: 10px 24px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .nav-tab-item.active {
+        background: var(--navy);
+        color: #FFFFFF;
+    }
+    .nav-tab-item:not(.active) {
+        color: #64748B;
+    }
+    .nav-tab-item:hover:not(.active) {
+        background: #F1F5F9;
+        color: var(--navy);
+    }
+
+    /* Module Cards */
+    .modules-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3rem;
+    }
+    .module-card-link {
+        text-decoration: none;
+        display: block;
+    }
+    .module-card {
+        background: #FFFFFF;
+        border-radius: 16px;
+        padding: 2.5rem 2rem;
+        text-align: center;
+        border: 1px solid #E2E8F0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        height: 100%;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        flex-direction: column;
+    }
+    .module-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+    .module-icon-wrap {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.5rem;
+        font-size: 1.75rem;
+    }
+    .module-title {
+        font-size: 1.25rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+    }
+    .module-desc {
+        font-size: 0.9rem;
+        color: #64748B;
+        line-height: 1.6;
+        margin-bottom: 2rem;
+        flex-grow: 1;
+    }
+    .module-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 24px;
+        border-radius: 8px;
         font-weight: 600;
         font-size: 0.9rem;
         color: #FFFFFF;
@@ -260,8 +292,8 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @endpush
 
-@section('content')
-<div class="container-fluid dashboard-container">
+    @section('content')
+<div class="container-fluid px-4 px-lg-5 position-relative">
     @php
         $user = auth()->user();
         $modules = $user?->module_access ?? [];
@@ -269,83 +301,135 @@
         $isContributor = $user && $user->role === 'contributor';
         $canShowSchoolTab = $isAdmin || $isContributor;
     @endphp
-    @if($announcements->count() == 0)
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <p class="text-muted mb-0">Welcome back, <strong>{{ Auth::user()->name }}</strong>! Select a compliance system to manage.</p>
-        </div>
-    @endif
 
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
-            <i class="fas fa-check-circle me-1"></i> {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
-            <i class="fas fa-triangle-exclamation me-1"></i> {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    @if($announcements->count() > 0)
-        {{-- ... (Rest of Carousel remains same) --}}
-        <div id="announcementCarousel" class="carousel slide announcement-banner mb-5" data-bs-ride="carousel" data-bs-interval="5000">
-            @if($announcements->count() > 1)
-                <div class="carousel-indicators">
-                    @foreach($announcements as $index => $announcement)
-                        <button type="button" data-bs-target="#announcementCarousel" data-bs-slide-to="{{ $index }}" class="{{ $index === 0 ? 'active' : '' }}" aria-label="Slide {{ $index + 1 }}"></button>
-                    @endforeach
-                </div>
-            @endif
-
-            <div class="carousel-inner h-100">
-                @foreach($announcements as $index => $announcement)
-                    <div class="carousel-item h-100 {{ $index === 0 ? 'active' : '' }}">
-                        @if(Auth::user()->role === 'admin')
-                            <button class="delete-announcement-btn" onclick="deleteAnnouncement({{ $announcement->id }})" title="Remove Announcement">
-                                <i class="fas fa-times me-1"></i> Remove
-                            </button>
-                        @endif
-                        <img src="{{ \Illuminate\Support\Facades\Storage::disk(config('filesystems.default'))->url($announcement->image_path) }}" class="d-block w-100" alt="Announcement Poster">
-                        <div class="announcement-overlay">
-                            <div class="announcement-content">
-                                <p class="announcement-meta">
-                                    <i class="far fa-calendar-alt me-1"></i> {{ \Carbon\Carbon::parse($announcement->when)->format('F j, Y \a\t h:i A') }}
-                                    <span class="mx-2">|</span>
-                                    <i class="fas fa-map-marker-alt me-1"></i> {{ $announcement->where }}
-                                </p>
-                                <h2 class="announcement-title">{{ $announcement->what }}</h2>
-                                <p class="announcement-why mb-0">{{ $announcement->why }}</p>
-                            </div>
-                        </div>
-                    </div>
-                @endforeach
+        <!-- Announcements Offcanvas -->
+        <div class="offcanvas offcanvas-start border-0 shadow" tabindex="-1" id="announcementsOffcanvas" aria-labelledby="announcementsOffcanvasLabel" style="width: 400px; max-width: 90vw;">
+            <div class="offcanvas-header bg-white border-bottom py-3 px-4">
+                <h5 class="offcanvas-title fw-bolder mb-0" id="announcementsOffcanvasLabel" style="font-family: var(--font-display, 'Sora', sans-serif); color: var(--navy, #0D1B36);">
+                    <i class="fas fa-bullhorn me-2 text-primary"></i> System Announcements
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
-
-            @if($announcements->count() > 1)
-                <button class="carousel-control-prev" type="button" data-bs-target="#announcementCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Previous</span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#announcementCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Next</span>
-                </button>
-            @endif
+            <div class="offcanvas-body p-0 bg-light position-relative">
+                @if($announcements->count() > 0)
+                    <div id="announcementCarousel" class="carousel slide h-100" data-bs-ride="carousel" data-bs-interval="5000">
+                        <div class="carousel-inner h-100">
+                            @foreach($announcements as $index => $announcement)
+                                <div class="carousel-item h-100 {{ $index === 0 ? 'active' : '' }}">
+                                    @if(Auth::user()->role === 'admin')
+                                        <button class="delete-announcement-btn shadow-sm" onclick="deleteAnnouncement({{ $announcement->id }})" title="Remove Announcement">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    @endif
+                                    <div class="announcement-card-wrap p-4 h-100 d-flex flex-column">
+                                        <div class="announcement-poster-wrap rounded-3 shadow-sm overflow-hidden mb-4 position-relative" style="padding-top: 100%; background: #fff;">
+                                            <img src="{{ asset('storage/' . $announcement->image_path) }}" class="position-absolute top-0 start-0 w-100 h-100" style="object-fit: cover;" alt="Announcement Poster">
+                                        </div>
+                                        <div class="announcement-content-text px-2 flex-grow-1">
+                                            <p class="text-muted small mb-1 fw-bold">
+                                                <i class="far fa-calendar-alt me-1"></i> {{ \Carbon\Carbon::parse($announcement->when)->format('M j, Y h:i A') }}
+                                            </p>
+                                            <p class="text-muted small mb-3 fw-bold">
+                                                <i class="fas fa-map-marker-alt me-1 text-danger"></i> {{ $announcement->where }}
+                                            </p>
+                                            <h4 class="fw-bolder text-dark mb-3" style="font-family: var(--font-display, 'Sora', sans-serif);">{{ $announcement->what }}</h4>
+                                            <p class="text-secondary" style="line-height: 1.6;">{{ $announcement->why }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                        @if($announcements->count() > 1)
+                            <div class="carousel-indicators mb-2" style="position: absolute; bottom: 10px;">
+                                @foreach($announcements as $index => $announcement)
+                                    <button type="button" data-bs-target="#announcementCarousel" data-bs-slide-to="{{ $index }}" class="{{ $index === 0 ? 'active' : '' }} bg-primary" aria-label="Slide {{ $index + 1 }}"></button>
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+                @else
+                    <div class="d-flex flex-column align-items-center justify-content-center h-100 p-5 text-center" style="color: #94A3B8;">
+                        <i class="fas fa-bell-slash mb-3" style="font-size: 3rem; opacity: 0.5;"></i>
+                        <h5 class="fw-bold mb-2" style="color: var(--navy, #0D1B36); font-family: var(--font-display, 'Sora', sans-serif);">All Caught Up!</h5>
+                        <p class="small mb-0" style="font-family: var(--font-body, 'Inter', sans-serif);">There are no active announcements at the moment. Check back later.</p>
+                    </div>
+                @endif
+            </div>
         </div>
-    @endif
+
+    <div class="dashboard-welcome mt-4">
+        Welcome back, <strong>{{ Auth::user()->name }}</strong>! Select a compliance system to manage.
+    </div>
+
+    <!-- Toast Container for Notifications -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-4" style="z-index: 1080;">
+        @if(session('success'))
+            <div id="successToast" class="toast align-items-center bg-white border-0 shadow-lg" style="border-radius: 12px;" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body fw-semibold py-3 px-4" style="color: var(--navy, #0D1B36); font-family: var(--font-body, 'Inter', sans-serif);">
+                        <i class="fas fa-check-circle me-2 text-success"></i> {{ session('success') }}
+                    </div>
+                    <button type="button" class="btn-close me-3 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        @endif
+        @if(session('error'))
+            <div id="errorToast" class="toast align-items-center bg-white border-0 shadow-lg" style="border-radius: 12px;" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body fw-semibold py-3 px-4" style="color: var(--navy, #0D1B36); font-family: var(--font-body, 'Inter', sans-serif);">
+                        <i class="fas fa-exclamation-triangle me-2 text-danger"></i> {{ session('error') }}
+                    </div>
+                    <button type="button" class="btn-close me-3 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        @endif
+    </div>
+
+    <!-- System Overview -->
+    <div class="overview-card">
+        <div class="overview-header">
+            <i class="fas fa-chart-line"></i> System Overview
+        </div>
+        <div class="overview-stats-grid">
+            <div class="stat-item">
+                <div class="stat-icon-wrapper stat-schools">
+                    <i class="fas fa-school"></i>
+                </div>
+                <div class="stat-value">{{ $totalSchoolsCount }}</div>
+                <div class="stat-label">Total Schools</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon-wrapper stat-users">
+                    <i class="fas fa-user-friends"></i>
+                </div>
+                <div class="stat-value">{{ $totalUsersCount }}</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon-wrapper stat-compliance">
+                    <i class="fas fa-chart-pie"></i>
+                </div>
+                <div class="stat-value">{{ $overallComplianceRate }}%</div>
+                <div class="stat-label">Compliance Rate</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon-wrapper stat-population">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-value">{{ number_format($totalPopulationCount) }}</div>
+                <div class="stat-label">Population</div>
+            </div>
+        </div>
+    </div>
 
     @if($canShowSchoolTab)
-        <!-- Dashboard Tabs Wrapper (Centered and covering full row) -->
-        <div class="dashboard-tabs-wrapper mb-5 px-lg-5">
-            <div class="custom-tabs-container shadow-sm border">
+        <div class="dashboard-tabs-wrapper">
+            <div class="custom-tabs-container">
                 <div id="complianceTabBtn" class="nav-tab-item active" onclick="switchDashboardTab('compliance')">
-                    <i class="fas fa-th-large me-2"></i> Compliance
+                    <i class="fas fa-th-large"></i> Compliance
                 </div>
                 <div id="schoolsTabBtn" class="nav-tab-item" onclick="switchDashboardTab('schools')">
-                    <i class="fas fa-university me-2"></i> {{ $isAdmin ? 'Schools' : 'School' }}
+                    <i class="fas fa-university"></i> {{ $isAdmin ? 'Schools' : 'School' }}
                 </div>
             </div>
         </div>
@@ -486,7 +570,7 @@
 
     @if($canShowSchoolTab)
         <!-- Schools Content Division -->
-        <div id="schoolsTabContent" class="d-none">
+        <div id="schoolsTabContent" style="display:none;">
             @if($isAdmin)
                 @include('schools-tab')
             @else
@@ -630,122 +714,133 @@
     @if($isAdmin)
 
         <!-- View School Details Modal -->
-        <div class="modal fade" id="viewSchoolModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-lg school-info-modal-dialog modal-dialog-centered">
-                <div class="modal-content border-0 shadow-lg rounded-4">
-                    <div class="modal-header bg-dark text-white p-4">
-                        <h5 class="modal-title fw-bold">
-                            <i class="fas fa-university me-2"></i> <span id="schoolDetailName">School Details</span>
+        <div class="modal fade modal-add-school" id="viewSchoolModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered" style="max-width: 900px;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <span class="title-icon"><i class="fas fa-university"></i></span>
+                            <span id="schoolDetailName">School Details</span>
                         </h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body p-4">
                         <div class="row g-4">
                             <!-- Core Info -->
-                            <div class="col-md-7">
+                            <div class="col-md-6 pe-md-4 border-md-end">
                                 <div class="mb-4">
-                                    <h6 class="fw-bold border-bottom pb-2 mb-3">Core Information</h6>
-                                    <div class="row">
+                                    <div class="form-section-label">Core Information</div>
+                                    <div class="row g-3">
                                         <div class="col-6">
-                                            <div class="school-detail-label">School ID</div>
-                                            <div class="school-detail-value text-break" id="detail_id">-</div>
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small" style="font-size: 0.7rem;">School ID</div>
+                                            <div class="school-detail-value text-break fw-semibold" id="detail_id">-</div>
                                         </div>
                                         <div class="col-6">
-                                            <div class="school-detail-label">Name</div>
-                                            <div class="school-detail-value" id="detail_name">-</div>
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small" style="font-size: 0.7rem;">Name</div>
+                                            <div class="school-detail-value fw-semibold" id="detail_name">-</div>
                                         </div>
                                         <div class="col-12">
-                                            <div class="school-detail-label">School Address</div>
-                                            <div class="school-detail-value" id="detail_address">-</div>
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small" style="font-size: 0.7rem;">School Address</div>
+                                            <div class="school-detail-value fw-semibold" id="detail_address">-</div>
                                         </div>
                                         <div class="col-6">
-                                            <div class="school-detail-label">School Head</div>
-                                            <div class="school-detail-value" id="detail_head">-</div>
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small" style="font-size: 0.7rem;">School Head</div>
+                                            <div class="school-detail-value text-muted" id="detail_head" style="font-style: italic;">-</div>
                                         </div>
                                         <div class="col-6">
-                                            <div class="school-detail-label">DRRM Coordinator</div>
-                                            <div class="school-detail-value" id="detail_coordinator">-</div>
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small" style="font-size: 0.7rem;">DRRM Coordinator</div>
+                                            <div class="school-detail-value text-muted" id="detail_coordinator" style="font-style: italic;">-</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4">
+                                    <div class="form-section-label">Additional & Module Info</div>
+                                    <div class="row g-3">
+                                        <div class="col-6">
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small" style="font-size: 0.7rem;">Head Contact</div>
+                                            <div class="school-detail-value text-muted" id="detail_head_contact" style="font-style: italic;">-</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small" style="font-size: 0.7rem;">Coord. Contact</div>
+                                            <div class="school-detail-value text-muted" id="detail_coord_contact" style="font-style: italic;">-</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small" style="font-size: 0.7rem;">District</div>
+                                            <div class="school-detail-value text-muted" id="detail_district" style="font-style: italic;">-</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small" style="font-size: 0.7rem;">Division</div>
+                                            <div class="school-detail-value text-muted" id="detail_division" style="font-style: italic;">-</div>
+                                        </div>
+                                        <div class="col-4">
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small" style="font-size: 0.7rem;">Region</div>
+                                            <div class="school-detail-value text-muted" id="detail_region" style="font-style: italic;">-</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.7rem;">Number of Students</div>
+                                            <div class="school-detail-value badge bg-light text-dark border px-3 py-2 rounded-pill fw-semibold" id="detail_students" style="font-size: 0.9rem;">0</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.7rem;">Number of Personnel</div>
+                                            <div class="school-detail-value badge bg-light text-dark border px-3 py-2 rounded-pill fw-semibold" id="detail_personnel" style="font-size: 0.9rem;">0</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.7rem;">Number of Gates</div>
+                                            <div class="school-detail-value badge bg-light text-dark border px-3 py-2 rounded-pill fw-semibold" id="detail_gates" style="font-size: 0.9rem;">0</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="school-detail-label text-uppercase fw-bold text-muted small mb-1" style="font-size: 0.7rem;">Engineer Last Inspection Date</div>
+                                            <div class="school-detail-value badge bg-light text-dark border px-3 py-2 rounded-pill fw-semibold" id="detail_engineer_last_inspection_date" style="font-size: 0.9rem;">N/A</div>
                                         </div>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <h6 class="fw-bold border-bottom pb-2 mb-3">Additional & Module Info</h6>
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <div class="school-detail-label">Head Contact</div>
-                                            <div class="school-detail-value" id="detail_head_contact">-</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="school-detail-label">Coord. Contact</div>
-                                            <div class="school-detail-value" id="detail_coord_contact">-</div>
-                                        </div>
-                                        <div class="col-4">
-                                            <div class="school-detail-label">District</div>
-                                            <div class="school-detail-value" id="detail_district">-</div>
-                                        </div>
-                                        <div class="col-4">
-                                            <div class="school-detail-label">Division</div>
-                                            <div class="school-detail-value" id="detail_division">-</div>
-                                        </div>
-                                        <div class="col-4">
-                                            <div class="school-detail-label">Region</div>
-                                            <div class="school-detail-value" id="detail_region">-</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="school-detail-label">Number of Students</div>
-                                            <div class="school-detail-value badge bg-light text-dark border p-2" id="detail_students">0</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="school-detail-label">Number of Personnel</div>
-                                            <div class="school-detail-value badge bg-light text-dark border p-2" id="detail_personnel">0</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="school-detail-label">Number of Gates</div>
-                                            <div class="school-detail-value badge bg-light text-dark border p-2" id="detail_gates">0</div>
-                                        </div>
-                                        <div class="col-6">
-                                            <div class="school-detail-label">Engineer Last Inspection Date</div>
-                                            <div class="school-detail-value badge bg-light text-dark border p-2" id="detail_engineer_last_inspection_date">N/A</div>
-                                        </div>
-                                        <div class="col-12 mt-3">
-                                            <div class="school-detail-label">Emergency Resources</div>
-                                            <div class="school-detail-value bg-light p-2 rounded small border" id="detail_resources">None specified</div>
-                                        </div>
-                                    </div>
+                                    <div class="form-section-label">Emergency Resources</div>
+                                    <div class="school-detail-value text-muted" id="detail_resources" style="font-style: italic;">None specified</div>
                                 </div>
                             </div>
 
-                            <!-- Module Shortcuts -->
-                            <div class="col-md-5 border-start">
-                                <h6 class="fw-bold border-bottom pb-2 mb-3">Module Connections</h6>
-                                <p class="small text-muted mb-4">Redirection depends on registration status.</p>
+                            <!-- Module Shortcuts & Users -->
+                            <div class="col-md-6 ps-md-4">
+                                <div class="form-section-label mb-1">Module Connections</div>
+                                <p class="small text-muted mb-3">Redirection depends on registration status.</p>
 
-                                <div class="d-grid gap-2">
-                                    <button id="btn_fire_safety" class="btn btn-module text-start mb-2 py-3 border">
-                                        <i class="fas fa-fire me-2 d-inline"></i> Fire Safety
-                                    </button>
-                                    <button id="btn_typhoon" class="btn btn-module text-start mb-2 py-3 border">
-                                        <i class="fas fa-cloud-showers-heavy me-2 d-inline"></i> Typhoon/Flood
-                                    </button>
-                                    <button id="btn_incident" class="btn btn-module text-start mb-2 py-3 border">
-                                        <i class="fas fa-clipboard-list me-2 d-inline"></i> Incidents
-                                    </button>
-                                    <button id="btn_comprehensive" class="btn btn-module text-start mb-2 py-3 border">
-                                        <i class="fas fa-school me-2 d-inline"></i> CSS Assessment
-                                    </button>
-                                    <button id="btn_damage_assessment" class="btn btn-module text-start mb-2 py-3 border">
-                                        <i class="fas fa-user-injured me-2 d-inline"></i> Damage Assessment
-                                    </button>
-                                    <button id="btn_hazard" class="btn btn-module text-start py-3 border">
-                                        <i class="fas fa-map-marked-alt me-2 d-inline"></i> Hazard (Dev)
-                                    </button>
-                                    <button id="btn_heat_index" class="btn bg-white border d-flex align-items-center justify-content-between p-3 rounded-3 text-start w-100 module-btn-link" style="transition: all 0.2s;">
+                                <div class="d-grid gap-2 mb-4">
+                                    <button id="btn_fire_safety" class="btn bg-white border d-flex align-items-center justify-content-between p-3 rounded-3 text-start w-100 module-btn-link" style="transition: all 0.2s;">
                                         <div class="d-flex align-items-center fw-semibold text-dark">
-                                            <div class="d-flex align-items-center justify-content-center rounded-3 me-3" style="width: 32px; height: 32px; background: #FFEDD5; color: #EA580C;">
-                                                <i class="fas fa-temperature-high"></i>
+                                            <div class="d-flex align-items-center justify-content-center rounded-3 me-3" style="width: 32px; height: 32px; background: #FEE2E2; color: #D12428;">
+                                                <i class="fas fa-fire"></i>
                                             </div>
-                                            Heat Index Report
+                                            Fire Safety
+                                        </div>
+                                        <i class="fas fa-chevron-right text-muted small"></i>
+                                    </button>
+                                    <button id="btn_typhoon" class="btn bg-white border d-flex align-items-center justify-content-between p-3 rounded-3 text-start w-100 module-btn-link" style="transition: all 0.2s;">
+                                        <div class="d-flex align-items-center fw-semibold text-dark">
+                                            <div class="d-flex align-items-center justify-content-center rounded-3 me-3" style="width: 32px; height: 32px; background: #E0F2FE; color: #1B4C6D;">
+                                                <i class="fas fa-cloud-showers-heavy"></i>
+                                            </div>
+                                            Typhoon/Flood
+                                        </div>
+                                        <i class="fas fa-chevron-right text-muted small"></i>
+                                    </button>
+                                    <button id="btn_incident" class="btn bg-white border d-flex align-items-center justify-content-between p-3 rounded-3 text-start w-100 module-btn-link" style="transition: all 0.2s;">
+                                        <div class="d-flex align-items-center fw-semibold text-dark">
+                                            <div class="d-flex align-items-center justify-content-center rounded-3 me-3" style="width: 32px; height: 32px; background: #FEF3C7; color: #D97706;">
+                                                <i class="fas fa-clipboard-list"></i>
+                                            </div>
+                                            Incidents
+                                        </div>
+                                        <i class="fas fa-chevron-right text-muted small"></i>
+                                    </button>
+                                    <button id="btn_comprehensive" class="btn bg-white border d-flex align-items-center justify-content-between p-3 rounded-3 text-start w-100 module-btn-link" style="transition: all 0.2s;">
+                                        <div class="d-flex align-items-center fw-semibold text-dark">
+                                            <div class="d-flex align-items-center justify-content-center rounded-3 me-3" style="width: 32px; height: 32px; background: #F5EAE6; color: #5C4033;">
+                                                <i class="fas fa-school"></i>
+                                            </div>
+                                            CSS Assessment
                                         </div>
                                         <i class="fas fa-chevron-right text-muted small"></i>
                                     </button>
@@ -784,25 +879,20 @@
                                     <div class="small text-muted" id="schoolAssignmentHint" style="font-size: 0.75rem;">Only unassigned contributors/viewers are listed here.</div>
                                 </div>
 
-                                <div class="mt-3">
-                                    <h6 class="fw-bold mb-2">School Account Users</h6>
-                                    <div id="schoolAccountUsersList" class="small text-muted">No assigned school account users.</div>
+                                <div>
+                                    <div class="form-section-label">School Account Users</div>
+                                    <div id="schoolAccountUsersList" class="small text-muted" style="font-style: italic;">No assigned school account users.</div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="modal-footer bg-light border-0 p-4 rounded-bottom-4">
+                    <div class="modal-footer d-flex justify-content-end align-items-center p-3 border-top bg-white">
+                        <button type="button" class="btn-cancel-school me-2" data-bs-dismiss="modal">Close</button>
                         @if(Auth::user()->role !== 'viewer')
-                        <button type="button" class="btn btn-dark px-4" id="editSchoolBtn">
+                        <button type="button" class="btn-save-school" id="editSchoolBtn">
                             <i class="fas fa-edit me-2"></i> Update Details
                         </button>
                         @endif
-                        {{--
-                        <button type="button" class="btn btn-outline-danger px-4" id="deleteSchoolBtn" style="display:none;">
-                            <i class="fas fa-trash me-2"></i> Delete
-                        </button>
-                        --}}
-                        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">Close</button>
                     </div>
                 </div>
             </div>
@@ -854,25 +944,30 @@
             </div>
         </div>
 
-        <!-- Add School Modal -->
-        <div class="modal fade" id="addSchoolModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                    <div class="modal-header bg-dark text-white p-4">
-                        <h5 class="modal-title fw-bold"><i class="fas fa-plus-circle me-2 text-warning"></i> Add New School</h5>
+        <!-- Add School Modal (Wireframe Redesign) -->
+        <div class="modal fade modal-add-school" id="addSchoolModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <span class="title-icon"><i class="fas fa-plus"></i></span>
+                            Add New School
+                        </h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <form id="addSchoolForm">
                         @csrf
-                        <div class="modal-body p-4">
+                        <div class="modal-body">
+
+                            {{-- School Identification --}}
+                            <div class="form-section-label">School Identification</div>
                             <div class="mb-3">
-                                <label class="form-label fw-bold small text-uppercase">School Identification</label>
-                                <input type="text" name="school_name" class="form-control mb-2 p-3" required placeholder="Official School Name">
-                                <input type="text" name="school_id" class="form-control p-3" placeholder="DepEd School ID (Optional)">
+                                <label class="form-label">Official School Name</label>
+                                <input type="text" name="school_name" class="form-control" required placeholder="e.g. Abayuan Senior High School">
                             </div>
-                            <div class="mb-3">
-                                <label class="form-label fw-bold small text-uppercase">School's Address</label>
-                                <textarea name="address" class="form-control p-3" rows="2" required placeholder="Complete School Address"></textarea>
+                            <div class="mb-4">
+                                <label class="form-label">DepEd School ID (Optional)</label>
+                                <input type="text" name="school_id" class="form-control" placeholder="e.g. 107119">
                             </div>
 
                             {{-- School Type - wip --}}
@@ -920,121 +1015,155 @@
                                     <label class="form-label">District</label>
                                     <input type="text" name="district" class="form-control" placeholder="Dist.">
                                 </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label fw-bold small text-uppercase">Division</label>
+                                <div class="col-4">
+                                    <label class="form-label">Division</label>
                                     <input type="text" name="division" class="form-control" placeholder="Div.">
                                 </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label fw-bold small text-uppercase">Region</label>
+                                <div class="col-4">
+                                    <label class="form-label">Region</label>
                                     <input type="text" name="region" class="form-control" placeholder="Reg.">
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label fw-bold small text-uppercase">Number of Students</label>
+
+                            {{-- Site Details --}}
+                            <div class="form-section-label">Site Details</div>
+                            <div class="row g-3">
+                                <div class="col-3">
+                                    <label class="form-label">No. of Students</label>
                                     <input type="number" name="number_students" class="form-control" min="0" value="0">
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label fw-bold small text-uppercase">Number of Personnel</label>
+                                <div class="col-3">
+                                    <label class="form-label">No. of Personnel</label>
                                     <input type="number" name="number_personnel" class="form-control" min="0" value="0">
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label fw-bold small text-uppercase">Number of Gates</label>
+                                <div class="col-3">
+                                    <label class="form-label">No. of Gates</label>
                                     <input type="number" name="number_gates" class="form-control" min="0" value="0">
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label fw-bold small text-uppercase">Engineer Last Inspection Date</label>
+                                <div class="col-3">
+                                    <label class="form-label">Last Inspection</label>
                                     <input type="date" name="engineer_last_inspection_date" class="form-control">
                                 </div>
                             </div>
+
                         </div>
-                        <div class="modal-footer border-0 p-4 pt-0">
-                            <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-dark px-5 py-2 fw-bold rounded-pill">Save School</button>
+                        <div class="modal-footer">
+                            <button type="button" class="btn-cancel-school" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn-save-school">
+                                <i class="fas fa-save"></i> Save School
+                            </button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
 
-        <!-- Edit School Modal -->
-        <div class="modal fade" id="editSchoolModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-lg modal-dialog-centered">
-                <div class="modal-content border-0 shadow-lg rounded-4">
-                    <div class="modal-header bg-dark text-white p-4">
-                        <h5 class="modal-title fw-bold"><i class="fas fa-edit me-2"></i> Update Information</h5>
+        <!-- Edit School Modal (Redesigned to match Add School) -->
+        <div class="modal fade modal-add-school" id="editSchoolModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" style="max-width:540px;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <span class="title-icon"><i class="fas fa-pen"></i></span>
+                            Update School Information
+                        </h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <form id="editSchoolForm" method="POST">
                         @csrf
                         @method('PUT')
-                        <div class="modal-body p-4">
-                            <div class="row g-3">
-                                <div class="col-md-9 mb-2">
-                                    <label class="form-label fw-bold small">Official School Name</label>
-                                    <input type="text" name="school_name" class="form-control" required>
+                        <div class="modal-body">
+
+                            {{-- School Identification --}}
+                            <div class="form-section-label">School Identification</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-8">
+                                    <label class="form-label">Official School Name</label>
+                                    <input type="text" name="school_name" class="form-control" required placeholder="e.g. Abayuan Senior High School">
                                 </div>
-                                <div class="col-md-3 mb-2">
-                                    <label class="form-label fw-bold small">School ID</label>
-                                    <input type="text" name="school_id" class="form-control">
-                                </div>
-                                <div class="col-md-12 mb-2">
-                                    <label class="form-label fw-bold small">School Address</label>
-                                    <textarea name="address" class="form-control" rows="2" required></textarea>
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label fw-bold small">School Head</label>
-                                    <input type="text" name="school_head" class="form-control" placeholder="Enter School Head Name">
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label fw-bold small">Head Contact No.</label>
-                                    <input type="text" name="contact_number" class="form-control">
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label fw-bold small">DRRM Coordinator</label>
-                                    <input type="text" name="drrm_coordinator" class="form-control" placeholder="Enter DRRM Coordinator Name">
-                                </div>
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label fw-bold small">Coord. Contact No.</label>
-                                    <input type="text" name="contact_number_2" class="form-control">
-                                </div>
-                                <div class="col-md-4 mb-2">
-                                    <label class="form-label fw-bold small">District</label>
-                                    <input type="text" name="district" class="form-control">
-                                </div>
-                                <div class="col-md-4 mb-2">
-                                    <label class="form-label fw-bold small">Division</label>
-                                    <input type="text" name="division" class="form-control">
-                                </div>
-                                <div class="col-md-4 mb-2">
-                                    <label class="form-label fw-bold small">Region</label>
-                                    <input type="text" name="region" class="form-control">
-                                </div>
-                                <div class="col-md-3 mb-2">
-                                    <label class="form-label fw-bold small">Number of Students</label>
-                                    <input type="number" name="number_students" class="form-control" min="0">
-                                </div>
-                                <div class="col-md-3 mb-2">
-                                    <label class="form-label fw-bold small">Number of Personnel</label>
-                                    <input type="number" name="number_personnel" class="form-control" min="0">
-                                </div>
-                                <div class="col-md-3 mb-2">
-                                    <label class="form-label fw-bold small">Number of Gates</label>
-                                    <input type="number" name="number_gates" class="form-control" min="0">
-                                </div>
-                                <div class="col-md-3 mb-2">
-                                    <label class="form-label fw-bold small">Engineer Last Inspection Date</label>
-                                    <input type="date" name="engineer_last_inspection_date" class="form-control">
-                                </div>
-                                <div class="col-md-12">
-                                    <label class="form-label fw-bold small">Emergency Resources</label>
-                                    <textarea name="emergency_resources" class="form-control" rows="2"></textarea>
+                                <div class="col-4">
+                                    <label class="form-label">School ID</label>
+                                    <input type="text" name="school_id" class="form-control" placeholder="e.g. 107119">
                                 </div>
                             </div>
+
+                            {{-- Address --}}
+                            <div class="form-section-label">School's Address</div>
+                            <div class="mb-4">
+                                <textarea name="address" class="form-control" rows="3" placeholder="Complete school address" required></textarea>
+                            </div>
+
+                            {{-- Personnel --}}
+                            <div class="form-section-label">Personnel</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-6">
+                                    <label class="form-label">School Head</label>
+                                    <input type="text" name="school_head" class="form-control" placeholder="Enter school head name">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Head Contact No.</label>
+                                    <input type="text" name="contact_number" class="form-control" placeholder="e.g. 09xxxxxxxxx">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">DRRM Coordinator</label>
+                                    <input type="text" name="drrm_coordinator" class="form-control" placeholder="Enter DRRM coordinator name">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label">Coord. Contact No.</label>
+                                    <input type="text" name="contact_number_2" class="form-control" placeholder="e.g. 09xxxxxxxxx">
+                                </div>
+                            </div>
+
+                            {{-- Location --}}
+                            <div class="form-section-label">Location Details</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-4">
+                                    <label class="form-label">District</label>
+                                    <input type="text" name="district" class="form-control" placeholder="Dist.">
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label">Division</label>
+                                    <input type="text" name="division" class="form-control" placeholder="Div.">
+                                </div>
+                                <div class="col-4">
+                                    <label class="form-label">Region</label>
+                                    <input type="text" name="region" class="form-control" placeholder="Reg.">
+                                </div>
+                            </div>
+
+                            {{-- Site Details --}}
+                            <div class="form-section-label">Site Details</div>
+                            <div class="row g-3 mb-4">
+                                <div class="col-3">
+                                    <label class="form-label">No. of Students</label>
+                                    <input type="number" name="number_students" class="form-control" min="0">
+                                </div>
+                                <div class="col-3">
+                                    <label class="form-label">No. of Personnel</label>
+                                    <input type="number" name="number_personnel" class="form-control" min="0">
+                                </div>
+                                <div class="col-3">
+                                    <label class="form-label">No. of Gates</label>
+                                    <input type="number" name="number_gates" class="form-control" min="0">
+                                </div>
+                                <div class="col-3">
+                                    <label class="form-label">Last Inspection</label>
+                                    <input type="date" name="engineer_last_inspection_date" class="form-control">
+                                </div>
+                            </div>
+
+                            {{-- Emergency Resources --}}
+                            <div class="form-section-label">Emergency Resources</div>
+                            <div class="mb-2">
+                                <textarea name="emergency_resources" class="form-control" rows="2" placeholder="List available emergency resources..."></textarea>
+                            </div>
+
                         </div>
-                        <div class="modal-footer bg-light border-0 p-4 rounded-bottom-4">
-                            <button type="button" class="btn btn-outline-secondary px-4 text-uppercase fw-bold small" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-dark px-5 text-uppercase fw-bold small">Update School</button>
+                        <div class="modal-footer">
+                            <button type="button" class="btn-cancel-school" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn-save-school">
+                                <i class="fas fa-save"></i> Update School
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -1217,15 +1346,17 @@
 
 <!-- Announce Modal -->
 <div class="modal fade" id="announceModal" tabindex="-1" aria-labelledby="announceModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="announceModalLabel"><i class="fas fa-bullhorn me-2"></i> Create System Announcement</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 18px; overflow: hidden;">
+            <div class="modal-header border-bottom bg-white py-3 px-4">
+                <h5 class="modal-title" id="announceModalLabel" style="font-family: var(--font-display, 'Sora', sans-serif); font-weight: 800; color: var(--navy, #0D1B36);">
+                    <i class="fas fa-bullhorn me-2 text-primary"></i> Create System Announcement
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="announceForm" method="POST" action="{{ route('announcements.store', [], false) }}" enctype="multipart/form-data">
                 @csrf
-                <div class="modal-body">
+                <div class="modal-body p-4 text-dark">
                     <div class="row g-3">
                         <div class="col-md-8">
                             <label class="form-label fw-bold">What is the event? (Title)</label>
@@ -1256,9 +1387,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="submitAnnounce">
+                <div class="modal-footer bg-light border-top-0 px-4 py-3">
+                    <button type="button" class="btn btn-light border shadow-sm fw-semibold" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn border-0 shadow-sm fw-semibold text-white px-4" id="submitAnnounce" style="background: var(--navy, #0D1B36);">
                         <i class="fas fa-paper-plane me-2"></i> Post Announcement
                     </button>
                 </div>
@@ -1292,17 +1423,28 @@
         const schoolAccountUsers = Array.isArray(data.school_account_users) ? data.school_account_users : [];
 
         if (!availableUsers.length) {
-            availableMenu.innerHTML = '<div class="text-muted small px-2 py-1">No available users.</div>';
+            availableMenu.innerHTML = '<div class="text-muted small" style="font-style: italic;">No available users.</div>';
         } else {
             availableMenu.innerHTML = availableUsers.map((u) => {
                 const roleLabel = u.role === 'viewer' ? 'Viewer' : 'Contributor';
+                const nameStr = u.name || '';
+                const initials = nameStr.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
                 return `
-                    <div class="border rounded p-2">
-                        <div class="fw-semibold">${escapeHtml(u.name)} <span class="text-muted">(${escapeHtml(roleLabel)})</span></div>
-                        <div class="text-muted mb-2">${escapeHtml(u.email)}</div>
-                        <button type="button" class="btn btn-sm btn-dark assign-school-user-btn" data-user-id="${u.id}">Assign</button>
+                    <div class="d-flex align-items-center justify-content-between p-3 border rounded-3 mb-2 bg-white shadow-sm">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center me-3 fw-bold" style="width: 40px; height: 40px; font-size: 0.9rem;">
+                                ${escapeHtml(initials)}
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark" style="font-size: 0.9rem; line-height: 1.2;">
+                                    ${escapeHtml(u.name)} <span class="fw-normal text-muted" style="font-size: 0.85rem;">(${escapeHtml(roleLabel)})</span>
+                                </div>
+                                <div class="text-muted small mt-1" style="line-height: 1.2;">${escapeHtml(u.email)}</div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-dark btn-sm px-4 fw-semibold rounded-2 assign-school-user-btn" style="padding-top: 6px; padding-bottom: 6px;" data-user-id="${u.id}">Assign</button>
                     </div>
-                `;
+                `
             }).join('');
         }
 
@@ -1470,35 +1612,50 @@
         });
     }
 
-    /* Tab Switching Logic (Phase 2) */
+    /* Tab Switching Logic — with smooth fade+slide animation */
     function switchDashboardTab(tabName) {
         const complianceBtn = document.getElementById('complianceTabBtn');
-        const schoolsBtn = document.getElementById('schoolsTabBtn');
+        const schoolsBtn    = document.getElementById('schoolsTabBtn');
         const complianceContent = document.getElementById('complianceTabContent');
-        const schoolsContent = document.getElementById('schoolsTabContent');
+        const schoolsContent    = document.getElementById('schoolsTabContent');
+        if (!complianceContent || !schoolsContent) return;
+
+        const DURATION = 220; // ms for fade-out before swap
+
+        function fadeOut(el, cb) {
+            el.style.transition = 'opacity ' + DURATION + 'ms ease, transform ' + DURATION + 'ms ease';
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(12px)';
+            setTimeout(() => { el.style.display = 'none'; el.style.transition = ''; el.style.opacity = ''; el.style.transform = ''; cb(); }, DURATION);
+        }
+
+        function fadeIn(el) {
+            el.style.display = 'block';
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(12px)';
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    el.style.transition = 'opacity ' + DURATION + 'ms ease, transform ' + DURATION + 'ms ease';
+                    el.style.opacity = '1';
+                    el.style.transform = 'translateY(0)';
+                    setTimeout(() => { el.style.transition = ''; el.style.opacity = ''; el.style.transform = ''; }, DURATION);
+                });
+            });
+        }
 
         if (tabName === 'schools') {
             complianceBtn.classList.remove('active');
             schoolsBtn.classList.add('active');
-            complianceContent.classList.add('d-none');
-            complianceContent.classList.remove('tab-content-active');
-            schoolsContent.classList.remove('d-none');
-            schoolsContent.classList.add('tab-content-active');
-
-            const schoolSearchInput = document.getElementById('schoolSearchInput');
-            if (schoolSearchInput) {
-                schoolSearchInput.value = '';
-                schoolSearchInput.dispatchEvent(new Event('input', { bubbles: true }));
-            }
-
+            fadeOut(complianceContent, () => {
+                fadeIn(schoolsContent);
+                const si = document.getElementById('schoolSearchInput');
+                if (si) { si.value = ''; si.dispatchEvent(new Event('input', { bubbles: true })); }
+            });
             localStorage.setItem('activeDashboardTab', 'schools');
         } else {
             schoolsBtn.classList.remove('active');
             complianceBtn.classList.add('active');
-            schoolsContent.classList.add('d-none');
-            schoolsContent.classList.remove('tab-content-active');
-            complianceContent.classList.remove('d-none');
-            complianceContent.classList.add('tab-content-active');
+            fadeOut(schoolsContent, () => fadeIn(complianceContent));
             localStorage.setItem('activeDashboardTab', 'compliance');
         }
     }
@@ -1863,7 +2020,7 @@
             const errEl = document.getElementById('deleteSchoolPasswordError');
             const confirmBtn = document.getElementById('deleteSchoolConfirmBtn');
 
-            if (nameEl) nameEl.textContent = school.school_name || '—';
+            if (nameEl) nameEl.textContent = school.school_name || 'â€”';
             if (idEl) idEl.value = school.id;
             if (pwdEl) pwdEl.value = '';
             if (errEl) errEl.style.display = 'none';
@@ -1967,6 +2124,13 @@
                 btn.disabled = false;
             }
         });
+    });
+    document.addEventListener('DOMContentLoaded', function () {
+        var toastElList = [].slice.call(document.querySelectorAll('.toast'));
+        var toastList = toastElList.map(function (toastEl) {
+            return new bootstrap.Toast(toastEl, { autohide: true, delay: 5000 });
+        });
+        toastList.forEach(toast => toast.show());
     });
 </script>
 @endpush

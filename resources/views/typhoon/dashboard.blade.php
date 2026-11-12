@@ -1,11 +1,11 @@
 {{-- resources/views/typhoon/dashboard.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'Typhoon/Flooding Monitoring')
+@section('title', 'Evacuation Monitoring')
 @section('hide_main_nav', '1')
 
 @push('styles')
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
     :root {
         --bg-dark: #0a1128;
@@ -15,18 +15,51 @@
         --text-dark: #1e293b;
         --text-muted: #64748b;
         --glass-border: rgba(0, 0, 0, 0.05);
+        --font-display: 'Sora', sans-serif;
+        --font-body: 'Inter', sans-serif;
+    }
+
+    .search-bar-container input::placeholder {
+        color: rgba(255, 255, 255, 0.6) !important;
+    }
+    .search-bar-container input:focus {
+        background-color: rgba(255, 255, 255, 0.15) !important;
+        border-color: rgba(255, 255, 255, 0.5) !important;
+        color: white !important;
+        box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.1) !important;
+        outline: none;
+    }
+    .search-bar-container i {
+        color: rgba(255, 255, 255, 0.7) !important;
     }
 
     body {
         background-color: var(--bg-dark) !important;
         background-image: radial-gradient(circle at 50% 50%, #112240 0%, #0a1128 100%);
         color: var(--text-dark);
-        font-family: 'Space Grotesk', 'Inter', sans-serif;
+        font-family: var(--font-body);
     }
 
     h1, h2, h3, h4, h5, .card-header-custom, .stat-value, .fw-bold {
-        font-family: 'Rajdhani', sans-serif;
+        font-family: var(--font-display);
         letter-spacing: 0.5px;
+    }
+
+    /* ── Full-screen context for dashboard ── */
+    html {
+        font-size: 80%;
+    }
+    html, body {
+        height: 100%;
+    }
+    body > div,
+    body > div > main {
+        height: 100%;
+    }
+    /* Override app layout's py-4 padding for this page */
+    main.py-4 {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
     }
 
     .container-fluid {
@@ -173,13 +206,13 @@
     }
 
     /* ====================================================
-     * 70/30 HYBRID MOBILE APPROACH — Typhoon Dashboard
+     * 70/30 HYBRID MOBILE APPROACH â€” Typhoon Dashboard
      * Desktop layout preserved. Minimal tweaks only:
      *  1. Scrollable tables
      *  2. Slightly larger button tap targets
      *  3. Stack form columns in modals/forms
      * ==================================================== */
-    /* Triggered by 1024px viewport lock — desktop layout preserved but mobile enhancements active */
+    /* Triggered by 1024px viewport lock â€” desktop layout preserved but mobile enhancements active */
     @media (max-width: 1024.1px) {
         .table-responsive {
             overflow-x: auto !important;
@@ -642,7 +675,7 @@
     .nav-link-custom {
         color: rgba(255, 255, 255, 0.7);
         text-decoration: none;
-        font-family: 'Rajdhani', sans-serif;
+        font-family: var(--font-display);
         font-weight: 700;
         font-size: 1.1rem;
         text-transform: uppercase;
@@ -933,11 +966,13 @@
             <div>
                 <h1 class="h3 mb-0 fw-bold text-white">
                     <i class="fas fa-satellite-dish me-2" style="color: var(--accent-blue);"></i>
-                    Typhoon & Flood Monitoring System
+                    Evacuation Management System
                 </h1>
             </div>
         </div>
 
+
+        
         {{-- Centered Navigation --}}
         <div class="header-nav-center">
             <a href="{{ route('typhoon.dashboard') }}" class="nav-link-custom active">
@@ -1058,134 +1093,59 @@
         </div> 
     </div> 
 
-                <div class="col-md-6">
-                    <div class="dashboard-card">
-                        <div class="card-header-custom"><i class="fas fa-exclamation-triangle"></i>Incident Monitoring</div>
-                        <div class="p-4">
-                            <div class="d-flex flex-column gap-3">
-                                <div class="d-flex justify-content-between align-items-center p-3 rounded" style="background: #fff5f5; border-left: 4px solid #dc3545;">
-                                    <div>
-                                        <div class="fw-bold" style="color: #991b1b;">Major Incidents</div>
-                                        <small class="text-muted">High priority response</small>
-                                    </div>
-                                    <div class="stat-value" style="color: #dc3545;">{{ $incidentMonitoring['major'] ?? 0 }}</div>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center p-3 rounded" style="background: #f0fdf4; border-left: 4px solid #198754;">
-                                    <div>
-                                        <div class="fw-bold" style="color: #166534;">Minor Incidents</div>
-                                        <small class="text-muted">Managed/Under control</small>
-                                    </div>
-                                    <div class="stat-value" style="color: #198754;">{{ $incidentMonitoring['minor'] ?? 0 }}</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- 2nd Row: Daily Rainfall (MM) & Weather Forecast --}}
-                <div class="col-md-6">
-                    <div class="dashboard-card">
-                        <div class="card-header-custom"><i class="fas fa-cloud-showers-heavy"></i>Daily Rainfall (MM)</div>
-                        <div class="p-4">
-                            <div class="row">
-                                <div class="col-6">
-                                    <div class="p-3 text-center rounded" style="background: #f0f9ff;">
-                                        <div class="stat-label">Bangal Station</div>
-                                        <div class="h3 mb-0 fw-bold text-primary">{{ $rainfall['bangal'] ?? '0.0' }} <small>mm</small></div>
-                                    </div>
-                                </div>
-                                <div class="col-6">
-                                    <div class="p-3 text-center rounded" style="background: #f0f9ff;">
-                                        <div class="stat-label">Kalaklan Station</div>
-                                        <div class="h3 mb-0 fw-bold text-primary">{{ $rainfall['kalaklan'] ?? '0.0' }} <small>mm</small></div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mt-4">
-                                <div class="progress" style="height: 6px; background: #f1f5f9;">
-                                    <div class="progress-bar bg-primary" role="progressbar" style="width: 45%;"></div>
-                                </div>
-                                <small class="text-muted mt-2 d-block">Accumulated precipitation last 24h</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="dashboard-card">
-                        <div class="card-header-custom"><i class="fas fa-cloud-sun-rain"></i>Weather Forecast</div>
-                        <div class="p-4">
-                            <div class="d-flex align-items-center mb-4">
-                                <div class="me-4">
-                                    <i class="fas fa-cloud-showers-water fa-3x text-primary"></i>
-                                </div>
-                                <div>
-                                    <div class="h3 mb-0 fw-bold">{{ $typhoonData->name ?? 'Moderate Rain' }}</div>
-                                    <div class="text-muted">{{ $typhoonData->temp ?? '28' }}°C | {{ $typhoonData->wind ?? '15' }} km/h Wind</div>
-                                </div>
-                            </div>
-                            <div class="small p-2 rounded bg-light border text-center">
-                                <i class="fas fa-info-circle me-1 text-primary"></i> Public Storm Warning Signal #1 Active
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        {{-- Right Section: Occupancy Overview (35%) --}}
-        <div class="col-lg-4">
-            <div class="dashboard-card d-flex flex-column">
-                <div class="card-header-custom justify-content-between">
-                    <div class="d-flex align-items-center">
-                        <i class="fas fa-chart-pie"></i>Occupancy Overview
-                    </div>
-                    <div class="dropdown">
-                        <button class="btn btn-sm occupancy-filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-filter"></i> Filter
-                        </button>
-                        <div class="dropdown-menu occupancy-filter-menu">
-                            <div class="mb-2">
-                                <label for="occupancySortOrder" class="form-label mb-1 small text-uppercase text-muted fw-semibold">Sort By</label>
-                                <select id="occupancySortOrder" class="form-select form-select-sm">
-                                    <option value="alphabetical">Alphabetical</option>
-                                    <option value="highest">Highest to Lowest</option>
-                                    <option value="newest">Newest to Lowest</option>
-                                </select>
-                            </div>
-                            <div>
-                                <div class="small text-uppercase text-muted fw-semibold mb-1">Direction</div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="occupancyDirection" id="occupancyDirectionLtr" value="ltr" checked>
-                                    <label class="form-check-label small" for="occupancyDirectionLtr">Left to Right</label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="occupancyDirection" id="occupancyDirectionRtl" value="rtl">
-                                    <label class="form-check-label small" for="occupancyDirectionRtl">Right to Left</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="p-2 flex-grow-1 d-flex flex-column">
-                    <div class="occupancy-chart-panel" style="position: relative; overflow-x: auto;">
-                        <div id="occupancyChartScroll" class="occupancy-chart-scroll">
-                            <canvas id="occupancyChart"></canvas>
-                        </div>
-                    </div>
-                    <div class="occupancy-summary">
-                        <div class="d-flex justify-content-between small mb-1">
-                            <span class="text-muted">Total System Capacity</span>
-                            <span class="fw-bold">{{ $totalSystemCapacity ?? 0 }}</span>
-                        </div>
-                        <div class="progress" style="height: 8px; background: #f1f5f9;">
-                            <div class="progress-bar bg-warning" role="progressbar" style="width: 100%;"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    {{-- Right Card: Occupancy Overview --}} 
+    <div class="col-md-6"> 
+        <div class="dashboard-card d-flex flex-column h-100"> 
+            <div class="card-header-custom justify-content-between"> 
+                <div class="d-flex align-items-center"> 
+                    <i class="fas fa-chart-pie"></i>Occupancy Overview 
+                </div> 
+                <div class="dropdown"> 
+                    <button class="btn btn-sm occupancy-filter-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false"> 
+                        <i class="fas fa-filter"></i> Filter 
+                    </button> 
+                    <div class="dropdown-menu occupancy-filter-menu"> 
+                        <div class="mb-2"> 
+                            <label for="occupancySortOrder" class="form-label mb-1 small text-uppercase text-muted fw-semibold">Sort By</label> 
+                            <select id="occupancySortOrder" class="form-select form-select-sm"> 
+                                <option value="alphabetical">Alphabetical</option> 
+                                <option value="highest">Highest to Lowest</option> 
+                                <option value="newest">Newest to Lowest</option> 
+                            </select> 
+                        </div> 
+                        <div> 
+                            <div class="small text-uppercase text-muted fw-semibold mb-1">Direction</div> 
+                            <div class="form-check"> 
+                                <input class="form-check-input" type="radio" name="occupancyDirection" id="occupancyDirectionLtr" value="ltr" checked> 
+                                <label class="form-check-label small" for="occupancyDirectionLtr">Left to Right</label> 
+                            </div> 
+                            <div class="form-check"> 
+                                <input class="form-check-input" type="radio" name="occupancyDirection" id="occupancyDirectionRtl" value="rtl"> 
+                                <label class="form-check-label small" for="occupancyDirectionRtl">Right to Left</label> 
+                            </div> 
+                        </div> 
+                    </div> 
+                </div> 
+            </div> 
+            <div class="p-2 flex-grow-1 d-flex flex-column justify-content-between"> 
+                <div class="occupancy-chart-panel" style="position: relative; overflow-x: auto; width: 100%;"> 
+                    <div id="occupancyChartScroll" class="occupancy-chart-scroll" style="width: 100%;"> 
+                        <canvas id="occupancyChart" style="width: 100%; min-height: 200px;"></canvas> 
+                    </div> 
+                </div> 
+                <div class="occupancy-summary"> 
+                    <div class="d-flex justify-content-between small mb-1"> 
+                        <span class="text-muted">Total System Capacity</span> 
+                        <span class="fw-bold">{{ $totalSystemCapacity ?? 0 }}</span> 
+                    </div> 
+                    <div class="progress" style="height: 8px; background: #f1f5f9;"> 
+                        <div class="progress-bar bg-warning" role="progressbar" style="width: 100%;"></div> 
+                    </div> 
+                </div> 
+            </div> 
+        </div> 
+    </div> 
+  </div>
 
     {{-- ═══ Active Typhoon Alert Banner (only shown when a TC is near Philippines) ═══ --}}
     @if(!empty($activeTyphoon))
@@ -1261,6 +1221,8 @@
     </div>
     @endif
 
+{{-- Family Registration Modal moved to a reusable partial. --}}
+@if(false)
 <div class="modal fade" id="familyRegistrationModal" tabindex="-1" aria-labelledby="familyRegistrationModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <form method="POST" action="{{ route('typhoon.families.store') }}" id="familyRegistrationForm">
@@ -1289,7 +1251,7 @@
                             <select id="existingFamilySelect" class="form-select">
                                 <option value="">-- Select existing family --</option>
                             </select>
-                            <small class="text-muted">Only families previously registered in the selected evacuation center are listed.</small>
+                            <small class="text-muted">Families registered in any evacuation center are available for selection.</small>
                         </div>
                     </div>
 
@@ -1346,60 +1308,49 @@
                         </div>
                     </div>
 
+    {{-- â”€â”€ MAIN BODY: Sidebar + Center + Right â”€â”€ --}}
+    <div class="evac-body">
 
-                    <hr>
+        {{-- â”€â”€ LEFT SIDEBAR â”€â”€ --}}
+        <aside class="evac-sidebar">
+            <nav class="evac-nav">
 
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <label class="form-label fw-bold mb-0">Other Family Members</label>
-                        <button type="button" class="btn btn-sm btn-outline-primary" id="add-member-btn">
-                            <i class="fas fa-plus"></i> Add Member
-                        </button>
+                <a href="#" class="evac-nav-item" id="evac-nav-incident">
+                    <div class="evac-nav-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
                     </div>
-                    <div id="family-members-container">
-                    </div>
+                    <span class="evac-nav-label">Incident</span>
+                </a>
 
-                    <hr>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="confirm_check_in" id="confirmCheckIn" checked>
-                        <label class="form-check-label" for="confirmCheckIn">
-                            Check-in this family now (sets current date/time)
-                        </label>
+                {{-- Register with dropdown --}}
+                <div class="evac-nav-item evac-nav-has-sub" id="evac-nav-register-wrap">
+                    <div class="evac-nav-item-inner" id="evac-nav-register-toggle">
+                        <div class="evac-nav-icon">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        <span class="evac-nav-label">Register</span>
+                        <i class="fas fa-chevron-down evac-nav-caret" id="evac-register-caret"></i>
+                    </div>
+                    <div class="evac-nav-sub" id="evac-nav-register-sub">
+                        <a href="#" class="evac-nav-sub-item" id="registerNavNew">
+                            <i class="fas fa-arrow-right evac-sub-arrow"></i> New
+                        </a>
+                        <a href="#" class="evac-nav-sub-item" id="registerNavExisting">
+                            <i class="fas fa-arrow-right evac-sub-arrow"></i> Existing
+                        </a>
                     </div>
                 </div>
 
-
-                    <!-- Evacuation Center Dropdown -->
-                <div class="modal-body">
-                    <div class="col-12">
-                        <label class="form-label fw-bold small text-uppercase text-muted">Evacuation Center / School <span class="text-danger">*</span></label>
-                        <div id="lockedCenterHint" class="small text-primary mb-1 d-none">
-                            <i class="fas fa-lock me-1"></i> Locked to selected evacuation center.
-                        </div>
-                        <select name="evacuation_center_id" id="modal_evacuation_center_id" class="form-select" required>
-                            <option value="">-- Select Evacuation Center --</option>
-                            @foreach($evacuationCenters ?? [] as $ec)
-                                <option value="{{ $ec->id }}">
-                                    {{ $ec->school_name ?? $ec->identification ?? ('Evacuation Center #' . $ec->id) }}
-                                </option>
-                            @endforeach
-                        </select>
+                <a href="#" class="evac-nav-item" id="evac-nav-school" data-bs-toggle="modal" data-bs-target="#chooseSchoolModal">
+                    <div class="evac-nav-icon">
+                        <i class="fas fa-school"></i>
                     </div>
+                    <span class="evac-nav-label">School</span>
+                </a>
 
-<!--work in progress-->
-                    <!-- Fire Safety Building Dropdown -->
-                    <div class="col-12">
-                        <label class="form-label fw-bold small text-uppercase text-muted">Building <span class="text-danger">*</span></label>
-                        <select name="building_id" id="firesafety_buildings" class="form-select" required>
-                            <option value="">-- Select Building --</option> 
-                        </select>
-                    </div>
-
-                    <!-- Room Dropdown -->
-                    <div class="col-12">
-                        <label class="form-label fw-bold small text-uppercase text-muted">Room <span class="text-danger">*</span></label>
-                        <select name="room_id" id="fire_safety_rooms" class="form-select" required>
-                            <option value="">-- Select Room --</option>
-                        </select>
+                <a href="#" class="evac-nav-item" id="evac-nav-remarks">
+                    <div class="evac-nav-icon">
+                        <i class="fas fa-comment-dots"></i>
                     </div>
                 </div>
 <!--work in progress-->
@@ -1603,7 +1554,7 @@
 {{-- ===================== SOCIAL / PRINT OVERLAY ===================== --}}
 <div id="socialPrintModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.92); z-index:9999; flex-direction:column; align-items:center; justify-content:flex-start; overflow-y:auto; padding: 1.5rem 0;">
 
-    {{-- ACTION BUTTONS — outside the printable card --}}
+    {{-- ACTION BUTTONS â€” outside the printable card --}}
     <div id="printActionBar" style="display:flex; align-items:center; gap:1rem; margin-bottom:1.25rem; width:1100px; max-width:96vw; justify-content:flex-end;">
         <span style="color:#8892b0; font-size:0.82rem; margin-right:auto; font-family:'Space Grotesk',sans-serif;">
             <i class="fas fa-info-circle me-1"></i> Preview your social media report. Click <strong style="color:#00d2ff;">Save as PDF</strong> to download.
@@ -1617,7 +1568,7 @@
     </div>
 
     {{-- PRINT CARD (landscape, 1100px wide) --}}
-    <div id="printCard" style="background: linear-gradient(135deg, #0a1128 0%, #112240 55%, #0d2137 100%); color: #e2e8f0; width: 1100px; max-width: 96vw; border-radius: 16px; box-shadow: 0 0 80px rgba(0,210,255,0.15); border: 1px solid rgba(0,210,255,0.2); font-family: 'Rajdhani', 'Space Grotesk', sans-serif; padding: 2.25rem; margin-bottom: 2rem;">
+    <div id="printCard" style="background: linear-gradient(135deg, #0a1128 0%, #112240 55%, #0d2137 100%); color: #e2e8f0; width: 1100px; max-width: 96vw; border-radius: 16px; box-shadow: 0 0 80px rgba(0,210,255,0.15); border: 1px solid rgba(0,210,255,0.2); font-family: 'Sora', 'Inter', sans-serif; padding: 2.25rem; margin-bottom: 2rem;">
 
         {{-- Header with Logos --}}
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem; padding-bottom:1.25rem; border-bottom:1px solid rgba(0,210,255,0.2);">
@@ -1633,7 +1584,7 @@
             <div style="text-align:right;">
                 <div style="font-size:1.75rem; font-weight:800; color:#00d2ff; letter-spacing:3px; line-height:1;">TYPHOON & FLOOD</div>
                 <div style="font-size:1rem; font-weight:700; color:#ffffff; letter-spacing:2px;">REPORTING SYSTEM</div>
-                <div style="font-size:0.72rem; color:#8892b0; margin-top:0.35rem; letter-spacing:0.5px;">📅 {{ now()->format('F d, Y  —  h:i A') }}</div>
+                <div style="font-size:0.72rem; color:#8892b0; margin-top:0.35rem; letter-spacing:0.5px;">ðŸ“… {{ now()->format('F d, Y  â€”  h:i A') }}</div>
             </div>
         </div>
 
@@ -1660,7 +1611,7 @@
         {{-- Rainfall & Weather + Active Centers --}}
         <div style="display:grid; grid-template-columns: 1fr 1fr 0.6fr; gap:1rem; margin-bottom:1.25rem;">
             <div style="background:rgba(0,210,255,0.06); border:1px solid rgba(0,210,255,0.15); border-radius:10px; padding:1rem;">
-                <div style="font-size:0.65rem; color:#00d2ff; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:0.75rem; font-weight:700;">📡 Daily Rainfall</div>
+                <div style="font-size:0.65rem; color:#00d2ff; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:0.75rem; font-weight:700;">ðŸ“¡ Daily Rainfall</div>
                 <div style="display:flex; justify-content:space-around;">
                     <div style="text-align:center;">
                         <div style="font-size:0.65rem; color:#8892b0; margin-bottom:0.25rem;">Bangal Station</div>
@@ -1674,10 +1625,10 @@
                 </div>
             </div>
             <div style="background:rgba(52,152,219,0.08); border:1px solid rgba(52,152,219,0.2); border-radius:10px; padding:1rem;">
-                <div style="font-size:0.65rem; color:#00d2ff; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:0.75rem; font-weight:700;">🌩 Weather Forecast</div>
+                <div style="font-size:0.65rem; color:#00d2ff; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:0.75rem; font-weight:700;">ðŸŒ© Weather Forecast</div>
                 <div style="font-size:1.6rem; font-weight:800; color:#ffffff; line-height:1; margin-bottom:0.25rem;">{{ $typhoonData->name ?? 'Moderate Rain' }}</div>
-                <div style="font-size:0.82rem; color:#8892b0; margin-bottom:0.5rem;">{{ $typhoonData->temp ?? '28' }}°C &nbsp;|&nbsp; {{ $typhoonData->wind ?? '15' }} km/h Wind</div>
-                <div style="font-size:0.72rem; background:rgba(255,183,3,0.12); border-radius:6px; padding:0.35rem 0.75rem; color:#f0b429; display:inline-block;">⚠ Storm Signal #1 Active</div>
+                <div style="font-size:0.82rem; color:#8892b0; margin-bottom:0.5rem;">{{ $typhoonData->temp ?? '28' }}Â°C &nbsp;|&nbsp; {{ $typhoonData->wind ?? '15' }} km/h Wind</div>
+                <div style="font-size:0.72rem; background:rgba(255,183,3,0.12); border-radius:6px; padding:0.35rem 0.75rem; color:#f0b429; display:inline-block;">âš  Storm Signal #1 Active</div>
             </div>
             <div style="background:rgba(0,210,255,0.06); border:1px solid rgba(0,210,255,0.15); border-radius:10px; padding:1rem; display:flex; flex-direction:column; align-items:center; justify-content:center;">
                 <div style="font-size:0.65rem; color:#8892b0; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:0.5rem; text-align:center;">Active Centers</div>
@@ -1687,7 +1638,7 @@
 
         {{-- Evacuation Centers Table --}}
         <div style="margin-bottom:1rem;">
-            <div style="font-size:0.7rem; color:#00d2ff; text-transform:uppercase; letter-spacing:2px; font-weight:700; margin-bottom:0.75rem; padding-bottom:0.5rem; border-bottom:1px solid rgba(0,210,255,0.2);">🏫 Evacuation Centers Status Monitoring</div>
+            <div style="font-size:0.7rem; color:#00d2ff; text-transform:uppercase; letter-spacing:2px; font-weight:700; margin-bottom:0.75rem; padding-bottom:0.5rem; border-bottom:1px solid rgba(0,210,255,0.2);">ðŸ« Evacuation Centers Status Monitoring</div>
             <table style="width:100%; border-collapse:collapse; font-size:0.82rem;">
                 <thead>
                     <tr style="background:rgba(0,210,255,0.12);">
@@ -1703,7 +1654,7 @@
                     <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
                         <td style="padding:0.6rem 0.75rem; font-weight:700; color:#e2e8f0;">{{ $ec->school_name ?? $ec->identification ?? ('Center #' . $ec->id) }}</td>
                         <td style="padding:0.6rem 0.75rem; color:#8892b0; font-size:0.78rem;">{{ Str::limit($ec->location, 40) }}</td>
-                        <td style="padding:0.6rem 0.75rem; text-align:center; color:#8892b0;">{{ $ec->capacity > 0 ? $ec->capacity : '∞' }}</td>
+                        <td style="padding:0.6rem 0.75rem; text-align:center; color:#8892b0;">{{ $ec->capacity > 0 ? $ec->capacity : 'âˆž' }}</td>
                         <td style="padding:0.6rem 0.75rem; text-align:center; font-weight:800; color:#00d2ff; font-size:1.05rem;">{{ $ec->current_occupancy }}</td>
                         <td style="padding:0.6rem 0.75rem; text-align:center;">
                             @php
@@ -1723,7 +1674,7 @@
         {{-- Footer --}}
         <div style="margin-top:1.25rem; padding-top:0.9rem; border-top:1px solid rgba(0,210,255,0.12); display:flex; justify-content:space-between; align-items:center; font-size:0.68rem; color:#4a5568;">
             <span>Generated by DRRM Typhoon & Flood Monitoring System</span>
-            <span>{{ now()->format('Y') }} · DepEd DRRM Monitoring · Printed: {{ now()->format('M d, Y h:i A') }}</span>
+            <span>{{ now()->format('Y') }} Â· DepEd DRRM Monitoring Â· Printed: {{ now()->format('M d, Y h:i A') }}</span>
         </div>
     </div>
 </div>
@@ -2016,7 +1967,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Typhoon & Flood Report</title>
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         @page { margin: 0; size: A4 landscape; }
@@ -2026,7 +1977,7 @@
             background: #0a1128 !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
-            font-family: 'Rajdhani', 'Space Grotesk', sans-serif;
+            font-family: 'Sora', 'Inter', sans-serif;
             display: flex;
             align-items: center;
             justify-content: center;
