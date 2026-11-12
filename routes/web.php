@@ -330,10 +330,6 @@ Route::prefix('comprehensive-school-safety')
         Route::get('/schools/{schoolId}/reports/assessment-print', [ComprehensiveSchoolSafetyController::class, 'printAssessmentReport'])->name('school.reports.assessment-print');
         Route::get('/schools/{schoolId}/reports/safety-index-print', [ComprehensiveSchoolSafetyController::class, 'printSafetyIndexReport'])->name('school.reports.safety-index-print');
         Route::get('/schools/{schoolId}/reports/timeline-print', [ComprehensiveSchoolSafetyController::class, 'printTimelineReport'])->name('school.reports.timeline-print');
-        Route::get('/schools/{schoolId}/storage', [ComprehensiveSchoolSafetyController::class, 'schoolStorage'])->name('school.storage');
-        Route::post('/schools/{schoolId}/storage', [ComprehensiveSchoolSafetyController::class, 'storeStorageItem'])->name('school.storage.store');
-        Route::put('/schools/{schoolId}/storage/{storageId}', [ComprehensiveSchoolSafetyController::class, 'updateStorageItem'])->name('school.storage.update');
-        Route::delete('/schools/{schoolId}/storage/{storageId}', [ComprehensiveSchoolSafetyController::class, 'destroyStorageItem'])->name('school.storage.destroy');
     });
 
 // Drill Monitoring Routes

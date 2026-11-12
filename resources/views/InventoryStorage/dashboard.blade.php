@@ -1404,24 +1404,12 @@
                             <span class="nav-icon"><i class="fa-solid fa-school"></i></span>
                         </button>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('inventory-storage.default-list') }}">
+                            <i class="fa-solid fa-list me-2"></i> Default List
+                        </a>
+                    </li>
                 </ul>
-            @endif
-
-            <div class="sidebar-section-label">Workspace</div>
-            <ul class="sidebar-nav">
-                <li>
-                    <button class="nav-link active" data-panel="panel-dashboard" id="nav-dashboard">
-                        <span class="nav-icon"><i class="fa-solid fa-border-all"></i></span>
-                        <span class="nav-text">Dashboard</span>
-                    </button>
-                </li>
-                <li>
-                    <button class="nav-link" data-panel="panel-default-list" id="nav-default-list">
-                        <span class="nav-icon"><i class="fa-solid fa-bars"></i></span>
-                        <span class="nav-text">Default List</span>
-                    </button>
-                </li>
-            </ul>
 
             <div class="sidebar-section-label">Reports</div>
             <ul class="sidebar-nav">

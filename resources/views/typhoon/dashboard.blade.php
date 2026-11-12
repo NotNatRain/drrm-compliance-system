@@ -732,8 +732,6 @@
     </div>
     @endif
 
-{{-- Family Registration Modal moved to a reusable partial. --}}
-@if(false)
 <div class="modal fade" id="familyRegistrationModal" tabindex="-1" aria-labelledby="familyRegistrationModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <form method="POST" action="{{ route('typhoon.families.store') }}" id="familyRegistrationForm">

@@ -117,30 +117,28 @@ class InventoryStorageController extends Controller
      ──────────────────────────────────────────────────────────────── */
     public function defaultList()
     {
-        return redirect()->route('inventory-storage.dashboard')
-                         ->with('open_panel', 'default-list');
+        $items = InventoryStorage::latest()->get();
+        return view('InventoryStorage.defaultList', compact('items'));
+{
+    $items = InventoryStorage::all();
+
+    return view('inventory-storage.dashboard', compact('items'));
+}
     }
 
-    /* ─────────────────────────────────────────────────────────────────
-     |  INVENTORY CRUD
-     ──────────────────────────────────────────────────────────────── */
-    public function store(Request $request)
-    {
-        $school = $this->resolveActiveSchool();
-        if (!$school) {
-            return redirect()->back()->withErrors(['error' => 'No active school selected.']);
-        }
-
-        $validated = $request->validate([
-            'item_name'     => 'required|string|max:255',
-            'unit'          => 'nullable|string|max:50',
-            'quantity'      => 'required|integer|min:0',
-            'status'        => 'required|string',
-            'location'      => 'nullable|string|max:255',
-            'fund_source'   => 'nullable|string|max:255',
-            'date_received' => 'nullable|date',
-            'date_checked'  => 'nullable|date',
-        ]);
+    public function store(Request $request) 
+    { 
+        $validated = $request->validate([ 
+            'id' => 'required|integer|unique:inventory_storages',
+            'emergecnySupplies' => 'required|integer|min:0',
+            'rescueSupplies' => 'required|integer|min:0',
+            'quantity' => 'required|integer|min:0', 
+            'status' => 'required|string', 
+            'location' => 'nullable|string|max:255', 
+            'fund_source' => 'nullable|string|max:255', 
+            'date_received' => 'nullable|date', 
+            'date_checked' => 'nullable|date', 
+        ]); 
 
         $validated['school_id'] = $school->id;
         InventoryStorage::create($validated);
