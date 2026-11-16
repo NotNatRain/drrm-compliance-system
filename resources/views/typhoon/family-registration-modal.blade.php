@@ -1,6 +1,6 @@
 {{-- Family Registration Modal --}}
 <div class="modal fade" id="familyRegistrationModal" tabindex="-1" aria-labelledby="familyRegistrationModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <form method="POST" action="{{ route('typhoon.families.store') }}" id="familyRegistrationForm">
             @csrf
             <div class="modal-content">
@@ -11,7 +11,12 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
-                <div class="modal-body">
+                <div class="modal-body" style="max-height: 75vh; overflow-y: auto;">
+
+                    {{-- Registration Mode --}}
+                    @if(isset($hidden_ec_id))
+                        <input type="hidden" name="evacuation_center_id" value="{{ $hidden_ec_id }}">
+                    @endif
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label small fw-bold">Family Encoding Mode <span class="text-danger">*</span></label>
@@ -22,278 +27,413 @@
                             <input type="hidden" name="existing_family_id" id="existingFamilyId" value="">
                         </div>
                         <div class="col-md-6 d-none" id="existingFamilySelectorWrap">
-                            <label class="form-label small fw-bold">Registered Family</label>
+                            <label class="form-label small fw-bold">Registered Family in This Center</label>
                             <select id="existingFamilySelect" class="form-select">
                                 <option value="">-- Select existing family --</option>
                             </select>
-                            <small class="text-muted">Families registered in any evacuation center are available.</small>
+                            <small class="text-muted">Only families previously registered in the selected evacuation center are listed.</small>
                         </div>
                     </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-12">
-                            <h6 class="fw-bold text-primary"><i class="fas fa-user-tie"></i> Head of Family Details</h6>
+                    {{-- ── SECTION 1: HEAD OF FAMILY ── --}}
+                    <div class="card mb-3 border-0 shadow-sm">
+                        <div class="card-header fw-bold small text-uppercase" style="background: #eaf0fb; color: #1B4C6D;">
+                            <i class="fas fa-user-tie me-2"></i> Head of Family Details
                         </div>
-                        <div class="col-md-6 mb-2">
-                            <label class="form-label small fw-bold">Full Name (Head) <span class="text-danger">*</span></label>
-                            <input type="text" name="head_family_name" id="input_head_name" class="form-control" placeholder="Full name of head" required>
-                            <input type="hidden" name="members[0][full_name]" id="hidden_head_name">
-                            <input type="hidden" name="members[0][is_head]" value="1">
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <label class="form-label small fw-bold">Age <span class="text-danger">*</span></label>
-                            <input type="number" name="members[0][age]" class="form-control" placeholder="Age" required min="0" max="150">
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <label class="form-label small fw-bold">Gender <span class="text-danger">*</span></label>
-                            <select name="members[0][gender]" class="form-select" required>
-                                <option value="">Select...</option>
-                                <option value="male">Male</option>
-                                <option value="female">Female</option>
-                            </select>
-                        </div>
+                        <div class="card-body">
+                            <div class="row g-2">
+                                {{-- Name --}}
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label small fw-bold">Full Name (Head) <span class="text-danger">*</span></label>
+                                    <input type="text" name="head_family_name" id="input_head_name" class="form-control" placeholder="Full name of head" required
+                                        oninput="document.getElementById('hidden_head_name').value = this.value">
+                                    <input type="hidden" name="members[0][full_name]" id="hidden_head_name">
+                                    <input type="hidden" name="members[0][is_head]" value="1">
+                                </div>
+                                {{-- Age --}}
+                                <div class="col-md-3 mb-2">
+                                    <label class="form-label small fw-bold">Age <span class="text-danger">*</span></label>
+                                    <input type="number" name="members[0][age]" class="form-control" placeholder="Age" required min="0" max="150">
+                                </div>
+                                {{-- Gender --}}
+                                <div class="col-md-3 mb-2">
+                                    <label class="form-label small fw-bold">Gender <span class="text-danger">*</span></label>
+                                    <select name="members[0][gender]" class="form-select" required>
+                                        <option value="">Select...</option>
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                    </select>
+                                </div>
+                                {{-- Contact Number --}}
+                                <div class="col-md-4 mb-2">
+                                    <label class="form-label small fw-bold">Contact Number</label>
+                                    <input type="text" name="contact_number" class="form-control" placeholder="e.g. 09XXXXXXXXX">
+                                </div>
+                                {{-- Street --}}
+                                <div class="col-md-8 mb-2">
+                                    <label class="form-label small fw-bold">Street / Purok</label>
+                                    <input type="text" name="street" class="form-control" placeholder="Street or Purok name">
+                                </div>
+                                {{-- Barangay --}}
+                                <div class="col-md-5 mb-2">
+                                    <label class="form-label small fw-bold">Barangay</label>
+                                    <input type="text" name="barangay" class="form-control" placeholder="Barangay">
+                                </div>
+                                {{-- City --}}
+                                <div class="col-md-7 mb-2">
+                                    <label class="form-label small fw-bold">City / Municipality</label>
+                                    <input type="text" name="city" class="form-control" placeholder="City or Municipality">
+                                </div>
+                            </div>
 
-                        <div class="col-12 vulnerability-wrapper mt-2">
-                            <div class="p-2 bg-light rounded border">
-                                <label class="form-label fw-bold small mb-1">Head Vulnerabilities / Special Concerns</label>
-                                <select class="form-select form-select-sm mb-2 vulnerability-selector">
-                                    <option value="">-- Add Concern --</option>
-                                    <option value="flagPregnant">Pregnant</option>
-                                    <option value="flagPwd">PWD</option>
-                                    <option value="flagSenior">Senior Citizen</option>
-                                    <option value="flagLactating">Lactating</option>
-                                    <option value="flagChild">Child Under 5</option>
-                                </select>
-                                <div class="vulnerability-tags-container d-flex flex-wrap gap-2"></div>
-                                <div class="d-none">
-                                    <input class="vulnerability-checkbox flagPregnant" type="checkbox" name="has_pregnant" value="1" id="flagPregnant">
-                                    <input class="vulnerability-checkbox flagPwd" type="checkbox" name="has_pwd" value="1" id="flagPwd">
-                                    <input class="vulnerability-checkbox flagSenior" type="checkbox" name="has_senior" value="1" id="flagSenior">
-                                    <input class="vulnerability-checkbox flagLactating" type="checkbox" name="has_lactating" value="1" id="flagLactating">
-                                    <input class="vulnerability-checkbox flagChild" type="checkbox" name="has_child_under5" value="1" id="flagChild">
+                            {{-- Vulnerabilities --}}
+                            <div class="vulnerability-wrapper mt-3">
+                                <div class="p-3 rounded border" style="background: #f8f9fa;">
+                                    <label class="form-label fw-bold small mb-2">Vulnerabilities / Special Concerns</label>
+                                    <select class="form-select form-select-sm mb-2 vulnerability-selector" id="headVulnerabilitySelector">
+                                        <option value="">-- Add Concern --</option>
+                                        <option value="flagPregnant">Pregnant</option>
+                                        <option value="flagPwd">PWD</option>
+                                        <option value="flagSenior">Senior Citizen</option>
+                                        <option value="flagLactating">Lactating</option>
+                                        <option value="flagChild">Child Under 5</option>
+                                        <option value="flagOtherNeeds">Other / Special Needs</option>
+                                    </select>
+                                    <div class="vulnerability-tags-container d-flex flex-wrap gap-2 mb-2"></div>
+                                    <div id="otherNeedsDetailsWrap" class="d-none">
+                                        <input type="text" name="other_needs_details" class="form-control form-control-sm" placeholder="Describe the special need..." maxlength="500">
+                                    </div>
+                                    <div class="d-none">
+                                        <input class="vulnerability-checkbox flagPregnant" type="checkbox" name="has_pregnant" value="1" id="flagPregnant">
+                                        <input class="vulnerability-checkbox flagPwd" type="checkbox" name="has_pwd" value="1" id="flagPwd">
+                                        <input class="vulnerability-checkbox flagSenior" type="checkbox" name="has_senior" value="1" id="flagSenior">
+                                        <input class="vulnerability-checkbox flagLactating" type="checkbox" name="has_lactating" value="1" id="flagLactating">
+                                        <input class="vulnerability-checkbox flagChild" type="checkbox" name="has_child_under5" value="1" id="flagChild">
+                                        <input class="vulnerability-checkbox flagOtherNeeds" type="checkbox" name="has_other_needs" value="1" id="flagOtherNeeds">
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Collective Needs --}}
+                            <div class="mt-3">
+                                <label class="form-label small fw-bold">Collective Family Needs <span class="text-danger">*</span></label>
+                                <div class="family-needs-builder" data-family-needs-builder="create" data-need-options='@json($familyNeedOptions ?? [])' data-existing-needs='[]'></div>
+                                <small class="text-muted d-block mt-1">Choose a need and quantity. Selecting <strong>Others Please Specify</strong> will reveal a custom need field.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- ── SECTION 2: OTHER FAMILY MEMBERS ── --}}
+                    <div class="card mb-3 border-0 shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center fw-bold small text-uppercase" style="background: #eaf0fb; color: #1B4C6D;">
+                            <span><i class="fas fa-users me-2"></i> Other Family Members</span>
+                            <button type="button" class="btn btn-sm btn-primary" id="add-member-btn" style="font-size:0.75rem;">
+                                <i class="fas fa-plus me-1"></i> Add Member
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="family-members-container"></div>
+                            <div id="no-members-hint" class="text-muted small text-center py-2">
+                                <i class="fas fa-info-circle me-1"></i> No additional members added. Click "Add Member" to include family members.
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- ── SECTION 3: PERSONAL BELONGINGS ── --}}
+                    <div class="card mb-3 border-0 shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center fw-bold small text-uppercase" style="background: #eaf0fb; color: #1B4C6D;">
+                            <span><i class="fas fa-briefcase me-2"></i> Personal Belongings</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="add-belonging-btn" style="font-size:0.75rem;">
+                                <i class="fas fa-plus me-1"></i> Add Item
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="belongings-container"></div>
+                            <div id="no-belongings-hint" class="text-muted small text-center py-2">
+                                <i class="fas fa-box-open me-1"></i> No items added yet. Click "Add Item" to list belongings.
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- ── SECTION 4: PERSONAL PETS ── --}}
+                    <div class="card mb-3 border-0 shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center fw-bold small text-uppercase" style="background: #eaf0fb; color: #1B4C6D;">
+                            <span><i class="fas fa-paw me-2"></i> Personal Pets</span>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="add-pet-btn" style="font-size:0.75rem;">
+                                <i class="fas fa-plus me-1"></i> Add Pet
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="pets-container"></div>
+                            <div id="no-pets-hint" class="text-muted small text-center py-2">
+                                <i class="fas fa-paw me-1"></i> No pets added yet. Click "Add Pet" to list pets.
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- ── SECTION 5: REGISTRANT & CHECK-IN ── --}}
+                    <div class="card mb-3 border-0 shadow-sm">
+                        <div class="card-header fw-bold small text-uppercase" style="background: #eaf0fb; color: #1B4C6D;">
+                            <i class="fas fa-clipboard-check me-2"></i> Registration Info
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-2">
+                                {{-- Registrant (read-only) --}}
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold">Registered By</label>
+                                    <input type="text" class="form-control" value="{{ auth()->user()->name }}" readonly style="background: #f1f3f5; cursor: not-allowed;">
+                                    <small class="text-muted">Automatically assigned to the currently logged-in user.</small>
+                                </div>
+                                {{-- Check-in --}}
+                                <div class="col-md-6 d-flex align-items-center">
+                                    <div class="form-check mt-3">
+                                        <input class="form-check-input" type="checkbox" name="confirm_check_in" id="confirmCheckIn" checked>
+                                        <label class="form-check-label" for="confirmCheckIn">
+                                            <strong>Check-in this family now</strong><br>
+                                            <small class="text-muted">Sets current date/time as check-in.</small>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-
-                        <div class="col-12 mt-2">
-                            <label class="form-label small fw-bold">Collective Family Needs <span class="text-danger">*</span></label>
-                            <div class="family-needs-builder" data-family-needs-builder="create" data-need-options='@json($familyNeedOptions ?? [])' data-existing-needs="[]"></div>
-                            <small class="text-muted d-block mt-2">Choose a need and quantity. Selecting <strong>Others Please Specify</strong> reveals a custom field.</small>
-                        </div>
                     </div>
 
-                    <hr>
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <label class="form-label fw-bold mb-0">Other Family Members</label>
-                        <button type="button" class="btn btn-sm btn-outline-primary" id="add-member-btn"><i class="fas fa-plus"></i> Add Member</button>
-                    </div>
-                    <div id="family-members-container"></div>
-                    <hr>
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="confirm_check_in" id="confirmCheckIn" checked>
-                        <label class="form-check-label" for="confirmCheckIn">Check-in this family now (sets current date/time)</label>
-                    </div>
-                </div>
-
-                <div class="modal-body">
-                    <div class="col-12">
+                    {{-- Evacuation Center Dropdown (hidden data) --}}
+                    <div class="mb-3">
                         <label class="form-label fw-bold small text-uppercase text-muted">Evacuation Center / School <span class="text-danger">*</span></label>
-                        <div id="lockedCenterHint" class="small text-primary mb-1 d-none"><i class="fas fa-lock me-1"></i> Locked to selected evacuation center.</div>
+                        <div id="lockedCenterHint" class="small text-primary mb-1 d-none">
+                            <i class="fas fa-lock me-1"></i> Locked to selected evacuation center.
+                        </div>
                         <select name="evacuation_center_id" id="modal_evacuation_center_id" class="form-select" required>
                             <option value="">-- Select Evacuation Center --</option>
                             @foreach($evacuationCenters ?? [] as $ec)
-                                <option value="{{ $ec->id }}">{{ $ec->school_name ?? $ec->identification ?? ('Evacuation Center #' . $ec->id) }}</option>
+                                <option value="{{ $ec->id }}">
+                                    {{ $ec->school_name ?? $ec->identification ?? ('Evacuation Center #' . $ec->id) }}
+                                </option>
                             @endforeach
                         </select>
                     </div>
-                    <div class="col-12">
-                        <label class="form-label fw-bold small text-uppercase text-muted">Building <span class="text-danger">*</span></label>
-                        <select name="building_id" id="firesafety_buildings" class="form-select" required><option value="">-- Select Building --</option></select>
-                    </div>
-                    <div class="col-12">
-                        <label class="form-label fw-bold small text-uppercase text-muted">Room <span class="text-danger">*</span></label>
-                        <select name="room_id" id="fire_safety_rooms" class="form-select" required><option value="">-- Select Room --</option></select>
-                    </div>
-                </div>
+
+                </div>{{-- /modal-body --}}
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn" style="background-color: #1B4C6D; color: white;"><i class="fas fa-save"></i> Register Family</button>
+                    <button type="submit" class="btn" style="background-color: #1B4C6D; color: white;">
+                        <i class="fas fa-save me-1"></i> Register Family
+                    </button>
                 </div>
             </div>
         </form>
     </div>
 </div>
 
+{{-- ── Common Belongings & Pets Data (for JS) ── --}}
 <script>
-(() => {
-    const existingFamiliesByCenter = @json($existingFamiliesByCenter ?? []);
+    const COMMON_BELONGINGS = [
+        'Clothing / Clothes', 'Blanket', 'Pillow', 'Towel', 'Toiletries',
+        'Food / Groceries', 'Water Containers', 'Medicine / First Aid Kit',
+        'Mobile Phone / Charger', 'Flashlight / Batteries', 'Important Documents',
+        'Cash / Valuables', 'Baby Items / Diapers', 'Cooking Utensils',
+        'Mattress / Sleeping Mat', 'Backpack / Bag'
+    ];
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const modal = document.getElementById('familyRegistrationModal');
-        const form = document.getElementById('familyRegistrationForm');
-        if (!modal || !form) return;
+    const COMMON_PETS = [
+        'Dog', 'Cat', 'Chicken / Poultry', 'Pig', 'Goat', 'Rabbit',
+        'Bird / Pigeon', 'Fish (in container)', 'Cow / Carabao', 'Horse'
+    ];
 
-        const centerSelect = document.getElementById('modal_evacuation_center_id');
-        const buildingSelect = document.getElementById('firesafety_buildings');
-        const roomSelect = document.getElementById('fire_safety_rooms');
-        const modeSelect = document.getElementById('familyRegistrationMode');
-        const existingWrap = document.getElementById('existingFamilySelectorWrap');
-        const existingSelect = document.getElementById('existingFamilySelect');
-        const existingId = document.getElementById('existingFamilyId');
-        const members = document.getElementById('family-members-container');
-        const addMember = document.getElementById('add-member-btn');
-        const headName = document.getElementById('input_head_name');
-        const hiddenHeadName = document.getElementById('hidden_head_name');
-        let memberIndex = 1;
+    const FAMILY_ROLES = [
+        'Father', 'Mother', 'Son', 'Daughter', 'Grandfather', 'Grandmother',
+        'Uncle', 'Aunt', 'Nephew', 'Niece', 'Cousin', 'Relative', 'Guardian',
+        'Family Friend'
+    ];
 
-        const allFamilies = () => {
-            const unique = new Map();
-            Object.values(existingFamiliesByCenter || {}).flat().forEach(family => {
-                if (family?.id != null) unique.set(String(family.id), family);
-            });
-            return [...unique.values()];
-        };
+    // ── Belongings Builder ──
+    let belongingIndex = 0;
 
-        const escapeHtml = value => String(value ?? '').replace(/[&<>'"]/g, char => ({
-            '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-        }[char]));
-
-        function initializeNeeds(needs = []) {
-            const builder = form.querySelector('.family-needs-builder');
-            if (!builder) return;
-            const options = JSON.parse(builder.dataset.needOptions || '[]');
-            builder.innerHTML = '';
-            let index = 0;
-            const addNeed = (need = {}) => {
-                const selected = need.need_name || '';
-                const custom = selected && !options.includes(selected);
-                const row = document.createElement('div');
-                row.className = 'row g-2 mb-2 family-need-row';
-                row.innerHTML = `<div class="col-md-6"><select class="form-select" name="needs[${index}][need_name]" required><option value="">-- Select need --</option>${options.map(option => `<option value="${escapeHtml(option)}">${escapeHtml(option)}</option>`).join('')}<option value="Others Please Specify">Others Please Specify</option></select></div><div class="col-md-3"><input type="number" class="form-control" name="needs[${index}][quantity]" min="1" value="${need.quantity || 1}" required></div><div class="col-md-3"><button type="button" class="btn btn-outline-danger w-100">Remove</button></div><div class="col-12 custom-need ${custom ? '' : 'd-none'}"><input type="text" class="form-control" name="needs[${index}][custom_need]" placeholder="Please specify other need" value="${escapeHtml(custom ? selected : '')}"></div>`;
-                const select = row.querySelector('select');
-                const customWrap = row.querySelector('.custom-need');
-                const customInput = row.querySelector('input[name$="[custom_need]"]');
-                select.value = custom ? 'Others Please Specify' : selected;
-                customInput.required = custom;
-                select.addEventListener('change', () => {
-                    const isOther = select.value === 'Others Please Specify';
-                    customWrap.classList.toggle('d-none', !isOther);
-                    customInput.required = isOther;
-                    if (isOther && row === builder.lastElementChild) addNeed();
-                });
-                row.querySelector('button').addEventListener('click', () => {
-                    if (builder.children.length > 1) row.remove();
-                    else { select.value = ''; customInput.value = ''; customWrap.classList.add('d-none'); }
-                });
-                builder.appendChild(row);
-                index++;
-            };
-            needs.forEach(addNeed);
-            addNeed();
-        }
-
-        function addMemberRow(member = {}) {
-            const row = document.createElement('div');
-            row.className = 'row g-2 mb-3 member-row border-bottom pb-3';
-            row.innerHTML = `<div class="col-md-6"><label class="form-label small fw-bold">Full Name *</label><input class="form-control" name="members[${memberIndex}][full_name]" value="${escapeHtml(member.full_name)}" required></div><div class="col-md-3"><label class="form-label small fw-bold">Age *</label><input type="number" class="form-control" name="members[${memberIndex}][age]" value="${escapeHtml(member.age)}" min="0" required></div><div class="col-md-3"><label class="form-label small fw-bold">Gender *</label><select class="form-select" name="members[${memberIndex}][gender]" required><option value="">Select...</option><option value="male">Male</option><option value="female">Female</option></select></div><div class="col-12 text-end"><button type="button" class="btn btn-outline-danger btn-sm">Remove Member</button></div><input type="hidden" name="members[${memberIndex}][is_head]" value="0">`;
-            row.querySelector('select').value = member.gender || '';
-            row.querySelector('button').addEventListener('click', () => row.remove());
-            members.appendChild(row);
-            memberIndex++;
-        }
-
-        function clearDetails() {
-            form.querySelectorAll('input, textarea').forEach(input => {
-                if (input.type !== 'hidden' || ['existingFamilyId', 'hidden_head_name'].includes(input.id)) input.value = '';
-            });
-            form.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
-            form.querySelectorAll('.vulnerability-checkbox').forEach(input => input.checked = false);
-            members.innerHTML = '';
-            memberIndex = 1;
-            existingId.value = '';
-            initializeNeeds();
-        }
-
-        function refreshFamilies() {
-            if (!existingSelect) return;
-            existingSelect.innerHTML = '<option value="">-- Select registered family --</option>';
-            allFamilies().forEach(family => {
-                const option = document.createElement('option');
-                option.value = family.id;
-                option.textContent = `#${family.id} - ${family.head_family_name || 'Unnamed family'}${family.checked_out_at ? ' (History)' : ''}`;
-                existingSelect.appendChild(option);
-            });
-        }
-
-        function fillFamily(family) {
-            const familyMembers = Array.isArray(family.members) ? family.members : [];
-            const head = familyMembers.find(member => member.is_head) || familyMembers[0];
-            headName.value = head?.full_name || family.head_family_name || '';
-            hiddenHeadName.value = headName.value;
-            form.querySelector('input[name="members[0][age]"]').value = head?.age || '';
-            form.querySelector('select[name="members[0][gender]"]').value = head?.gender || '';
-            familyMembers.filter(member => !member.is_head).forEach(addMemberRow);
-            ['pregnant', 'pwd', 'senior', 'lactating', 'child_under5'].forEach(flag => {
-                const input = form.querySelector(`[name="has_${flag}"]`);
-                if (input) input.checked = !!family[`has_${flag}`];
-            });
-            existingId.value = family.id;
-            initializeNeeds(family.needs || []);
-        }
-
-        async function loadBuildings() {
-            if (!buildingSelect || !centerSelect.value) return;
-            buildingSelect.innerHTML = '<option value="">-- Loading Buildings --</option>';
-            roomSelect.innerHTML = '<option value="">-- Select Room --</option>';
-            try {
-                const response = await fetch(`/fire-safety/buildings/${centerSelect.value}`);
-                const buildings = await response.json();
-                buildingSelect.innerHTML = '<option value="">-- Select Building --</option>';
-                buildings.forEach(building => buildingSelect.add(new Option(`${building.building_no}${building.building_name ? ` - ${building.building_name}` : ''}`, building.id)));
-            } catch { buildingSelect.innerHTML = '<option value="">-- Error loading buildings --</option>'; }
-        }
-
-        async function loadRooms() {
-            if (!roomSelect || !buildingSelect.value) return;
-            roomSelect.innerHTML = '<option value="">-- Loading Rooms --</option>';
-            try {
-                const response = await fetch(`/fire-safety/rooms/${buildingSelect.value}`);
-                const rooms = await response.json();
-                const evacRooms = rooms.filter(room => room.Main_evac || room.Buffer_evac || room.is_evacuation_room);
-                roomSelect.innerHTML = evacRooms.length ? '<option value="">-- Select Room --</option>' : '<option value="">No evacuation rooms found</option>';
-                evacRooms.forEach(room => roomSelect.add(new Option(`${room.room_code || 'Room'}${room.room_name ? ` - ${room.room_name}` : ''}`, room.id)));
-            } catch { roomSelect.innerHTML = '<option value="">-- Error loading rooms --</option>'; }
-        }
-
-        headName?.addEventListener('input', () => { hiddenHeadName.value = headName.value; });
-        addMember?.addEventListener('click', () => addMemberRow());
-        centerSelect?.addEventListener('change', loadBuildings);
-        buildingSelect?.addEventListener('change', loadRooms);
-        modeSelect?.addEventListener('change', () => {
-            const existing = modeSelect.value === 'existing';
-            existingWrap?.classList.toggle('d-none', !existing);
-            clearDetails();
-            if (existing) refreshFamilies();
+    function buildSelectOptions(optionsList, selectedVal = '') {
+        let html = '<option value="">-- Select --</option>';
+        optionsList.forEach(opt => {
+            html += `<option value="${opt}" ${opt === selectedVal ? 'selected' : ''}>${opt}</option>`;
         });
-        existingSelect?.addEventListener('change', () => {
-            const family = allFamilies().find(item => String(item.id) === existingSelect.value);
-            if (family) { clearDetails(); fillFamily(family); }
-        });
-        modal.addEventListener('show.bs.modal', event => {
-            clearDetails();
-            modeSelect.value = 'new';
-            existingWrap?.classList.add('d-none');
-            const centerId = event.relatedTarget?.dataset.ecId;
-            if (centerId) {
-                centerSelect.value = centerId;
-                centerSelect.dataset.lockedValue = centerId;
-                centerSelect.style.pointerEvents = 'none';
-                document.getElementById('lockedCenterHint')?.classList.remove('d-none');
-                loadBuildings();
+        html += `<option value="Others" ${selectedVal === 'Others' ? 'selected' : ''}>Others (specify)</option>`;
+        return html;
+    }
+
+    function addBelongingRow(item = {}) {
+        const container = document.getElementById('belongings-container');
+        const hint = document.getElementById('no-belongings-hint');
+        if (hint) hint.classList.add('d-none');
+
+        const idx = belongingIndex++;
+        const row = document.createElement('div');
+        row.className = 'row g-2 mb-2 align-items-end belonging-row';
+
+        const selectedName = item.name || '';
+        const isOther = selectedName && !COMMON_BELONGINGS.includes(selectedName);
+        const qty = item.qty || 1;
+
+        row.innerHTML = `
+            <div class="col-md-5">
+                <label class="form-label small fw-bold">Item</label>
+                <select class="form-select belonging-select" name="belongings[${idx}][name]">
+                    ${buildSelectOptions(COMMON_BELONGINGS, isOther ? 'Others' : selectedName)}
+                </select>
+            </div>
+            <div class="col-md-4 belonging-other-wrap ${isOther ? '' : 'd-none'}">
+                <label class="form-label small fw-bold">Specify</label>
+                <input type="text" class="form-control belonging-other-input" placeholder="Specify item..." value="${isOther ? selectedName : ''}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold">Qty</label>
+                <input type="number" class="form-control" name="belongings[${idx}][qty]" value="${qty}" min="1" max="999">
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="button" class="btn btn-outline-danger btn-sm remove-belonging w-100"><i class="fas fa-trash"></i></button>
+            </div>
+        `;
+
+        const select = row.querySelector('.belonging-select');
+        const otherWrap = row.querySelector('.belonging-other-wrap');
+        const otherInput = row.querySelector('.belonging-other-input');
+
+        select.addEventListener('change', function () {
+            const isOtherVal = this.value === 'Others';
+            otherWrap.classList.toggle('d-none', !isOtherVal);
+            // Sync name field
+            if (!isOtherVal) {
+                otherInput.value = '';
+                this.name = `belongings[${idx}][name]`;
+            } else {
+                this.name = ''; // let other input carry the value
+                otherInput.name = `belongings[${idx}][name]`;
             }
-            refreshFamilies();
+        });
+
+        // Init: if it's Others, wire up properly
+        if (isOther) {
+            select.name = '';
+            otherInput.name = `belongings[${idx}][name]`;
+        }
+
+        row.querySelector('.remove-belonging').addEventListener('click', function () {
+            row.remove();
+            checkBelongingsHint();
+        });
+
+        container.appendChild(row);
+    }
+
+    function checkBelongingsHint() {
+        const container = document.getElementById('belongings-container');
+        const hint = document.getElementById('no-belongings-hint');
+        if (hint) hint.classList.toggle('d-none', container.children.length > 0);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('add-belonging-btn')?.addEventListener('click', function () {
+            addBelongingRow();
         });
     });
-})();
+
+    // ── Pets Builder ──
+    let petIndex = 0;
+
+    function addPetRow(item = {}) {
+        const container = document.getElementById('pets-container');
+        const hint = document.getElementById('no-pets-hint');
+        if (hint) hint.classList.add('d-none');
+
+        const idx = petIndex++;
+        const row = document.createElement('div');
+        row.className = 'row g-2 mb-2 align-items-end pet-row';
+
+        const selectedName = item.name || '';
+        const isOther = selectedName && !COMMON_PETS.includes(selectedName);
+        const qty = item.qty || 1;
+
+        row.innerHTML = `
+            <div class="col-md-5">
+                <label class="form-label small fw-bold">Pet Type</label>
+                <select class="form-select pet-select" name="pets[${idx}][name]">
+                    ${buildSelectOptions(COMMON_PETS, isOther ? 'Others' : selectedName)}
+                </select>
+            </div>
+            <div class="col-md-4 pet-other-wrap ${isOther ? '' : 'd-none'}">
+                <label class="form-label small fw-bold">Specify</label>
+                <input type="text" class="form-control pet-other-input" placeholder="Specify pet type..." value="${isOther ? selectedName : ''}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-bold">Qty</label>
+                <input type="number" class="form-control" name="pets[${idx}][qty]" value="${qty}" min="1" max="999">
+            </div>
+            <div class="col-md-1 d-flex align-items-end">
+                <button type="button" class="btn btn-outline-danger btn-sm remove-pet w-100"><i class="fas fa-trash"></i></button>
+            </div>
+        `;
+
+        const select = row.querySelector('.pet-select');
+        const otherWrap = row.querySelector('.pet-other-wrap');
+        const otherInput = row.querySelector('.pet-other-input');
+
+        select.addEventListener('change', function () {
+            const isOtherVal = this.value === 'Others';
+            otherWrap.classList.toggle('d-none', !isOtherVal);
+            if (!isOtherVal) {
+                otherInput.value = '';
+                this.name = `pets[${idx}][name]`;
+            } else {
+                this.name = '';
+                otherInput.name = `pets[${idx}][name]`;
+            }
+        });
+
+        if (isOther) {
+            select.name = '';
+            otherInput.name = `pets[${idx}][name]`;
+        }
+
+        row.querySelector('.remove-pet').addEventListener('click', function () {
+            row.remove();
+            checkPetsHint();
+        });
+
+        container.appendChild(row);
+    }
+
+    function checkPetsHint() {
+        const container = document.getElementById('pets-container');
+        const hint = document.getElementById('no-pets-hint');
+        if (hint) hint.classList.toggle('d-none', container.children.length > 0);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('add-pet-btn')?.addEventListener('click', function () {
+            addPetRow();
+        });
+    });
+
+    // ── Other Needs Vulnerability Toggle ──
+    document.addEventListener('change', function (e) {
+        if (e.target && e.target.classList.contains('vulnerability-selector')) {
+            if (e.target.value === 'flagOtherNeeds') {
+                const wrap = document.getElementById('otherNeedsDetailsWrap');
+                if (wrap) wrap.classList.remove('d-none');
+            }
+        }
+    });
+
+    // Reset belongings/pets when modal is reset
+    function resetBelongingsAndPets() {
+        const bc = document.getElementById('belongings-container');
+        const pc = document.getElementById('pets-container');
+        if (bc) bc.innerHTML = '';
+        if (pc) pc.innerHTML = '';
+        checkBelongingsHint();
+        checkPetsHint();
+        belongingIndex = 0;
+        petIndex = 0;
+        const otherWrap = document.getElementById('otherNeedsDetailsWrap');
+        if (otherWrap) otherWrap.classList.add('d-none');
+    }
 </script>

@@ -874,7 +874,7 @@
         </form>
     </div>
 </div>
-@endif
+
 @include('typhoon.family-registration-modal')
 
             </nav>
