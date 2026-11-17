@@ -273,7 +273,11 @@ class TyphoonController extends Controller
                 $lat = 14.83;
                 $lon = 120.28;
                 $url = "https://api.open-meteo.com/v1/forecast?latitude={$lat}&longitude={$lon}&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m,precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Asia%2FSingapore";
-                $response = file_get_contents($url);
+                $ctx = stream_context_create(['http' => ['timeout' => 8]]);
+                $response = @file_get_contents($url, false, $ctx);
+                if (!$response) {
+                    return null;
+                }
 
                 return json_decode($response, true);
             } catch (\Exception $e) {
@@ -1097,5 +1101,88 @@ class TyphoonController extends Controller
         ]);
     }
 
-    
+
+    public function dswdForm()
+    {
+        $user = Auth::user();
+
+        $evacuationCentersQuery = $this->typhoonRegisteredEvacuationCentersQuery();
+        if ($user->role !== 'admin') {
+            $ids = $this->contributorTyphoonSchoolIds($user);
+            if (!$ids || count($ids) === 0) {
+                $evacuationCentersQuery->whereRaw('1=0');
+            } else {
+                $evacuationCentersQuery->whereIn('id', $ids);
+            }
+        }
+
+        $evacuationCenters = $evacuationCentersQuery->get()->map(fn($ec) => $this->attachCurrentOccupancy($ec));
+
+        $activeSchoolId = session('typhoon_active_school_id');
+        if ($user->role !== 'admin' && $user->typhoon_school_id) {
+            $activeSchoolId = $user->typhoon_school_id;
+        }
+
+        $activeCenter = $activeSchoolId ? School::find($activeSchoolId) : null;
+
+        $families = collect();
+        if ($activeCenter) {
+            $families = TypFldFamily::with(['members', 'needs'])
+                ->where('school_id', $activeCenter->id)
+                ->latest()
+                ->get();
+        }
+
+        return view('typhoon.dswd-form', [
+            'evacuationCenters' => $evacuationCenters,
+            'activeCenter'      => $activeCenter,
+            'activeSchoolId'    => $activeSchoolId,
+            'families'          => $families,
+        ]);
+    }
+
+    public function submitDSWDForm(Request $request)
+    {
+        return redirect()->route('typhoon.dswd-form')->with('success', 'DSWD Form submitted successfully.');
+    }
+
+    public function familyAssistance()
+    {
+        $user = Auth::user();
+
+        $evacuationCentersQuery = $this->typhoonRegisteredEvacuationCentersQuery();
+        if ($user->role !== 'admin') {
+            $ids = $this->contributorTyphoonSchoolIds($user);
+            if (!$ids || count($ids) === 0) {
+                $evacuationCentersQuery->whereRaw('1=0');
+            } else {
+                $evacuationCentersQuery->whereIn('id', $ids);
+            }
+        }
+
+        $evacuationCenters = $evacuationCentersQuery->get()->map(fn($ec) => $this->attachCurrentOccupancy($ec));
+
+        $activeSchoolId = session('typhoon_active_school_id');
+        if ($user->role !== 'admin' && $user->typhoon_school_id) {
+            $activeSchoolId = $user->typhoon_school_id;
+        }
+
+        $activeCenter = $activeSchoolId ? School::find($activeSchoolId) : null;
+
+        $families = collect();
+        if ($activeCenter) {
+            $families = TypFldFamily::with(['members', 'needs'])
+                ->where('school_id', $activeCenter->id)
+                ->whereNull('checked_out_at')
+                ->latest()
+                ->get();
+        }
+
+        return view('typhoon.family-assistance', [
+            'evacuationCenters' => $evacuationCenters,
+            'activeCenter'      => $activeCenter,
+            'activeSchoolId'    => $activeSchoolId,
+            'families'          => $families,
+        ]);
+    }
 }
