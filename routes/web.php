@@ -253,6 +253,9 @@ Route::prefix('typhoon')->middleware(['auth', 'module.access:typhoon_flood'])->g
     Route::post('/announcements', [TyphoonController::class, 'storeAnnouncement'])->name('typhoon.announcements.store');
     
 
+    Route::get('/dswd-form', [TyphoonController::class, 'dswdForm'])->name('typhoon.dswd-form');
+    Route::post('/dswd-form/submit', [TyphoonController::class, 'submitDSWDForm'])->name('typhoon.dswd-form.submit');
+    Route::get('/family-assistance', [TyphoonController::class, 'familyAssistance'])->name('typhoon.family-assistance');
     // Add other typhoon routes here
 });
 
