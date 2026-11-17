@@ -1322,54 +1322,6 @@
 @endif
 
     {{-- â”€â”€ MAIN BODY: Sidebar + Center + Right â”€â”€ --}}
-    <div class="evac-body">
-
-        {{-- â”€â”€ LEFT SIDEBAR â”€â”€ --}}
-        <aside class="evac-sidebar">
-            <nav class="evac-nav">
-
-                <a href="#" class="evac-nav-item" id="evac-nav-incident">
-                    <div class="evac-nav-icon">
-                        <i class="fas fa-exclamation-triangle"></i>
-                    </div>
-                    <span class="evac-nav-label">Incident</span>
-                </a>
-
-                {{-- Register with dropdown --}}
-                <div class="evac-nav-item evac-nav-has-sub" id="evac-nav-register-wrap">
-                    <div class="evac-nav-item-inner" id="evac-nav-register-toggle">
-                        <div class="evac-nav-icon">
-                            <i class="fas fa-clipboard-list"></i>
-                        </div>
-                        <span class="evac-nav-label">Register</span>
-                        <i class="fas fa-chevron-down evac-nav-caret" id="evac-register-caret"></i>
-                    </div>
-                    <div class="evac-nav-sub" id="evac-nav-register-sub">
-                        <a href="#" class="evac-nav-sub-item" id="registerNavNew">
-                            <i class="fas fa-arrow-right evac-sub-arrow"></i> New
-                        </a>
-                        <a href="#" class="evac-nav-sub-item" id="registerNavExisting">
-                            <i class="fas fa-arrow-right evac-sub-arrow"></i> Existing
-                        </a>
-                    </div>
-                </div>
-
-                <a href="#" class="evac-nav-item" id="evac-nav-school" data-bs-toggle="modal" data-bs-target="#chooseSchoolModal">
-                    <div class="evac-nav-icon">
-                        <i class="fas fa-school"></i>
-                    </div>
-                    <span class="evac-nav-label">School</span>
-                </a>
-
-                <a href="#" class="evac-nav-item" id="evac-nav-remarks">
-                    <div class="evac-nav-icon">
-                        <i class="fas fa-comment-dots"></i>
-                    </div>
-                </a>
-<!--work in progress-->
-
-            </nav>
-        </aside>
 
         {{-- â”€â”€ CENTER COLUMN â”€â”€ --}}
         <main class="evac-main">
