@@ -2,1153 +2,230 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>School Safety & Emergency Inventory</title>
-
-<!-- Bootstrap 5 -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-<!-- Font Awesome -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
+<title>Inventory Compliance Report</title>
 <style>
-:root{
-    --drrm-teal:#0D7377;
-    --drrm-teal-hover:#0a5a5d;
-    --drrm-teal-light:#e6f1f1;
-}
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: DejaVu Sans, sans-serif; font-size: 10px; color: #1a2e2e; background: #fff; }
 
-body{
-    background:#f4f7f6;
-    font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
-}
+    /* Header */
+    .report-header { text-align: center; padding: 18px 0 14px; border-bottom: 2px solid #0D7377; margin-bottom: 18px; }
+    .report-header .agency { font-size: 8px; text-transform: uppercase; letter-spacing: .08em; color: #6b8080; }
+    .report-header h1 { font-size: 15px; font-weight: 700; color: #0D7377; margin: 4px 0 2px; }
+    .report-header .school-name { font-size: 11px; font-weight: 700; color: #1a2e2e; }
+    .report-header .meta { font-size: 8px; color: #9bb2b2; margin-top: 4px; }
 
-/* Sidebar */
-.sidebar{
-    min-height:100vh;
-    background:var(--drrm-teal);
-    color:white;
-    box-shadow:2px 0 5px rgba(0,0,0,.1);
-}
+    /* Section header */
+    .section-header { background: #0D7377; color: #fff; padding: 7px 12px; border-radius: 4px 4px 0 0; margin-top: 18px; }
+    .section-header h2 { font-size: 10px; font-weight: 700; letter-spacing: .04em; }
+    .section-header .score { float: right; font-size: 9px; font-weight: 600; }
 
-.sidebar-heading{
-    font-size:1.1rem;
-    font-weight:bold;
-    text-transform:uppercase;
-    padding:1.5rem;
-    border-bottom:1px solid rgba(255,255,255,.1);
-}
+    /* Table */
+    table { width: 100%; border-collapse: collapse; font-size: 9px; }
+    thead th { background: #eef5f5; color: #4a6060; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; padding: 6px 8px; border-bottom: 1px solid #cdd8d8; text-align: left; }
+    tbody td { padding: 6px 8px; border-bottom: 1px solid #f0f5f5; vertical-align: top; }
+    tbody tr:nth-child(even) td { background: #f8fbfb; }
+    .badge-yes { color: #065f46; font-weight: 700; }
+    .badge-no  { color: #9ca3af; }
+    .badge-source { background: #e0f2fe; color: #0369a1; padding: 1px 5px; border-radius: 3px; }
 
-.sidebar .nav-link{
-    color:rgba(255,255,255,.75);
-    padding:.9rem 1.5rem;
-    transition:.3s;
-}
+    /* Inventory table */
+    .inv-section-header { background: #1a2e2e; color: #fff; padding: 7px 12px; border-radius: 4px 4px 0 0; margin-top: 18px; }
+    .inv-section-header h2 { font-size: 10px; font-weight: 700; }
+    .status-missing   { color: #c0293a; font-weight: 700; }
+    .status-working   { color: #065f46; font-weight: 700; }
+    .status-attention { color: #b45309; font-weight: 700; }
+    .status-repair    { color: #3730a3; font-weight: 700; }
+    .status-defective { color: #6b21a8; font-weight: 700; }
 
-.sidebar .nav-link:hover,
-.sidebar .nav-link.active{
-    color:white;
-    background:var(--drrm-teal-hover);
-    border-left:4px solid white;
-}
-
-/* Cards */
-.card{
-    border:none;
-    border-radius:12px;
-    box-shadow:0 .125rem .25rem rgba(0,0,0,.075);
-}
-
-.stat-card{
-    border-left:4px solid var(--drrm-teal);
-}
-
-.text-teal{
-    color:var(--drrm-teal);
-}
-
-.btn-teal{
-    background:var(--drrm-teal);
-    color:white;
-}
-
-.btn-teal:hover{
-    background:var(--drrm-teal-hover);
-    color:white;
-}
-
-.table thead{
-    background:var(--drrm-teal-light);
-}
-
-.form-control:focus{
-    border-color:var(--drrm-teal);
-    box-shadow:0 0 0 .2rem rgba(13,115,119,.15);
-}
-
-.section-badge{
-    background:var(--drrm-teal);
-    color:white;
-    padding:.4rem .75rem;
-    border-radius:6px;
-    font-weight:600;
-}
-
-.inventory-icon{
-    color:var(--drrm-teal);
-}
+    /* Footer */
+    .report-footer { margin-top: 24px; padding-top: 10px; border-top: 1px solid #e0eaea; text-align: center; font-size: 8px; color: #9bb2b2; }
+    .compliance-summary { display: flex; gap: 12px; margin-top: 14px; }
+    .summary-box { flex: 1; border: 1px solid #dde8e8; border-radius: 4px; padding: 8px 10px; text-align: center; }
+    .summary-box .val { font-size: 18px; font-weight: 700; }
+    .summary-box .lbl { font-size: 7.5px; text-transform: uppercase; letter-spacing: .06em; color: #9bb2b2; }
+    .val-good { color: #065f46; }
+    .val-fair { color: #b45309; }
+    .val-poor { color: #c0293a; }
 </style>
 </head>
-
 <body>
 
-<div class="container-fluid">
-<div class="row">
-<!-- Sidebar -->
-<nav class="col-md-3 col-lg-2 d-md-block sidebar px-0">
-
-    <div class="sidebar-heading text-center">
-        <i class="fa-solid fa-boxes-stacked me-2"></i>
-        Inventory Manager
-    </div>
-
-    <div class="position-sticky pt-3">
-
-        <ul class="nav flex-column">
-
-            <li class="nav-item">
-                <a class="nav-link" href="{{ route('inventory-storage.dashboard') }}">
-                    <i class="fa-solid fa-gauge-high me-2"></i>
-                    Dashboard
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link active" href="{{ route('inventory-storage.default-list') }}">
-                    <i class="fa-solid fa-list me-2"></i>
-                    Default List
-                </a>
-            </li>
-
-        </ul>
-
-        <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-white-50"
-            style="font-size:0.75rem; border:none;">
-            <span>Saved Reports</span>
-        </h6>
-
-        <ul class="nav flex-column mb-2">
-            <li class="nav-item">
-                <a class="nav-link" href="#">
-                    <i class="fa-solid fa-file-lines me-2"></i>
-                    Monthly Summary
-                </a>
-            </li>
-        </ul>
-
-    </div>
-
-</nav>
-
-    <!-- Main Content -->
-    <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center pt-4 pb-3 mb-4 border-bottom">
-
-            <div>
-                <h2 class="fw-bold text-teal">
-                    Default Inventory List
-                </h2>
-                <p class="text-muted mb-0">
-                    Supplies and equipment provided by DepEd and/or Partners
-                </p>
-            </div>
-
-                    <button type="button" class="btn btn-sm btn-teal" data-bs-toggle="modal" data-bs-target="#addItemModal">
-                        <i class="fa-solid fa-plus me-1"></i> Add New Item
-                    </button>
-
-        </div>
-
-
-        <!-- Inventory Table -->
-        <div class="card">
-
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-
-                <div>
-                    <span class="section-badge me-2">A</span>
-                    <span class="fw-semibold text-teal">
-                        Emergency Supplies and Equipment
-                    </span>
-                </div>
-
-                <input
-                    type="text"
-                    class="form-control w-auto"
-                    placeholder="Search Item..."
-                >
-
-            </div>
-
-            <div class="table-responsive">
-
-                <table class="table table-hover align-middle mb-0">
-
-                    <thead>
-                    <tr>
-                        <th>Item Description</th>
-                        <th class="text-center">Source</th>
-                        <th class="text-center">Date checked</th>
-                    </tr>
-                    </thead>
-
-                    <tbody>               
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <!-- Image element added here -->
-                                <img src="{{ asset('images/aluminumstretcher.jpg') }}" style="width: 45px; height: 45px; object-fit: cover; border-radius: 4px;">
-                                <span>2-fold Aluminum Stretcher</span>
-                            </div>
-                        </td>
-                        <td class="text-center">
-
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                    </td>
-                        <td class="text-center">
-                            <input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required>
-                        </td>
-                    </tr>
-
-                    <tr>
-                        <div><td>Cadaver bag</td><div>
-                                                   <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div><td>C-Collars</td><div>
-                                                   <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div><td>Cot (Battlefield Bed)</td><div>
-                                                    <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div><td>CPR board</td><div>
-                                                    <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div><td>Emergency Head Lamp</td><div>
-                                                    <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="date" class="form-control border-primary" name="dateChecked" value="{{ date('Y-m-d') }}" required></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div><td>Emergency Whistle</td><div>
-                                                    <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div><td>Fire Extinguisher</td><div>
-                                                    <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div><td>Go bag with Multi-Tool for each learner</td><div>
-                                                    <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div><td>Go bag with Multi-Tool for each personnel</td><div>
-                                                    <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div><td>Handheld / Base Radios</td><div>
-                                                    <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div><td>LED search light, 850 lumens</td><div>
-                                                    <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div><td>Life Vest / Life Jacket</td><div>
-                                                        <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div><td>Medical cushion</td><div>
-                                                    <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div><td>Plastic Spine Board with Safety Belts</td><div>
-                                                    <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div><td>Portable P.A. system</td><div>
-                                                    <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div> <td>Safety Coat</td><div>
-                                                        <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div>
-                        <td>Safety Helmet</td>
-                        <div>
-                                                    <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div>
-                        <td>safety Shoes</td>
-                        <div>
-                                                   <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div>
-                        <td>Splinter</td>
-                        <div>
-                                                    <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div>
-                        <td>Steel boxes</td>
-                        <div>
-                                                    <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div>
-                        <td>Steel Cabinets</td>
-                        <div>
-                                                   <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div>
-                        <td>Traffic Vest</td>
-                        <div>
-                                                <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div>
-                        <td>Transport Bags, 45L</td>
-                        <div>
-                                                    <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div>
-                        <td>Trauma Bag with contents for 20–25 persons</td>
-                        <div>
-                                                   <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div>
-                        <td>Universal head immobilizer</td>
-                        <div>
-                                                    <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-
-            </tbody>
-
-                </table>
-
-            </div>
-
-        </di
-        <!-- Response and Rescue Supplies Table --!>
-<div class="card mt-4">
-
-    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-
-        <div>
-            <span class="section-badge me-2">B</span>
-            <span class="fw-semibold text-teal">
-                Response and Rescue Supplies
-            </span>
-        </div>
-
-        <input
-            type="text"
-            class="form-control w-auto"
-            placeholder="Search Item..."
-        >
-
-    </div>
-
-    <div class="table-responsive">
-
-        <table class="table table-hover align-middle mb-0">
-
-            <thead>
-                <tr>
-                    <th>Item Description</th>
-                    <th class="text-center">Sources</th>
-                    <th class="text-center">Date Checked</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                    <tr>
-                        <div>
-                        <td>Bicycle</td>
-                        <div>
-                            <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div>
-                        <td>Fire Hose</td>
-                        <div>
-                                                    <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div>
-                        <td>Motor Banca</td>
-                        <div>
-                                                    <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-                    <tr>
-                        <div>
-                        <td>Power Sprayer</td>
-                        <div>
-                                                    <td class="text-center">                  
-                        <select class="form-select form-select-sm mx-auto mb-2 source-select" style="width:160px;">
-                            <option value="">Select Source</option>
-                            <option value="deped">DepEd</option>
-                            <option value="partner">Partner</option>
-                        </select>
-
-                        <select class="form-select form-select-sm deped-options d-none" style="width:160px;">
-                            <option value="">Select DepEd Source</option>
-                            <option value="GAA">GAA</option>
-                            <option value="Special Purpose Fund">Special Purpose Fund</option>
-                            <option value="Other DepEd Sources">Other DepEd Sources</option>
-                            <option value="Others">Others</option>
-                        </select>
-
-                        <select class="form-select form-select-sm partner-options d-none" style="width:160px;">
-                            <option value="">Select Partner Source</option>
-                            <option value="NGO">NGO</option>
-                            <option value="LGU">LGU</option>
-                            <option value="Private Sector">Private Sector</option>
-                            <option value="Others">Others</option>
-                        </select>
-</td>
-                        <td class="text-center"><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" min="0"></td>
-                        <td class="text-center text-muted small">-</td>
-                    </tr>
-            </tbody>
-
-        </table>
-
-    </div>
-
-</div>
-    </main>
-
-</div>
+<!-- Header -->
+<div class="report-header">
+    <div class="agency">Division Disaster Risk Reduction &amp; Management Office</div>
+    <h1>Inventory &amp; Resource Compliance Report</h1>
+    <div class="school-name">{{ $school->school_name }}</div>
+    <div class="meta">Generated: {{ $generatedAt }} &nbsp;|&nbsp; School ID: {{ $school->school_id ?? 'N/A' }}</div>
 </div>
 
+@php
+    $savedA  = $saved['A'] ?? collect();
+    $savedB  = $saved['B'] ?? collect();
+    $totalA  = count($itemsA);
+    $totalB  = count($itemsB);
+    $haveA   = $savedA->where('has_item', true)->count();
+    $haveB   = $savedB->where('has_item', true)->count();
+    $pctA    = $totalA > 0 ? round(($haveA / $totalA) * 100) : 0;
+    $pctB    = $totalB > 0 ? round(($haveB / $totalB) * 100) : 0;
+    $totalAll = $totalA + $totalB;
+    $haveAll  = $haveA + $haveB;
+    $pctAll   = $totalAll > 0 ? round(($haveAll / $totalAll) * 100) : 0;
+    $colorClass = fn($p) => $p >= 80 ? 'val-good' : ($p >= 50 ? 'val-fair' : 'val-poor');
+@endphp
 
-<script>
-document.querySelectorAll('.source-select').forEach(function(select){
-  select.addEventListener('change',function(){
-    const td=this.parentElement;
-    const deped=td.querySelector('.deped-options');
-    const partner=td.querySelector('.partner-options');
-    deped.classList.add('d-none');
-    partner.classList.add('d-none');
-    if(this.value==='deped') deped.classList.remove('d-none');
-    if(this.value==='partner') partner.classList.remove('d-none');
-  });
-});
-</script>
+<!-- Compliance summary boxes -->
+<table style="width:100%; margin-top:0;" cellspacing="0" cellpadding="0">
+    <tr>
+        <td style="width:33%; padding:6px; text-align:center; border:1px solid #dde8e8; border-radius:4px;">
+            <div style="font-size:18px; font-weight:700;" class="{{ $colorClass($pctA) }}">{{ $pctA }}%</div>
+            <div style="font-size:7.5px; text-transform:uppercase; color:#9bb2b2;">Section A Compliance</div>
+            <div style="font-size:8px; color:#4a6060;">{{ $haveA }} / {{ $totalA }} items</div>
+        </td>
+        <td style="width:4%;"></td>
+        <td style="width:33%; padding:6px; text-align:center; border:1px solid #dde8e8; border-radius:4px;">
+            <div style="font-size:18px; font-weight:700;" class="{{ $colorClass($pctB) }}">{{ $pctB }}%</div>
+            <div style="font-size:7.5px; text-transform:uppercase; color:#9bb2b2;">Section B Compliance</div>
+            <div style="font-size:8px; color:#4a6060;">{{ $haveB }} / {{ $totalB }} items</div>
+        </td>
+        <td style="width:4%;"></td>
+        <td style="width:33%; padding:6px; text-align:center; border:1px solid #dde8e8; border-radius:4px;">
+            <div style="font-size:18px; font-weight:700;" class="{{ $colorClass($pctAll) }}">{{ $pctAll }}%</div>
+            <div style="font-size:7.5px; text-transform:uppercase; color:#9bb2b2;">Overall Compliance</div>
+            <div style="font-size:8px; color:#4a6060;">{{ $haveAll }} / {{ $totalAll }} items</div>
+        </td>
+    </tr>
+</table>
 
+<!-- Section A -->
+<div class="section-header">
+    <h2>Section A — Emergency Supplies and Equipment <span class="score">{{ $haveA }} / {{ $totalA }} sourced ({{ $pctA }}%)</span></h2>
+</div>
+<table>
+    <thead>
+        <tr>
+            <th style="width:32%">Item</th>
+            <th style="width:8%">Have</th>
+            <th style="width:8%">Qty</th>
+            <th style="width:18%">Source</th>
+            <th style="width:15%">Date Checked</th>
+            <th style="width:19%">Remarks</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach($itemsA as $key => $name)
+            @php $row = $savedA->get($key); @endphp
+            <tr>
+                <td>{{ $name }}</td>
+                <td class="{{ $row && $row->has_item ? 'badge-yes' : 'badge-no' }}">
+                    {{ $row && $row->has_item ? '✓ Yes' : '✗ No' }}
+                </td>
+                <td>{{ $row ? $row->quantity_owned : '–' }}</td>
+                <td>
+                    @if($row && $row->source)
+                        <span class="badge-source">{{ ucfirst($row->source) }}</span>
+                        @if($row->source_detail) <br><small>{{ $row->source_detail }}</small> @endif
+                    @else –
+                    @endif
+                </td>
+                <td>{{ $row && $row->date_checked ? $row->date_checked->format('M d, Y') : '–' }}</td>
+                <td>{{ $row ? ($row->remarks ?: '–') : '–' }}</td>
+            </tr>
+        @endforeach
+    </tbody>
+</table>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Section B -->
+<div class="section-header" style="background:#1a7f5a;">
+    <h2>Section B — Response and Rescue Supplies <span class="score">{{ $haveB }} / {{ $totalB }} sourced ({{ $pctB }}%)</span></h2>
+</div>
+<table>
+    <thead>
+        <tr>
+            <th style="width:32%">Item</th>
+            <th style="width:8%">Have</th>
+            <th style="width:8%">Qty</th>
+            <th style="width:18%">Source</th>
+            <th style="width:15%">Date Checked</th>
+            <th style="width:19%">Remarks</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach($itemsB as $key => $name)
+            @php $row = $savedB->get($key); @endphp
+            <tr>
+                <td>{{ $name }}</td>
+                <td class="{{ $row && $row->has_item ? 'badge-yes' : 'badge-no' }}">
+                    {{ $row && $row->has_item ? '✓ Yes' : '✗ No' }}
+                </td>
+                <td>{{ $row ? $row->quantity_owned : '–' }}</td>
+                <td>
+                    @if($row && $row->source)
+                        <span class="badge-source">{{ ucfirst($row->source) }}</span>
+                        @if($row->source_detail) <br><small>{{ $row->source_detail }}</small> @endif
+                    @else –
+                    @endif
+                </td>
+                <td>{{ $row && $row->date_checked ? $row->date_checked->format('M d, Y') : '–' }}</td>
+                <td>{{ $row ? ($row->remarks ?: '–') : '–' }}</td>
+            </tr>
+        @endforeach
+    </tbody>
+</table>
+
+<!-- Inventory Ledger -->
+@if($inventoryItems->count() > 0)
+<div class="inv-section-header">
+    <h2>Inventory Ledger ({{ $inventoryItems->count() }} items)</h2>
+</div>
+<table>
+    <thead>
+        <tr>
+            <th style="width:28%">Item Name</th>
+            <th style="width:8%">Unit</th>
+            <th style="width:6%">Qty</th>
+            <th style="width:13%">Status</th>
+            <th style="width:13%">Location</th>
+            <th style="width:17%">Fund Source</th>
+            <th style="width:15%">Date Checked</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach($inventoryItems as $item)
+        @php
+            $sc = match($item->status) {
+                'missing'         => 'status-missing',
+                'needs_attention' => 'status-attention',
+                'working'         => 'status-working',
+                'for_repair'      => 'status-repair',
+                'defective'       => 'status-defective',
+                default           => '',
+            };
+            $sl = match($item->status) {
+                'missing'         => 'Missing',
+                'needs_attention' => 'Needs Attention',
+                'working'         => 'Working',
+                'for_repair'      => 'For Repair',
+                'defective'       => 'Defective',
+                default           => ucfirst($item->status),
+            };
+        @endphp
+        <tr>
+            <td>{{ $item->item_name }}</td>
+            <td>{{ $item->unit ?: '–' }}</td>
+            <td>{{ $item->quantity }}</td>
+            <td class="{{ $sc }}">{{ $sl }}</td>
+            <td>{{ $item->location ?: '–' }}</td>
+            <td>{{ $item->fund_source ?: '–' }}</td>
+            <td>{{ $item->date_checked ? \Carbon\Carbon::parse($item->date_checked)->format('M d, Y') : '–' }}</td>
+        </tr>
+        @endforeach
+    </tbody>
+</table>
+@endif
+
+<div class="report-footer">
+    This report was generated automatically by the DRRM Compliance System &nbsp;|&nbsp; {{ $generatedAt }}
+</div>
 
 </body>
 </html>
